@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Minha Agenda Nuvem</title>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- FIREBASE SDK -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+<style>
+:root{--bg:#EEF2F5;--panel:#fff;--ink:#14212E;--mute:#5F6F7E;--line:#D9E1E8;--accent:#0E7C86;--accent-ink:#fff;--danger:#B3261E;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0F1720;--panel:#17222E;--ink:#E8EEF3;--mute:#93A3B2;--line:#27384A;--accent:#35B7C2;--accent-ink:#06222A;--danger:#FF8A80}}
+:root[data-theme="dark"]{--bg:#0F1720;--panel:#17222E;--ink:#E8EEF3;--mute:#93A3B2;--line:#27384A;--accent:#35B7C2;--accent-ink:#06222A;--danger:#FF8A80}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 Figtree,system-ui,-apple-system,"Segoe UI",sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.app{display:flex;min-height:100vh}
+aside{width:290px;flex:none;background:var(--panel);border-right:1px solid var(--line);padding:18px 12px;overflow-y:auto}
+main{flex:1;min-width:0;padding:18px 18px 110px;max-width:760px;margin:0 auto}
+.nav{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:none;border:0;border-radius:10px;padding:9px 10px;font-weight:500}
+.nav:hover{background:var(--bg)}
+.nav.on{background:var(--accent);color:var(--accent-ink)}
+.nav .n{margin-left:auto;font-size:13px;opacity:.75}
+.dot{width:12px;height:12px;border-radius:4px;flex:none}
+.sub{margin-left:20px;border-left:2px solid var(--line);padding-left:4px}
+.add{color:var(--accent);font-weight:600;margin-top:10px}
+.top{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+h1{font-size:26px;margin:0;font-weight:700;letter-spacing:-.01em}
+.menu{display:none;border:1px solid var(--line);background:var(--panel);border-radius:10px;width:40px;height:40px;font-size:20px}
+.crumb{color:var(--mute);font-size:14px;margin-bottom:4px}
+
+.tools{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 4px}
+.ghost{border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:6px 14px;font-size:14px}
+h2{font-size:15px;margin:24px 0 8px;font-weight:700}
+h2.late{color:var(--danger)}
+.item{display:flex;gap:12px;align-items:flex-start;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:8px}
+.item.done .t{text-decoration:line-through;color:var(--mute)}
+.chk{width:24px;height:24px;flex:none;border-radius:50%;border:2px solid var(--mute);background:none;margin-top:1px;padding:0;color:var(--accent-ink);font-size:14px;line-height:1}
+.chk.on{background:var(--accent);border-color:var(--accent)}
+.body{flex:1;min-width:0;cursor:pointer}
+.t{font-weight:600;overflow-wrap:anywhere}
+.meta{font-size:13.5px;color:var(--mute);display:flex;gap:10px;flex-wrap:wrap;margin-top:2px}
+.note{font-size:14px;color:var(--mute);margin-top:4px;white-space:pre-wrap;overflow-wrap:anywhere}
+.empty{background:var(--panel);border:1px dashed var(--line);border-radius:12px;padding:28px 18px;text-align:center;color:var(--mute);margin-top:18px}
+.fab{position:fixed;right:18px;bottom:calc(18px + env(safe-area-inset-bottom,0px));background:var(--accent);color:var(--accent-ink);border:0;border-radius:999px;padding:14px 22px;font-weight:700;box-shadow:0 6px 20px rgba(0,0,0,.25);z-index:5}
+
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center;z-index:20}
+.sheet{background:var(--panel);width:100%;max-width:520px;border-radius:18px 18px 0 0;padding:20px 18px calc(20px + env(safe-area-inset-bottom,0px));max-height:92%;overflow-y:auto}
+@media(min-width:700px){.scrim{align-items:center}.sheet{border-radius:18px}}
+.sheet h3{margin:0 0 12px;font-size:19px}
+label{display:block;font-size:14px;font-weight:600;margin:12px 0 4px}
+input,select,textarea{width:100%;border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:10px 12px}
+.row{display:flex;gap:10px}.row>div{flex:1}
+.acts{display:flex;gap:10px;margin-top:18px}
+.btn{flex:1;border:0;border-radius:10px;padding:12px;font-weight:700;background:var(--accent);color:var(--accent-ink)}
+.btn.sec{background:var(--bg);color:var(--ink);border:1px solid var(--line);flex:none}
+.btn.del{background:none;color:var(--danger);border:1px solid var(--line);flex:none}
+.colors{display:flex;gap:10px;flex-wrap:wrap}
+.colors button{width:34px;height:34px;border-radius:10px;border:3px solid transparent}
+.colors button.on{border-color:var(--ink)}
+
+.item.red{border-left:5px solid #D64545}.item.yellow{border-left:5px solid #E0A100}.item.green{border-left:5px solid #2E9E5B}
+.star{background:none;border:0;font-size:24px;color:var(--mute);padding:0 2px;align-self:flex-start;line-height:1}.star.on{color:#E0A100}
+#qa{margin:10px 0 0}
+.badge{font-size:12px;font-weight:700;background:var(--accent);color:var(--accent-ink);border-radius:999px;padding:1px 9px;white-space:nowrap}
+.hello{color:var(--mute);margin:0 0 4px;text-transform:capitalize}
+.lights{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:14px 0}
+.light{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 6px;text-align:center}
+.light b{display:block;font-size:32px;line-height:1.1}
+.light span{font-size:13px;color:var(--mute)}
+.light i{display:block;width:14px;height:14px;border-radius:50%;margin:0 auto 6px}
+.week{display:flex;gap:6px}
+.day{flex:1;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px 0;text-align:center;font-size:12px;color:var(--mute)}
+.day b{display:block;font-size:17px;color:var(--ink)}
+.day.today{border:2px solid var(--accent)}
+.day em{display:block;font-style:normal;font-weight:700;min-height:18px;color:var(--accent)}
+.fold{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:8px}
+.fold .n{margin-left:auto;color:var(--mute);font-size:14px}
+.lamp{width:12px;height:12px;border-radius:50%;flex:none}
+
+@media(max-width:800px){
+aside{position:fixed;inset:0 auto 0 0;z-index:15;transform:translateX(-100%);transition:transform .2s;width:min(300px,86vw);padding-top:calc(18px + env(safe-area-inset-top,0px))}
+aside.open{transform:none}
+.menu{display:block}
+}
+@media(prefers-reduced-motion:reduce){aside{transition:none}}
+</style>
+</head>
+<body>
+<div class="app">
+<aside id="side" aria-label="Pastas"></aside>
+<main id="main"></main>
+</div>
+<button class="fab" id="fab">+ Novo item</button>
+<div id="layer"></div><input type="file" id="fi" accept=".json,application/json" hidden>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyAvdngV2HMKdAIUmK1f9IF0gm4uEXPdd44",
+  authDomain: "fluxo-de-caixa-59dd1.firebaseapp.com",
+  projectId: "fluxo-de-caixa-59dd1",
+  storageBucket: "fluxo-de-caixa-59dd1.appspot.com",
+  messagingSenderId: "367352854109",
+  appId: "1:367352854109:web:a6273752e5a7ea891c305e"
+};
+
+if (!firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
+}
+const db = firebase.firestore();
+const docRef = db.collection("shared").doc("agenda-vida");
+
+const KEY="agenda-vida-v1";
+const COLORS=["#0E7C86","#7C5CD6","#D9822B","#2E9E5B","#C2415D","#3B6FD4"];
+const seed=()=>({areas:[
+{id:"a1",name:"Academia",color:COLORS[3],parent:null},
+{id:"a2",name:"Igreja",color:COLORS[1],parent:null},
+{id:"a3",name:"Minhas funções",color:COLORS[1],parent:"a2"},
+{id:"a4",name:"Vida financeira",color:COLORS[2],parent:null}],items:[]});
+
+let S;
+try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){S=null}
+if(!S||!S.areas)S=seed();
+let tm;
+
+const push = async () => {
+  try {
+    await docRef.set({ json: JSON.stringify(S), t: S.t });
+  } catch (e) {
+    console.error("Erro ao sincronizar com a nuvem", e);
+  }
+};
+
+const save=()=>{
+  S.t=Date.now();
+  try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}
+  clearTimeout(tm);
+  tm=setTimeout(push,600);
+};
+
+const $=s=>document.querySelector(s);
+const uid=()=>Math.random().toString(36).slice(2,9);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const iso=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+const todayS=()=>iso(new Date());
+const tomorrowS=()=>{const d=new Date();d.setDate(d.getDate()+1);return iso(d)};
+const fmt=s=>new Date(s+"T12:00:00").toLocaleDateString("pt-BR",{weekday:"short",day:"numeric",month:"short"});
+
+const myAlert = (msg) => {
+    sheet(`<h3>Aviso</h3><p>${esc(msg)}</p><div class="acts"><button class="btn" id="btn-ok">OK</button></div>`);
+    $("#btn-ok").onclick = close;
+};
+const myConfirm = (msg, action) => {
+    sheet(`<h3>Atenção</h3><p>${esc(msg)}</p><div class="acts"><button class="btn sec" id="btn-no">Cancelar</button><button class="btn del" id="btn-yes">Confirmar</button></div>`);
+    $("#btn-no").onclick = close;
+    $("#btn-yes").onclick = () => { close(); action(); };
+};
+
+let view="home",showDone=false,sq="";
+const area=id=>S.areas.find(a=>a.id===id);
+const kids=id=>S.areas.filter(a=>a.parent===id);
+const family=id=>[id,...kids(id).flatMap(k=>family(k.id))];
+const path=id=>{const a=area(id);return a?(a.parent?path(a.parent)+" › ":"")+a.name:"Caixa de entrada"};
+const flat=(p=null,d=0)=>kids(p).flatMap(a=>[{a,d},...flat(a.id,d+1)]);
+const pending=ids=>S.items.filter(i=>!i.done&&(!ids||ids.includes(i.area))).length;
+
+function renderSide(){
+ const tree=(p)=>kids(p).map(a=>`<button class="nav ${view===a.id?"on":""}" data-go="${a.id}"><span class="dot" style="background:${a.color}"></span>${esc(a.name)}<span class="n">${pending(family(a.id))||""}</span></button>${kids(a.id).length?`<div class="sub">${tree(a.id)}</div>`:""}`).join("");
+ $("#side").innerHTML=`<input id="q" type="search" placeholder="Buscar em tudo..." value="${esc(sq)}" aria-label="Buscar" style="margin-bottom:10px"><button class="nav ${view==="home"?"on":""}" data-go="home"><b>Início</b></button><button class="nav ${view==="agenda"?"on":""}" data-go="agenda"><b>Agenda geral</b><span class="n">${pending()||""}</span></button><h2 style="margin:18px 10px 6px;color:var(--mute);font-size:13px">Pastas</h2>${tree(null)}<button class="nav add" data-newfolder="">+ Nova pasta</button><h2 style="margin:18px 10px 6px;color:var(--mute);font-size:13px">Dados</h2><button class="nav" id="bk">⬇ Exportar backup</button><button class="nav" id="im">⬆ Importar backup</button><div class="crumb" style="padding:6px 10px">☁ Sincronizado na nuvem compartilhada</div>`;
+}
+
+function groups(list){
+ const t=todayS(),m=tomorrowS(),p=list.filter(i=>!i.done).sort((a,b)=>(a.date||"9")+(a.time||"")>(b.date||"9")+(b.time||"")?1:-1);
+ return[["Atrasados",p.filter(i=>i.date&&i.date<t),"late"],["Hoje",p.filter(i=>i.date===t)],["Amanhã",p.filter(i=>i.date===m)],["Próximos dias",p.filter(i=>i.date>m)],["Sem data",p.filter(i=>!i.date)]].filter(g=>g[1].length);
+}
+const urg=i=>{const t=todayS();if(!i.date)return"green";if(i.date<t)return"red";if(i.date===t){const n=new Date(),hm=String(n.getHours()).padStart(2,"0")+":"+String(n.getMinutes()).padStart(2,"0");return i.time&&i.time<hm?"red":"yellow"}return i.date===tomorrowS()?"yellow":"green"};
+const nextDate=i=>{const d=new Date((i.date||todayS())+"T12:00:00"),t=todayS();do{if(i.rep==="d")d.setDate(d.getDate()+1);else if(i.rep==="w")d.setDate(d.getDate()+7);else d.setMonth(d.getMonth()+1)}while(iso(d)<=t&&false||iso(d)<=t);return iso(d)};
+
+function itemHtml(i,showPath){
+ return`<div class="item ${i.done?"done":urg(i)}"><button class="chk ${i.done?"on":""}" data-done="${i.id}" aria-label="Concluir">${i.done?"✓":""}</button><div class="body" data-edit="${i.id}"><div class="t">${esc(i.title)}${i.doing&&!i.done?` <span class="badge">Em andamento</span>`:""}${i.pri&&!i.done?` <span class="badge" style="background:#D64545;color:#fff">Alta</span>`:""}</div><div class="meta">${i.date?`<span>${fmt(i.date)}${i.time?" às "+i.time:""}</span>`:""}${i.rep?`<span>↻ ${{d:"diário",w:"semanal",m:"mensal"}[i.rep]}</span>`:""}${showPath?`<span>${esc(path(i.area))}</span>`:""}</div>${i.note?`<div class="note">${esc(i.note)}</div>`:""}</div>${i.done?"":`<button class="star ${i.focus===todayS()?"on":""}" data-star="${i.id}" aria-label="Foco de hoje">★</button>`}</div>`;
+}
+
+function renderHome(){
+ const p=S.items.filter(i=>!i.done),n=new Date(),hr=n.getHours();
+ const hi=hr<12?"Bom dia":hr<18?"Boa tarde":"Boa noite";
+ const c=k=>p.filter(i=>urg(i)===k).length;
+ const rank={red:0,yellow:1,green:2};
+ const key=i=>(i.date||"")+(i.time||"");
+ const foc=p.filter(i=>i.focus===todayS()),att=p.filter(i=>urg(i)!=="green"&&!foc.includes(i)).sort((a,b)=>rank[urg(a)]-rank[urg(b)]||(key(a)>key(b)?1:-1)).slice(0,6);
+ const doing=p.filter(i=>i.doing);
+ const LC={red:"#D64545",yellow:"#E0A100",green:"#2E9E5B"};
+ let h=`<div class="top"><button class="menu" id="menu" aria-label="Abrir pastas">☰</button><h1>${hi}</h1></div><p class="hello">${n.toLocaleDateString("pt-BR",{weekday:"long",day:"numeric",month:"long"})}</p>`;
+ h+=`<input id="qa" placeholder="📥 Anotar rápido (Enter) — organizo depois" aria-label="Anotar rápido">`;
+ h+=`<div class="lights"><div class="light"><i style="background:${LC.red}"></i><b>${c("red")}</b><span>Atrasados</span></div><div class="light"><i style="background:${LC.yellow}"></i><b>${c("yellow")}</b><span>Hoje e amanhã</span></div><div class="light"><i style="background:${LC.green}"></i><b>${c("green")}</b><span>Tranquilos</span></div></div>`;
+ h+=`<h2>⭐ Foco de hoje (${foc.length}/3)</h2>`+(foc.length?foc.map(i=>itemHtml(i,true)).join(""):`<div class="empty">Toque na ★ de até 3 itens para marcar o que mais importa hoje.</div>`);
+ h+=`<h2>Merece sua atenção</h2>`;
+ h+=att.length?att.map(i=>itemHtml(i,true)).join(""):`<div class="empty">${p.length?"Nada urgente agora. Dia tranquilo.":"Tudo em dia! Toque em “+ Novo item” para começar."}</div>`;
+ if(doing.length)h+=`<h2>Em andamento</h2>`+doing.map(i=>itemHtml(i,true)).join("");
+ const inbox=p.filter(i=>!i.area);if(inbox.length)h+=`<h2>📥 Caixa de entrada (${inbox.length})</h2>`+inbox.map(i=>itemHtml(i,false)).join("");
+ h+=`<h2>Próximos 7 dias</h2><div class="week">`;
+ for(let k=0;k<7;k++){const d=new Date();d.setDate(d.getDate()+k);const s=iso(d),q=p.filter(i=>i.date===s).length;
+  h+=`<div class="day ${k?"":"today"}">${d.toLocaleDateString("pt-BR",{weekday:"short"}).replace(".","")}<b>${d.getDate()}</b><em>${q||""}</em></div>`}
+ h+=`</div><div class="tools"><button class="ghost" id="rv">📋 Revisão da semana</button></div><h2>Suas pastas</h2>`;
+ kids(null).forEach(a=>{const its=p.filter(i=>family(a.id).includes(i.area));
+  const w=its.some(i=>urg(i)==="red")?"red":its.some(i=>urg(i)==="yellow")?"yellow":"green";
+  const ds=S.items.filter(i=>family(a.id).includes(i.area)).map(i=>i.doneAt||i.c||"").filter(Boolean).sort(),last=ds.pop(),dd=last?Math.floor((new Date(todayS())-new Date(last))/864e5):null,warn=dd!==null&&dd>=7?` · parada há ${dd} dias`:"";
+  h+=`<button class="fold" data-go="${a.id}"><span class="lamp" style="background:${LC[w]}"></span><span class="dot" style="background:${a.color}"></span><b>${esc(a.name)}</b><span class="n">${its.length} pendente${its.length===1?"":"s"}${warn}</span></button>`});
+ $("#main").innerHTML=h;
+}
+
+function renderSearch(){const q=sq.toLowerCase(),r=S.items.filter(i=>(i.title+" "+(i.note||"")+" "+path(i.area)).toLowerCase().includes(q));
+ $("#main").innerHTML=`<div class="top"><button class="menu" id="menu" aria-label="Abrir pastas">☰</button><h1>Busca</h1></div><div class="crumb">${r.length} resultado${r.length===1?"":"s"} para “${esc(sq)}”</div>`+r.map(i=>itemHtml(i,true)).join("")}
+function review(){const t=todayS(),p=S.items.filter(i=>!i.done),w=new Date();w.setDate(w.getDate()-7);const ws=iso(w),nx=new Date();nx.setDate(nx.getDate()+7);const ns=iso(nx);
+ const dn=S.items.filter(i=>i.doneAt&&i.doneAt>=ws).length,late=p.filter(i=>i.date&&i.date<t),ahead=p.filter(i=>i.date>=t&&i.date<=ns).length,inb=p.filter(i=>!i.area).length,und=p.filter(i=>!i.date&&i.area).length;
+ sheet(`<h3>Revisão da semana</h3><p>✅ <b>${dn}</b> concluídos nos últimos 7 dias</p><p>🔴 <b>${late.length}</b> atrasados</p><p>📅 <b>${ahead}</b> nos próximos 7 dias</p><p>📥 <b>${inb}</b> na caixa de entrada para organizar</p><p>🗂️ <b>${und}</b> itens sem data</p><div class="acts"><button class="btn sec" id="c">Fechar</button>${late.length?`<button class="btn" id="rs">Mover atrasados para hoje</button>`:""}</div>`);
+ $("#c").onclick=close;if($("#rs"))$("#rs").onclick=()=>{late.forEach(i=>i.date=t);save();close();render()}}
+
+function renderMain(){
+ if(view==="home"){renderHome();return}
+ if(view==="search"){renderSearch();return}
+ const a=view==="agenda"?null:area(view);
+ if(view!=="agenda"&&!a)view="agenda";
+ const ids=a?family(a.id):null;
+ const list=S.items.filter(i=>!ids||ids.includes(i.area));
+ let h=`<div class="top"><button class="menu" id="menu" aria-label="Abrir pastas">☰</button><h1>${a?esc(a.name):"Agenda geral"}</h1></div>`;
+ if(a){
+  if(a.parent)h+=`<div class="crumb">${esc(path(a.parent))}</div>`;
+  h+=`<div class="tools"><button class="ghost" data-newfolder="${a.id}">+ Subpasta</button><button class="ghost" data-editfolder="${a.id}">Editar pasta</button></div>`;
+  const subs=kids(a.id);
+  if(subs.length)h+=`<div class="tools">${subs.map(s=>`<button class="ghost" data-go="${s.id}"><span class="dot" style="background:${s.color};display:inline-block;margin-right:6px"></span>${esc(s.name)}</button>`).join("")}</div>`;
+ }
+ const g=groups(list);
+ g.forEach(([n,arr,c])=>h+=`<h2 class="${c||""}">${n}</h2>`+arr.map(i=>itemHtml(i,!a||a.id!==i.area)).join(""));
+ if(!g.length)h+=`<div class="empty">Nada pendente por aqui.<br>Toque em “+ Novo item” para adicionar um compromisso ou tarefa.</div>`;
+ const done=list.filter(i=>i.done);
+ if(done.length){h+=`<div class="tools"><button class="ghost" id="td">${showDone?"Ocultar":"Mostrar"} concluídos (${done.length})</button></div>`;if(showDone)h+=done.map(i=>itemHtml(i,true)).join("")}
+ $("#main").innerHTML=h;
+}
+
+const render=()=>{renderSide();renderMain()};
+const close=()=>{$("#layer").innerHTML=""};
+function sheet(html){$("#layer").innerHTML=`<div class="scrim" id="scrim"><div class="sheet" role="dialog" aria-modal="true">${html}</div></div>`;$("#scrim").onclick=e=>{if(e.target.id==="scrim")close()};const f=$(".sheet input");if(f)f.focus()}
+const opts=(sel,skip=[])=>flat().filter(x=>!skip.includes(x.a.id)).map(x=>`<option value="${x.a.id}" ${x.a.id===sel?"selected":""}>${"— ".repeat(x.d)}${esc(x.a.name)}</option>`).join("");
+
+function itemForm(id){
+ const it=S.items.find(i=>i.id===id)||{area:area(view)?view:"",title:"",date:"",time:"",note:""};
+ if(!S.areas.length){myAlert("Crie uma pasta primeiro.");return}
+ sheet(`<h3>${id?"Editar item":"Novo item"}</h3><label for="f-t">O que é?</label><input id="f-t" value="${esc(it.title)}" placeholder="Ex.: Treino de pernas"><label for="f-a">Pasta</label><select id="f-a"><option value="">Caixa de entrada</option>${opts(it.area)}</select><div class="row"><div><label for="f-d">Data</label><input id="f-d" type="date" value="${it.date||""}"></div><div><label for="f-h">Hora</label><input id="f-h" type="time" value="${it.time||""}"></div></div><label for="f-n">Descrição</label><textarea id="f-n" rows="3" placeholder="Detalhes, como está a situação...">${esc(it.note)}</textarea><div class="row"><div><label for="f-r">Repetir</label><select id="f-r"><option value="">Não repete</option><option value="d" ${it.rep==="d"?"selected":""}>Todo dia</option><option value="w" ${it.rep==="w"?"selected":""}>Toda semana</option><option value="m" ${it.rep==="m"?"selected":""}>Todo mês</option></select></div><div><label for="f-p">Prioridade</label><select id="f-p"><option value="0">Normal</option><option value="1" ${it.pri?"selected":""}>Alta</option></select></div></div><label for="f-s">Situação</label><select id="f-s"><option value="">A fazer</option><option value="1" ${it.doing?"selected":""}>Em andamento</option></select><div class="acts">${id?`<button class="btn del" id="x">Excluir</button>`:`<button class="btn sec" id="c">Cancelar</button>`}<button class="btn" id="s">Salvar</button></div>`);
+ if($("#c"))$("#c").onclick=close;
+ if($("#x"))$("#x").onclick=()=>{
+     myConfirm("Deseja realmente excluir este item?", () => {
+         S.items=S.items.filter(i=>i.id!==id); save(); render();
+     });
+ };
+ $("#s").onclick=()=>{const title=$("#f-t").value.trim();if(!title){$("#f-t").focus();return}
+  const v={title,area:$("#f-a").value,date:$("#f-d").value,time:$("#f-h").value,note:$("#f-n").value.trim(),doing:$("#f-s").value==="1",rep:$("#f-r").value,pri:$("#f-p").value==="1"?1:0};
+  if(v.rep&&!v.date)v.date=todayS();
+  if(id)Object.assign(S.items.find(i=>i.id===id),v);else S.items.push({id:uid(),done:false,c:todayS(),...v});
+  save();close();render()};
+}
+
+function folderForm(parentId,editId){
+ const a=editId?area(editId):{name:"",color:COLORS[0],parent:parentId||null};
+ let col=a.color;
+ const skip=editId?family(editId):[];
+ sheet(`<h3>${editId?"Editar pasta":parentId?"Nova subpasta":"Nova pasta"}</h3><label for="g-n">Nome</label><input id="g-n" value="${esc(a.name)}" placeholder="Ex.: Saúde, Estudos, Família"><label for="g-p">Dentro de</label><select id="g-p"><option value="">(pasta principal)</option>${opts(a.parent,skip)}</select><label>Cor</label><div class="colors">${COLORS.map(c=>`<button data-c="${c}" class="${c===col?"on":""}" style="background:${c}" aria-label="Cor"></button>`).join("")}</div><div class="acts">${editId?`<button class="btn del" id="x">Excluir</button>`:`<button class="btn sec" id="c">Cancelar</button>`}<button class="btn" id="s">Salvar</button></div>`);
+ document.querySelectorAll(".colors button").forEach(b=>b.onclick=()=>{col=b.dataset.c;document.querySelectorAll(".colors button").forEach(x=>x.classList.toggle("on",x===b))});
+ if($("#c"))$("#c").onclick=close;
+ if($("#x"))$("#x").onclick=()=>{
+     const ids=family(editId);
+     myConfirm("Excluir esta pasta, as subpastas e todos os itens dentro delas?", () => {
+         S.areas=S.areas.filter(x=>!ids.includes(x.id));
+         S.items=S.items.filter(i=>!ids.includes(i.area));
+         if(ids.includes(view))view="agenda";
+         save(); render();
+     });
+ };
+ $("#s").onclick=()=>{const name=$("#g-n").value.trim();if(!name){$("#g-n").focus();return}
+  const v={name,color:col,parent:$("#g-p").value||null};
+  if(editId)Object.assign(area(editId),v);else{const n={id:uid(),...v};S.areas.push(n);view=n.id}
+  save();close();render()};
+}
+
+document.addEventListener("click",e=>{
+ const t=e.target.closest("[data-go],[data-done],[data-edit],[data-newfolder],[data-editfolder],[data-star],#menu,#td,#rv,#bk,#im");if(!t)return;
+ if(t.dataset.go){view=t.dataset.go;sq="";$("#side").classList.remove("open");render();window.scrollTo(0,0)}
+ else if(t.dataset.done){const i=S.items.find(x=>x.id===t.dataset.done);if(i.rep&&!i.done){i.doneAt=todayS();i.date=nextDate(i);i.focus=null}else{i.done=!i.done;i.doneAt=i.done?todayS():null}save();render()}
+ else if(t.dataset.star){const i=S.items.find(x=>x.id===t.dataset.star),td=todayS();if(i.focus===td)i.focus=null;else if(S.items.filter(x=>x.focus===td&&!x.done).length>=3){myAlert("O foco do dia tem no máximo 3 itens.");return}else i.focus=td;save();render()}
+ else if(t.id==="rv")review();
+ else if(t.id==="im")$("#fi").click();
+ else if(t.id==="bk"){
+  // Download direto pelo navegador com um alert bonitinho antes se for preciso
+  const blob = new Blob([JSON.stringify(S,null,1)], {type: "application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "agenda-backup-"+todayS()+".json";
+  a.click();
+  URL.revokeObjectURL(url);
+ }
+ else if(t.dataset.edit)itemForm(t.dataset.edit);
+ else if(t.dataset.newfolder!==undefined)folderForm(t.dataset.newfolder||null);
+ else if(t.dataset.editfolder)folderForm(null,t.dataset.editfolder);
+ else if(t.id==="menu")$("#side").classList.add("open");
+ else if(t.id==="td"){showDone=!showDone;renderMain()}
+});
+
+document.addEventListener("click",e=>{if(!e.target.closest("aside,#menu"))$("#side").classList.remove("open")});
+$("#fab").onclick=()=>itemForm();
+document.addEventListener("input",e=>{if(e.target.id==="q"){sq=e.target.value;view=sq.trim()?"search":"home";renderMain()}});
+document.addEventListener("keydown",e=>{if(e.target.id==="qa"&&e.key==="Enter"){const v=e.target.value.trim();if(!v)return;S.items.push({id:uid(),title:v,area:"",date:"",time:"",note:"",done:false,c:todayS()});save();render();setTimeout(()=>{const q=$("#qa");if(q)q.focus()},0)}});
+
+$("#fi").onchange=async e=>{const f=e.target.files[0];e.target.value="";if(!f)return;try{const o=JSON.parse(await f.text());if(!Array.isArray(o.areas)||!Array.isArray(o.items))throw 0; 
+  myConfirm("Substituir sua agenda atual por este backup?", () => {
+      S=o;view="home";save();render();
+  });
+}catch(x){myAlert("Arquivo de backup inválido.")}};
+
+document.addEventListener("keydown",e=>{if(e.key==="Escape")close()});
+
+docRef.onSnapshot((sn) => {
+  if (sn.exists) {
+    const r = sn.data();
+    // Atualiza a tela se a nuvem tiver informações mais recentes
+    if (r && r.json && (r.t || 0) > (S.t || 0)) {
+      S = JSON.parse(r.json);
+      try { localStorage.setItem(KEY, r.json) } catch (e) {}
+      render();
+    }
+  } else {
+    if (S.t) push();
+  }
+});
+render();
+</script>
+</body>
+</html>
