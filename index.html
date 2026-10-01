@@ -1,27 +1,34 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-theme="auto">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Minha Agenda Nuvem</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=0">
+<title>Minha Agenda Pro</title>
 <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- Link do Manifest PWA (Será preenchido dinamicamente pelo JS) -->
+<link rel="manifest" id="manifest-link">
 <!-- FIREBASE SDK -->
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
 <style>
 :root{--bg:#EEF2F5;--panel:#fff;--ink:#14212E;--mute:#5F6F7E;--line:#D9E1E8;--accent:#0E7C86;--accent-ink:#fff;--danger:#B3261E;
 box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0F1720;--panel:#17222E;--ink:#E8EEF3;--mute:#93A3B2;--line:#27384A;--accent:#35B7C2;--accent-ink:#06222A;--danger:#FF8A80}}
+@media (prefers-color-scheme:dark){:root[data-theme="auto"]{--bg:#0F1720;--panel:#17222E;--ink:#E8EEF3;--mute:#93A3B2;--line:#27384A;--accent:#35B7C2;--accent-ink:#06222A;--danger:#FF8A80}}
 :root[data-theme="dark"]{--bg:#0F1720;--panel:#17222E;--ink:#E8EEF3;--mute:#93A3B2;--line:#27384A;--accent:#35B7C2;--accent-ink:#06222A;--danger:#FF8A80}
+:root[data-theme="light"]{--bg:#EEF2F5;--panel:#fff;--ink:#14212E;--mute:#5F6F7E;--line:#D9E1E8;--accent:#0E7C86;--accent-ink:#fff;--danger:#B3261E;}
+
 *{box-sizing:border-box}
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
-body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 Figtree,system-ui,-apple-system,"Segoe UI",sans-serif}
-button,input,select,textarea{font:inherit;color:inherit}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 Figtree,system-ui,-apple-system,sans-serif}
+body.no-scroll{overflow:hidden}
+button,input,select,textarea{font:inherit;color:inherit;font-family:inherit}
 button{cursor:pointer}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
 .app{display:flex;min-height:100vh}
-aside{width:290px;flex:none;background:var(--panel);border-right:1px solid var(--line);padding:18px 12px;overflow-y:auto}
+aside{width:290px;flex:none;background:var(--panel);border-right:1px solid var(--line);padding:18px 12px;overflow-y:auto;position:relative}
+.close-menu{display:none;position:absolute;top:10px;right:10px;background:none;border:0;font-size:24px;color:var(--mute);padding:4px}
 main{flex:1;min-width:0;padding:18px 18px 110px;max-width:760px;margin:0 auto}
 .nav{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:none;border:0;border-radius:10px;padding:9px 10px;font-weight:500}
 .nav:hover{background:var(--bg)}
@@ -35,14 +42,25 @@ h1{font-size:26px;margin:0;font-weight:700;letter-spacing:-.01em}
 .menu{display:none;border:1px solid var(--line);background:var(--panel);border-radius:10px;width:40px;height:40px;font-size:20px}
 .crumb{color:var(--mute);font-size:14px;margin-bottom:4px}
 
+/* Indicador de Sync e PWA */
+.sync-ind{position:fixed;top:10px;right:10px;background:var(--accent);color:var(--accent-ink);padding:6px 14px;border-radius:999px;font-size:13px;font-weight:600;z-index:100;opacity:0;transition:opacity .3s;pointer-events:none}
+.sync-ind.show{opacity:1}
+
 .tools{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 4px}
 .ghost{border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:6px 14px;font-size:14px}
+.ghost.active{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
 h2{font-size:15px;margin:24px 0 8px;font-weight:700}
 h2.late{color:var(--danger)}
-.item{display:flex;gap:12px;align-items:flex-start;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:8px}
+
+/* Itens e Checkboxes em Lote */
+.item{display:flex;gap:12px;align-items:flex-start;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:8px;transition:opacity .2s}
 .item.done .t{text-decoration:line-through;color:var(--mute)}
 .chk{width:24px;height:24px;flex:none;border-radius:50%;border:2px solid var(--mute);background:none;margin-top:1px;padding:0;color:var(--accent-ink);font-size:14px;line-height:1}
 .chk.on{background:var(--accent);border-color:var(--accent)}
+.bulk-chk{width:24px;height:24px;flex:none;margin-top:1px;display:none;accent-color:var(--accent)}
+.bulk-mode .chk{display:none}
+.bulk-mode .bulk-chk{display:block}
+
 .body{flex:1;min-width:0;cursor:pointer}
 .t{font-weight:600;overflow-wrap:anywhere}
 .meta{font-size:13.5px;color:var(--mute);display:flex;gap:10px;flex-wrap:wrap;margin-top:2px}
@@ -50,6 +68,11 @@ h2.late{color:var(--danger)}
 .empty{background:var(--panel);border:1px dashed var(--line);border-radius:12px;padding:28px 18px;text-align:center;color:var(--mute);margin-top:18px}
 .fab{position:fixed;right:18px;bottom:calc(18px + env(safe-area-inset-bottom,0px));background:var(--accent);color:var(--accent-ink);border:0;border-radius:999px;padding:14px 22px;font-weight:700;box-shadow:0 6px 20px rgba(0,0,0,.25);z-index:5}
 
+/* Bulk Bar */
+.bulk-bar{position:fixed;bottom:0;left:0;right:0;background:var(--panel);border-top:1px solid var(--line);padding:14px 18px calc(14px + env(safe-area-inset-bottom,0px));display:flex;gap:10px;justify-content:center;z-index:10;transform:translateY(100%);transition:transform .3s}
+.bulk-bar.show{transform:translateY(0)}
+
+/* Modais */
 .scrim{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center;z-index:20}
 .sheet{background:var(--panel);width:100%;max-width:520px;border-radius:18px 18px 0 0;padding:20px 18px calc(20px + env(safe-area-inset-bottom,0px));max-height:92%;overflow-y:auto}
 @media(min-width:700px){.scrim{align-items:center}.sheet{border-radius:18px}}
@@ -65,8 +88,13 @@ input,select,textarea{width:100%;border:1px solid var(--line);background:var(--b
 .colors button{width:34px;height:34px;border-radius:10px;border:3px solid transparent}
 .colors button.on{border-color:var(--ink)}
 
+/* Pomodoro Timer */
+.pomo-timer{font-size:56px;font-weight:700;text-align:center;margin:24px 0;font-variant-numeric:tabular-nums;color:var(--accent)}
+
 .item.red{border-left:5px solid #D64545}.item.yellow{border-left:5px solid #E0A100}.item.green{border-left:5px solid #2E9E5B}
 .star{background:none;border:0;font-size:24px;color:var(--mute);padding:0 2px;align-self:flex-start;line-height:1}.star.on{color:#E0A100}
+.pomo-btn{background:none;border:0;font-size:20px;padding:0 4px;margin-left:4px;opacity:0.5} .pomo-btn:hover{opacity:1}
+
 #qa{margin:10px 0 0}
 .badge{font-size:12px;font-weight:700;background:var(--accent);color:var(--accent-ink);border-radius:999px;padding:1px 9px;white-space:nowrap}
 .hello{color:var(--mute);margin:0 0 4px;text-transform:capitalize}
@@ -75,11 +103,18 @@ input,select,textarea{width:100%;border:1px solid var(--line);background:var(--b
 .light b{display:block;font-size:32px;line-height:1.1}
 .light span{font-size:13px;color:var(--mute)}
 .light i{display:block;width:14px;height:14px;border-radius:50%;margin:0 auto 6px}
+
+/* Dias da Semana (Clicáveis) */
 .week{display:flex;gap:6px}
-.day{flex:1;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px 0;text-align:center;font-size:12px;color:var(--mute)}
+.day{flex:1;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px 0;text-align:center;font-size:12px;color:var(--mute);cursor:pointer;transition:background 0.2s}
+.day:hover{background:var(--bg)}
 .day b{display:block;font-size:17px;color:var(--ink)}
 .day.today{border:2px solid var(--accent)}
+.day.active-filter{background:var(--accent);color:var(--accent-ink)}
+.day.active-filter b{color:var(--accent-ink)}
 .day em{display:block;font-style:normal;font-weight:700;min-height:18px;color:var(--accent)}
+.day.active-filter em{color:var(--panel)}
+
 .fold{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:8px}
 .fold .n{margin-left:auto;color:var(--mute);font-size:14px}
 .lamp{width:12px;height:12px;border-radius:50%;flex:none}
@@ -88,19 +123,45 @@ input,select,textarea{width:100%;border:1px solid var(--line);background:var(--b
 aside{position:fixed;inset:0 auto 0 0;z-index:15;transform:translateX(-100%);transition:transform .2s;width:min(300px,86vw);padding-top:calc(18px + env(safe-area-inset-top,0px))}
 aside.open{transform:none}
 .menu{display:block}
+.close-menu{display:block}
 }
 @media(prefers-reduced-motion:reduce){aside{transition:none}}
 </style>
 </head>
 <body>
+<div id="sync-ind" class="sync-ind">☁ Sincronizando...</div>
 <div class="app">
 <aside id="side" aria-label="Pastas"></aside>
 <main id="main"></main>
 </div>
 <button class="fab" id="fab">+ Novo item</button>
+
+<div class="bulk-bar" id="bulk-bar">
+    <button class="btn" id="bk-done">✅ Concluir</button>
+    <button class="btn sec" id="bk-delay">📅 Adiar p/ Hoje</button>
+    <button class="btn del" id="bk-del">🗑 Excluir</button>
+</div>
+
 <div id="layer"></div><input type="file" id="fi" accept=".json,application/json" hidden>
 
 <script>
+// Gerador de PWA Manifest Dinâmico
+const manifestJSON = {
+  "name": "Minha Agenda Pro",
+  "short_name": "Agenda",
+  "start_url": window.location.href,
+  "display": "standalone",
+  "background_color": "#EEF2F5",
+  "theme_color": "#0E7C86",
+  "icons": [{"src": "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%230E7C86' rx='20'/><text x='50' y='65' font-size='50' text-anchor='middle' fill='white'>📅</text></svg>", "sizes": "192x192", "type": "image/svg+xml"}]
+};
+const blob = new Blob([JSON.stringify(manifestJSON)], {type: 'application/json'});
+document.querySelector('#manifest-link').setAttribute('href', URL.createObjectURL(blob));
+
+// Theme Inicial
+let currentTheme = localStorage.getItem('agenda-theme') || 'auto';
+document.documentElement.setAttribute('data-theme', currentTheme);
+
 const firebaseConfig = {
   apiKey: "AIzaSyAvdngV2HMKdAIUmK1f9IF0gm4uEXPdd44",
   authDomain: "fluxo-de-caixa-59dd1.firebaseapp.com",
@@ -110,9 +171,7 @@ const firebaseConfig = {
   appId: "1:367352854109:web:a6273752e5a7ea891c305e"
 };
 
-if (!firebase.apps.length) {
-  firebase.initializeApp(firebaseConfig);
-}
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const docRef = db.collection("shared").doc("agenda-vida");
 
@@ -127,14 +186,26 @@ const seed=()=>({areas:[
 let S;
 try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){S=null}
 if(!S||!S.areas)S=seed();
+
+// Variáveis de Estado UI
 let tm;
+let view="home";
+let showDone=false;
+let sq="";
+let dayFilter = null; // Para filtro semanal
+let bulkMode = false;
+let bulkSelection = new Set();
+let sortBy = 'date'; // 'date' ou 'pri'
 
 const push = async () => {
+  const ind = document.getElementById('sync-ind');
+  if(ind) ind.classList.add('show');
   try {
     await docRef.set({ json: JSON.stringify(S), t: S.t });
   } catch (e) {
-    console.error("Erro ao sincronizar com a nuvem", e);
+    console.error("Erro ao sincronizar", e);
   }
+  if(ind) setTimeout(()=>ind.classList.remove('show'), 500);
 };
 
 const save=()=>{
@@ -162,7 +233,6 @@ const myConfirm = (msg, action) => {
     $("#btn-yes").onclick = () => { close(); action(); };
 };
 
-let view="home",showDone=false,sq="";
 const area=id=>S.areas.find(a=>a.id===id);
 const kids=id=>S.areas.filter(a=>a.parent===id);
 const family=id=>[id,...kids(id).flatMap(k=>family(k.id))];
@@ -170,20 +240,86 @@ const path=id=>{const a=area(id);return a?(a.parent?path(a.parent)+" › ":"")+a
 const flat=(p=null,d=0)=>kids(p).flatMap(a=>[{a,d},...flat(a.id,d+1)]);
 const pending=ids=>S.items.filter(i=>!i.done&&(!ids||ids.includes(i.area))).length;
 
+// Web Notifications API
+let notifsEnabled = localStorage.getItem('agenda-notifs') === '1';
+function toggleNotifs() {
+    if (!("Notification" in window)) { myAlert("Seu navegador não suporta notificações."); return; }
+    if (Notification.permission === "granted") {
+        notifsEnabled = !notifsEnabled;
+        localStorage.setItem('agenda-notifs', notifsEnabled ? '1' : '0');
+        renderSide();
+    } else if (Notification.permission !== "denied") {
+        Notification.requestPermission().then(permission => {
+            if (permission === "granted") {
+                notifsEnabled = true;
+                localStorage.setItem('agenda-notifs', '1');
+                renderSide();
+            }
+        });
+    }
+}
+setInterval(() => {
+    if(!notifsEnabled || Notification.permission !== "granted") return;
+    const now = new Date();
+    const hm = String(now.getHours()).padStart(2,"0")+":"+String(now.getMinutes()).padStart(2,"0");
+    const ts = todayS();
+    S.items.forEach(i => {
+        if(!i.done && i.date === ts && i.time === hm && !i.notified) {
+            new Notification("Agenda: Hora da Tarefa!", { body: i.title });
+            i.notified = true; // Previne repetição no mesmo minuto
+        }
+    });
+}, 60000);
+
 function renderSide(){
  const tree=(p)=>kids(p).map(a=>`<button class="nav ${view===a.id?"on":""}" data-go="${a.id}"><span class="dot" style="background:${a.color}"></span>${esc(a.name)}<span class="n">${pending(family(a.id))||""}</span></button>${kids(a.id).length?`<div class="sub">${tree(a.id)}</div>`:""}`).join("");
- $("#side").innerHTML=`<input id="q" type="search" placeholder="Buscar em tudo..." value="${esc(sq)}" aria-label="Buscar" style="margin-bottom:10px"><button class="nav ${view==="home"?"on":""}" data-go="home"><b>Início</b></button><button class="nav ${view==="agenda"?"on":""}" data-go="agenda"><b>Agenda geral</b><span class="n">${pending()||""}</span></button><h2 style="margin:18px 10px 6px;color:var(--mute);font-size:13px">Pastas</h2>${tree(null)}<button class="nav add" data-newfolder="">+ Nova pasta</button><h2 style="margin:18px 10px 6px;color:var(--mute);font-size:13px">Dados</h2><button class="nav" id="bk">⬇ Exportar backup</button><button class="nav" id="im">⬆ Importar backup</button><div class="crumb" style="padding:6px 10px">☁ Sincronizado na nuvem compartilhada</div>`;
+ const tName = currentTheme === 'auto' ? 'Automático' : (currentTheme === 'dark' ? 'Escuro' : 'Claro');
+ $("#side").innerHTML=`
+  <button class="close-menu" id="close-menu" aria-label="Fechar">&times;</button>
+  <input id="q" type="search" placeholder="Buscar em tudo (/)" value="${esc(sq)}" aria-label="Buscar" style="margin-bottom:10px">
+  <button class="nav ${view==="home"?"on":""}" data-go="home"><b>Início</b></button>
+  <button class="nav ${view==="agenda"?"on":""}" data-go="agenda"><b>Agenda geral</b><span class="n">${pending()||""}</span></button>
+  <h2 style="margin:18px 10px 6px;color:var(--mute);font-size:13px">Pastas</h2>${tree(null)}
+  <button class="nav add" data-newfolder="">+ Nova pasta</button>
+  <h2 style="margin:18px 10px 6px;color:var(--mute);font-size:13px">Configurações</h2>
+  <button class="nav" id="btn-theme">🎨 Tema: ${tName}</button>
+  <button class="nav" id="btn-notif">🔔 Notificações: ${notifsEnabled ? 'Ativas' : 'Inativas'}</button>
+  <button class="nav" id="bk">⬇ Exportar backup</button>
+  <button class="nav" id="im">⬆ Importar backup</button>
+  <div class="crumb" style="padding:6px 10px">☁ Sincronizado</div>`;
 }
 
 function groups(list){
- const t=todayS(),m=tomorrowS(),p=list.filter(i=>!i.done).sort((a,b)=>(a.date||"9")+(a.time||"")>(b.date||"9")+(b.time||"")?1:-1);
+ const t=todayS(),m=tomorrowS();
+ let p=list.filter(i=>!i.done);
+ // Ordenação Personalizada
+ if(sortBy === 'pri') {
+    p.sort((a,b)=>(b.pri||0)-(a.pri||0) || ((a.date||"9")+(a.time||"")>(b.date||"9")+(b.time||"")?1:-1));
+ } else {
+    p.sort((a,b)=>(a.date||"9")+(a.time||"")>(b.date||"9")+(b.time||"")?1:-1);
+ }
  return[["Atrasados",p.filter(i=>i.date&&i.date<t),"late"],["Hoje",p.filter(i=>i.date===t)],["Amanhã",p.filter(i=>i.date===m)],["Próximos dias",p.filter(i=>i.date>m)],["Sem data",p.filter(i=>!i.date)]].filter(g=>g[1].length);
 }
+
 const urg=i=>{const t=todayS();if(!i.date)return"green";if(i.date<t)return"red";if(i.date===t){const n=new Date(),hm=String(n.getHours()).padStart(2,"0")+":"+String(n.getMinutes()).padStart(2,"0");return i.time&&i.time<hm?"red":"yellow"}return i.date===tomorrowS()?"yellow":"green"};
 const nextDate=i=>{const d=new Date((i.date||todayS())+"T12:00:00"),t=todayS();do{if(i.rep==="d")d.setDate(d.getDate()+1);else if(i.rep==="w")d.setDate(d.getDate()+7);else d.setMonth(d.getMonth()+1)}while(iso(d)<=t&&false||iso(d)<=t);return iso(d)};
 
 function itemHtml(i,showPath){
- return`<div class="item ${i.done?"done":urg(i)}"><button class="chk ${i.done?"on":""}" data-done="${i.id}" aria-label="Concluir">${i.done?"✓":""}</button><div class="body" data-edit="${i.id}"><div class="t">${esc(i.title)}${i.doing&&!i.done?` <span class="badge">Em andamento</span>`:""}${i.pri&&!i.done?` <span class="badge" style="background:#D64545;color:#fff">Alta</span>`:""}</div><div class="meta">${i.date?`<span>${fmt(i.date)}${i.time?" às "+i.time:""}</span>`:""}${i.rep?`<span>↻ ${{d:"diário",w:"semanal",m:"mensal"}[i.rep]}</span>`:""}${showPath?`<span>${esc(path(i.area))}</span>`:""}</div>${i.note?`<div class="note">${esc(i.note)}</div>`:""}</div>${i.done?"":`<button class="star ${i.focus===todayS()?"on":""}" data-star="${i.id}" aria-label="Foco de hoje">★</button>`}</div>`;
+ const chkHtml = bulkMode 
+    ? `<input type="checkbox" class="bulk-chk" data-bid="${i.id}" ${bulkSelection.has(i.id) ? 'checked' : ''}>`
+    : `<button class="chk ${i.done?"on":""}" data-done="${i.id}" aria-label="Concluir">${i.done?"✓":""}</button>`;
+ 
+ const pomoHtml = (i.focus === todayS() && !i.done) ? `<button class="pomo-btn" data-pomo="${i.id}" title="Pomodoro">🍅</button>` : '';
+
+ return`<div class="item ${i.done?"done":urg(i)}" id="item-${i.id}">
+  ${chkHtml}
+  <div class="body" data-edit="${i.id}">
+    <div class="t">${esc(i.title)}${i.doing&&!i.done?` <span class="badge">Em andamento</span>`:""}${i.pri&&!i.done?` <span class="badge" style="background:#D64545;color:#fff">Alta</span>`:""}</div>
+    <div class="meta">${i.date?`<span>${fmt(i.date)}${i.time?" às "+i.time:""}</span>`:""}${i.rep?`<span>↻ ${{d:"diário",w:"semanal",m:"mensal"}[i.rep]}</span>`:""}${showPath?`<span>${esc(path(i.area))}</span>`:""}</div>
+    ${i.note?`<div class="note">${esc(i.note)}</div>`:""}
+  </div>
+  ${i.done?"":`<button class="star ${i.focus===todayS()?"on":""}" data-star="${i.id}" aria-label="Foco">★</button>${pomoHtml}`}
+</div>`;
 }
 
 function renderHome(){
@@ -195,31 +331,40 @@ function renderHome(){
  const foc=p.filter(i=>i.focus===todayS()),att=p.filter(i=>urg(i)!=="green"&&!foc.includes(i)).sort((a,b)=>rank[urg(a)]-rank[urg(b)]||(key(a)>key(b)?1:-1)).slice(0,6);
  const doing=p.filter(i=>i.doing);
  const LC={red:"#D64545",yellow:"#E0A100",green:"#2E9E5B"};
+ 
  let h=`<div class="top"><button class="menu" id="menu" aria-label="Abrir pastas">☰</button><h1>${hi}</h1></div><p class="hello">${n.toLocaleDateString("pt-BR",{weekday:"long",day:"numeric",month:"long"})}</p>`;
- h+=`<input id="qa" placeholder="📥 Anotar rápido (Enter) — organizo depois" aria-label="Anotar rápido">`;
+ h+=`<input id="qa" placeholder="📥 Anotar rápido (Enter)" aria-label="Anotar rápido">`;
  h+=`<div class="lights"><div class="light"><i style="background:${LC.red}"></i><b>${c("red")}</b><span>Atrasados</span></div><div class="light"><i style="background:${LC.yellow}"></i><b>${c("yellow")}</b><span>Hoje e amanhã</span></div><div class="light"><i style="background:${LC.green}"></i><b>${c("green")}</b><span>Tranquilos</span></div></div>`;
- h+=`<h2>⭐ Foco de hoje (${foc.length}/3)</h2>`+(foc.length?foc.map(i=>itemHtml(i,true)).join(""):`<div class="empty">Toque na ★ de até 3 itens para marcar o que mais importa hoje.</div>`);
- h+=`<h2>Merece sua atenção</h2>`;
- h+=att.length?att.map(i=>itemHtml(i,true)).join(""):`<div class="empty">${p.length?"Nada urgente agora. Dia tranquilo.":"Tudo em dia! Toque em “+ Novo item” para começar."}</div>`;
- if(doing.length)h+=`<h2>Em andamento</h2>`+doing.map(i=>itemHtml(i,true)).join("");
- const inbox=p.filter(i=>!i.area);if(inbox.length)h+=`<h2>📥 Caixa de entrada (${inbox.length})</h2>`+inbox.map(i=>itemHtml(i,false)).join("");
+ 
+ h+=`<div class="tools"><button class="ghost ${bulkMode?'active':''}" id="btn-bulk">✓ Selecionar vários</button> <button class="ghost" id="rv">📋 Revisão da semana</button></div>`;
+
+ // Dia Específico (Filtro Semanal clicado)
+ if(dayFilter) {
+     const dayItems = p.filter(i=>i.date === dayFilter);
+     h+=`<h2>📅 Tarefas para ${fmt(dayFilter)} <button class="btn sec" style="padding:2px 8px;font-size:12px;margin-left:10px" id="clr-day">Limpar</button></h2>`;
+     h+=dayItems.length ? dayItems.map(i=>itemHtml(i,true)).join("") : `<div class="empty">Nenhuma tarefa para este dia.</div>`;
+ } else {
+    h+=`<h2>⭐ Foco de hoje (${foc.length}/3)</h2>`+(foc.length?foc.map(i=>itemHtml(i,true)).join(""):`<div class="empty">Toque na ★ de até 3 itens para marcar o que mais importa hoje.</div>`);
+    h+=`<h2>Merece sua atenção</h2>`;
+    h+=att.length?att.map(i=>itemHtml(i,true)).join(""):`<div class="empty">${p.length?"Nada urgente agora.":"Tudo em dia!"}</div>`;
+    if(doing.length)h+=`<h2>Em andamento</h2>`+doing.map(i=>itemHtml(i,true)).join("");
+    const inbox=p.filter(i=>!i.area);if(inbox.length)h+=`<h2>📥 Caixa de entrada (${inbox.length})</h2>`+inbox.map(i=>itemHtml(i,false)).join("");
+ }
+
  h+=`<h2>Próximos 7 dias</h2><div class="week">`;
  for(let k=0;k<7;k++){const d=new Date();d.setDate(d.getDate()+k);const s=iso(d),q=p.filter(i=>i.date===s).length;
-  h+=`<div class="day ${k?"":"today"}">${d.toLocaleDateString("pt-BR",{weekday:"short"}).replace(".","")}<b>${d.getDate()}</b><em>${q||""}</em></div>`}
- h+=`</div><div class="tools"><button class="ghost" id="rv">📋 Revisão da semana</button></div><h2>Suas pastas</h2>`;
+  h+=`<div class="day ${k?"":"today"} ${dayFilter===s?'active-filter':''}" data-day="${s}">${d.toLocaleDateString("pt-BR",{weekday:"short"}).replace(".","")}<b>${d.getDate()}</b><em>${q||""}</em></div>`}
+ h+=`</div><h2>Suas pastas</h2>`;
  kids(null).forEach(a=>{const its=p.filter(i=>family(a.id).includes(i.area));
   const w=its.some(i=>urg(i)==="red")?"red":its.some(i=>urg(i)==="yellow")?"yellow":"green";
-  const ds=S.items.filter(i=>family(a.id).includes(i.area)).map(i=>i.doneAt||i.c||"").filter(Boolean).sort(),last=ds.pop(),dd=last?Math.floor((new Date(todayS())-new Date(last))/864e5):null,warn=dd!==null&&dd>=7?` · parada há ${dd} dias`:"";
-  h+=`<button class="fold" data-go="${a.id}"><span class="lamp" style="background:${LC[w]}"></span><span class="dot" style="background:${a.color}"></span><b>${esc(a.name)}</b><span class="n">${its.length} pendente${its.length===1?"":"s"}${warn}</span></button>`});
+  h+=`<button class="fold" data-go="${a.id}"><span class="lamp" style="background:${LC[w]}"></span><span class="dot" style="background:${a.color}"></span><b>${esc(a.name)}</b><span class="n">${its.length}</span></button>`});
+ $("#main").className = bulkMode ? 'bulk-mode' : '';
  $("#main").innerHTML=h;
 }
 
 function renderSearch(){const q=sq.toLowerCase(),r=S.items.filter(i=>(i.title+" "+(i.note||"")+" "+path(i.area)).toLowerCase().includes(q));
+ $("#main").className = bulkMode ? 'bulk-mode' : '';
  $("#main").innerHTML=`<div class="top"><button class="menu" id="menu" aria-label="Abrir pastas">☰</button><h1>Busca</h1></div><div class="crumb">${r.length} resultado${r.length===1?"":"s"} para “${esc(sq)}”</div>`+r.map(i=>itemHtml(i,true)).join("")}
-function review(){const t=todayS(),p=S.items.filter(i=>!i.done),w=new Date();w.setDate(w.getDate()-7);const ws=iso(w),nx=new Date();nx.setDate(nx.getDate()+7);const ns=iso(nx);
- const dn=S.items.filter(i=>i.doneAt&&i.doneAt>=ws).length,late=p.filter(i=>i.date&&i.date<t),ahead=p.filter(i=>i.date>=t&&i.date<=ns).length,inb=p.filter(i=>!i.area).length,und=p.filter(i=>!i.date&&i.area).length;
- sheet(`<h3>Revisão da semana</h3><p>✅ <b>${dn}</b> concluídos nos últimos 7 dias</p><p>🔴 <b>${late.length}</b> atrasados</p><p>📅 <b>${ahead}</b> nos próximos 7 dias</p><p>📥 <b>${inb}</b> na caixa de entrada para organizar</p><p>🗂️ <b>${und}</b> itens sem data</p><div class="acts"><button class="btn sec" id="c">Fechar</button>${late.length?`<button class="btn" id="rs">Mover atrasados para hoje</button>`:""}</div>`);
- $("#c").onclick=close;if($("#rs"))$("#rs").onclick=()=>{late.forEach(i=>i.date=t);save();close();render()}}
 
 function renderMain(){
  if(view==="home"){renderHome();return}
@@ -235,29 +380,70 @@ function renderMain(){
   const subs=kids(a.id);
   if(subs.length)h+=`<div class="tools">${subs.map(s=>`<button class="ghost" data-go="${s.id}"><span class="dot" style="background:${s.color};display:inline-block;margin-right:6px"></span>${esc(s.name)}</button>`).join("")}</div>`;
  }
+ h+=`<div class="tools"><button class="ghost ${bulkMode?'active':''}" id="btn-bulk">✓ Em Lote</button> <button class="ghost" id="btn-sort">⇅ Ordem: ${sortBy==='date'?'Data':'Prioridade'}</button></div>`;
+ 
  const g=groups(list);
  g.forEach(([n,arr,c])=>h+=`<h2 class="${c||""}">${n}</h2>`+arr.map(i=>itemHtml(i,!a||a.id!==i.area)).join(""));
- if(!g.length)h+=`<div class="empty">Nada pendente por aqui.<br>Toque em “+ Novo item” para adicionar um compromisso ou tarefa.</div>`;
+ if(!g.length)h+=`<div class="empty">Nada pendente por aqui.</div>`;
  const done=list.filter(i=>i.done);
  if(done.length){h+=`<div class="tools"><button class="ghost" id="td">${showDone?"Ocultar":"Mostrar"} concluídos (${done.length})</button></div>`;if(showDone)h+=done.map(i=>itemHtml(i,true)).join("")}
+ $("#main").className = bulkMode ? 'bulk-mode' : '';
  $("#main").innerHTML=h;
 }
 
-const render=()=>{renderSide();renderMain()};
-const close=()=>{$("#layer").innerHTML=""};
-function sheet(html){$("#layer").innerHTML=`<div class="scrim" id="scrim"><div class="sheet" role="dialog" aria-modal="true">${html}</div></div>`;$("#scrim").onclick=e=>{if(e.target.id==="scrim")close()};const f=$(".sheet input");if(f)f.focus()}
+const render=()=>{
+    renderSide();
+    renderMain();
+    if(bulkMode) {
+        $("#bulk-bar").classList.add("show");
+        $("#fab").style.display = 'none';
+    } else {
+        $("#bulk-bar").classList.remove("show");
+        $("#fab").style.display = 'block';
+    }
+};
+
+const close=()=>{
+    $("#layer").innerHTML="";
+    document.body.classList.remove('no-scroll');
+};
+
+function sheet(html){
+    document.body.classList.add('no-scroll');
+    $("#layer").innerHTML=`<div class="scrim" id="scrim"><div class="sheet" role="dialog" aria-modal="true">${html}</div></div>`;
+    $("#scrim").onclick=e=>{if(e.target.id==="scrim")close()};
+    const f=$(".sheet input");if(f)f.focus()
+}
+
+let pomoInt;
+function startPomodoro(id) {
+    const it = S.items.find(i=>i.id===id);
+    if(!it) return;
+    let t = 25 * 60; // 25 min
+    sheet(`<h3>🍅 Foco: ${esc(it.title)}</h3><div class="pomo-timer" id="p-t">25:00</div><div class="acts"><button class="btn del" id="p-c">Parar</button></div>`);
+    clearInterval(pomoInt);
+    pomoInt = setInterval(() => {
+        t--;
+        const m = String(Math.floor(t/60)).padStart(2,'0');
+        const s = String(t%60).padStart(2,'0');
+        if($('#p-t')) $('#p-t').innerText = `${m}:${s}`;
+        if(t<=0) {
+            clearInterval(pomoInt);
+            if("Notification" in window && Notification.permission === "granted") new Notification("Pomodoro Concluído!", {body: "Hora de uma pausa."});
+            myAlert("Tempo esgotado! Bom trabalho.");
+        }
+    }, 1000);
+    $('#p-c').onclick = () => { clearInterval(pomoInt); close(); };
+}
+
 const opts=(sel,skip=[])=>flat().filter(x=>!skip.includes(x.a.id)).map(x=>`<option value="${x.a.id}" ${x.a.id===sel?"selected":""}>${"— ".repeat(x.d)}${esc(x.a.name)}</option>`).join("");
 
 function itemForm(id){
  const it=S.items.find(i=>i.id===id)||{area:area(view)?view:"",title:"",date:"",time:"",note:""};
  if(!S.areas.length){myAlert("Crie uma pasta primeiro.");return}
- sheet(`<h3>${id?"Editar item":"Novo item"}</h3><label for="f-t">O que é?</label><input id="f-t" value="${esc(it.title)}" placeholder="Ex.: Treino de pernas"><label for="f-a">Pasta</label><select id="f-a"><option value="">Caixa de entrada</option>${opts(it.area)}</select><div class="row"><div><label for="f-d">Data</label><input id="f-d" type="date" value="${it.date||""}"></div><div><label for="f-h">Hora</label><input id="f-h" type="time" value="${it.time||""}"></div></div><label for="f-n">Descrição</label><textarea id="f-n" rows="3" placeholder="Detalhes, como está a situação...">${esc(it.note)}</textarea><div class="row"><div><label for="f-r">Repetir</label><select id="f-r"><option value="">Não repete</option><option value="d" ${it.rep==="d"?"selected":""}>Todo dia</option><option value="w" ${it.rep==="w"?"selected":""}>Toda semana</option><option value="m" ${it.rep==="m"?"selected":""}>Todo mês</option></select></div><div><label for="f-p">Prioridade</label><select id="f-p"><option value="0">Normal</option><option value="1" ${it.pri?"selected":""}>Alta</option></select></div></div><label for="f-s">Situação</label><select id="f-s"><option value="">A fazer</option><option value="1" ${it.doing?"selected":""}>Em andamento</option></select><div class="acts">${id?`<button class="btn del" id="x">Excluir</button>`:`<button class="btn sec" id="c">Cancelar</button>`}<button class="btn" id="s">Salvar</button></div>`);
+ sheet(`<h3>${id?"Editar item":"Novo item"}</h3><label for="f-t">O que é?</label><input id="f-t" value="${esc(it.title)}" placeholder="Ex.: Treino de pernas"><label for="f-a">Pasta</label><select id="f-a"><option value="">Caixa de entrada</option>${opts(it.area)}</select><div class="row"><div><label for="f-d">Data</label><input id="f-d" type="date" value="${it.date||""}"></div><div><label for="f-h">Hora</label><input id="f-h" type="time" value="${it.time||""}"></div></div><label for="f-n">Descrição</label><textarea id="f-n" rows="3" placeholder="Detalhes...">${esc(it.note)}</textarea><div class="row"><div><label for="f-r">Repetir</label><select id="f-r"><option value="">Não repete</option><option value="d" ${it.rep==="d"?"selected":""}>Todo dia</option><option value="w" ${it.rep==="w"?"selected":""}>Toda semana</option><option value="m" ${it.rep==="m"?"selected":""}>Todo mês</option></select></div><div><label for="f-p">Prioridade</label><select id="f-p"><option value="0">Normal</option><option value="1" ${it.pri?"selected":""}>Alta</option></select></div></div><label for="f-s">Situação</label><select id="f-s"><option value="">A fazer</option><option value="1" ${it.doing?"selected":""}>Em andamento</option></select><div class="acts">${id?`<button class="btn del" id="x">Excluir</button>`:`<button class="btn sec" id="c">Cancelar</button>`}<button class="btn" id="s">Salvar</button></div>`);
  if($("#c"))$("#c").onclick=close;
- if($("#x"))$("#x").onclick=()=>{
-     myConfirm("Deseja realmente excluir este item?", () => {
-         S.items=S.items.filter(i=>i.id!==id); save(); render();
-     });
- };
+ if($("#x"))$("#x").onclick=()=>{ myConfirm("Deseja realmente excluir este item?", () => { S.items=S.items.filter(i=>i.id!==id); save(); render(); }); };
  $("#s").onclick=()=>{const title=$("#f-t").value.trim();if(!title){$("#f-t").focus();return}
   const v={title,area:$("#f-a").value,date:$("#f-d").value,time:$("#f-h").value,note:$("#f-n").value.trim(),doing:$("#f-s").value==="1",rep:$("#f-r").value,pri:$("#f-p").value==="1"?1:0};
   if(v.rep&&!v.date)v.date=todayS();
@@ -269,18 +455,10 @@ function folderForm(parentId,editId){
  const a=editId?area(editId):{name:"",color:COLORS[0],parent:parentId||null};
  let col=a.color;
  const skip=editId?family(editId):[];
- sheet(`<h3>${editId?"Editar pasta":parentId?"Nova subpasta":"Nova pasta"}</h3><label for="g-n">Nome</label><input id="g-n" value="${esc(a.name)}" placeholder="Ex.: Saúde, Estudos, Família"><label for="g-p">Dentro de</label><select id="g-p"><option value="">(pasta principal)</option>${opts(a.parent,skip)}</select><label>Cor</label><div class="colors">${COLORS.map(c=>`<button data-c="${c}" class="${c===col?"on":""}" style="background:${c}" aria-label="Cor"></button>`).join("")}</div><div class="acts">${editId?`<button class="btn del" id="x">Excluir</button>`:`<button class="btn sec" id="c">Cancelar</button>`}<button class="btn" id="s">Salvar</button></div>`);
+ sheet(`<h3>${editId?"Editar pasta":parentId?"Nova subpasta":"Nova pasta"}</h3><label for="g-n">Nome</label><input id="g-n" value="${esc(a.name)}" placeholder="Ex.: Saúde, Estudos"><label for="g-p">Dentro de</label><select id="g-p"><option value="">(pasta principal)</option>${opts(a.parent,skip)}</select><label>Cor</label><div class="colors">${COLORS.map(c=>`<button data-c="${c}" class="${c===col?"on":""}" style="background:${c}" aria-label="Cor"></button>`).join("")}</div><div class="acts">${editId?`<button class="btn del" id="x">Excluir</button>`:`<button class="btn sec" id="c">Cancelar</button>`}<button class="btn" id="s">Salvar</button></div>`);
  document.querySelectorAll(".colors button").forEach(b=>b.onclick=()=>{col=b.dataset.c;document.querySelectorAll(".colors button").forEach(x=>x.classList.toggle("on",x===b))});
  if($("#c"))$("#c").onclick=close;
- if($("#x"))$("#x").onclick=()=>{
-     const ids=family(editId);
-     myConfirm("Excluir esta pasta, as subpastas e todos os itens dentro delas?", () => {
-         S.areas=S.areas.filter(x=>!ids.includes(x.id));
-         S.items=S.items.filter(i=>!ids.includes(i.area));
-         if(ids.includes(view))view="agenda";
-         save(); render();
-     });
- };
+ if($("#x"))$("#x").onclick=()=>{ const ids=family(editId); myConfirm("Excluir pasta e tudo dentro dela?", () => { S.areas=S.areas.filter(x=>!ids.includes(x.id)); S.items=S.items.filter(i=>!ids.includes(i.area)); if(ids.includes(view))view="agenda"; save(); render(); }); };
  $("#s").onclick=()=>{const name=$("#g-n").value.trim();if(!name){$("#g-n").focus();return}
   const v={name,color:col,parent:$("#g-p").value||null};
   if(editId)Object.assign(area(editId),v);else{const n={id:uid(),...v};S.areas.push(n);view=n.id}
@@ -288,23 +466,55 @@ function folderForm(parentId,editId){
 }
 
 document.addEventListener("click",e=>{
- const t=e.target.closest("[data-go],[data-done],[data-edit],[data-newfolder],[data-editfolder],[data-star],#menu,#td,#rv,#bk,#im");if(!t)return;
- if(t.dataset.go){view=t.dataset.go;sq="";$("#side").classList.remove("open");render();window.scrollTo(0,0)}
- else if(t.dataset.done){const i=S.items.find(x=>x.id===t.dataset.done);if(i.rep&&!i.done){i.doneAt=todayS();i.date=nextDate(i);i.focus=null}else{i.done=!i.done;i.doneAt=i.done?todayS():null}save();render()}
+ const t=e.target.closest("[data-go],[data-done],[data-edit],[data-newfolder],[data-editfolder],[data-star],[data-pomo],[data-day],#menu,#td,#rv,#bk,#im,#btn-theme,#btn-notif,#btn-bulk,#btn-sort,#clr-day,.bulk-chk,#bk-done,#bk-delay,#bk-del,#close-menu");if(!t)return;
+ 
+ if(t.id==="close-menu") $("#side").classList.remove("open");
+ else if(t.dataset.go){view=t.dataset.go;sq="";dayFilter=null;$("#side").classList.remove("open");render();window.scrollTo(0,0)}
+ else if(t.dataset.day){dayFilter=t.dataset.day;render();}
+ else if(t.id==="clr-day"){dayFilter=null;render();}
+ else if(t.id==="btn-theme"){
+     currentTheme = currentTheme === 'auto' ? 'light' : (currentTheme === 'light' ? 'dark' : 'auto');
+     localStorage.setItem('agenda-theme', currentTheme);
+     document.documentElement.setAttribute('data-theme', currentTheme);
+     renderSide();
+ }
+ else if(t.id==="btn-notif") toggleNotifs();
+ else if(t.id==="btn-bulk"){ bulkMode = !bulkMode; bulkSelection.clear(); render(); }
+ else if(t.classList.contains("bulk-chk")){
+     const bid = t.dataset.bid;
+     if(t.checked) bulkSelection.add(bid); else bulkSelection.delete(bid);
+ }
+ else if(t.id==="bk-done"){
+     bulkSelection.forEach(id => { const i = S.items.find(x=>x.id===id); if(i) { i.done=true; i.doneAt=todayS(); }});
+     bulkMode=false; save(); render();
+ }
+ else if(t.id==="bk-delay"){
+     bulkSelection.forEach(id => { const i = S.items.find(x=>x.id===id); if(i) i.date=todayS(); });
+     bulkMode=false; save(); render();
+ }
+ else if(t.id==="bk-del"){
+     myConfirm(`Excluir ${bulkSelection.size} itens selecionados?`, () => {
+         S.items = S.items.filter(i => !bulkSelection.has(i.id));
+         bulkMode=false; save(); render();
+     });
+ }
+ else if(t.id==="btn-sort"){ sortBy = sortBy === 'date' ? 'pri' : 'date'; render(); }
+ else if(t.dataset.pomo) startPomodoro(t.dataset.pomo);
+ else if(t.dataset.done){
+    // Optimistic UI update
+    const i=S.items.find(x=>x.id===t.dataset.done);
+    if(i.rep&&!i.done){i.doneAt=todayS();i.date=nextDate(i);i.focus=null}
+    else{i.done=!i.done;i.doneAt=i.done?todayS():null}
+    document.getElementById(`item-${i.id}`).classList.toggle('done');
+    save(); setTimeout(render, 300); // Renders after brief visual feedback
+ }
  else if(t.dataset.star){const i=S.items.find(x=>x.id===t.dataset.star),td=todayS();if(i.focus===td)i.focus=null;else if(S.items.filter(x=>x.focus===td&&!x.done).length>=3){myAlert("O foco do dia tem no máximo 3 itens.");return}else i.focus=td;save();render()}
- else if(t.id==="rv")review();
  else if(t.id==="im")$("#fi").click();
  else if(t.id==="bk"){
-  // Download direto pelo navegador com um alert bonitinho antes se for preciso
   const blob = new Blob([JSON.stringify(S,null,1)], {type: "application/json"});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "agenda-backup-"+todayS()+".json";
-  a.click();
-  URL.revokeObjectURL(url);
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "agenda-backup-"+todayS()+".json"; a.click();
  }
- else if(t.dataset.edit)itemForm(t.dataset.edit);
+ else if(t.dataset.edit && !bulkMode)itemForm(t.dataset.edit);
  else if(t.dataset.newfolder!==undefined)folderForm(t.dataset.newfolder||null);
  else if(t.dataset.editfolder)folderForm(null,t.dataset.editfolder);
  else if(t.id==="menu")$("#side").classList.add("open");
@@ -314,24 +524,34 @@ document.addEventListener("click",e=>{
 document.addEventListener("click",e=>{if(!e.target.closest("aside,#menu"))$("#side").classList.remove("open")});
 $("#fab").onclick=()=>itemForm();
 document.addEventListener("input",e=>{if(e.target.id==="q"){sq=e.target.value;view=sq.trim()?"search":"home";renderMain()}});
-document.addEventListener("keydown",e=>{if(e.target.id==="qa"&&e.key==="Enter"){const v=e.target.value.trim();if(!v)return;S.items.push({id:uid(),title:v,area:"",date:"",time:"",note:"",done:false,c:todayS()});save();render();setTimeout(()=>{const q=$("#qa");if(q)q.focus()},0)}});
+
+// Atalhos de Teclado Universais
+document.addEventListener("keydown",e=>{
+    const tag = e.target.tagName;
+    if(['INPUT','TEXTAREA','SELECT'].includes(tag)) {
+        if(e.target.id==="qa"&&e.key==="Enter"){const v=e.target.value.trim();if(!v)return;S.items.push({id:uid(),title:v,area:"",date:"",time:"",note:"",done:false,c:todayS()});save();render();setTimeout(()=>{const q=$("#qa");if(q)q.focus()},0)}
+        return;
+    }
+    if(e.key==="Escape") close();
+    if(e.key.toLowerCase()==="n" && !$("#layer").innerHTML) { e.preventDefault(); itemForm(); }
+    if(e.key==="/") { e.preventDefault(); $("#q")?.focus(); }
+});
 
 $("#fi").onchange=async e=>{const f=e.target.files[0];e.target.value="";if(!f)return;try{const o=JSON.parse(await f.text());if(!Array.isArray(o.areas)||!Array.isArray(o.items))throw 0; 
-  myConfirm("Substituir sua agenda atual por este backup?", () => {
-      S=o;view="home";save();render();
-  });
+  myConfirm("Substituir sua agenda atual por este backup?", () => { S=o;view="home";save();render(); });
 }catch(x){myAlert("Arquivo de backup inválido.")}};
 
-document.addEventListener("keydown",e=>{if(e.key==="Escape")close()});
-
+// Tratamento de Conflito Simples no Firebase
 docRef.onSnapshot((sn) => {
   if (sn.exists) {
     const r = sn.data();
-    // Atualiza a tela se a nuvem tiver informações mais recentes
     if (r && r.json && (r.t || 0) > (S.t || 0)) {
       S = JSON.parse(r.json);
       try { localStorage.setItem(KEY, r.json) } catch (e) {}
       render();
+    } else if (r && (r.t || 0) < (S.t || 0) - 10000) {
+      // Se o local for mais de 10s mais novo que a nuvem após load inicial, reenvia.
+      push();
     }
   } else {
     if (S.t) push();
