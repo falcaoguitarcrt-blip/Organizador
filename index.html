@@ -27,10 +27,10 @@ button{cursor:pointer}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
 .app{display:flex;min-height:100vh}
-aside{width:290px;flex:none;background:var(--panel);border-right:1px solid var(--line);padding:18px 12px;overflow-y:auto;position:relative}
+aside{width:310px;flex:none;background:var(--panel);border-right:1px solid var(--line);padding:18px 12px;overflow-y:auto;position:relative}
 .close-menu{display:none;position:absolute;top:10px;right:10px;background:none;border:0;font-size:24px;color:var(--mute);padding:4px}
 main{flex:1;min-width:0;padding:18px 18px 110px;max-width:760px;margin:0 auto}
-.nav{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:none;border:0;border-radius:10px;padding:9px 10px;font-weight:500}
+.nav{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:none;border:0;border-radius:10px;padding:9px 10px;font-weight:500;transition:background 0.15s, transform 0.15s;position:relative}
 .nav:hover{background:var(--bg)}
 .nav.on{background:var(--accent);color:var(--accent-ink)}
 .nav .n{margin-left:auto;font-size:13px;opacity:.75}
@@ -42,9 +42,21 @@ h1{font-size:26px;margin:0;font-weight:700;letter-spacing:-.01em}
 .menu{display:none;border:1px solid var(--line);background:var(--panel);border-radius:10px;width:40px;height:40px;font-size:20px}
 .crumb{color:var(--mute);font-size:14px;margin-bottom:4px}
 
-.fold-btn-toggle{background:none;border:0;color:var(--mute);padding:4px;display:inline-flex;align-items:center;justify-content:center;font-size:11px;border-radius:6px;width:24px;height:24px;margin-right:2px}
+.fold-btn-toggle{background:none;border:0;color:var(--mute);padding:4px;display:inline-flex;align-items:center;justify-content:center;font-size:11px;border-radius:6px;width:24px;height:24px;margin-right:2px;flex:none}
 .fold-btn-toggle:hover{background:var(--bg);color:var(--ink)}
-.tree-item{display:flex;align-items:center;width:100%;gap:2px}
+
+/* Tree item styling for clean Drag & Drop */
+.tree-item{display:flex;align-items:center;width:100%;gap:2px;margin-bottom:3px;border-radius:10px;transition:background .2s, border .2s;user-select:none;position:relative}
+.tree-item.dragging{opacity:0.4;background:var(--bg);border:1px dashed var(--accent)}
+.tree-item.drag-over{border-top:2px solid var(--accent);background:var(--bg)}
+.pin-badge{font-size:11px;opacity:0.8;margin-left:2px}
+
+/* Menu de Contexto Flutuante (Botão Direito / Ações de Pasta) */
+.ctx-menu{position:fixed;background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.2);padding:6px;z-index:1000;display:none;min-width:180px;animation:ctxIn 0.15s ease-out}
+@keyframes ctxIn{from{opacity:0;transform:scale(0.95)}to{opacity:1;transform:scale(1)}}
+.ctx-item{display:flex;align-items:center;gap:8px;width:100%;padding:8px 12px;border:0;background:none;text-align:left;border-radius:8px;font-size:14px;font-weight:500;color:var(--ink)}
+.ctx-item:hover{background:var(--bg)}
+.ctx-item.del{color:var(--danger)}
 
 .sync-ind{position:fixed;top:10px;right:10px;background:var(--accent);color:var(--accent-ink);padding:6px 14px;border-radius:999px;font-size:13px;font-weight:600;z-index:100;opacity:0;transition:opacity .3s;pointer-events:none}
 .sync-ind.show{opacity:1}
@@ -117,7 +129,6 @@ input,select,textarea{width:100%;border:1px solid var(--line);background:var(--b
 .fold .n{margin-left:auto;color:var(--mute);font-size:14px}
 .lamp{width:12px;height:12px;border-radius:50%;flex:none}
 
-/* Specific Days Selector & Checklist UI */
 .days-selector{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 12px}
 .days-selector label{font-size:13px;font-weight:600;display:flex;align-items:center;gap:4px;background:var(--bg);padding:6px 10px;border-radius:8px;border:1px solid var(--line);cursor:pointer;margin:0}
 .days-selector input{width:auto;padding:0}
@@ -136,7 +147,7 @@ input,select,textarea{width:100%;border:1px solid var(--line);background:var(--b
 .att-badge:hover{border-color:var(--accent)}
 
 @media(max-width:800px){
-aside{position:fixed;inset:0 auto 0 0;z-index:15;transform:translateX(-100%);transition:transform .2s;width:min(300px,86vw);padding-top:calc(18px + env(safe-area-inset-top,0px))}
+aside{position:fixed;inset:0 auto 0 0;z-index:15;transform:translateX(-100%);transition:transform .2s;width:min(320px,88vw);padding-top:calc(18px + env(safe-area-inset-top,0px))}
 aside.open{transform:none}
 .menu{display:block}
 .close-menu{display:block}
@@ -158,10 +169,19 @@ aside.open{transform:none}
     <button class="btn del" id="bk-del">🗑 Excluir</button>
 </div>
 
+<!-- Menu de contexto customizado para opções de pasta -->
+<div class="ctx-menu" id="ctx-menu">
+    <button class="ctx-item" id="ctx-pin">📌 Fixar no topo</button>
+    <button class="ctx-item" id="ctx-up">⬆ Mover para cima</button>
+    <button class="ctx-item" id="ctx-dn">⬇ Mover para baixo</button>
+    <button class="ctx-item" id="ctx-edit">✏ Editar pasta</button>
+    <button class="ctx-item del" id="ctx-del">🗑 Excluir pasta</button>
+</div>
+
 <div id="layer"></div><input type="file" id="fi" accept=".json,application/json" hidden>
 
 <script>
-// Gerador de PWA Manifest Dinâmico
+// PWA Manifest
 const manifestJSON = {
   "name": "Minha Agenda Pro",
   "short_name": "Agenda",
@@ -174,13 +194,12 @@ const manifestJSON = {
 const blob = new Blob([JSON.stringify(manifestJSON)], {type: 'application/json'});
 document.querySelector('#manifest-link').setAttribute('href', URL.createObjectURL(blob));
 
-// Theme Inicial
+// Tema e Estado Local
 let currentTheme = localStorage.getItem('agenda-theme') || 'auto';
 document.documentElement.setAttribute('data-theme', currentTheme);
-
-// Estado de Pastas Recolhidas
 let collapsedFolders = JSON.parse(localStorage.getItem('agenda-collapsed') || '{}');
 
+// Configuração do Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyAvdngV2HMKdAIUmK1f9IF0gm4uEXPdd44",
   authDomain: "fluxo-de-caixa-59dd1.firebaseapp.com",
@@ -197,25 +216,33 @@ const docRef = db.collection("shared").doc("agenda-vida");
 const S_KEY="agenda-vida-v1";
 const COLORS=["#0E7C86","#7C5CD6","#D9822B","#2E9E5B","#C2415D","#3B6FD4"];
 const seed=()=>({areas:[
-{id:"a1",name:"Academia",color:COLORS[3],parent:null,order:0},
-{id:"a2",name:"Igreja",color:COLORS[1],parent:null,order:1},
-{id:"a3",name:"Minhas funções",color:COLORS[1],parent:"a2",order:0},
-{id:"a4",name:"Vida financeira",color:COLORS[2],parent:null,order:2}],items:[]});
+{id:"a1",name:"Academia",color:COLORS[3],parent:null,order:0,pinned:false},
+{id:"a2",name:"Igreja",color:COLORS[1],parent:null,order:1,pinned:false},
+{id:"a3",name:"Minhas funções",color:COLORS[1],parent:"a2",order:0,pinned:false},
+{id:"a4",name:"Vida financeira",color:COLORS[2],parent:null,order:2,pinned:false}],items:[]});
 
 let S;
 try{S=JSON.parse(localStorage.getItem(S_KEY))}catch(e){S=null}
 if(!S||!S.areas)S=seed();
 
-// Garante que todas as áreas tenham ordem
-S.areas.forEach((a, i) => { if (a.order === undefined) a.order = i; });
+// Garante propriedade de ordem e fixação em todas as pastas
+S.areas.forEach((a, i) => { 
+    if (a.order === undefined) a.order = i; 
+    if (a.pinned === undefined) a.pinned = false;
+});
+
 let view = "home";
-let showDone=false;
-let sq="";
+let showDone = false;
+let sq = "";
 let dayFilter = null;
 let bulkMode = false;
 let bulkSelection = new Set();
 let sortBy = 'date'; 
+let activeCtxFolderId = null;
+let draggedFolderId = null;
+let tm;
 
+// Sincronização Nuvem
 const push = async () => {
   const ind = document.getElementById('sync-ind');
   if(ind) ind.classList.add('show');
@@ -234,6 +261,7 @@ const save=()=>{
   tm=setTimeout(push,600);
 };
 
+// Funções Auxiliares
 const $=s=>document.querySelector(s);
 const uid=()=>Math.random().toString(36).slice(2,9);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -253,7 +281,15 @@ const myConfirm = (msg, action) => {
 };
 
 const area=id=>S.areas.find(a=>a.id===id);
-const kids=id=>S.areas.filter(a=>a.parent===id).sort((a,b)=>((a.order??S.areas.indexOf(a)) - (b.order??S.areas.indexOf(b))));
+
+/* Retorna filhas ordenadas: fixadas no topo primeiro, depois pela propriedade 'order' */
+const kids = id => S.areas.filter(a => a.parent === id).sort((a,b) => {
+    if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
+    const oa = a.order ?? S.areas.indexOf(a);
+    const ob = b.order ?? S.areas.indexOf(b);
+    return oa - ob;
+});
+
 const family=id=>[id,...kids(id).flatMap(k=>family(k.id))];
 const path=id=>{const a=area(id);return a?(a.parent?path(a.parent)+" › ":"")+a.name:"Caixa de entrada"};
 const flat=(p=null,d=0)=>kids(p).flatMap(a=>[{a,d},...flat(a.id,d+1)]);
@@ -264,20 +300,30 @@ function moveArea(id, dir) {
     if (!a) return;
     const sibs = kids(a.parent);
     const idx = sibs.findIndex(x => x.id === id);
-    if (dir === -1 && idx > 0) {
-        const prev = sibs[idx - 1];
-        const tempOrder = a.order ?? idx;
-        a.order = prev.order ?? (idx - 1);
-        prev.order = tempOrder;
-    } else if (dir === 1 && idx < sibs.length - 1) {
-        const next = sibs[idx + 1];
-        const tempOrder = a.order ?? idx;
-        a.order = next.order ?? (idx + 1);
-        next.order = tempOrder;
+    if (idx === -1) return;
+    
+    sibs.forEach((item, index) => {
+        if (item.order === undefined) item.order = index;
+    });
+
+    const targetIdx = idx + dir;
+    if (targetIdx >= 0 && targetIdx < sibs.length) {
+        const sibling = sibs[targetIdx];
+        const temp = a.order ?? idx;
+        a.order = sibling.order ?? targetIdx;
+        sibling.order = temp;
     }
-    sibs.forEach((item, index) => { item.order = index; });
+    
     save();
-    renderSide(); // Atualiza apenas a barra lateral
+    render();
+}
+
+function togglePinArea(id) {
+    const a = area(id);
+    if (!a) return;
+    a.pinned = !a.pinned;
+    save();
+    render();
 }
 
 const nextDate = i => {
@@ -314,19 +360,8 @@ function toggleNotifs() {
         });
     }
 }
-setInterval(() => {
-    if(!notifsEnabled || Notification.permission !== "granted") return;
-    const now = new Date();
-    const hm = String(now.getHours()).padStart(2,"0")+":"+String(now.getMinutes()).padStart(2,"0");
-    const ts = todayS();
-    S.items.forEach(i => {
-        if(!i.done && i.date === ts && i.time === hm && !i.notified) {
-            new Notification("Agenda: Hora da Tarefa!", { body: i.title });
-            i.notified = true; 
-        }
-    });
-}, 60000);
 
+// Renderização da Barra Lateral com Suporte a Drag & Drop e Clique com Botão Direito
 function renderSide(){
  const tree = (p) => kids(p).map(a => {
   const subKids = kids(a.id);
@@ -336,10 +371,16 @@ function renderSide(){
     ? `<button class="fold-btn-toggle" data-toggle-folder="${a.id}" aria-label="Minimizar subpastas">${isCollapsed ? '▶' : '▼'}</button>` 
     : `<span style="width:24px;display:inline-block"></span>`;
   
+  const pinMark = a.pinned ? `<span class="pin-badge" title="Pasta Fixada no topo">📌</span>` : '';
+
   return `
-   <div class="tree-item">
+   <div class="tree-item" draggable="true" data-folder-id="${a.id}">
      ${toggleBtn}
-     <button class="nav ${view===a.id?"on":""}" data-go="${a.id}" style="flex:1"><span class="dot" style="background:${a.color}"></span>${esc(a.name)}<span class="n">${pending(family(a.id))||""}</span></button>
+     <button class="nav ${view===a.id?"on":""}" data-go="${a.id}" data-folder-ctx="${a.id}" style="flex:1;min-width:0">
+        <span class="dot" style="background:${a.color}"></span>
+        <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(a.name)} ${pinMark}</span>
+        <span class="n">${pending(family(a.id))||""}</span>
+     </button>
    </div>
    ${hasSub && !isCollapsed ? `<div class="sub">${tree(a.id)}</div>` : ''}
   `;
@@ -351,7 +392,7 @@ function renderSide(){
   <input id="q" type="search" placeholder="Buscar em tudo (/)" value="${esc(sq)}" aria-label="Buscar" style="margin-bottom:10px">
   <button class="nav ${view==="home"?"on":""}" data-go="home"><b>Início</b></button>
   <button class="nav ${view==="agenda"?"on":""}" data-go="agenda"><b>Agenda geral</b><span class="n">${pending()||""}</span></button>
-  <h2 style="margin:18px 10px 6px;color:var(--mute);font-size:13px">Pastas</h2>${tree(null)}
+  <h2 style="margin:18px 10px 6px;color:var(--mute);font-size:13px">Pastas (Arraste p/ mover)</h2>${tree(null)}
   <button class="nav add" data-newfolder="">+ Nova pasta</button>
   <h2 style="margin:18px 10px 6px;color:var(--mute);font-size:13px">Configurações</h2>
   <button class="nav" id="btn-theme">🎨 Tema: ${tName}</button>
@@ -359,6 +400,53 @@ function renderSide(){
   <button class="nav" id="bk">⬇ Exportar backup</button>
   <button class="nav" id="im">⬆ Importar backup</button>
   <div class="crumb" style="padding:6px 10px">☁ Sincronizado</div>`;
+
+ attachDragAndDrop();
+}
+
+/* Eventos de Arrastar e Soltar (Drag and Drop) */
+function attachDragAndDrop() {
+    const items = document.querySelectorAll('.tree-item[draggable="true"]');
+    items.forEach(item => {
+        item.addEventListener('dragstart', e => {
+            draggedFolderId = item.dataset.folderId;
+            item.classList.add('dragging');
+            e.stopPropagation();
+        });
+
+        item.addEventListener('dragend', () => {
+            item.classList.remove('dragging');
+            document.querySelectorAll('.tree-item').forEach(el => el.classList.remove('drag-over'));
+        });
+
+        item.addEventListener('dragover', e => {
+            e.preventDefault();
+            e.stopPropagation();
+            item.classList.add('drag-over');
+        });
+
+        item.addEventListener('dragleave', () => {
+            item.classList.remove('drag-over');
+        });
+
+        item.addEventListener('drop', e => {
+            e.preventDefault();
+            e.stopPropagation();
+            item.classList.remove('drag-over');
+            const targetId = item.dataset.folderId;
+            if (draggedFolderId && targetId && draggedFolderId !== targetId) {
+                const source = area(draggedFolderId);
+                const target = area(targetId);
+                if (source && target && source.parent === target.parent) {
+                    const temp = source.order ?? 0;
+                    source.order = target.order ?? 0;
+                    target.order = temp;
+                    save();
+                    render();
+                }
+            }
+        });
+    });
 }
 
 function groups(list){
@@ -381,7 +469,6 @@ function itemHtml(i,showPath){
  
  const pomoHtml = (i.focus === todayS() && !i.done) ? `<button class="pomo-btn" data-pomo="${i.id}" title="Pomodoro">🍅</button>` : '';
 
- // Formatting Repetition text
  const repText = {
     d: "diário",
     w: "semanal",
@@ -389,7 +476,6 @@ function itemHtml(i,showPath){
     custom: "dias específicos"
  }[i.rep] || "";
 
- // Checklist Progress
  let chkProgress = "";
  if (Array.isArray(i.checklist) && i.checklist.length > 0) {
      const doneCnt = i.checklist.filter(c => c.done).length;
@@ -401,7 +487,6 @@ function itemHtml(i,showPath){
       </div>`;
  }
 
- // Attachments HTML
  let attHtml = "";
  if (Array.isArray(i.attachments) && i.attachments.length > 0) {
      attHtml = `<div class="attachments-list">` + i.attachments.map(a => `
@@ -480,8 +565,6 @@ function renderMain(){
   h+=`<div class="tools">
     <button class="ghost" data-newfolder="${a.id}">+ Subpasta</button>
     <button class="ghost" data-editfolder="${a.id}">Editar pasta</button>
-    <button class="ghost" data-move-folder="${a.id}" data-dir="-1" title="Mover para cima">▲ Subir</button>
-    <button class="ghost" data-move-folder="${a.id}" data-dir="1" title="Mover para baixo">▼ Descer</button>
   </div>`;
   const subs=kids(a.id);
   if(subs.length)h+=`<div class="tools">${subs.map(s=>`<button class="ghost" data-go="${s.id}"><span class="dot" style="background:${s.color};display:inline-block;margin-right:6px"></span>${esc(s.name)}</button>`).join("")}</div>`;
@@ -544,7 +627,7 @@ function startPomodoro(id) {
 
 const opts=(sel,skip=[])=>flat().filter(x=>!skip.includes(x.a.id)).map(x=>`<option value="${x.a.id}" ${x.a.id===sel?"selected":""}>${"— ".repeat(x.d)}${esc(x.a.name)}</option>`).join("");
 
- function itemForm(id){
+function itemForm(id){
  const it=S.items.find(i=>i.id===id)||{area:area(view)?view:"",title:"",date:"",time:"",note:"",rep:"",repDays:[],checklist:[],attachments:[]};
  if(!S.areas.length){myAlert("Crie uma pasta primeiro.");return}
 
@@ -595,14 +678,14 @@ const opts=(sel,skip=[])=>flat().filter(x=>!skip.includes(x.a.id)).map(x=>`<opti
   <textarea id="f-n" rows="2" placeholder="Detalhes...">${esc(it.note)}</textarea>
 
   <label>Subtarefas / Checklist</label>
-  <div class="checklist-container" style="background:var(--bg);border-radius:10px;padding:10px;border:1px solid var(--line);margin-top:4px;">
+  <div class="checklist-container">
     <div id="chk-list"></div>
     <button class="btn sec" id="add-chk" style="width:100%;margin-top:6px;padding:6px;font-size:13px">+ Adicionar subtarefa</button>
   </div>
 
   <label>Anexos & Links (Drive, Arquivos, etc.)</label>
-  <div class="checklist-container" style="background:var(--bg);border-radius:10px;padding:10px;border:1px solid var(--line);margin-top:4px;">
-    <div id="att-list" class="attachments-list" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
+  <div class="checklist-container">
+    <div id="att-list" class="attachments-list"></div>
     <div class="row" style="margin-top:8px">
         <input type="text" id="att-link-name" placeholder="Nome (Ex: Planilha)" style="flex:1">
         <input type="text" id="att-link-url" placeholder="https://..." style="flex:2">
@@ -636,7 +719,7 @@ const opts=(sel,skip=[])=>flat().filter(x=>!skip.includes(x.a.id)).map(x=>`<opti
 
   <div id="custom-days-box" style="display:${it.rep==='custom'?'block':'none'}; margin-top:10px;">
     <label>Selecione os dias:</label>
-    <div class="days-selector" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:4px;">${daysHtml}</div>
+    <div class="days-selector">${daysHtml}</div>
   </div>
 
   <label for="f-s">Situação</label>
@@ -750,14 +833,25 @@ const opts=(sel,skip=[])=>flat().filter(x=>!skip.includes(x.a.id)).map(x=>`<opti
 }
 
 function folderForm(parentId,editId){
- const a=editId?area(editId):{name:"",color:COLORS[0],parent:parentId||null};
+ const a=editId?area(editId):{name:"",color:COLORS[0],parent:parentId||null,pinned:false};
  let col=a.color;
  const skip=editId?family(editId):[];
  sheet(`<h3>${editId?"Editar pasta":parentId?"Nova subpasta":"Nova pasta"}</h3>
   <label for="g-n">Nome</label><input id="g-n" value="${esc(a.name)}" placeholder="Ex.: Saúde, Estudos">
   <label for="g-p">Dentro de</label><select id="g-p"><option value="">(pasta principal)</option>${opts(a.parent,skip)}</select>
   <label>Cor</label><div class="colors">${COLORS.map(c=>`<button data-c="${c}" class="${c===col?"on":""}" style="background:${c}" aria-label="Cor"></button>`).join("")}</div>
-  ${editId ? `<div style="margin-top:12px"><label>Posição / Reordenar</label><div class="row"><button class="btn sec" id="m-up">▲ Mover para cima</button><button class="btn sec" id="m-dn">▼ Mover para baixo</button></div></div>` : ''}
+  ${editId ? `
+    <div style="margin-top:12px">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+            <input type="checkbox" id="g-pin" ${a.pinned ? 'checked' : ''} style="width:18px;height:18px">
+            📌 Fixar esta pasta no topo
+        </label>
+        <label style="margin-top:10px">Posição / Reordenar</label>
+        <div class="row">
+            <button class="btn sec" id="m-up">▲ Mover para cima</button>
+            <button class="btn sec" id="m-dn">▼ Mover para baixo</button>
+        </div>
+    </div>` : ''}
   <div class="acts">${editId?`<button class="btn del" id="x">Excluir</button>`:`<button class="btn sec" id="c">Cancelar</button>`}<button class="btn" id="s">Salvar</button></div>`);
  
  document.querySelectorAll(".colors button").forEach(b=>b.onclick=()=>{col=b.dataset.c;document.querySelectorAll(".colors button").forEach(x=>x.classList.toggle("on",x===b))});
@@ -766,10 +860,85 @@ function folderForm(parentId,editId){
  if($("#m-dn")) $("#m-dn").onclick = () => { moveArea(editId, 1); close(); };
  if($("#x"))$("#x").onclick=()=>{ const ids=family(editId); myConfirm("Excluir pasta e tudo dentro dela?", () => { S.areas=S.areas.filter(x=>!ids.includes(x.id)); S.items=S.items.filter(i=>!ids.includes(i.area)); if(ids.includes(view))view="agenda"; save(); render(); }); };
  $("#s").onclick=()=>{const name=$("#g-n").value.trim();if(!name){$("#g-n").focus();return}
-  const v={name,color:col,parent:$("#g-p").value||null};
+  const isPinned = $("#g-pin") ? $("#g-pin").checked : false;
+  const v={name,color:col,parent:$("#g-p").value||null,pinned:isPinned};
   if(editId)Object.assign(area(editId),v);else{const n={id:uid(),order:kids(v.parent).length,...v};S.areas.push(n);view=n.id}
   save();close();render()};
 }
+
+// Menu de Contexto (Clique com Botão Direito nas Pastas)
+function showContextMenu(e, folderId) {
+    e.preventDefault();
+    activeCtxFolderId = folderId;
+    const a = area(folderId);
+    if (!a) return;
+
+    const ctx = $("#ctx-menu");
+    $("#ctx-pin").innerText = a.pinned ? "📌 Desafixar do topo" : "📌 Fixar no topo";
+    
+    ctx.style.display = "block";
+    
+    // Posicionamento elegante próximo ao clique
+    const x = Math.min(e.clientX, window.innerWidth - 190);
+    const y = Math.min(e.clientY, window.innerHeight - 200);
+    ctx.style.left = `${x}px`;
+    ctx.style.top = `${y}px`;
+}
+
+function hideContextMenu() {
+    const ctx = $("#ctx-menu");
+    if(ctx) ctx.style.display = "none";
+    activeCtxFolderId = null;
+}
+
+document.addEventListener("click", e => {
+    if(!e.target.closest("#ctx-menu")) hideContextMenu();
+});
+
+$("#ctx-pin").onclick = () => {
+    if(activeCtxFolderId) togglePinArea(activeCtxFolderId);
+    hideContextMenu();
+};
+
+$("#ctx-up").onclick = () => {
+    if(activeCtxFolderId) moveArea(activeCtxFolderId, -1);
+    hideContextMenu();
+};
+
+$("#ctx-dn").onclick = () => {
+    if(activeCtxFolderId) moveArea(activeCtxFolderId, 1);
+    hideContextMenu();
+};
+
+$("#ctx-edit").onclick = () => {
+    if(activeCtxFolderId) folderForm(null, activeCtxFolderId);
+    hideContextMenu();
+};
+
+$("#ctx-del").onclick = () => {
+    if(activeCtxFolderId) {
+        const editId = activeCtxFolderId;
+        const ids = family(editId);
+        myConfirm("Excluir pasta e tudo dentro dela?", () => { 
+            S.areas = S.areas.filter(x => !ids.includes(x.id)); 
+            S.items = S.items.filter(i => !ids.includes(i.area)); 
+            if(ids.includes(view)) view = "agenda"; 
+            save(); 
+            render(); 
+        });
+    }
+    hideContextMenu();
+};
+
+// Event Delegation do Documento
+document.addEventListener("contextmenu", e => {
+    const folderNav = e.target.closest("[data-folder-ctx]");
+    if(folderNav) {
+        showContextMenu(e, folderNav.dataset.folderCtx);
+    } else {
+        hideContextMenu();
+    }
+});
 
 document.addEventListener("click",e=>{
  const toggleFolderBtn = e.target.closest("[data-toggle-folder]");
@@ -778,14 +947,6 @@ document.addEventListener("click",e=>{
      collapsedFolders[fid] = !collapsedFolders[fid];
      localStorage.setItem('agenda-collapsed', JSON.stringify(collapsedFolders));
      renderSide();
-     return;
- }
-
- const moveBtn = e.target.closest("[data-move-folder]");
- if(moveBtn) {
-     const fid = moveBtn.dataset.moveFolder;
-     const dir = parseInt(moveBtn.dataset.dir, 10);
-     moveArea(fid, dir);
      return;
  }
 
@@ -862,6 +1023,7 @@ $("#fi").onchange=async e=>{const f=e.target.files[0];e.target.value="";if(!f)re
   myConfirm("Substituir sua agenda atual por este backup?", () => { S=o;view="home";save();render(); });
 }catch(x){myAlert("Arquivo de backup inválido.")}};
 
+// Firebase Realtime Synchronization
 docRef.onSnapshot((sn) => {
   if (sn.exists) {
     const r = sn.data();
@@ -876,6 +1038,7 @@ docRef.onSnapshot((sn) => {
     if (S.t) push();
   }
 });
+
 render();
 </script>
 </body>
