@@ -208,6 +208,7 @@ if(!S||!S.areas)S=seed();
 
 // Garante que todas as áreas tenham ordem
 S.areas.forEach((a, i) => { if (a.order === undefined) a.order = i; });
+let view = "home";
 let showDone=false;
 let sq="";
 let dayFilter = null;
@@ -543,7 +544,7 @@ function startPomodoro(id) {
 
 const opts=(sel,skip=[])=>flat().filter(x=>!skip.includes(x.a.id)).map(x=>`<option value="${x.a.id}" ${x.a.id===sel?"selected":""}>${"— ".repeat(x.d)}${esc(x.a.name)}</option>`).join("");
 
-function itemForm(id){
+ function itemForm(id){
  const it=S.items.find(i=>i.id===id)||{area:area(view)?view:"",title:"",date:"",time:"",note:"",rep:"",repDays:[],checklist:[],attachments:[]};
  if(!S.areas.length){myAlert("Crie uma pasta primeiro.");return}
 
@@ -866,7 +867,7 @@ docRef.onSnapshot((sn) => {
     const r = sn.data();
     if (r && r.json && (r.t || 0) > (S.t || 0)) {
       S = JSON.parse(r.json);
-      try { localStorage.setItem(KEY, r.json) } catch (e) {}
+      try { localStorage.setItem(S_KEY, r.json) } catch (e) {}
       render();
     } else if (r && (r.t || 0) < (S.t || 0) - 10000) {
       push();
