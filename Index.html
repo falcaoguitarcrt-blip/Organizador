@@ -194,7 +194,7 @@ if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const docRef = db.collection("shared").doc("agenda-vida");
 
-const KEY="agenda-vida-v1";
+const S_KEY="agenda-vida-v1";
 const COLORS=["#0E7C86","#7C5CD6","#D9822B","#2E9E5B","#C2415D","#3B6FD4"];
 const seed=()=>({areas:[
 {id:"a1",name:"Academia",color:COLORS[3],parent:null,order:0},
@@ -203,11 +203,11 @@ const seed=()=>({areas:[
 {id:"a4",name:"Vida financeira",color:COLORS[2],parent:null,order:2}],items:[]});
 
 let S;
-try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){S=null}
+try{S=JSON.parse(localStorage.getItem(S_KEY))}catch(e){S=null}
 if(!S||!S.areas)S=seed();
 
-let tm;
-let view="home";
+// Garante que todas as áreas tenham ordem
+S.areas.forEach((a, i) => { if (a.order === undefined) a.order = i; });
 let showDone=false;
 let sq="";
 let dayFilter = null;
@@ -228,7 +228,7 @@ const push = async () => {
 
 const save=()=>{
   S.t=Date.now();
-  try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}
+  try{localStorage.setItem(S_KEY,JSON.stringify(S))}catch(e){}
   clearTimeout(tm);
   tm=setTimeout(push,600);
 };
@@ -276,7 +276,7 @@ function moveArea(id, dir) {
     }
     sibs.forEach((item, index) => { item.order = index; });
     save();
-    render();
+    renderSide(); // Atualiza apenas a barra lateral
 }
 
 const nextDate = i => {
@@ -574,7 +574,7 @@ function itemForm(id){
  const dayNames = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
  const repDaysArr = it.repDays || [];
  const daysHtml = dayNames.map((d, idx) => `
-    <label><input type="checkbox" class="rep-day-chk" value="${idx}" ${repDaysArr.includes(idx)?'checked':''}> ${d}</label>
+    <label style="display:flex;align-items:center;gap:4px;margin:0;font-weight:normal;font-size:14px;"><input type="checkbox" class="rep-day-chk" value="${idx}" ${repDaysArr.includes(idx)?'checked':''}> ${d}</label>
  `).join("");
 
  sheet(`
@@ -594,21 +594,21 @@ function itemForm(id){
   <textarea id="f-n" rows="2" placeholder="Detalhes...">${esc(it.note)}</textarea>
 
   <label>Subtarefas / Checklist</label>
-  <div class="checklist-container">
+  <div class="checklist-container" style="background:var(--bg);border-radius:10px;padding:10px;border:1px solid var(--line);margin-top:4px;">
     <div id="chk-list"></div>
     <button class="btn sec" id="add-chk" style="width:100%;margin-top:6px;padding:6px;font-size:13px">+ Adicionar subtarefa</button>
   </div>
 
-  <label>Anexos & Links (Google Drive, Fotos, etc.)</label>
-  <div class="checklist-container">
-    <div id="att-list" class="attachments-list"></div>
+  <label>Anexos & Links (Drive, Arquivos, etc.)</label>
+  <div class="checklist-container" style="background:var(--bg);border-radius:10px;padding:10px;border:1px solid var(--line);margin-top:4px;">
+    <div id="att-list" class="attachments-list" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
     <div class="row" style="margin-top:8px">
-        <input type="text" id="att-link-name" placeholder="Nome do arquivo/link" style="flex:1">
+        <input type="text" id="att-link-name" placeholder="Nome (Ex: Planilha)" style="flex:1">
         <input type="text" id="att-link-url" placeholder="https://..." style="flex:2">
     </div>
     <div class="row" style="margin-top:6px">
         <button class="btn sec" id="add-att-link" style="padding:6px;font-size:13px">+ Adicionar Link</button>
-        <button class="btn sec" id="add-att-file" style="padding:6px;font-size:13px">📁 Carregar do Aparelho</button>
+        <button class="btn sec" id="add-att-file" style="padding:6px;font-size:13px">📁 Enviar Arquivo</button>
         <input type="file" id="f-file-input" style="display:none">
     </div>
   </div>
@@ -633,9 +633,9 @@ function itemForm(id){
     </div>
   </div>
 
-  <div id="custom-days-box" style="display:${it.rep==='custom'?'block':'none'}">
-    <label>Selecione os dias da semana:</label>
-    <div class="days-selector">${daysHtml}</div>
+  <div id="custom-days-box" style="display:${it.rep==='custom'?'block':'none'}; margin-top:10px;">
+    <label>Selecione os dias:</label>
+    <div class="days-selector" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:4px;">${daysHtml}</div>
   </div>
 
   <label for="f-s">Situação</label>
