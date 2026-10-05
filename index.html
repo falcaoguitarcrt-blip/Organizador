@@ -110,7 +110,22 @@
     .period-header::after { content: ''; flex: 1; height: 1px; background: var(--border); }
 
     /* Cards e Itens (Lista) */
-    .card { background: var(--card); border: 1px solid var(--border); border-left: 4px solid var(--muted); border-radius: 12px; padding: 14px 16px; margin-bottom: 10px; display: flex; gap: 12px; cursor: pointer; position: relative; transition: border-color 0.2s, opacity 0.2s; }
+    .card { 
+      background: var(--card); 
+      border: 1px solid var(--border); 
+      border-left: 4px solid var(--muted); 
+      border-radius: 12px; 
+      padding: 14px 16px; 
+      margin-bottom: 10px; 
+      display: flex; 
+      gap: 12px; 
+      cursor: pointer; 
+      position: relative; 
+      transition: border-color 0.2s, opacity 0.2s; 
+      -webkit-touch-callout: none; 
+      -webkit-user-select: none; 
+      user-select: none; 
+    }
     .card:hover { border-color: #3b4b5e; }
     .card.status-done { opacity: 0.55; }
     
@@ -124,7 +139,16 @@
     .card-title { font-weight: 600; margin-bottom: 6px; font-size: 0.98rem; color: #fff; word-break: break-word; }
     .card-meta { font-size: 0.75rem; color: var(--muted); display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 4px; }
     
-    .card-desc { font-size: 0.85rem; color: var(--muted); margin-top: 8px; white-space: pre-wrap; word-break: break-word; line-height: 1.4; }
+    .card-desc { 
+      font-size: 0.85rem; 
+      color: var(--muted); 
+      margin-top: 8px; 
+      white-space: pre-wrap; 
+      word-break: break-word; 
+      line-height: 1.4; 
+      -webkit-user-select: text; 
+      user-select: text; 
+    }
     .card-desc.collapsed { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
     .btn-toggle-desc { background: none; border: none; color: var(--accent); font-size: 0.75rem; cursor: pointer; padding: 2px 0; margin-top: 2px; font-weight: 600; }
 
@@ -202,7 +226,7 @@
   </div>
 
   <!-- Menu Contextual Flutuante -->
-  <div id="context-menu"></div>
+  <div id="context-menu" onclick="event.stopPropagation()"></div>
 
   <!-- Sidebar -->
   <div id="sidebar">
@@ -319,7 +343,7 @@
       </div>
 
       <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
-        <button class="btn" style="background: transparent; color: var(--text);" onclick="closeItemModal()">Cancelar</button>
+        <button class="btn" style="background: transparent; color: var(--text);" onclick="attemptCloseItemModal()">Cancelar</button>
         <button class="btn" onclick="saveItem()">Salvar Item</button>
       </div>
     </div>
@@ -341,7 +365,7 @@
         <input type="color" id="f-folder-color" class="form-control" value="#2dd4bf" style="height: 40px; padding: 4px;">
       </div>
 
-      <div class="form-group">
+      <div class="form-group" id="f-folder-parent-group">
         <label>Pertence à pasta? (Subpasta / Mover)</label>
         <select id="f-folder-parent" class="form-control">
           <option value="">Nenhuma (Pasta Principal)</option>
@@ -384,6 +408,8 @@
     let longTouchTimer = null;
     let touchMoved = false;
     let blockNextClick = false;
+    let blockClickTimer = null;
+    let unsubscribeFirestore = null;
 
     // Preferências em LocalStorage (com Try/Catch)
     let prefs = { collapsedDone: true, viewMode: 'list', descExpanded: {} };
@@ -394,6 +420,34 @@
 
     function savePrefs() {
       try { localStorage.setItem('agenda_prefs_v2', JSON.stringify(prefs)); } catch(e){}
+    }
+
+    function generateId(prefix = 'id') {
+      return prefix + '_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+    }
+
+    function toLocalDateStr(d) {
+      if (!d) return '';
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+
+    function compareItemsByDateTime(a, b) {
+      const dateA = a.date || '9999-99-99';
+      const dateB = b.date || '9999-99-99';
+      if (dateA !== dateB) {
+        return dateA.localeCompare(dateB);
+      }
+      const timeA = a.time || '23:59:59';
+      const timeB = b.time || '23:59:59';
+      return timeA.localeCompare(timeB);
+    }
+
+    function filterItems(val) {
+      searchTerm = val;
+      render();
     }
 
     // Utilitários de Segurança e Formatação
@@ -412,9 +466,17 @@
       }
     }
 
+    function normalizeAndValidateUrl(urlStr) {
+      if (!urlStr) return '';
+      let testUrl = urlStr.trim();
+      if (!/^https?:\/\//i.test(testUrl)) {
+        testUrl = 'https://' + testUrl;
+      }
+      return isValidHttpUrl(testUrl) ? testUrl : '';
+    }
+
     function getTodayBR() {
-      const d = new Date();
-      return new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
+      return toLocalDateStr(new Date());
     }
 
     function formatBR(dStr, tStr) {
@@ -437,8 +499,11 @@
       }
       if (e.key === 'Escape') {
         hideContextMenu();
-        closeItemModal();
-        closeFolderModal();
+        if (document.getElementById('item-modal').classList.contains('open')) {
+          attemptCloseItemModal();
+        } else {
+          closeFolderModal();
+        }
       }
     });
 
@@ -452,15 +517,30 @@
         document.getElementById('u-name').innerText = user.displayName || user.email;
         loadData();
       } else { 
+        if (unsubscribeFirestore) {
+          unsubscribeFirestore();
+          unsubscribeFirestore = null;
+        }
         document.getElementById('auth-overlay').style.display = 'flex'; 
       }
     });
 
     function loginGoogle() { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
-    function logout() { auth.signOut(); }
+    function logout() { 
+      if (unsubscribeFirestore) {
+        unsubscribeFirestore();
+        unsubscribeFirestore = null;
+      }
+      auth.signOut(); 
+    }
 
     function loadData() {
-      db.collection('shared').doc('agenda-vida').onSnapshot(doc => {
+      if (unsubscribeFirestore) {
+        unsubscribeFirestore();
+        unsubscribeFirestore = null;
+      }
+
+      unsubscribeFirestore = db.collection('shared').doc('agenda-vida').onSnapshot(doc => {
         if (doc.exists) {
           const raw = doc.data();
           if (raw.json) { try { S = JSON.parse(raw.json); } catch (e) { S = raw; } } else { S = raw; }
@@ -502,6 +582,7 @@
       let text = input.value.trim();
       if(!text) return;
 
+      const originalText = text;
       let date = getTodayBR();
       let time = '';
       let folderId = currentArea === 'all' ? '' : currentArea;
@@ -513,12 +594,12 @@
         title = title.replace(timeMatch[0], '');
       }
       if (/amanh[ãa]/i.test(text)) {
-        let d = new Date(getTodayBR() + 'T12:00:00');
+        let d = new Date();
         d.setDate(d.getDate() + 1);
-        date = d.toISOString().split('T')[0];
+        date = toLocalDateStr(d);
         title = title.replace(/amanh[ãa]/i, '');
       }
-      const tagMatch = text.match(/#(\w+)/);
+      const tagMatch = text.match(/#([\p{L}\p{N}_]+)/u);
       if (tagMatch) {
         const fName = tagMatch[1].toLowerCase();
         const found = S.areas.find(a => a.name.toLowerCase().includes(fName));
@@ -526,9 +607,14 @@
         title = title.replace(tagMatch[0], '');
       }
 
+      title = title.trim();
+      if (!title) {
+        title = originalText;
+      }
+
       S.items.push({ 
-        id: 'item_' + Date.now(), 
-        title: title.trim(), 
+        id: generateId('item'), 
+        title: title, 
         date: date, 
         time: time, 
         area: folderId, 
@@ -562,13 +648,21 @@
         );
       }
 
-      if (list.length === 0 && currentArea !== 'all' && !searchTerm) {
-        container.innerHTML = `
-          <div class="empty-state">
-            <p>Nenhum item nesta pasta ainda.</p>
-            <button class="btn" onclick="openItemModal()">+ Novo item nesta pasta</button>
-          </div>
-        `;
+      if (list.length === 0) {
+        if (searchTerm) {
+          container.innerHTML = `
+            <div class="empty-state">
+              <p>Nenhum resultado para '${escapeHtml(searchTerm)}'</p>
+            </div>
+          `;
+        } else if (currentArea !== 'all') {
+          container.innerHTML = `
+            <div class="empty-state">
+              <p>Nenhum item nesta pasta ainda.</p>
+              <button class="btn" onclick="openItemModal()">+ Novo item nesta pasta</button>
+            </div>
+          `;
+        }
         return;
       }
 
@@ -660,8 +754,10 @@
       if (currentArea !== 'all') {
         const folder = getFolderConfig(currentArea);
         const parentId = folder?.parentId || currentArea;
-        const related = S.areas.filter(a => a.id === parentId || a.parentId === parentId);
-        if (related.length > 0) {
+        const subfolders = S.areas.filter(a => a.parentId === parentId);
+        if (subfolders.length > 0) {
+          const parentFolder = getFolderConfig(parentId);
+          const related = [parentFolder, ...subfolders].filter(Boolean);
           subchips = `<div class="subfolder-chips">` + related.map(r => `
             <button class="chip ${r.id === currentArea ? 'active' : ''}" onclick="setArea('${r.id}')">
               <span class="color-dot" style="background:${escapeHtml(r.color||'#ccc')}"></span> ${escapeHtml(r.name)}
@@ -718,17 +814,17 @@
         `;
       }
 
-      const validLink = isValidHttpUrl(item.link) ? item.link : null;
+      const validLink = normalizeAndValidateUrl(item.link);
 
       return `
         <div class="card ${isDone ? 'status-done' : ''}" 
              style="border-left-color: ${escapeHtml(folderInfo.color)}"
              onclick="handleCardClick('${item.id}', event)"
              oncontextmenu="handleContextMenuEvent(event, '${item.id}')"
-             ontouchstart="handleTouchStart(event, '${item.id}')"
+             onmouseenter="this.setAttribute('draggable', 'true')"
+             ontouchstart="this.removeAttribute('draggable'); handleTouchStart(event, '${item.id}')"
              ontouchmove="handleTouchMove()"
              ontouchend="handleTouchEnd()"
-             draggable="true"
              ondragstart="handleDragStart(event, '${item.id}')">
              
           <div class="card-check ${isDone ? 'done' : ''}" onclick="toggleStatus('${item.id}', event)"></div>
@@ -784,7 +880,7 @@
 
       Object.entries(periods).forEach(([key, period]) => {
         if (period.items.length === 0) return;
-        period.items.sort((a,b) => (a.date||'9999').localeCompare(b.date||'9999'));
+        period.items.sort(compareItemsByDateTime);
 
         const g = document.createElement('div');
         g.className = 'period-group';
@@ -898,7 +994,8 @@
     // Visualização 4: Calendário Semanal com Navegação
     function renderViewCalendar(list, c) {
       const todayStr = getTodayBR();
-      const baseDate = new Date(todayStr + 'T12:00:00');
+      const parts = todayStr.split('-').map(Number);
+      const baseDate = new Date(parts[0], parts[1] - 1, parts[2]);
       baseDate.setDate(baseDate.getDate() + (calendarWeekOffset * 7));
 
       const startOfWeek = new Date(baseDate);
@@ -929,13 +1026,15 @@
       for(let i=0; i<7; i++) {
         const d = new Date(startOfWeek);
         d.setDate(d.getDate() + i);
-        const dStr = d.toISOString().split('T')[0];
+        const dStr = toLocalDateStr(d);
         
         const col = document.createElement('div');
         col.className = 'cal-col';
         col.innerHTML = `<div class="cal-header" style="${dStr === todayStr ? 'color:var(--accent); font-weight:900;' : ''}">${daysOfWeek[i]} ${d.getDate()}</div>`;
         
         let itemsForDay = list.filter(it => it.date === dStr && it.status !== 'done');
+        itemsForDay.sort(compareItemsByDateTime);
+
         itemsForDay.forEach(item => {
            const folderInfo = getHierarchy(item.area);
            col.innerHTML += `
@@ -956,6 +1055,99 @@
       render();
     }
 
+    function makeRepSnapshot(item) {
+      return {
+        title: item.title || '',
+        date: item.date || '',
+        desc: item.desc || '',
+        checklist: (item.checklist || []).map(c => ({ text: c.text, done: !!c.done }))
+      };
+    }
+
+    function isCopyUntouched(copyItem) {
+      if (!copyItem || !copyItem.repSnapshot) return true;
+      const snap = copyItem.repSnapshot;
+
+      if ((copyItem.title || '') !== snap.title) return false;
+      if ((copyItem.date || '') !== snap.date) return false;
+      if ((copyItem.desc || '') !== snap.desc) return false;
+
+      const curChk = copyItem.checklist || [];
+      const snapChk = snap.checklist || [];
+
+      if (curChk.length !== snapChk.length) return false;
+
+      for (let i = 0; i < curChk.length; i++) {
+        if (curChk[i].text !== snapChk[i].text) return false;
+        if (!!curChk[i].done !== !!snapChk[i].done) return false;
+      }
+
+      return true;
+    }
+
+    function addNextOccurrence(item) {
+      if (!item || !item.rep || item.rep === 'none' || !item.date) return;
+      const today = getTodayBR();
+
+      let nextDateStr = '';
+      const parts = item.date.split('-').map(Number);
+      let curYear = parts[0];
+      let curMonth = parts[1] - 1;
+      let curDay = parts[2];
+      const originalRepDay = item.repDay || curDay;
+
+      if (item.rep === 'daily') {
+        const baseDateStr = (item.date < today) ? today : item.date;
+        const bParts = baseDateStr.split('-').map(Number);
+        let d = new Date(bParts[0], bParts[1] - 1, bParts[2]);
+        d.setDate(d.getDate() + 1);
+        nextDateStr = toLocalDateStr(d);
+      } else if (item.rep === 'weekly') {
+        let d = new Date(curYear, curMonth, curDay);
+        do {
+          d.setDate(d.getDate() + 7);
+          nextDateStr = toLocalDateStr(d);
+        } while (nextDateStr <= today);
+      } else if (item.rep === 'monthly') {
+        do {
+          curMonth++;
+          if (curMonth > 11) {
+            curMonth = 0;
+            curYear++;
+          }
+          let lastDayOfTarget = new Date(curYear, curMonth + 1, 0).getDate();
+          let targetDay = Math.min(originalRepDay, lastDayOfTarget);
+          let d = new Date(curYear, curMonth, targetDay);
+          nextDateStr = toLocalDateStr(d);
+        } while (nextDateStr <= today);
+      }
+
+      if (!nextDateStr) return;
+
+      const newItem = {
+        ...item,
+        id: generateId('item'),
+        status: 'todo',
+        date: nextDateStr,
+        repDay: originalRepDay,
+        checklist: (item.checklist || []).map(c => ({ ...c, done: false })),
+        repSourceId: item.id
+      };
+
+      newItem.repSnapshot = makeRepSnapshot(newItem);
+      S.items.push(newItem);
+    }
+
+    function removeUntouchedCopy(sourceId) {
+      const copyIndex = S.items.findIndex(i => i.repSourceId === sourceId && i.status === 'todo');
+      if (copyIndex > -1) {
+        const copyItem = S.items[copyIndex];
+        if (isCopyUntouched(copyItem)) {
+          S.items.splice(copyIndex, 1);
+        }
+      }
+    }
+
     // Ações do Item e Repetição Inteligente
     function setItemStatus(id, newStatus) {
       const item = S.items.find(i => i.id === id);
@@ -964,38 +1156,10 @@
       const wasDone = item.status === 'done';
       item.status = newStatus;
 
-      const today = getTodayBR();
-
-      // Dispara repetição se transitou para 'done'
-      if (newStatus === 'done' && !wasDone && item.rep && item.rep !== 'none' && item.date) {
-        const baseDateStr = (item.date < today) ? today : item.date;
-        let nextD = new Date(baseDateStr + 'T12:00:00');
-        
-        if (item.rep === 'daily') nextD.setDate(nextD.getDate() + 1);
-        else if (item.rep === 'weekly') nextD.setDate(nextD.getDate() + 7);
-        else if (item.rep === 'monthly') nextD.setMonth(nextD.getMonth() + 1);
-        
-        const newItem = {
-          ...item,
-          id: 'item_' + Date.now(),
-          status: 'todo',
-          date: nextD.toISOString().split('T')[0],
-          checklist: (item.checklist || []).map(c => ({ ...c, done: false })),
-          repSourceId: item.id
-        };
-        S.items.push(newItem);
-      }
-
-      // Reabertura de item original: limpa cópia intocada se existir
-      if (wasDone && newStatus !== 'done') {
-        const copyIndex = S.items.findIndex(i => i.repSourceId === item.id && i.status === 'todo');
-        if (copyIndex > -1) {
-          const copyItem = S.items[copyIndex];
-          const isChecklistUntouched = !copyItem.checklist || copyItem.checklist.every(c => !c.done);
-          if (isChecklistUntouched) {
-            S.items.splice(copyIndex, 1);
-          }
-        }
+      if (newStatus === 'done' && !wasDone) {
+        addNextOccurrence(item);
+      } else if (wasDone && newStatus !== 'done') {
+        removeUntouchedCopy(item.id);
       }
 
       saveData();
@@ -1022,9 +1186,12 @@
         if (!baseDateStr || baseDateStr < today) {
           baseDateStr = today;
         }
-        let base = new Date(baseDateStr + 'T12:00:00');
+        const parts = baseDateStr.split('-').map(Number);
+        let base = new Date(parts[0], parts[1] - 1, parts[2]);
         base.setDate(base.getDate() + days);
-        item.date = base.toISOString().split('T')[0];
+        const newDateStr = toLocalDateStr(base);
+        item.date = newDateStr;
+        item.repDay = parseInt(newDateStr.split('-')[2], 10);
         saveData();
         render();
       }
@@ -1035,6 +1202,7 @@
       const item = S.items.find(i => i.id === id);
       if (item) {
         item.date = targetDate;
+        item.repDay = parseInt(targetDate.split('-')[2], 10);
         saveData();
         render();
       }
@@ -1060,31 +1228,31 @@
       const menu = document.getElementById('context-menu');
       
       let foldersOptions = `
-        <button class="ctx-item" onclick="moveItemToArea('${id}', '')">
+        <button class="ctx-item" onclick="moveItemToArea('${id}', ''); hideContextMenu();">
           <span>📁 Sem Pasta</span> ${!item.area ? '✓' : ''}
         </button>
       ` + S.areas.map(a => `
-        <button class="ctx-item" onclick="moveItemToArea('${id}', '${a.id}')">
+        <button class="ctx-item" onclick="moveItemToArea('${id}', '${a.id}'); hideContextMenu();">
           <span>📁 ${escapeHtml(a.name)}</span> ${item.area === a.id ? '✓' : ''}
         </button>
       `).join('');
 
       menu.innerHTML = `
         <div style="font-size:0.75rem; color:var(--muted); padding:6px 14px; font-weight:bold;">SITUAÇÃO</div>
-        <button class="ctx-item" onclick="setItemStatus('${id}', 'todo')">A Fazer ${item.status === 'todo' ? '✓' : ''}</button>
-        <button class="ctx-item" onclick="setItemStatus('${id}', 'doing')">Em andamento ${item.status === 'doing' ? '✓' : ''}</button>
-        <button class="ctx-item" onclick="setItemStatus('${id}', 'waiting')">Aguardando ${item.status === 'waiting' ? '✓' : ''}</button>
-        <button class="ctx-item" onclick="setItemStatus('${id}', 'done')">Concluído ${item.status === 'done' ? '✓' : ''}</button>
+        <button class="ctx-item" onclick="setItemStatus('${id}', 'todo'); hideContextMenu();">A Fazer ${item.status === 'todo' ? '✓' : ''}</button>
+        <button class="ctx-item" onclick="setItemStatus('${id}', 'doing'); hideContextMenu();">Em andamento ${item.status === 'doing' ? '✓' : ''}</button>
+        <button class="ctx-item" onclick="setItemStatus('${id}', 'waiting'); hideContextMenu();">Aguardando ${item.status === 'waiting' ? '✓' : ''}</button>
+        <button class="ctx-item" onclick="setItemStatus('${id}', 'done'); hideContextMenu();">Concluído ${item.status === 'done' ? '✓' : ''}</button>
         
         <div class="ctx-divider"></div>
-        <button class="ctx-item" onclick="toggleStar('${id}')">${item.starred ? '★ Desmarcar Estrela' : '☆ Marcar Estrela'}</button>
+        <button class="ctx-item" onclick="toggleStar('${id}'); hideContextMenu();">${item.starred ? '★ Desmarcar Estrela' : '☆ Marcar Estrela'}</button>
         
         <div class="ctx-divider"></div>
         <div style="font-size:0.75rem; color:var(--muted); padding:6px 14px; font-weight:bold;">ADIAR</div>
-        <button class="ctx-item" onclick="postponeItemByDays('${id}', 1)">Amanhã (+1 dia)</button>
-        <button class="ctx-item" onclick="postponeItemByDays('${id}', 7)">Daqui a 1 semana</button>
+        <button class="ctx-item" onclick="postponeItemByDays('${id}', 1); hideContextMenu();">Amanhã (+1 dia)</button>
+        <button class="ctx-item" onclick="postponeItemByDays('${id}', 7); hideContextMenu();">Daqui a 1 semana</button>
         <div class="ctx-date-picker">
-          <span style="font-size:0.8rem; color:var(--muted);">Escolhar data:</span>
+          <span style="font-size:0.8rem; color:var(--muted);">Escolher data:</span>
           <input type="date" value="${item.date || ''}" onchange="postponeItemToDate('${id}', this.value); hideContextMenu();">
         </div>
 
@@ -1093,9 +1261,9 @@
         ${foldersOptions}
         
         <div class="ctx-divider"></div>
-        <button class="ctx-item" onclick="duplicateItem('${id}')">📋 Duplicar</button>
-        <button class="ctx-item" onclick="openItemModal(S.items.find(x=>x.id==='${id}'))">✏️ Editar</button>
-        <button class="ctx-item danger" onclick="deleteItemDirect('${id}')">🗑️ Excluir</button>
+        <button class="ctx-item" onclick="duplicateItem('${id}'); hideContextMenu();">📋 Duplicar</button>
+        <button class="ctx-item" onclick="openItemModal(S.items.find(x=>x.id==='${id}')); hideContextMenu();">✏️ Editar</button>
+        <button class="ctx-item danger" onclick="deleteItemDirect('${id}'); hideContextMenu();">🗑 Excluir</button>
       `;
 
       menu.style.display = 'flex';
@@ -1127,10 +1295,15 @@
       const x = touch.clientX;
       const y = touch.clientY;
 
+      if (blockClickTimer) clearTimeout(blockClickTimer);
+
       longTouchTimer = setTimeout(() => {
         if (!touchMoved) {
           blockNextClick = true;
           openContextMenuAt(x, y, id);
+          blockClickTimer = setTimeout(() => {
+            blockNextClick = false;
+          }, 600);
         }
       }, 500);
     }
@@ -1147,6 +1320,7 @@
     function handleCardClick(id, e) {
       if (blockNextClick) {
         blockNextClick = false;
+        if (blockClickTimer) clearTimeout(blockClickTimer);
         e.stopPropagation();
         e.preventDefault();
         return;
@@ -1171,11 +1345,12 @@
       if (item) {
         const clone = { 
           ...item, 
-          id: 'item_' + Date.now(), 
+          id: generateId('item'), 
           title: item.title + ' (Cópia)',
           checklist: (item.checklist||[]).map(c=>({...c}))
         };
         delete clone.repSourceId;
+        delete clone.repSnapshot;
         S.items.push(clone);
         saveData();
         render();
@@ -1196,6 +1371,84 @@
       render(); 
       if(window.innerWidth <= 768) {
         document.getElementById('sidebar').classList.remove('open');
+      }
+    }
+
+    function getFormState() {
+      const chkRows = document.querySelectorAll('#checklist-container .checklist-row');
+      const checklist = Array.from(chkRows).map(r => ({
+        done: r.querySelector('input[type="checkbox"]').checked,
+        text: r.querySelector('.chk-text').value.trim()
+      })).filter(c => c.text.length > 0);
+
+      return {
+        title: document.getElementById('f-title').value.trim(),
+        desc: document.getElementById('f-desc').value,
+        area: document.getElementById('f-area').value,
+        status: document.getElementById('f-status').value,
+        date: document.getElementById('f-date').value,
+        time: document.getElementById('f-time').value,
+        rep: document.getElementById('f-rep').value,
+        link: document.getElementById('f-link').value.trim(),
+        starred: formStarred,
+        checklist: checklist
+      };
+    }
+
+    function hasFormChanged() {
+      const current = getFormState();
+      if (!editingOriginalItem) {
+        let defaultArea = (currentArea !== 'all') ? currentArea : '';
+        if (defaultArea && !S.areas.some(a => a.id === defaultArea)) {
+          defaultArea = '';
+        }
+        const defaultDate = getTodayBR();
+        return current.title !== '' ||
+               current.desc !== '' ||
+               current.area !== defaultArea ||
+               current.status !== 'todo' ||
+               current.date !== defaultDate ||
+               current.time !== '' ||
+               current.rep !== 'none' ||
+               current.link !== '' ||
+               current.starred !== false ||
+               current.checklist.length > 0;
+      }
+
+      const orig = editingOriginalItem;
+      let origArea = orig.area || '';
+      if (origArea && !S.areas.some(a => a.id === origArea)) {
+        origArea = '';
+      }
+
+      if (current.title !== (orig.title || '')) return true;
+      if (current.desc !== (orig.desc || '')) return true;
+      if (current.area !== origArea) return true;
+      if (current.status !== (orig.status || 'todo')) return true;
+      if (current.date !== (orig.date || '')) return true;
+      if (current.time !== (orig.time || '')) return true;
+      if (current.rep !== (orig.rep || 'none')) return true;
+      if (current.link !== (orig.link || '')) return true;
+      if (current.starred !== (!!orig.starred)) return true;
+
+      const origChk = orig.checklist || [];
+      if (current.checklist.length !== origChk.length) return true;
+
+      for (let i = 0; i < current.checklist.length; i++) {
+        if (current.checklist[i].text !== origChk[i].text) return true;
+        if (current.checklist[i].done !== !!origChk[i].done) return true;
+      }
+
+      return false;
+    }
+
+    function attemptCloseItemModal() {
+      if (hasFormChanged()) {
+        if (confirm('Você tem alterações não salvas. Deseja realmente fechar?')) {
+          closeItemModal();
+        }
+      } else {
+        closeItemModal();
       }
     }
 
@@ -1221,7 +1474,13 @@
         currentEditItemId = item.id;
         document.getElementById('f-title').value = item.title || '';
         descEl.value = item.desc || '';
-        document.getElementById('f-area').value = item.area || '';
+        
+        let validArea = item.area || '';
+        if (validArea && !S.areas.some(a => a.id === validArea)) {
+          validArea = '';
+        }
+        document.getElementById('f-area').value = validArea;
+
         document.getElementById('f-status').value = item.status || 'todo';
         document.getElementById('f-date').value = item.date || '';
         document.getElementById('f-time').value = item.time || '';
@@ -1236,7 +1495,13 @@
         currentEditItemId = null;
         document.getElementById('f-title').value = '';
         descEl.value = '';
-        document.getElementById('f-area').value = (currentArea !== 'all') ? currentArea : '';
+        
+        let initialArea = (currentArea !== 'all') ? currentArea : '';
+        if (initialArea && !S.areas.some(a => a.id === initialArea)) {
+          initialArea = '';
+        }
+        document.getElementById('f-area').value = initialArea;
+
         document.getElementById('f-status').value = 'todo';
         document.getElementById('f-date').value = getTodayBR();
         document.getElementById('f-time').value = '';
@@ -1244,12 +1509,14 @@
         document.getElementById('f-link').value = '';
         formStarred = false;
       }
-      
-      autoResizeTextarea(descEl);
 
       document.getElementById('f-star-btn').innerText = formStarred ? '★' : '☆';
       document.getElementById('f-star-btn').className = formStarred ? 'star-btn active' : 'star-btn inactive';
       document.getElementById('item-modal').classList.add('open');
+
+      requestAnimationFrame(() => {
+        autoResizeTextarea(descEl);
+      });
     }
 
     function closeItemModal() { 
@@ -1341,7 +1608,9 @@
         document.getElementById('f-title').value = t.title || '';
         const descEl = document.getElementById('f-desc');
         descEl.value = t.desc || '';
-        autoResizeTextarea(descEl);
+        requestAnimationFrame(() => {
+          autoResizeTextarea(descEl);
+        });
         if(t.area) document.getElementById('f-area').value = t.area;
         document.getElementById('checklist-container').innerHTML = '';
         (t.checklist||[]).forEach(c => addChecklistItem(c.text, false, false));
@@ -1352,8 +1621,20 @@
       const title = document.getElementById('f-title').value.trim();
       if (!title) return;
 
-      const rawLink = document.getElementById('f-link').value.trim();
-      const validLink = isValidHttpUrl(rawLink) ? rawLink : '';
+      let rawLink = document.getElementById('f-link').value.trim();
+      let validLink = '';
+
+      if (rawLink) {
+        const testedUrl = normalizeAndValidateUrl(rawLink);
+        if (testedUrl) {
+          validLink = testedUrl;
+        } else {
+          alert('Link inválido. O formato deve ser um endereço de site válido.');
+          if (editingOriginalItem && editingOriginalItem.link) {
+            validLink = editingOriginalItem.link;
+          }
+        }
+      }
 
       const chkRows = document.querySelectorAll('#checklist-container .checklist-row');
       const checklist = Array.from(chkRows).map(r => ({
@@ -1361,34 +1642,68 @@
         text: r.querySelector('.chk-text').value.trim()
       })).filter(c => c.text.length > 0);
 
+      const oldStatus = editingOriginalItem ? (editingOriginalItem.status || 'todo') : null;
+      const newStatus = document.getElementById('f-status').value;
+      const itemDate = document.getElementById('f-date').value;
+
+      let calculatedRepDay = editingOriginalItem?.repDay || null;
+      if (!editingOriginalItem) {
+        if (itemDate) {
+          calculatedRepDay = parseInt(itemDate.split('-')[2], 10);
+        }
+      } else {
+        if (itemDate !== (editingOriginalItem.date || '')) {
+          if (itemDate) {
+            calculatedRepDay = parseInt(itemDate.split('-')[2], 10);
+          } else {
+            calculatedRepDay = null;
+          }
+        }
+      }
+
       const editedFields = {
         title: title,
         desc: document.getElementById('f-desc').value,
         area: document.getElementById('f-area').value,
-        status: document.getElementById('f-status').value,
-        date: document.getElementById('f-date').value,
+        status: newStatus,
+        date: itemDate,
         time: document.getElementById('f-time').value,
         rep: document.getElementById('f-rep').value,
+        repDay: calculatedRepDay,
         link: validLink,
         starred: formStarred,
         checklist: checklist
       };
 
+      let targetItem = null;
+
       if (currentEditItemId && editingOriginalItem) {
         const updatedItem = { ...editingOriginalItem, ...editedFields };
         const idx = S.items.findIndex(x => x.id === currentEditItemId);
-        if (idx > -1) S.items[idx] = updatedItem;
+        if (idx > -1) {
+          S.items[idx] = updatedItem;
+          targetItem = S.items[idx];
+        }
       } else {
         const newItem = {
-          id: 'item_' + Date.now(),
+          id: generateId('item'),
           ...editedFields
         };
         S.items.push(newItem);
+        targetItem = newItem;
+      }
+
+      if (targetItem) {
+        if (oldStatus !== 'done' && newStatus === 'done') {
+          addNextOccurrence(targetItem);
+        } else if (oldStatus === 'done' && newStatus !== 'done') {
+          removeUntouchedCopy(targetItem.id);
+        }
       }
 
       if (document.getElementById('f-save-template').checked) {
         S.templates.push({ 
-          id: 'tpl_' + Date.now(), 
+          id: generateId('tpl'), 
           title: editedFields.title, 
           desc: editedFields.desc, 
           area: editedFields.area, 
@@ -1407,6 +1722,7 @@
       const mainFolders = S.areas.filter(a => !a.parentId);
       sParent.innerHTML = '<option value="">Nenhuma (Pasta Principal)</option>' + mainFolders.map(a => `<option value="${a.id}">${escapeHtml(a.name)}</option>`).join('');
 
+      document.getElementById('f-folder-parent-group').style.display = 'block';
       document.getElementById('folder-modal-title').innerText = 'Nova Pasta';
       document.getElementById('f-folder-id').value = '';
       document.getElementById('f-folder-name').value = '';
@@ -1419,24 +1735,49 @@
       const f = S.areas.find(a => a.id === id);
       if(!f) return;
       
-      const sParent = document.getElementById('f-folder-parent');
-      const allowedParents = S.areas.filter(a => !a.parentId && a.id !== id);
-      sParent.innerHTML = '<option value="">Nenhuma (Pasta Principal)</option>' + allowedParents.map(a => `<option value="${a.id}">${escapeHtml(a.name)}</option>`).join('');
+      const hasSubfolders = S.areas.some(a => a.parentId === id);
+      const parentGroup = document.getElementById('f-folder-parent-group');
+
+      if (hasSubfolders) {
+        parentGroup.style.display = 'none';
+      } else {
+        parentGroup.style.display = 'block';
+        const sParent = document.getElementById('f-folder-parent');
+        const allowedParents = S.areas.filter(a => !a.parentId && a.id !== id);
+        sParent.innerHTML = '<option value="">Nenhuma (Pasta Principal)</option>' + allowedParents.map(a => `<option value="${a.id}">${escapeHtml(a.name)}</option>`).join('');
+        sParent.value = f.parentId || '';
+      }
 
       document.getElementById('folder-modal-title').innerText = 'Editar / Mover Pasta';
       document.getElementById('f-folder-id').value = f.id;
       document.getElementById('f-folder-name').value = f.name;
       document.getElementById('f-folder-color').value = f.color || '#2dd4bf';
-      document.getElementById('f-folder-parent').value = f.parentId || '';
       document.getElementById('folder-modal').classList.add('open');
     }
 
     function closeFolderModal() { document.getElementById('folder-modal').classList.remove('open'); }
     
     function deleteFolder(id) {
-      if(confirm('Excluir esta pasta? As tarefas dela ficarão na Agenda Geral.')) {
-        S.areas = S.areas.filter(a => a.id !== id && a.parentId !== id);
-        if(currentArea === id) currentArea = 'all';
+      const subfolders = S.areas.filter(a => a.parentId === id);
+      let msg = 'Excluir esta pasta? As tarefas dela ficarão na Agenda Geral.';
+      if (subfolders.length > 0) {
+        msg = `Excluir esta pasta e as suas ${subfolders.length} subpasta(s)? As tarefas delas ficarão na Agenda Geral.`;
+      }
+
+      if(confirm(msg)) {
+        const deletedIds = new Set([id, ...subfolders.map(s => s.id)]);
+
+        S.areas = S.areas.filter(a => !deletedIds.has(a.id));
+
+        S.items.forEach(item => {
+          if (deletedIds.has(item.area)) {
+            item.area = '';
+          }
+        });
+
+        if(deletedIds.has(currentArea)) {
+          currentArea = 'all';
+        }
         saveData();
         render();
       }
@@ -1445,12 +1786,16 @@
     function saveFolder() {
       const name = document.getElementById('f-folder-name').value.trim();
       if (!name) return;
-      const id = document.getElementById('f-folder-id').value || 'area_' + Date.now();
+      const id = document.getElementById('f-folder-id').value || generateId('area');
+      const parentIdVal = document.getElementById('f-folder-parent-group').style.display === 'none' ? 
+                          (S.areas.find(a => a.id === id)?.parentId || null) : 
+                          (document.getElementById('f-folder-parent').value || null);
+
       const folderData = {
         id: id, 
         name: name, 
         color: document.getElementById('f-folder-color').value,
-        parentId: document.getElementById('f-folder-parent').value || null
+        parentId: parentIdVal
       };
       const idx = S.areas.findIndex(a => a.id === id);
       if (idx > -1) S.areas[idx] = folderData; 
