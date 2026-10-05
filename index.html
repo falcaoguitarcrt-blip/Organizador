@@ -100,7 +100,6 @@
 </head>
 <body>
 
-  <!-- Tela de Login Google -->
   <div id="auth-overlay">
     <div class="auth-card">
       <h2 style="margin-bottom: 8px;">Minha Agenda Pro</h2>
@@ -112,7 +111,6 @@
     </div>
   </div>
 
-  <!-- Sidebar -->
   <div id="sidebar">
     <div class="user-profile">
       <img id="u-avatar" class="user-avatar" src="" alt="Avatar">
@@ -131,7 +129,6 @@
     </div>
   </div>
 
-  <!-- Principal -->
   <div id="main">
     <div class="top-bar">
       <button class="mobile-nav-toggle" onclick="toggleSidebar()">☰ Menu</button>
@@ -139,7 +136,6 @@
       <button class="btn" onclick="openItemModal()">+ Novo item</button>
     </div>
 
-    <!-- Saudação Dinâmica -->
     <div style="margin-bottom: 28px;">
       <h2 id="greeting-title" style="font-size: 1.6rem; margin-bottom: 4px;">Olá, Felipe</h2>
       <p style="color: var(--muted); font-size: 0.95rem;" id="greeting-sub">Organize seu dia e acompanhe suas tarefas.</p>
@@ -148,7 +144,6 @@
     <div id="items-container"></div>
   </div>
 
-  <!-- Modal de Item -->
   <div id="item-modal" class="modal">
     <div class="modal-content">
       <h3 style="margin-bottom: 20px; font-size: 1.2rem;">Novo Item</h3>
@@ -228,9 +223,6 @@
   </div>
 
   <script>
-    // ==========================================
-    // CONFIGURAÇÃO DO FIREBASE ATUALIZADA
-    // ==========================================
     const firebaseConfig = {
       apiKey: "AIzaSyAvdngV2HMKdAIUmK1f9IF0gm4uEXPdd44",
       authDomain: "fluxo-de-caixa-59dd1.firebaseapp.com",
@@ -273,22 +265,44 @@
 
     function loginGoogle() {
       const provider = new firebase.auth.GoogleAuthProvider();
-      auth.signInWithPopup(provider).catch(e => alert("Erro ao fazer login. Verifique se copiou a chave corretamente. Detalhe: " + e.message));
+      auth.signInWithPopup(provider).catch(e => alert("Erro ao fazer login. Detalhe: " + e.message));
     }
 
     function logout() { auth.signOut(); }
 
     function loadData() {
       db.collection('shared').doc('agenda-vida').onSnapshot(doc => {
+        let needsSave = false;
+        
         if (doc.exists) {
-          S = doc.data();
-          if (!S.items) S.items = [];
-          if (!S.areas) S.areas = [];
-          updateProgress();
-          render();
+          let cloudData = doc.data();
+          const localStr = localStorage.getItem('agenda-vida-v1');
+          
+          if (localStr && (!cloudData.areas || cloudData.areas.length === 0)) {
+            S = JSON.parse(localStr);
+            needsSave = true;
+            alert("✅ Seus dados antigos foram recuperados do navegador e enviados para a nuvem!");
+          } else {
+            S = cloudData;
+          }
         } else {
-          saveData();
+          const localStr = localStorage.getItem('agenda-vida-v1');
+          if (localStr) {
+            S = JSON.parse(localStr);
+            needsSave = true;
+            alert("✅ Seus dados antigos foram recuperados do navegador e enviados para a nuvem!");
+          }
         }
+
+        if (!S.items) S.items = [];
+        if (!S.areas) S.areas = [];
+        
+        if (needsSave) {
+          saveData(); 
+        }
+
+        updateProgress();
+        render();
       });
     }
 
