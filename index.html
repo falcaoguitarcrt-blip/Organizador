@@ -5,30 +5,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Minha Agenda Pro</title>
   
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#2dd4bf">
+  <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2360/2360875.png">
+
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 
   <style>
-    :root {
-      --bg: #121820;
-      --card: #1a232e;
-      --border: #2a3646;
-      --accent: #2dd4bf;
-      --accent-hover: #14b8a6;
-      --text: #f1f5f9;
-      --muted: #94a3b8;
-      --danger: #ef4444;
-      --warning: #f59e0b;
-      --sidebar-w: 260px;
-    }
-
+    :root { --bg: #121820; --card: #1a232e; --border: #2a3646; --accent: #2dd4bf; --accent-hover: #14b8a6; --text: #f1f5f9; --muted: #94a3b8; --danger: #ef4444; --warning: #f59e0b; --sidebar-w: 260px; }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     body { background: var(--bg); color: var(--text); display: flex; min-height: 100vh; overflow-x: hidden; }
 
     #auth-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: var(--bg); z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 20px; }
-    .auth-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 32px; text-align: center; max-width: 360px; width: 90%; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
-    .btn-google { background: #ffffff; color: #000000; border: 1px solid #dadce0; padding: 12px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 10px; width: 100%; margin-top: 16px; }
+    .auth-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 32px; text-align: center; max-width: 360px; width: 90%; }
+    .btn-google { background: #fff; color: #000; border: 1px solid #dadce0; padding: 12px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; width: 100%; margin-top: 16px; }
 
     #sidebar { width: var(--sidebar-w); background: var(--card); border-right: 1px solid var(--border); display: flex; flex-direction: column; transition: transform 0.3s ease; z-index: 100; position: fixed; top: 0; bottom: 0; left: 0; }
     #main { flex: 1; margin-left: var(--sidebar-w); padding: 24px; max-width: 900px; width: 100%; position: relative; }
@@ -39,7 +31,6 @@
       #main { margin-left: 0; padding: 16px; }
       .mobile-nav-toggle { display: block !important; }
     }
-
     .mobile-nav-toggle { display: none; background: var(--accent); color: #000; border: none; padding: 8px 14px; border-radius: 8px; font-weight: bold; cursor: pointer; }
 
     .user-profile { padding: 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; }
@@ -49,73 +40,61 @@
     .btn-logout { background: transparent; border: none; color: var(--muted); cursor: pointer; font-size: 0.8rem; padding: 0; margin-top: 2px;}
 
     .nav-group { padding: 12px 8px; flex: 1; overflow-y: auto; }
-    .nav-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border-radius: 8px; cursor: pointer; color: var(--muted); text-decoration: none; margin-bottom: 4px; font-size: 0.95rem; }
+    .nav-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border-radius: 8px; cursor: pointer; color: var(--muted); margin-bottom: 4px; font-size: 0.95rem; }
     .nav-item:hover, .nav-item.active { background: rgba(45, 212, 191, 0.1); color: var(--accent); }
 
-    .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; gap: 12px; flex-wrap: wrap;}
-    .search-input { background: var(--card); border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: 8px; width: 100%; max-width: 300px; }
+    .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 12px; flex-wrap: wrap;}
+    .search-input { background: var(--card); border: 1px solid var(--border); color: var(--text); padding: 10px 14px; border-radius: 8px; flex: 1; min-width: 200px; font-size: 0.9rem; }
     
-    /* Folder Header & Subfolders */
+    .quick-capture { display: flex; gap: 8px; width: 100%; margin-bottom: 24px; }
+    .quick-capture input { flex: 1; background: rgba(255,255,255,0.03); border: 1px solid var(--border); color: var(--text); padding: 12px 16px; border-radius: 8px; font-size: 0.95rem; }
+    .quick-capture input:focus { border-color: var(--accent); outline: none; }
+
     .folder-header-area { margin-bottom: 24px; }
-    .folder-title { font-size: 1.8rem; font-weight: bold; margin-bottom: 12px; display: flex; align-items: center; gap: 12px; }
+    .folder-title { font-size: 1.6rem; font-weight: bold; margin-bottom: 8px; display: flex; align-items: center; gap: 12px; }
+    .folder-stats { font-size: 0.85rem; color: var(--accent); margin-bottom: 16px; }
     .folder-actions { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
-    .subfolder-chips { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
-    .chip { padding: 6px 12px; background: transparent; border: 1px solid var(--border); border-radius: 20px; font-size: 0.85rem; color: var(--text); cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.2s; }
-    .chip:hover { border-color: var(--muted); }
-    .chip.active { border-color: var(--text); background: rgba(255,255,255,0.05); }
     .color-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
 
-    /* Grouping & Periods */
     .period-group { margin-bottom: 32px; }
     .period-header { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; color: var(--muted); letter-spacing: 0.5px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
     .period-header::after { content: ''; flex: 1; height: 1px; background: var(--border); }
 
-    /* Cards */
-    .card { background: var(--card); border: 1px solid var(--border); border-left: 4px solid var(--muted); border-radius: 12px; padding: 14px 16px; margin-bottom: 10px; display: flex; align-items: flex-start; gap: 12px; transition: opacity 0.2s; cursor: pointer; }
+    .card { background: var(--card); border: 1px solid var(--border); border-left: 4px solid var(--muted); border-radius: 12px; padding: 14px 16px; margin-bottom: 10px; display: flex; gap: 12px; cursor: pointer; position: relative;}
     .card:hover { border-color: #3b4b5e; }
     .card.status-done { opacity: 0.5; }
     
-    .card-check { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--muted); cursor: pointer; flex-shrink: 0; margin-top: 2px; transition: all 0.2s; display: flex; align-items: center; justify-content: center; }
-    .card-check:hover { border-color: var(--accent); }
+    .card-check { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--muted); cursor: pointer; flex-shrink: 0; margin-top: 2px; display: flex; align-items: center; justify-content: center; }
     .card-check.done { background: var(--accent); border-color: var(--accent); }
     .card-check.done::after { content: '✓'; color: #000; font-size: 14px; font-weight: bold; }
     
-    .card-body { flex: 1; }
-    .card-title { font-weight: 600; margin-bottom: 6px; font-size: 1rem; color: #fff; }
-    .card-meta { font-size: 0.8rem; color: var(--muted); display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 4px; }
-    .card-desc { font-size: 0.85rem; color: var(--muted); margin-top: 4px; }
+    .card-body { flex: 1; overflow: hidden; }
+    .card-title { font-weight: 600; margin-bottom: 6px; font-size: 1rem; }
+    .card-meta { font-size: 0.75rem; color: var(--muted); display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
     
-    .badge-status { font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; background: rgba(255,255,255,0.05); border: 1px solid var(--border); text-transform: uppercase; font-weight: bold; }
+    .postpone-btn { background: rgba(245, 158, 11, 0.15); color: var(--warning); border: 1px solid var(--warning); padding: 2px 8px; border-radius: 12px; font-size: 0.7rem; font-weight: bold; cursor: pointer; margin-left: auto; }
 
-    .btn { background: var(--accent); color: #000; border: none; padding: 8px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
-    .btn:hover { background: var(--accent-hover); }
+    .btn { background: var(--accent); color: #000; border: none; padding: 10px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; }
     .btn-sm { padding: 6px 12px; font-size: 0.8rem; border-radius: 20px; border: 1px solid var(--border); background: transparent; color: var(--text); cursor: pointer; display: flex; align-items: center; gap: 6px; }
-    .btn-sm:hover { background: rgba(255,255,255,0.05); }
+    
+    .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; margin-top: 20px; overflow-x: auto; min-width: 700px;}
+    .cal-col { background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 8px; padding: 10px; min-height: 200px; }
+    .cal-header { font-size: 0.8rem; font-weight: bold; text-align: center; margin-bottom: 10px; color: var(--muted); }
+    .cal-item { background: var(--card); border-left: 3px solid var(--accent); padding: 8px; border-radius: 6px; font-size: 0.8rem; margin-bottom: 6px; cursor: pointer; }
 
-    /* Modais */
     .modal { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(2px); }
     .modal.open { display: flex; }
-    .modal-content { background: var(--card); border: 1px solid var(--border); border-radius: 16px; width: 90%; max-width: 520px; padding: 28px; max-height: 90vh; overflow-y: auto; }
-    
-    .form-group { margin-bottom: 16px; }
-    .form-group label { display: block; font-size: 0.85rem; font-weight: 600; color: var(--muted); margin-bottom: 6px; }
-    .form-control { width: 100%; background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 12px; border-radius: 8px; outline: none; }
-    .form-control:focus { border-color: var(--accent); }
-
-    .week-days { display: flex; gap: 6px; margin-top: 8px; }
-    .day-btn { width: 34px; height: 34px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 0.8rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .modal-content { background: var(--card); border: 1px solid var(--border); border-radius: 16px; width: 90%; max-width: 520px; padding: 24px; max-height: 90vh; overflow-y: auto; }
+    .form-group { margin-bottom: 14px; }
+    .form-group label { display: block; font-size: 0.8rem; color: var(--muted); margin-bottom: 4px; }
+    .form-control { width: 100%; background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 10px; border-radius: 8px; }
+    .week-days { display: flex; gap: 4px; margin-top: 6px; }
+    .day-btn { width: 30px; height: 30px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 0.75rem; cursor: pointer; }
     .day-btn.selected { background: var(--accent); color: #000; border-color: var(--accent); }
-
-    .checklist-row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
-
-    /* Estrela */
-    .star-btn { background: transparent; border: none; font-size: 1.2rem; cursor: pointer; padding: 4px; }
+    .checklist-row { display: flex; gap: 8px; align-items: center; margin-bottom: 6px; }
+    .star-btn { background: transparent; border: none; font-size: 1.2rem; cursor: pointer; }
     .star-btn.active { color: var(--warning); }
     .star-btn.inactive { color: var(--muted); }
-
-    /* Modo Lote */
-    #batch-bar { display: none; position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--accent); color: #000; padding: 12px 24px; border-radius: 30px; font-weight: bold; z-index: 900; box-shadow: 0 10px 20px rgba(0,0,0,0.5); align-items: center; gap: 16px; }
-    .card.batch-selected { border-color: var(--accent); background: rgba(45, 212, 191, 0.1); }
   </style>
 </head>
 <body>
@@ -123,7 +102,7 @@
   <div id="auth-overlay">
     <div class="auth-card">
       <h2 style="margin-bottom: 8px;">Minha Agenda Pro</h2>
-      <p style="color: var(--muted); font-size: 0.9rem;">Acesse suas tarefas e compromissos sincronizados.</p>
+      <p style="color: var(--muted); font-size: 0.9rem;">Sincronizando tarefas offline e nuvem...</p>
       <button class="btn-google" onclick="loginGoogle()">Entrar com o Google</button>
     </div>
   </div>
@@ -138,10 +117,8 @@
     </div>
     
     <div class="nav-group">
-      <div class="nav-item active" id="nav-all" onclick="setArea('all')">
-        <span>📋 Agenda geral</span>
-      </div>
-      <div style="margin: 20px 8px 8px; font-weight: 700; font-size: 0.75rem; color: var(--muted); text-transform: uppercase;">Pastas</div>
+      <div class="nav-item active" id="nav-all" onclick="setArea('all')"><span>📋 Agenda geral</span></div>
+      <div style="margin: 20px 8px 8px; font-weight: 700; font-size: 0.75rem; color: var(--muted);">PASTAS</div>
       <div id="folder-tree"></div>
       <button class="btn-sm" style="margin: 12px 8px; width: calc(100% - 16px); justify-content: center;" onclick="openFolderModal()">+ Nova Pasta</button>
     </div>
@@ -150,108 +127,82 @@
   <div id="main">
     <div class="top-bar">
       <button class="mobile-nav-toggle" onclick="toggleSidebar()">☰ Menu</button>
-      <input type="text" class="search-input" placeholder="Buscar compromissos... (/)" oninput="filterItems(this.value)">
+      <input type="text" class="search-input" placeholder="Buscar (/)..." oninput="filterItems(this.value)">
       <button class="btn" onclick="openItemModal()">+ Novo item</button>
+    </div>
+
+    <div class="quick-capture">
+      <input type="text" id="quick-input" placeholder="Captura rápida: Ex: Treino amanhã 18h #Academia" onkeypress="handleQuickCapture(event)">
+      <button class="btn" onclick="processQuickCapture()">Salvar</button>
     </div>
 
     <div id="header-container"></div>
     <div id="items-container"></div>
   </div>
 
-  <!-- Barra de Lote Flutuante -->
-  <div id="batch-bar">
-    <span id="batch-count">0 selecionados</span>
-    <button class="btn-sm" style="border-color:#000; color:#000;" onclick="batchMarkDone()">✓ Concluir</button>
-    <button class="btn-sm" style="border-color:#000; color:#000;" onclick="batchDelete()">🗑️ Excluir</button>
-    <button class="btn-sm" style="border:none; color:#000;" onclick="toggleBatchMode()">✕ Cancelar</button>
-  </div>
-
-  <!-- Modal de Item -->
   <div id="item-modal" class="modal">
     <div class="modal-content">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-        <h3 style="font-size: 1.2rem;">Novo Item</h3>
-        <button id="f-star-btn" class="star-btn inactive" onclick="toggleFormStar()">☆</button>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3 style="font-size: 1.2rem;">Item da Agenda</h3>
+        <div>
+          <button id="f-delete-btn" class="btn-sm" style="display:inline-flex; border-color:var(--danger); color:var(--danger); margin-right:8px;" onclick="deleteCurrentItem()">🗑️ Excluir</button>
+          <button id="f-star-btn" class="star-btn inactive" onclick="toggleFormStar()">☆</button>
+        </div>
       </div>
       
-      <div class="form-group">
-        <label>O que é?</label>
-        <input type="text" id="f-title" class="form-control" placeholder="Ex.: Culto de Quinta">
+      <div class="form-group" id="template-loader-box">
+        <label>Carregar Modelo (Opcional)</label>
+        <select id="f-load-template" class="form-control" onchange="loadTemplate(this.value)"></select>
       </div>
 
       <div class="form-group">
-        <label>Anotações adicionais</label>
-        <input type="text" id="f-desc" class="form-control" placeholder="Ex.: Os três horários de culto">
+        <input type="text" id="f-title" class="form-control" placeholder="Título. Ex: Culto de Quinta">
+      </div>
+      <div class="form-group">
+        <input type="text" id="f-desc" class="form-control" placeholder="Anotações adicionais">
       </div>
 
       <div class="form-group" style="display: flex; gap: 12px;">
-        <div style="flex:1;">
-          <label>Pasta / Subpasta</label>
-          <select id="f-area" class="form-control"></select>
-        </div>
-        <div style="flex:1;">
-          <label>Situação</label>
-          <select id="f-status" class="form-control">
-            <option value="todo">A Fazer</option>
-            <option value="doing">Em Andamento</option>
-            <option value="waiting">Aguardando</option>
-            <option value="done">Concluído</option>
-          </select>
-        </div>
+        <select id="f-area" class="form-control" style="flex:1;"></select>
+        <select id="f-status" class="form-control" style="flex:1;">
+          <option value="todo">A Fazer</option>
+          <option value="doing">Em andamento</option>
+          <option value="waiting">Aguardando</option>
+          <option value="done">Concluído</option>
+        </select>
       </div>
 
       <div class="form-group" style="display: flex; gap: 12px;">
-        <div style="flex:1;">
-          <label>Data</label>
-          <input type="date" id="f-date" class="form-control">
-        </div>
-        <div style="flex:1;">
-          <label>Hora</label>
-          <input type="time" id="f-time" class="form-control">
-        </div>
+        <input type="date" id="f-date" class="form-control" style="flex:1;">
+        <input type="time" id="f-time" class="form-control" style="flex:1;">
       </div>
 
       <div class="form-group">
-        <label>Repetir</label>
         <select id="f-rep" class="form-control" onchange="toggleRepOptions(this.value)">
           <option value="none">Não repete</option>
           <option value="daily">Diariamente</option>
           <option value="weekly">Semanalmente</option>
           <option value="monthly">Mensalmente</option>
         </select>
-
-        <div id="rep-days-box" style="display: none; margin-top: 10px; background: rgba(0,0,0,0.1); padding: 12px; border-radius: 8px;">
-          <label style="font-size: 0.78rem;">Dias da semana (complementar):</label>
-          <div class="week-days">
-            <button type="button" class="day-btn" onclick="toggleDay(this, 'DOM')">D</button>
-            <button type="button" class="day-btn" onclick="toggleDay(this, 'SEG')">S</button>
-            <button type="button" class="day-btn" onclick="toggleDay(this, 'TER')">T</button>
-            <button type="button" class="day-btn" onclick="toggleDay(this, 'QUA')">Q</button>
-            <button type="button" class="day-btn" onclick="toggleDay(this, 'QUI')">Q</button>
-            <button type="button" class="day-btn" onclick="toggleDay(this, 'SEX')">S</button>
-            <button type="button" class="day-btn" onclick="toggleDay(this, 'SAB')">S</button>
-          </div>
-        </div>
       </div>
 
       <div class="form-group">
         <label>Checklist</label>
         <div id="checklist-container"></div>
-        <button type="button" class="btn-sm" style="margin-top: 8px; width: 100%; border-style: dashed; justify-content: center;" onclick="addChecklistItem()">+ Adicionar subitem</button>
+        <button type="button" class="btn-sm" style="margin-top: 8px; width: 100%; justify-content: center;" onclick="addChecklistItem()">+ Adicionar subitem</button>
       </div>
 
-      <div class="form-group" style="border-top: 1px solid var(--border); padding-top: 16px; margin-top: 20px;">
-        <input type="url" id="f-link" class="form-control" placeholder="🔗 Adicionar Link (ex: Drive, YouTube)">
+      <div class="form-group" style="display: flex; align-items: center; gap: 8px; margin-top: 16px;">
+        <input type="checkbox" id="f-save-template"> <label style="margin:0;">Salvar como Modelo Reutilizável</label>
       </div>
 
-      <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px;">
+      <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
         <button class="btn" style="background: transparent; color: var(--text);" onclick="closeItemModal()">Cancelar</button>
         <button class="btn" onclick="saveItem()">Salvar Item</button>
       </div>
     </div>
   </div>
 
-  <!-- Modal de Pasta -->
   <div id="folder-modal" class="modal">
     <div class="modal-content" style="max-width: 400px;">
       <h3 id="folder-modal-title" style="margin-bottom: 20px;">Nova Pasta</h3>
@@ -267,13 +218,6 @@
         <input type="color" id="f-folder-color" class="form-control" value="#2dd4bf" style="height: 40px; padding: 4px;">
       </div>
 
-      <div class="form-group">
-        <label>Pertence à pasta? (Subpasta)</label>
-        <select id="f-folder-parent" class="form-control">
-          <option value="">Nenhuma (Pasta Principal)</option>
-        </select>
-      </div>
-
       <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px;">
         <button class="btn" style="background: transparent; color: var(--text);" onclick="closeFolderModal()">Cancelar</button>
         <button class="btn" onclick="saveFolder()">Salvar</button>
@@ -282,9 +226,8 @@
   </div>
 
   <script>
-    // ==========================================
-    // CHAVES DO FIREBASE RECUPERADAS
-    // ==========================================
+    if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js').catch(console.error); }
+
     const firebaseConfig = {
       apiKey: "AIzaSyAvdngV2HMKdAIUmK1f9IF0gm4uEXPdd44",
       authDomain: "fluxo-de-caixa-59dd1.firebaseapp.com",
@@ -297,338 +240,286 @@
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     const auth = firebase.auth();
+    db.enablePersistence().catch(err => console.log("Offline mode error:", err));
 
-    let S = { areas: [], items: [] };
+    let S = { areas: [], items: [], templates: [] };
     let currentArea = 'all';
-    let selectedDays = [];
     let searchTerm = '';
-    
-    // Controles de Visualização
-    let isBatchMode = false;
-    let batchSelected = [];
-    let sortMode = 'date';
+    let viewMode = 'list';
     let currentEditItemId = null;
     let formStarred = false;
 
-    // ==========================================
-    // AUTENTICAÇÃO E RESGATE DE DADOS
-    // ==========================================
+    document.addEventListener('keydown', (e) => {
+      if (e.key === '/' && !['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) {
+        e.preventDefault(); document.querySelector('.search-input').focus();
+      }
+    });
+
     auth.onAuthStateChanged(user => {
       if (user) {
         document.getElementById('auth-overlay').style.display = 'none';
         document.getElementById('u-avatar').src = user.photoURL || '';
         document.getElementById('u-name').innerText = user.displayName || user.email;
         loadData();
-      } else {
-        document.getElementById('auth-overlay').style.display = 'flex';
-      }
+      } else { document.getElementById('auth-overlay').style.display = 'flex'; }
     });
 
-    function loginGoogle() {
-      const provider = new firebase.auth.GoogleAuthProvider();
-      auth.signInWithPopup(provider).catch(e => alert("Erro ao fazer login: " + e.message));
-    }
+    function loginGoogle() { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
     function logout() { auth.signOut(); }
 
     function loadData() {
       db.collection('shared').doc('agenda-vida').onSnapshot(doc => {
         if (doc.exists) {
-          const rawData = doc.data();
-          if (rawData.json) {
-            try { S = JSON.parse(rawData.json); } catch (e) { S = rawData; }
-          } else { S = rawData; }
+          const raw = doc.data();
+          if (raw.json) { try { S = JSON.parse(raw.json); } catch (e) { S = raw; } } else { S = raw; }
         }
         if (!S.items) S.items = [];
         if (!S.areas) S.areas = [];
-
+        if (!S.templates) S.templates = [];
         render();
       });
     }
 
     function saveData() {
-      const dataToSave = { ...S, json: JSON.stringify(S), t: Date.now() };
-      db.collection('shared').doc('agenda-vida').set(dataToSave);
+      db.collection('shared').doc('agenda-vida').set({ ...S, json: JSON.stringify(S), t: Date.now() });
     }
 
-    // ==========================================
-    // RENDERIZAÇÃO E HIERARQUIA
-    // ==========================================
-    function getFolderConfig(id) {
-      return S.areas.find(a => a.id === id);
+    function getTodayBR() {
+      const d = new Date(); return new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
+    }
+    function formatBR(dStr, tStr) {
+      if (!dStr) return '';
+      const p = dStr.split('-');
+      return `${p[2]}/${p[1]}` + (tStr ? ` às ${tStr}` : '');
     }
 
-    function getHierarchy(id) {
-      let folder = getFolderConfig(id);
-      if (!folder) return { text: '', color: 'var(--muted)' };
-      
-      let color = folder.color || 'var(--muted)';
-      if (folder.parentId) {
-        let parent = getFolderConfig(folder.parentId);
-        if (parent) return { text: `${parent.name} > ${folder.name}`, color: color };
+    function processQuickCapture() {
+      const input = document.getElementById('quick-input');
+      let text = input.value.trim();
+      if(!text) return;
+
+      let date = getTodayBR();
+      let time = '';
+      let folderId = currentArea === 'all' ? '' : currentArea;
+      let title = text;
+
+      const timeMatch = text.match(/\b([01]?\d|2[0-3])[:h]([0-5]\d)?\b/i);
+      if (timeMatch) {
+        time = timeMatch[1].padStart(2, '0') + ':' + (timeMatch[2] || '00');
+        title = title.replace(timeMatch[0], '');
       }
-      return { text: folder.name, color: color };
+      if (/amanh[ãa]/i.test(text)) {
+        let d = new Date(getTodayBR() + 'T12:00:00');
+        d.setDate(d.getDate() + 1);
+        date = d.toISOString().split('T')[0];
+        title = title.replace(/amanh[ãa]/i, '');
+      }
+      const tagMatch = text.match(/#(\w+)/);
+      if (tagMatch) {
+        const fName = tagMatch[1].toLowerCase();
+        const found = S.areas.find(a => a.name.toLowerCase().includes(fName));
+        if (found) folderId = found.id;
+        title = title.replace(tagMatch[0], '');
+      }
+
+      S.items.push({ id: 'item_' + Date.now(), title: title.trim(), date: date, time: time, area: folderId, status: 'todo', rep: 'none' });
+      saveData();
+      input.value = '';
     }
+    function handleQuickCapture(e) { if(e.key === 'Enter') processQuickCapture(); }
 
     function render() {
       renderSidebar();
       renderHeader();
-      renderItems();
+      if (viewMode === 'calendar') renderCalendar();
+      else renderItems();
     }
 
     function renderSidebar() {
-      const container = document.getElementById('folder-tree');
-      container.innerHTML = '';
-      
-      document.getElementById('nav-all').className = `nav-item ${currentArea === 'all' ? 'active' : ''}`;
-
-      // Apenas pastas principais (sem parentId) na sidebar
-      const mainFolders = S.areas.filter(a => !a.parentId);
-      
-      mainFolders.forEach(area => {
+      const c = document.getElementById('folder-tree');
+      c.innerHTML = '';
+      S.areas.forEach(area => {
         const el = document.createElement('div');
-        el.className = `nav-item ${currentArea === area.id || S.areas.find(a => a.id === currentArea)?.parentId === area.id ? 'active' : ''}`;
-        el.innerHTML = `<span style="display:flex; align-items:center; gap:8px;"><span class="color-dot" style="background:${area.color || '#ccc'}"></span> ${area.name}</span>`;
-        el.onclick = () => setArea(area.id);
-        container.appendChild(el);
+        el.className = `nav-item ${currentArea === area.id ? 'active' : ''}`;
+        el.innerHTML = `<span onclick="setArea('${area.id}')"><span class="color-dot" style="background:${area.color||'#ccc'}"></span> ${area.name}</span>
+                        <button style="background:none;border:none;color:var(--danger);cursor:pointer;" onclick="deleteFolder('${area.id}')">✕</button>`;
+        c.appendChild(el);
       });
     }
 
     function renderHeader() {
-      const container = document.getElementById('header-container');
-      const hour = new Date().getHours();
-      let greeting = "Boa noite";
-      if (hour >= 5 && hour < 12) greeting = "Bom dia";
-      else if (hour >= 12 && hour < 18) greeting = "Boa tarde";
-      
-      const userName = (auth.currentUser?.displayName || 'Usuário').split(' ')[0];
+      const c = document.getElementById('header-container');
+      const name = (auth.currentUser?.displayName || 'Usuário').split(' ')[0];
+      const today = getTodayBR();
+      const doneThisWeek = S.items.filter(i => i.status === 'done' && i.date && i.date <= today).length;
 
-      if (currentArea === 'all') {
-        container.innerHTML = `
-          <div class="folder-header-area">
-            <div class="folder-title">${greeting}, ${userName}</div>
-            <div class="folder-actions">
-              <button class="btn-sm" onclick="toggleBatchMode()">✓ Em Lote</button>
-              <button class="btn-sm" onclick="toggleSort()">↑↓ Ordem: ${sortMode === 'date' ? 'Data' : 'Status'}</button>
-            </div>
-          </div>
-        `;
-        return;
-      }
-
-      // Se for uma pasta específica
-      let folder = getFolderConfig(currentArea);
-      let isSubfolder = folder?.parentId ? true : false;
-      let displayTitle = folder ? folder.name : '';
-      
-      let subfolders = S.areas.filter(a => a.parentId === currentArea || (isSubfolder && a.parentId === folder.parentId));
-
-      let chipsHtml = subfolders.map(sub => `
-        <button class="chip ${sub.id === currentArea ? 'active' : ''}" onclick="setArea('${sub.id}')">
-          <span class="color-dot" style="background:${sub.color || '#ccc'}"></span> ${sub.name}
-        </button>
-      `).join('');
-
-      container.innerHTML = `
+      c.innerHTML = `
         <div class="folder-header-area">
-          <div class="folder-title">${displayTitle}</div>
+          <div class="folder-title">Olá, ${name}</div>
+          <div class="folder-stats">🔥 ${doneThisWeek} tarefas concluídas no total</div>
           <div class="folder-actions">
-            <button class="btn-sm" onclick="openFolderModal('${currentArea}')">+ Subpasta</button>
-            <button class="btn-sm" onclick="editFolder('${currentArea}')">Editar pasta</button>
-            <button class="btn-sm" onclick="toggleBatchMode()">✓ Em Lote</button>
-            <button class="btn-sm" onclick="toggleSort()">↑↓ Ordem: ${sortMode === 'date' ? 'Data' : 'Status'}</button>
+            <button class="btn-sm" onclick="toggleView()">📅 Mudar para: ${viewMode === 'list' ? 'Semana' : 'Lista'}</button>
+            <button class="btn-sm" onclick="openFolderModal()">+ Nova Pasta</button>
           </div>
-          ${chipsHtml ? `<div class="subfolder-chips">${chipsHtml}</div>` : ''}
         </div>
       `;
     }
 
-    function renderItems() {
-      const container = document.getElementById('items-container');
-      container.innerHTML = '';
-
-      let list = S.items.filter(i => currentArea === 'all' || i.area === currentArea || getFolderConfig(i.area)?.parentId === currentArea);
-      
-      if (searchTerm) {
-        list = list.filter(i => i.title.toLowerCase().includes(searchTerm.toLowerCase()) || (i.desc && i.desc.toLowerCase().includes(searchTerm.toLowerCase())));
+    function postponeItem(id, e) {
+      e.stopPropagation();
+      const item = S.items.find(i => i.id === id);
+      if(item && item.date) {
+        let d = new Date(item.date + 'T12:00:00');
+        d.setDate(d.getDate() + 1);
+        item.date = d.toISOString().split('T')[0];
+        saveData();
       }
+    }
 
-      const today = new Date().toISOString().split('T')[0];
-      
+    function renderItems() {
+      const c = document.getElementById('items-container');
+      c.innerHTML = '';
+
+      let list = S.items.filter(i => currentArea === 'all' || i.area === currentArea);
+      if (searchTerm) list = list.filter(i => i.title.toLowerCase().includes(searchTerm.toLowerCase()));
+
+      const today = getTodayBR();
       const periods = {
         overdue: { title: '⚠️ Atrasados', items: [] },
-        today: { title: '📅 Hoje', items: [] },
-        next7: { title: '📆 Próximos 7 dias', items: [] },
-        later: { title: '📌 Mais adiante / Sem data', items: [] },
+        today: { title: '🔥 Hoje', items: [] },
+        next7: { title: '📆 Próximos', items: [] },
         done: { title: '✅ Concluídos', items: [] }
       };
 
       list.forEach(item => {
         if (item.status === 'done') periods.done.items.push(item);
-        else if (!item.date) periods.later.items.push(item);
         else if (item.date < today) periods.overdue.items.push(item);
         else if (item.date === today) periods.today.items.push(item);
-        else {
-          const diffDays = Math.ceil(Math.abs(new Date(item.date) - new Date(today)) / (1000 * 60 * 60 * 24)); 
-          if (diffDays <= 7) periods.next7.items.push(item);
-          else periods.later.items.push(item);
-        }
+        else periods.next7.items.push(item);
       });
 
       Object.values(periods).forEach(period => {
         if (period.items.length === 0) return;
-
-        // Ordenação
-        period.items.sort((a, b) => {
-          if (sortMode === 'date') return (a.date || '9999').localeCompare(b.date || '9999');
-          return (a.status || '').localeCompare(b.status || '');
-        });
-
-        const groupEl = document.createElement('div');
-        groupEl.className = 'period-group';
-        groupEl.innerHTML = `<div class="period-header">${period.title}</div>`;
+        period.items.sort((a,b) => (a.date||'').localeCompare(b.date||''));
+        
+        const g = document.createElement('div');
+        g.className = 'period-group';
+        g.innerHTML = `<div class="period-header">${period.title}</div>`;
 
         period.items.forEach(item => {
-          const folderInfo = getHierarchy(item.area);
+          const area = S.areas.find(a => a.id === item.area) || {};
           const isDone = item.status === 'done';
-          const isSelected = batchSelected.includes(item.id);
-          const starIcon = item.starred ? '★' : '☆';
-          const starClass = item.starred ? 'active' : 'inactive';
-          
-          let repInfo = '';
-          if (item.rep && item.rep !== 'none') {
-            repInfo = `↻ ${item.rep === 'weekly' && item.repDays && item.repDays.length ? 'dias específicos' : item.rep}`;
-          }
+          const isOverdue = !isDone && item.date && item.date < today;
 
           const card = document.createElement('div');
-          card.className = `card ${isDone ? 'status-done' : ''} ${isSelected ? 'batch-selected' : ''}`;
-          card.style.borderLeftColor = folderInfo.color;
-          
-          // Função de clique do Card
-          card.onclick = (e) => {
-            if (isBatchMode) { toggleBatchSelect(item.id); return; }
-            if (!e.target.closest('.card-check') && !e.target.closest('.star-btn')) {
-              openItemModal(item);
-            }
-          };
+          card.className = `card ${isDone ? 'status-done' : ''}`;
+          card.style.borderLeftColor = area.color || 'var(--muted)';
+          card.onclick = (e) => { if(!e.target.closest('button') && !e.target.closest('.card-check')) openItemModal(item); };
 
           card.innerHTML = `
             <div class="card-check ${isDone ? 'done' : ''}" onclick="toggleStatus('${item.id}', event)"></div>
             <div class="card-body">
-              <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-                <div class="card-title" style="${isDone ? 'text-decoration: line-through;' : ''}">${item.title}</div>
-                <button class="star-btn ${starClass}" onclick="toggleStar('${item.id}', event)">${starIcon}</button>
+              <div style="display:flex; justify-content:space-between;">
+                <div class="card-title" style="${isDone?'text-decoration:line-through;':''}">${item.title}</div>
+                ${item.starred ? '<span style="color:var(--warning);">★</span>' : ''}
               </div>
-              
               <div class="card-meta">
-                ${item.date ? `<span>📅 ${item.date}${item.time || ''}</span>` : ''}
-                ${repInfo ? `<span>${repInfo}</span>` : ''}
-                <span class="badge-status">${item.status === 'todo' ? 'A Fazer' : item.status}</span>
-                ${folderInfo.text ? `<span>📁 ${folderInfo.text}</span>` : ''}
-                ${item.checklist && item.checklist.length > 0 ? `<span>📋 ${item.checklist.filter(c=>c.done).length}/${item.checklist.length}</span>` : ''}
+                ${item.date ? `<span>📅 ${formatBR(item.date, item.time)}</span>` : ''}
+                ${area.name ? `<span>📁 ${area.name}</span>` : ''}
+                ${isOverdue ? `<button class="postpone-btn" onclick="postponeItem('${item.id}', event)">+1 Dia</button>` : ''}
               </div>
-              ${item.desc ? `<div class="card-desc">${item.desc}</div>` : ''}
             </div>
           `;
-          groupEl.appendChild(card);
+          g.appendChild(card);
         });
-
-        container.appendChild(groupEl);
+        c.appendChild(g);
       });
+    }
+
+    function renderCalendar() {
+      const c = document.getElementById('items-container');
+      c.innerHTML = '<div class="calendar-grid" id="cal-grid"></div>';
+      const grid = document.getElementById('cal-grid');
+
+      const todayStr = getTodayBR();
+      const todayDate = new Date(todayStr + 'T12:00:00');
+      const startOfWeek = new Date(todayDate);
+      startOfWeek.setDate(todayDate.getDate() - todayDate.getDay());
+
+      const daysOfWeek = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
       
-      if(container.innerHTML === '') {
-        container.innerHTML = '<p style="color:var(--muted); text-align:center; margin-top:40px;">Nenhuma tarefa encontrada.</p>';
+      for(let i=0; i<7; i++) {
+        const d = new Date(startOfWeek);
+        d.setDate(d.getDate() + i);
+        const dStr = d.toISOString().split('T')[0];
+        
+        const col = document.createElement('div');
+        col.className = 'cal-col';
+        col.innerHTML = `<div class="cal-header" style="${dStr === todayStr ? 'color:var(--accent); font-weight:900;' : ''}">${daysOfWeek[i]} ${d.getDate()}</div>`;
+        
+        let itemsForDay = S.items.filter(it => it.date === dStr && it.status !== 'done');
+        itemsForDay.forEach(item => {
+           const area = S.areas.find(a => a.id === item.area) || {};
+           col.innerHTML += `<div class="cal-item" style="border-left-color:${area.color||'var(--accent)'}" onclick="openItemModal(S.items.find(x=>x.id==='${item.id}'))">${item.time ? item.time+' ' : ''}${item.title}</div>`;
+        });
+        grid.appendChild(col);
       }
     }
 
-    // ==========================================
-    // AÇÕES DE INTERAÇÃO
-    // ==========================================
-    function setArea(id) { currentArea = id; render(); if(window.innerWidth <= 768) toggleSidebar(); }
-    function filterItems(val) { searchTerm = val; renderItems(); }
-    function toggleSort() { sortMode = sortMode === 'date' ? 'status' : 'date'; render(); }
+    function toggleView() { viewMode = viewMode === 'list' ? 'calendar' : 'list'; render(); }
+    function setArea(id) { currentArea = id; render(); }
+    function filterItems(val) { searchTerm = val; render(); }
 
     function toggleStatus(id, e) {
       if(e) e.stopPropagation();
-      if(isBatchMode) { toggleBatchSelect(id); return; }
       const item = S.items.find(i => i.id === id);
-      if (item) { item.status = item.status === 'done' ? 'todo' : 'done'; saveData(); }
+      if(!item) return;
+
+      if (item.status !== 'done') {
+        item.status = 'done';
+        if (item.rep && item.rep !== 'none' && item.date) {
+            let nextD = new Date(item.date + 'T12:00:00');
+            if (item.rep === 'daily') nextD.setDate(nextD.getDate() + 1);
+            else if (item.rep === 'weekly') nextD.setDate(nextD.getDate() + 7);
+            else if (item.rep === 'monthly') nextD.setMonth(nextD.getMonth() + 1);
+            
+            S.items.push({...item, id: 'item_'+Date.now(), status: 'todo', date: nextD.toISOString().split('T')[0], checklist: (item.checklist||[]).map(c=>({...c,done:false}))});
+        }
+      } else { item.status = 'todo'; }
+      saveData();
     }
 
-    function toggleStar(id, e) {
-      if(e) e.stopPropagation();
-      const item = S.items.find(i => i.id === id);
-      if (item) { item.starred = !item.starred; saveData(); }
+    function toggleFormStar() { formStarred = !formStarred; const b = document.getElementById('f-star-btn'); b.innerText = formStarred?'★':'☆'; b.className = formStarred?'star-btn active':'star-btn inactive'; }
+
+    function addChecklistItem(txt = '', d = false) {
+      const c = document.getElementById('checklist-container');
+      const r = document.createElement('div'); r.className = 'checklist-row';
+      r.innerHTML = `<input type="checkbox" ${d?'checked':''} style="width:18px;height:18px;"><input type="text" class="form-control" value="${txt}" style="padding:8px;"><button type="button" class="btn-sm" onclick="this.parentElement.remove()">✕</button>`;
+      c.appendChild(r);
     }
 
-    // Modo Lote
-    function toggleBatchMode() {
-      isBatchMode = !isBatchMode;
-      batchSelected = [];
-      document.getElementById('batch-bar').style.display = isBatchMode ? 'flex' : 'none';
-      renderItems();
-    }
-    function toggleBatchSelect(id) {
-      if (batchSelected.includes(id)) batchSelected = batchSelected.filter(i => i !== id);
-      else batchSelected.push(id);
-      document.getElementById('batch-count').innerText = `${batchSelected.length} selecionados`;
-      renderItems();
-    }
-    function batchMarkDone() {
-      S.items.forEach(i => { if (batchSelected.includes(i.id)) i.status = 'done'; });
-      toggleBatchMode(); saveData();
-    }
-    function batchDelete() {
-      if(confirm('Excluir itens selecionados?')) {
-        S.items = S.items.filter(i => !batchSelected.includes(i.id));
-        toggleBatchMode(); saveData();
+    function loadTemplate(id) {
+      if(!id) return;
+      const t = S.templates.find(x => x.id === id);
+      if(t) {
+        document.getElementById('f-title').value = t.title;
+        document.getElementById('f-desc').value = t.desc;
+        document.getElementById('f-area').value = t.area;
+        document.getElementById('checklist-container').innerHTML = '';
+        (t.checklist||[]).forEach(c => addChecklistItem(c.text, false));
       }
     }
 
-    // ==========================================
-    // FORMULÁRIO DE ITENS E CHECKLIST
-    // ==========================================
-    function toggleRepOptions(val) { document.getElementById('rep-days-box').style.display = val === 'weekly' ? 'block' : 'none'; }
-    function toggleDay(btn, day) {
-      btn.classList.toggle('selected');
-      if (selectedDays.includes(day)) selectedDays = selectedDays.filter(d => d !== day);
-      else selectedDays.push(day);
-    }
-    function toggleFormStar() {
-      formStarred = !formStarred;
-      const btn = document.getElementById('f-star-btn');
-      btn.innerText = formStarred ? '★' : '☆';
-      btn.className = formStarred ? 'star-btn active' : 'star-btn inactive';
-    }
-
-    function addChecklistItem(text = '', done = false) {
-      const container = document.getElementById('checklist-container');
-      const row = document.createElement('div');
-      row.className = 'checklist-row';
-      row.innerHTML = `
-        <input type="checkbox" ${done ? 'checked' : ''} style="width: 18px; height: 18px;">
-        <input type="text" class="form-control" value="${text}" placeholder="Item..." style="padding:8px 12px; font-size:0.9rem;">
-        <button type="button" class="btn-sm" onclick="this.parentElement.remove()">✕</button>
-      `;
-      container.appendChild(row);
-    }
-
-    function populateFolderSelects() {
-      const selects = [document.getElementById('f-area'), document.getElementById('f-folder-parent')];
-      selects.forEach(sel => {
-        if(!sel) return;
-        sel.innerHTML = '<option value="">(Nenhuma / Pasta Principal)</option>';
-        S.areas.forEach(a => {
-          let prefix = a.parentId ? '— ' : '';
-          sel.innerHTML += `<option value="${a.id}">${prefix}${a.name}</option>`;
-        });
-      });
-    }
-
     function openItemModal(item = null) {
-      populateFolderSelects();
-      const container = document.getElementById('checklist-container');
-      container.innerHTML = '';
-      document.querySelectorAll('.day-btn').forEach(btn => btn.classList.remove('selected'));
+      const sArea = document.getElementById('f-area');
+      sArea.innerHTML = '<option value="">Sem Pasta</option>' + S.areas.map(a => `<option value="${a.id}">${a.name}</option>`).join('');
+      
+      const sTpl = document.getElementById('f-load-template');
+      sTpl.innerHTML = '<option value="">Selecione para carregar...</option>' + S.templates.map(t => `<option value="${t.id}">${t.title}</option>`).join('');
+
+      document.getElementById('checklist-container').innerHTML = '';
+      document.getElementById('f-delete-btn').style.display = item ? 'inline-flex' : 'none';
+      document.getElementById('f-save-template').checked = false;
 
       if (item) {
         currentEditItemId = item.id;
@@ -639,121 +530,64 @@
         document.getElementById('f-date').value = item.date || '';
         document.getElementById('f-time').value = item.time || '';
         document.getElementById('f-rep').value = item.rep || 'none';
-        document.getElementById('f-link').value = item.link || '';
-        
         formStarred = item.starred || false;
-        selectedDays = item.repDays || [];
-        
-        selectedDays.forEach(day => {
-          const btn = Array.from(document.querySelectorAll('.day-btn')).find(b => b.innerText.charAt(0) === day.charAt(0));
-          if(btn) btn.classList.add('selected');
-        });
-        
-        if(item.checklist) item.checklist.forEach(c => addChecklistItem(c.text, c.done));
+        (item.checklist||[]).forEach(c => addChecklistItem(c.text, c.done));
       } else {
         currentEditItemId = null;
         document.getElementById('f-title').value = '';
-        document.getElementById('f-desc').value = '';
-        document.getElementById('f-area').value = currentArea !== 'all' ? currentArea : '';
-        document.getElementById('f-status').value = 'todo';
-        document.getElementById('f-date').value = '';
+        document.getElementById('f-date').value = getTodayBR();
         document.getElementById('f-time').value = '';
         document.getElementById('f-rep').value = 'none';
-        document.getElementById('f-link').value = '';
         formStarred = false;
-        selectedDays = [];
       }
       
-      toggleFormStar(); // Atualiza visual do botão estrela
-      toggleFormStar(); // Gambiarra rápida pra forçar o state
-      formStarred = item ? !!item.starred : false; 
-      document.getElementById('f-star-btn').innerText = formStarred ? '★' : '☆';
-      document.getElementById('f-star-btn').className = formStarred ? 'star-btn active' : 'star-btn inactive';
-
-      toggleRepOptions(document.getElementById('f-rep').value);
+      document.getElementById('f-star-btn').innerText = formStarred?'★':'☆';
       document.getElementById('item-modal').classList.add('open');
     }
 
     function closeItemModal() { document.getElementById('item-modal').classList.remove('open'); }
+    function deleteCurrentItem() { if(currentEditItemId && confirm('Excluir?')) { S.items = S.items.filter(i => i.id !== currentEditItemId); saveData(); closeItemModal(); } }
 
     function saveItem() {
       const title = document.getElementById('f-title').value;
       if (!title) return;
-
-      const checklistRows = document.querySelectorAll('#checklist-container .checklist-row');
-      const checklist = Array.from(checklistRows).map(row => ({
-        done: row.querySelector('input[type="checkbox"]').checked,
-        text: row.querySelector('input[type="text"]').value
-      }));
-
-      const itemData = {
-        id: currentEditItemId || 'item_' + Date.now(),
-        title: title,
-        desc: document.getElementById('f-desc').value,
-        area: document.getElementById('f-area').value,
-        status: document.getElementById('f-status').value,
-        date: document.getElementById('f-date').value,
-        time: document.getElementById('f-time').value,
-        rep: document.getElementById('f-rep').value,
-        repDays: [...selectedDays],
-        checklist: checklist,
-        link: document.getElementById('f-link').value,
-        starred: formStarred
+      const chk = Array.from(document.querySelectorAll('#checklist-container .checklist-row')).map(r => ({ done: r.querySelector('input[type="checkbox"]').checked, text: r.querySelector('input[type="text"]').value }));
+      const data = {
+        id: currentEditItemId || 'item_' + Date.now(), title: title, desc: document.getElementById('f-desc').value,
+        area: document.getElementById('f-area').value, status: document.getElementById('f-status').value,
+        date: document.getElementById('f-date').value, time: document.getElementById('f-time').value,
+        rep: document.getElementById('f-rep').value, checklist: chk, starred: formStarred
       };
+      
+      if (currentEditItemId) { const i = S.items.findIndex(x=>x.id===currentEditItemId); if(i>-1) S.items[i]=data; } 
+      else S.items.push(data);
 
-      if (currentEditItemId) {
-        const idx = S.items.findIndex(i => i.id === currentEditItemId);
-        if(idx > -1) S.items[idx] = itemData;
-      } else {
-        S.items.push(itemData);
+      if (document.getElementById('f-save-template').checked) {
+        S.templates.push({ id: 'tpl_'+Date.now(), title: data.title, desc: data.desc, area: data.area, checklist: data.checklist });
       }
-
       saveData(); closeItemModal();
     }
 
-    // ==========================================
-    // FORMULÁRIO DE PASTAS
-    // ==========================================
-    function openFolderModal(parentId = null) {
-      populateFolderSelects();
-      document.getElementById('folder-modal-title').innerText = 'Nova Pasta';
+    function openFolderModal() {
       document.getElementById('f-folder-id').value = '';
       document.getElementById('f-folder-name').value = '';
       document.getElementById('f-folder-color').value = '#2dd4bf';
-      document.getElementById('f-folder-parent').value = parentId || '';
       document.getElementById('folder-modal').classList.add('open');
     }
-
-    function editFolder(id) {
-      const folder = S.areas.find(a => a.id === id);
-      if(!folder) return;
-      populateFolderSelects();
-      document.getElementById('folder-modal-title').innerText = 'Editar Pasta';
-      document.getElementById('f-folder-id').value = folder.id;
-      document.getElementById('f-folder-name').value = folder.name;
-      document.getElementById('f-folder-color').value = folder.color || '#2dd4bf';
-      document.getElementById('f-folder-parent').value = folder.parentId || '';
-      document.getElementById('folder-modal').classList.add('open');
-    }
-
     function closeFolderModal() { document.getElementById('folder-modal').classList.remove('open'); }
+    
+    function deleteFolder(id) {
+      if(confirm('Excluir esta pasta?')) {
+        S.areas = S.areas.filter(a => a.id !== id);
+        if(currentArea === id) currentArea = 'all';
+        saveData();
+      }
+    }
 
     function saveFolder() {
       const name = document.getElementById('f-folder-name').value;
       if (!name) return;
-      
-      const id = document.getElementById('f-folder-id').value || 'area_' + Date.now();
-      const folderData = {
-        id: id,
-        name: name,
-        color: document.getElementById('f-folder-color').value,
-        parentId: document.getElementById('f-folder-parent').value || null
-      };
-
-      const idx = S.areas.findIndex(a => a.id === id);
-      if (idx > -1) S.areas[idx] = folderData;
-      else S.areas.push(folderData);
-
+      S.areas.push({ id: 'area_' + Date.now(), name: name, color: document.getElementById('f-folder-color').value });
       saveData(); closeFolderModal();
     }
 
