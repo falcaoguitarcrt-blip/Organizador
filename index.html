@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Minha Agenda Pro</title>
   
-  <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#2dd4bf">
   <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2360/2360875.png">
 
@@ -503,7 +502,7 @@
     <div class="modal-content">
       <h3 style="margin-bottom: 12px;">🔔 Configurar Alertas e Notificações</h3>
       <p style="font-size: 0.8rem; color: var(--muted); margin-bottom: 16px;">
-        Nota: Como esta é uma aplicação estática sem servidor, os alertas disparam quando a página estiver aberta no navegador ou PWA.
+        Nota: Como esta é uma aplicação estática sem servidor, os alertas disparam quando a página estiver aberta no navegador.
       </p>
 
       <div class="form-group">
@@ -553,8 +552,6 @@
   </div>
 
   <script>
-    if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js').catch(console.error); }
-
     // Firebase Config
     const firebaseConfig = {
       apiKey: "AIzaSyAvdngV2HMKdAIUmK1f9IF0gm4uEXPdd44",
@@ -578,14 +575,14 @@
     let editingOriginalItem = null;
     let formStarred = false;
     let calendarWeekOffset = 0;
-    let calendarMonthOffset = 0; // Nova variável para navegação de mês
+    let calendarMonthOffset = 0; 
     let longTouchTimer = null;
     let touchMoved = false;
     let blockNextClick = false;
     let blockClickTimer = null;
     let unsubscribeFirestore = null;
-    let pendingAttachments = []; // Anexos temporários
-    let currentDashboardFilter = null; // Filtro dos cards da Agenda Geral
+    let pendingAttachments = []; 
+    let currentDashboardFilter = null; 
 
     // Preferências em LocalStorage
     let prefs = { 
@@ -1694,7 +1691,7 @@
       const daysInMonth = new Date(baseDate.getFullYear(), baseDate.getMonth() + 1, 0).getDate();
       const daysInPrevMonth = new Date(baseDate.getFullYear(), baseDate.getMonth(), 0).getDate();
       
-      const totalCells = 42; // 6 semanas de 7 dias = 42 dias para cobrir todos os layouts de mês perfeitamente
+      const totalCells = 42; 
       
       for (let i = 0; i < totalCells; i++) {
          let cellDate;
@@ -2137,7 +2134,7 @@
         el.className = 'attachment-item';
         
         let icon = '📄';
-        if (att.type.startsWith('image/')) icon = '🖼️️';
+        if (att.type.startsWith('image/')) icon = '🖼';
         else if (att.type.includes('pdf')) icon = '📕';
 
         let sizeKb = Math.round(att.size / 1024) + ' KB';
