@@ -91,6 +91,13 @@
     .quick-capture input { flex: 1; background: rgba(255,255,255,0.03); border: 1px solid var(--border); color: var(--text); padding: 12px 16px; border-radius: 8px; font-size: 0.95rem; }
     .quick-capture input:focus { border-color: var(--accent); outline: none; }
 
+    /* Botão Gemini */
+    .btn-gemini { background: linear-gradient(135deg, #8b5cf6, #3b82f6); color: #fff; border: none; padding: 10px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: opacity 0.2s; min-height: 40px; display: inline-flex; align-items: center; gap: 8px; }
+    .btn-gemini:hover { opacity: 0.85; }
+    .btn-gemini:disabled { opacity: 0.5; cursor: not-allowed; }
+    #ai-loading { display: none; margin-top: 10px; font-size: 0.85rem; color: #8b5cf6; font-weight: bold; animation: pulse 1.5s infinite; }
+    @keyframes pulse { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
+
     /* Banner Atrasados */
     .overdue-banner { background: rgba(239, 68, 68, 0.15); border: 1px solid var(--danger); border-radius: 10px; padding: 12px 16px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
     .overdue-banner-text { font-size: 0.9rem; font-weight: 600; color: #fca5a5; }
@@ -332,7 +339,10 @@
     <div class="top-bar">
       <button class="mobile-nav-toggle" onclick="toggleSidebar()">☰ Menu</button>
       <input type="text" class="search-input" placeholder="Buscar (/)..." oninput="filterItems(this.value)">
-      <button class="btn" onclick="openItemModal()">+ Novo item</button>
+      <div style="display:flex; gap:8px;">
+        <button class="btn-gemini" onclick="openGeminiModal()">✨ AI</button>
+        <button class="btn" onclick="openItemModal()">+ Novo item</button>
+      </div>
     </div>
 
     <div id="overdue-banner-container"></div>
@@ -344,6 +354,34 @@
 
     <div id="header-container"></div>
     <div id="items-container"></div>
+  </div>
+
+  <!-- Modal Gemini AI -->
+  <div id="gemini-modal" class="modal">
+    <div class="modal-content">
+      <h3 style="margin-bottom: 12px; display:flex; align-items:center; gap:8px;">✨ Assistente Gemini</h3>
+      <p style="font-size: 0.85rem; color: var(--muted); margin-bottom: 16px;">
+        Descreva a tarefa naturalmente. A IA identificará data, hora, pasta e detalhes para você.
+      </p>
+      
+      <div class="form-group" style="background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px;">
+        <label>Chave da API do Gemini (Google AI Studio)</label>
+        <input type="password" id="gemini-api-key" class="form-control" placeholder="AIzaSy...">
+        <small style="color:var(--muted); font-size:0.7rem;">Salvo apenas localmente no seu navegador.</small>
+      </div>
+
+      <div class="form-group">
+        <label>O que você deseja adicionar?</label>
+        <textarea id="gemini-prompt" class="form-control" placeholder='Ex: "Reunião de alinhamento com a equipe amanhã às 14h na pasta Trabalho. Me lembre 30 min antes."' rows="3"></textarea>
+      </div>
+
+      <div id="ai-loading">✨ O Gemini está pensando...</div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+        <button class="btn" style="background: transparent; color: var(--text);" onclick="closeGeminiModal()">Cancelar</button>
+        <button class="btn-gemini" onclick="processGeminiPrompt()" id="btn-process-ai">Gerar e Salvar</button>
+      </div>
+    </div>
   </div>
 
   <!-- Modal de Item -->
@@ -692,6 +730,7 @@
         else if (document.getElementById('folder-modal').classList.contains('open')) closeFolderModal();
         else if (document.getElementById('templates-modal').classList.contains('open')) closeManageTemplatesModal();
         else if (document.getElementById('alerts-modal').classList.contains('open')) closeAlertsModal();
+        else if (document.getElementById('gemini-modal').classList.contains('open')) closeGeminiModal();
       }
     });
 
@@ -813,6 +852,117 @@
       saveData();
       input.value = '';
       renderWithScrollPreserved();
+    }
+
+    // Funções do Gemini Assistente
+    function openGeminiModal() {
+      const savedKey = localStorage.getItem('agenda_gemini_key') || '';
+      document.getElementById('gemini-api-key').value = savedKey;
+      document.getElementById('gemini-prompt').value = '';
+      document.getElementById('ai-loading').style.display = 'none';
+      document.getElementById('btn-process-ai').disabled = false;
+      document.getElementById('gemini-modal').classList.add('open');
+    }
+
+    function closeGeminiModal() {
+      document.getElementById('gemini-modal').classList.remove('open');
+    }
+
+    async function processGeminiPrompt() {
+      const apiKey = document.getElementById('gemini-api-key').value.trim();
+      const promptText = document.getElementById('gemini-prompt').value.trim();
+
+      if (!apiKey) {
+        showToast('Por favor, insira sua chave da API do Gemini.');
+        return;
+      }
+      if (!promptText) {
+        showToast('Digite algo para o assistente fazer.');
+        return;
+      }
+
+      localStorage.setItem('agenda_gemini_key', apiKey);
+
+      const loading = document.getElementById('ai-loading');
+      const btn = document.getElementById('btn-process-ai');
+      
+      loading.style.display = 'block';
+      btn.disabled = true;
+
+      const today = getTodayBR();
+      
+      const foldersContext = S.areas.map(a => `ID: "${a.id}", Nome: "${a.name}"`).join(' | ');
+
+      const systemPrompt = `Você é um assistente de produtividade. Sua única função é extrair informações da frase do usuário e retornar EXCLUSIVAMENTE um objeto JSON válido, sem formatação markdown (sem \`\`\`json).
+Hoje é dia: ${today} (formato YYYY-MM-DD).
+Pastas disponíveis: [${foldersContext}].
+
+Propriedades do JSON esperado:
+- "title": (string) Título da tarefa
+- "desc": (string) Detalhes ou descrição. Se não houver, deixe "".
+- "date": (string) Data no formato YYYY-MM-DD. Se for hoje, use ${today}. Calcule datas relativas baseadas em hoje. Se não houver data explícita, deixe "".
+- "time": (string) Horário no formato HH:MM. Se não houver, deixe "".
+- "area": (string) ID da pasta que melhor se encaixa no contexto. Se não identificar, deixe "".
+- "status": "todo"
+- "rep": (string) "none", "daily", "weekly" ou "monthly" (padrao "none")
+- "reminder": (string) "none", "at_time", "5m", "15m", "30m", "1h", "2h", "1d" (tente inferir do texto, padrão "none")
+- "starred": (boolean) true se o usuário disser que é prioridade ou urgente, senão false.
+
+Texto do usuário: "${promptText}"`;
+
+      try {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: systemPrompt }] }]
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error('Falha na API. Verifique sua chave.');
+        }
+
+        const data = await response.json();
+        let aiText = data.candidates[0].content.parts[0].text;
+        
+        // Remove markdown block if AI includes it
+        aiText = aiText.replace(/```json/gi, '').replace(/```/g, '').trim();
+        
+        const itemData = JSON.parse(aiText);
+        
+        const newItem = {
+          id: generateId('item'),
+          title: itemData.title || 'Nova Tarefa',
+          desc: itemData.desc || '',
+          date: itemData.date || '',
+          time: itemData.time || '',
+          area: itemData.area || '',
+          status: 'todo',
+          rep: itemData.rep || 'none',
+          reminder: itemData.reminder || 'none',
+          starred: !!itemData.starred,
+          checklist: [],
+          attachments: []
+        };
+
+        if (newItem.date) {
+           newItem.repDay = parseInt(newItem.date.split('-')[2], 10) || null;
+        }
+
+        S.items.push(newItem);
+        saveData();
+        renderWithScrollPreserved();
+        showToast('Item adicionado pelo Gemini! ✨');
+        closeGeminiModal();
+
+      } catch (error) {
+        console.error(error);
+        showToast('Erro ao processar: Não foi possível ler a resposta ou a chave é inválida.');
+      } finally {
+        loading.style.display = 'none';
+        btn.disabled = false;
+      }
     }
 
     // Renderização Geral
@@ -2851,6 +3001,2903 @@
         if (now >= triggerTime && (now - triggerTime) <= 60 * 60000) {
           if (!firedAlerts[alertKey]) {
             triggerNotification('🔔 Lembrete de Tarefa', item.title, item.id);
+            firedAlerts[alertKey] = true;Como você deixou a indicação `[COLE SEU CÓDIGO HTML AQUI]` no prompt sem o código em si, **eu utilizei exatamente a última versão completa do código que você me enviou na mensagem anterior**. 
+
+Segui todas as suas regras de ouro: **nenhuma vírgula da estrutura original foi alterada**. Eu adicionei um botão flutuante no canto inferior esquerdo (para não atrapalhar o menu nem o toast de notificação), um modal dedicado ao Gemini e toda a lógica de integração direta com a API, exigindo retorno formatado em JSON. 
+
+Basta copiar o código abaixo e substituir todo o conteúdo do seu arquivo `index.html`.
+
+```html
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Minha Agenda Pro</title>
+  
+  <meta name="theme-color" content="#2dd4bf">
+  <link rel="apple-touch-icon" href="[https://cdn-icons-png.flaticon.com/512/2360/2360875.png](https://cdn-icons-png.flaticon.com/512/2360/2360875.png)">
+
+  <script src="[https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js](https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js)"></script>
+  <script src="[https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js](https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js)"></script>
+  <script src="[https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js](https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js)"></script>
+
+  <style>
+    :root { 
+      --bg: #121820; 
+      --card: #1a232e; 
+      --border: #2a3646; 
+      --accent: #2dd4bf; 
+      --accent-hover: #14b8a6; 
+      --text: #f1f5f9; 
+      --muted: #94a3b8; 
+      --danger: #ef4444; 
+      --warning: #f59e0b; 
+      --purple: #8b5cf6;
+      --sidebar-w: 260px; 
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background: var(--bg); color: var(--text); display: flex; min-height: 100vh; overflow-x: hidden; }
+
+    /* Scrollbars Finas e Discretas */
+    * { scrollbar-width: thin; scrollbar-color: transparent transparent; }
+    *:hover { scrollbar-color: var(--border) transparent; }
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: transparent; border-radius: 4px; }
+    *:hover::-webkit-scrollbar-thumb { background: var(--border); }
+
+    /* Auth Overlay */
+    #auth-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: var(--bg); z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 20px; }
+    .auth-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 32px; text-align: center; max-width: 360px; width: 90%; }
+    .btn-google { background: #fff; color: #000; border: 1px solid #dadce0; padding: 12px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; width: 100%; margin-top: 16px; min-height: 44px; }
+
+    /* Layout Principal */
+    #sidebar { width: var(--sidebar-w); background: var(--card); border-right: 1px solid var(--border); display: flex; flex-direction: column; transition: transform 0.3s ease; z-index: 100; position: fixed; top: 0; bottom: 0; left: 0; }
+    #main { flex: 1; margin-left: var(--sidebar-w); padding: 24px; max-width: 1000px; width: 100%; position: relative; }
+
+    @media (max-width: 768px) {
+      #sidebar { transform: translateX(-100%); }
+      #sidebar.open { transform: translateX(0); }
+      #main { margin-left: 0; padding: 16px; }
+      .mobile-nav-toggle { display: block !important; }
+    }
+    .mobile-nav-toggle { display: none; background: var(--accent); color: #000; border: none; padding: 8px 14px; border-radius: 8px; font-weight: bold; cursor: pointer; min-height: 40px; }
+
+    /* Perfil */
+    .user-profile { padding: 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; }
+    .user-avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--border); object-fit: cover; }
+    .user-info { flex: 1; overflow: hidden; }
+    .user-name { font-size: 0.9rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .btn-logout { background: transparent; border: none; color: var(--muted); cursor: pointer; font-size: 0.8rem; padding: 4px 0; margin-top: 2px; }
+
+    /* Navegação / Sidebar */
+    .nav-group { padding: 12px 8px; flex: 1; overflow-y: auto; }
+    .nav-section-title { margin: 16px 8px 6px; font-weight: 700; font-size: 0.75rem; color: var(--muted); display: flex; justify-content: space-between; align-items: center; letter-spacing: 0.5px; }
+    .nav-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-radius: 8px; cursor: pointer; color: var(--muted); margin-bottom: 4px; font-size: 0.95rem; position: relative; user-select: none; min-height: 40px; }
+    .nav-item.sub { padding-left: 28px; font-size: 0.9rem; }
+    .nav-item:hover { background: rgba(255,255,255,0.03); color: var(--text); }
+    .nav-item.active { background: rgba(45, 212, 191, 0.15); color: var(--accent); font-weight: 600; }
+    .nav-item.drag-over-folder { border: 2px dashed var(--accent); }
+
+    .chevron-btn { background: transparent; border: none; color: var(--muted); cursor: pointer; padding: 2px 6px; font-size: 0.85rem; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; }
+    .folder-menu-btn { background: transparent; border: none; color: var(--muted); cursor: pointer; padding: 2px 6px; border-radius: 4px; font-size: 1rem; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; }
+    .folder-menu-btn:hover { color: var(--text); background: rgba(255,255,255,0.1); }
+    .folder-badge { background: rgba(255,255,255,0.1); color: var(--muted); font-size: 0.72rem; padding: 2px 6px; border-radius: 10px; font-weight: bold; margin-left: auto; margin-right: 4px; }
+    
+    /* Dropdown Geral */
+    .dropdown { display: none; position: absolute; right: 10px; top: 32px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; z-index: 300; flex-direction: column; box-shadow: 0 8px 20px rgba(0,0,0,0.6); min-width: 170px; }
+    .dropdown.show { display: flex; }
+    .dropdown-item { padding: 10px 14px; color: var(--text); font-size: 0.85rem; cursor: pointer; text-align: left; background: transparent; border: none; display: flex; align-items: center; gap: 8px; width: 100%; min-height: 40px; }
+    .dropdown-item:hover { background: rgba(255,255,255,0.08); }
+    .dropdown-item.danger { color: var(--danger); }
+
+    /* Topbar & Captura Rápida */
+    .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; gap: 12px; flex-wrap: wrap;}
+    .search-input { background: var(--card); border: 1px solid var(--border); color: var(--text); padding: 10px 14px; border-radius: 8px; flex: 1; min-width: 200px; font-size: 0.9rem; }
+    .search-input:focus { border-color: var(--accent); outline: none; }
+    
+    .quick-capture { display: flex; gap: 8px; width: 100%; margin-bottom: 24px; }
+    .quick-capture input { flex: 1; background: rgba(255,255,255,0.03); border: 1px solid var(--border); color: var(--text); padding: 12px 16px; border-radius: 8px; font-size: 0.95rem; }
+    .quick-capture input:focus { border-color: var(--accent); outline: none; }
+
+    /* Banner Atrasados */
+    .overdue-banner { background: rgba(239, 68, 68, 0.15); border: 1px solid var(--danger); border-radius: 10px; padding: 12px 16px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+    .overdue-banner-text { font-size: 0.9rem; font-weight: 600; color: #fca5a5; }
+
+    /* Agenda Geral Dashboard */
+    .dashboard-hero { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 20px; margin-bottom: 24px; }
+    .dashboard-hero h2 { font-size: 1.4rem; margin-bottom: 4px; }
+    .dashboard-hero .date-str { font-size: 0.85rem; color: var(--muted); margin-bottom: 16px; }
+    
+    .dashboard-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 16px; }
+    .dash-card { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 12px; padding: 12px; cursor: pointer; text-align: center; transition: all 0.2s; min-height: 70px; }
+    .dash-card:hover { border-color: var(--accent); background: rgba(45, 212, 191, 0.05); }
+    .dash-card.active { border-color: var(--accent); background: rgba(45, 212, 191, 0.15); }
+    .dash-card-num { font-size: 1.4rem; font-weight: bold; margin-bottom: 2px; }
+    .dash-card-lbl { font-size: 0.75rem; color: var(--muted); font-weight: 600; }
+
+    .dash-special-block { background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 14px; }
+    .dash-special-title { font-size: 0.85rem; font-weight: bold; color: var(--muted); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    /* Cabeçalho do Conteúdo */
+    .folder-header-area { margin-bottom: 24px; }
+    .folder-title { font-size: 1.6rem; font-weight: bold; margin-bottom: 6px; display: flex; align-items: center; gap: 12px; }
+    .folder-actions { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+    .subfolder-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+    .chip { padding: 6px 12px; background: transparent; border: 1px solid var(--border); border-radius: 20px; font-size: 0.85rem; color: var(--text); cursor: pointer; display: flex; align-items: center; gap: 6px; min-height: 36px; }
+    .chip:hover { border-color: var(--muted); }
+    .chip.active { border-color: var(--accent); background: rgba(45, 212, 191, 0.1); color: var(--accent); font-weight: 600; }
+    .color-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+
+    /* Botões e Segmentados de Visualização */
+    .view-selector { display: flex; background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 8px; padding: 2px; }
+    .view-btn { padding: 8px 12px; border: none; background: transparent; color: var(--muted); font-size: 0.8rem; font-weight: 600; cursor: pointer; border-radius: 6px; display: flex; align-items: center; gap: 6px; min-height: 36px; }
+    .view-btn.active { background: var(--card); color: var(--accent); border: 1px solid var(--border); }
+    .view-btn:hover:not(.active) { color: var(--text); }
+
+    .btn { background: var(--accent); color: #000; border: none; padding: 10px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: background 0.2s; min-height: 40px; display: inline-flex; align-items: center; justify-content: center; }
+    .btn:hover { background: var(--accent-hover); }
+    .btn-sm { padding: 6px 12px; font-size: 0.8rem; border-radius: 20px; border: 1px solid var(--border); background: transparent; color: var(--text); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; min-height: 36px; }
+    .btn-sm:hover { background: rgba(255,255,255,0.05); }
+
+    /* Períodos e Grupos */
+    .period-group { margin-bottom: 28px; }
+    .period-header { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; color: var(--muted); letter-spacing: 0.5px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; user-select: none; }
+    .period-header.collapsible { cursor: pointer; }
+    .period-header.collapsible:hover { color: var(--text); }
+    .period-header::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+    /* Cards e Itens (Lista) */
+    .card { 
+      background: var(--card); 
+      border: 1px solid var(--border); 
+      border-left: 4px solid var(--muted); 
+      border-radius: 12px; 
+      padding: 14px 16px; 
+      margin-bottom: 10px; 
+      display: flex; 
+      gap: 12px; 
+      cursor: pointer; 
+      position: relative; 
+      transition: border-color 0.2s, opacity 0.2s; 
+      user-select: text; 
+      -webkit-user-select: text;
+    }
+    .card:hover { border-color: #3b4b5e; }
+    .card:hover .card-edit-btn { opacity: 1; }
+    .card.status-done { opacity: 0.55; }
+    
+    .card-drag-handle { cursor: grab; color: var(--muted); font-size: 1.1rem; padding: 0 4px; display: none; align-items: center; }
+    .kanban-board .card-drag-handle { display: flex; }
+    
+    .card-check { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--muted); cursor: pointer; flex-shrink: 0; margin-top: 2px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+    .card-check:hover { border-color: var(--accent); }
+    .card-check.done { background: var(--accent); border-color: var(--accent); }
+    .card-check.done::after { content: '✓'; color: #000; font-size: 13px; font-weight: bold; }
+    
+    .card-body { flex: 1; overflow: hidden; }
+    .card-title-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+    .card-title { font-weight: 600; margin-bottom: 6px; font-size: 0.98rem; color: #fff; word-break: break-word; }
+    .card-meta { font-size: 0.75rem; color: var(--muted); display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 4px; }
+    
+    .card-desc { 
+      font-size: 0.85rem; 
+      color: var(--muted); 
+      margin-top: 8px; 
+      white-space: pre-wrap; 
+      word-break: break-word; 
+      line-height: 1.4; 
+    }
+    .card-desc.collapsed { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+    .btn-toggle-desc { background: none; border: none; color: var(--accent); font-size: 0.75rem; cursor: pointer; padding: 2px 0; margin-top: 2px; font-weight: 600; }
+
+    .card-edit-btn { opacity: 0; background: transparent; border: none; color: var(--muted); cursor: pointer; padding: 2px 6px; font-size: 0.9rem; border-radius: 4px; transition: opacity 0.2s; min-height: 32px; min-width: 32px; }
+    .card-edit-btn:hover { color: var(--text); background: rgba(255,255,255,0.1); }
+
+    /* Checklist Interativo no Card */
+    .card-checklist-box { margin-top: 10px; background: rgba(0,0,0,0.15); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 10px; }
+    .card-chk-progress { height: 4px; background: var(--border); border-radius: 2px; margin-bottom: 8px; overflow: hidden; }
+    .card-chk-progress-bar { height: 100%; background: var(--accent); transition: width 0.3s ease; }
+    .card-chk-progress-bar.complete { background: #10b981; }
+    .card-chk-item { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-size: 0.82rem; }
+    .card-chk-item.done span { text-decoration: line-through; opacity: 0.5; }
+    .card-chk-add { display: flex; gap: 6px; margin-top: 8px; }
+    .card-chk-add input { flex: 1; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 4px 8px; color: var(--text); font-size: 0.8rem; }
+    .card-chk-add input:focus { border-color: var(--accent); outline: none; }
+
+    /* Selos de Status */
+    .badge-status { font-size: 0.68rem; padding: 2px 6px; border-radius: 4px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; }
+    .badge-status.doing { background: rgba(245, 158, 11, 0.15); color: var(--warning); border: 1px solid var(--warning); }
+    .badge-status.waiting { background: rgba(139, 92, 246, 0.15); color: #c4b5fd; border: 1px solid var(--purple); }
+
+    .postpone-btn { background: rgba(245, 158, 11, 0.15); color: var(--warning); border: 1px solid var(--warning); padding: 2px 8px; border-radius: 12px; font-size: 0.7rem; font-weight: bold; cursor: pointer; margin-left: auto; min-height: 28px; }
+    .postpone-btn:hover { background: rgba(245, 158, 11, 0.3); }
+
+    .item-more-btn { background: transparent; border: none; color: var(--muted); cursor: pointer; padding: 2px 6px; font-size: 1.1rem; border-radius: 4px; min-height: 32px; min-width: 32px; }
+    .item-more-btn:hover { color: var(--text); background: rgba(255,255,255,0.1); }
+
+    /* Visualização: Cards (Quadrantes Grid) */
+    .grid-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+    .grid-cards .card { flex-direction: column; margin-bottom: 0; justify-content: space-between; }
+    .grid-cards .card-body { width: 100%; }
+
+    /* Visualização: Kanban */
+    .kanban-board { display: flex; gap: 14px; overflow-x: auto; padding-bottom: 16px; align-items: flex-start; }
+    .kanban-col { flex: 1; min-width: 250px; max-width: 320px; background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 12px; padding: 12px; min-height: 400px; display: flex; flex-direction: column; }
+    .kanban-header { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+    .kanban-cards { flex: 1; display: flex; flex-direction: column; gap: 10px; min-height: 100px; }
+    .kanban-cards.drag-over { background: rgba(45, 212, 191, 0.05); border-radius: 8px; }
+
+    /* Visualização: Calendário Semanal e Mensal */
+    .calendar-controls { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; background: var(--card); padding: 8px 14px; border-radius: 8px; border: 1px solid var(--border); }
+    .calendar-scroll-container { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; min-width: 700px; }
+    .cal-col { background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 8px; padding: 8px; min-height: 250px; }
+    .cal-header { font-size: 0.78rem; font-weight: 700; text-align: center; margin-bottom: 8px; color: var(--muted); padding-bottom: 4px; border-bottom: 1px solid var(--border); }
+    .cal-item { background: var(--card); border-left: 3px solid var(--accent); padding: 6px 8px; border-radius: 6px; font-size: 0.78rem; margin-bottom: 6px; cursor: pointer; word-break: break-word; }
+    .cal-item:hover { border-color: var(--accent-hover); background: rgba(255,255,255,0.05); }
+
+    .month-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; min-width: 700px; }
+    .month-cell { background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 8px; min-height: 85px; padding: 4px; display: flex; flex-direction: column; }
+    .month-cell-header { font-size: 0.75rem; font-weight: 700; text-align: right; color: var(--muted); margin-bottom: 4px; padding-bottom: 2px; }
+    .month-cell.other-month { opacity: 0.4; background: rgba(0,0,0,0.2); }
+    .month-cell.today { border-color: var(--accent); background: rgba(45, 212, 191, 0.05); }
+
+    /* Estado Vazio */
+    .empty-state { text-align: center; padding: 40px 20px; color: var(--muted); }
+    .empty-state p { margin-bottom: 16px; font-size: 0.95rem; }
+
+    /* Context Menu Flutuante */
+    #context-menu { position: fixed; background: var(--card); border: 1px solid var(--border); border-radius: 10px; z-index: 9999; box-shadow: 0 10px 25px rgba(0,0,0,0.7); display: none; flex-direction: column; min-width: 210px; max-height: 85vh; overflow-y: auto; padding: 4px 0; }
+    #context-menu .ctx-item { padding: 10px 16px; font-size: 0.85rem; color: var(--text); background: transparent; border: none; text-align: left; cursor: pointer; display: flex; align-items: center; justify-content: space-between; width: 100%; min-height: 40px; }
+    #context-menu .ctx-item:hover { background: rgba(255,255,255,0.08); }
+    #context-menu .ctx-item.danger { color: var(--danger); }
+    #context-menu .ctx-divider { height: 1px; background: var(--border); margin: 4px 0; }
+    #context-menu .ctx-date-picker { padding: 6px 14px; display: flex; align-items: center; gap: 8px; }
+    #context-menu .ctx-date-picker input { background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 6px; border-radius: 6px; font-size: 0.8rem; width: 100%; }
+
+    /* Modais */
+    .modal { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.65); display: none; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(3px); }
+    .modal.open { display: flex; }
+    .modal-content { background: var(--card); border: 1px solid var(--border); border-radius: 16px; width: 90%; max-width: 560px; padding: 24px; max-height: 90vh; overflow-y: auto; }
+    
+    .form-group { margin-bottom: 14px; }
+    .form-group label { display: block; font-size: 0.8rem; color: var(--muted); margin-bottom: 4px; font-weight: 600; }
+    .form-control { width: 100%; background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 10px; border-radius: 8px; outline: none; font-size: 0.9rem; min-height: 40px; }
+    .form-control:focus { border-color: var(--accent); }
+    textarea.form-control { resize: vertical; min-height: 90px; line-height: 1.4; overflow-y: hidden; }
+
+    .checklist-row { display: flex; gap: 8px; align-items: center; margin-bottom: 6px; }
+    .star-btn { background: transparent; border: none; font-size: 1.2rem; cursor: pointer; min-width: 36px; min-height: 36px; }
+    .star-btn.active { color: var(--warning); }
+    .star-btn.inactive { color: var(--muted); }
+
+    /* Área de Anexos */
+    .drop-zone { border: 2px dashed var(--border); border-radius: 8px; padding: 16px; text-align: center; background: rgba(0,0,0,0.1); cursor: pointer; transition: all 0.2s; margin-top: 6px; }
+    .drop-zone:hover, .drop-zone.dragover { border-color: var(--accent); background: rgba(45, 212, 191, 0.05); }
+    .attachment-list { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+    .attachment-item { display: flex; align-items: center; justify-content: space-between; background: var(--bg); border: 1px solid var(--border); padding: 8px 12px; border-radius: 8px; font-size: 0.85rem; }
+    .attachment-preview { width: 32px; height: 32px; object-fit: cover; border-radius: 4px; }
+
+    /* Toasts In-App */
+    #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 10000; display: flex; flex-direction: column; gap: 10px; max-width: 340px; width: 90%; }
+    .toast { background: var(--card); border: 1px solid var(--accent); border-radius: 12px; padding: 14px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); display: flex; flex-direction: column; gap: 8px; animation: slideIn 0.3s ease; }
+    @keyframes slideIn { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+    /* --- ADIÇÕES PARA O ASSISTENTE GEMINI --- */
+    .gemini-fab { position: fixed; bottom: 24px; left: 24px; background: linear-gradient(135deg, #8b5cf6, #3b82f6); color: white; border: none; width: 56px; height: 56px; border-radius: 50%; font-size: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.4); cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 900; transition: transform 0.2s; }
+    .gemini-fab:hover { transform: scale(1.1); }
+    @media (max-width: 768px) { .gemini-fab { bottom: 24px; left: 24px; } }
+    .ai-loading { font-size: 0.9rem; color: #8b5cf6; margin-top: 10px; display: none; font-weight: bold; text-align: center;}
+    .ai-loading.active { display: block; animation: pulse 1.5s infinite; }
+    @keyframes pulse { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
+  </style>
+</head>
+<body>
+
+  <!-- Login Overlay -->
+  <div id="auth-overlay">
+    <div class="auth-card">
+      <h2 style="margin-bottom: 8px;">Minha Agenda Pro</h2>
+      <p style="color: var(--muted); font-size: 0.9rem;">Sincronizando tarefas offline e nuvem...</p>
+      <button class="btn-google" onclick="loginGoogle()">Entrar com o Google</button>
+    </div>
+  </div>
+
+  <!-- Menu Contextual Flutuante -->
+  <div id="context-menu" onclick="event.stopPropagation()"></div>
+
+  <!-- Toast Container -->
+  <div id="toast-container"></div>
+
+  <!-- Botão Flutuante Gemini -->
+  <button class="gemini-fab" onclick="openGeminiModal()" title="Assistente IA Gemini">✨</button>
+
+  <!-- Sidebar -->
+  <div id="sidebar">
+    <div class="user-profile">
+      <img id="u-avatar" class="user-avatar" src="" alt="Avatar">
+      <div class="user-info">
+        <div id="u-name" class="user-name">Carregando...</div>
+        <button class="btn-logout" onclick="logout()">Sair</button>
+      </div>
+    </div>
+    
+    <div class="nav-group" id="sidebar-nav-group">
+      <div class="nav-item" id="nav-all" onclick="setArea('all')">
+        <span>📋 Agenda geral</span>
+      </div>
+      
+      <div id="pinned-folders-section">
+        <div class="nav-section-title">📌 FIXADAS</div>
+        <div id="pinned-folder-tree"></div>
+      </div>
+
+      <div>
+        <div class="nav-section-title">
+          <span>PASTAS</span>
+          <button class="btn-sm" style="padding: 2px 6px; font-size: 0.7rem; min-height: auto;" onclick="toggleAllFoldersCollapse(event)" id="btn-toggle-all-folders">Recolher todas</button>
+        </div>
+        <div id="folder-tree"></div>
+      </div>
+
+      <button class="btn-sm" style="margin: 16px 8px 8px; width: calc(100% - 16px); justify-content: center;" onclick="openFolderModal()">+ Nova Pasta</button>
+      <button class="btn-sm" style="margin: 4px 8px; width: calc(100% - 16px); justify-content: center;" onclick="openAlertsModal()">🔔 Alertas</button>
+      <button class="btn-sm" style="margin: 4px 8px; width: calc(100% - 16px); justify-content: center;" onclick="openManageTemplatesModal()">⚙ Gerenciar Modelos</button>
+    </div>
+  </div>
+
+  <!-- Conteúdo Principal -->
+  <div id="main">
+    <div class="top-bar">
+      <button class="mobile-nav-toggle" onclick="toggleSidebar()">☰ Menu</button>
+      <input type="text" class="search-input" placeholder="Buscar (/)..." oninput="filterItems(this.value)">
+      <button class="btn" onclick="openItemModal()">+ Novo item</button>
+    </div>
+
+    <div id="overdue-banner-container"></div>
+
+    <div class="quick-capture">
+      <input type="text" id="quick-input" placeholder="Captura rápida: Ex: Treino amanhã 18h #Academia" onkeypress="handleQuickCapture(event)">
+      <button class="btn" onclick="processQuickCapture()">Salvar</button>
+    </div>
+
+    <div id="header-container"></div>
+    <div id="items-container"></div>
+  </div>
+
+  <!-- Modal de Item -->
+  <div id="item-modal" class="modal">
+    <div class="modal-content" id="item-modal-content">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3 style="font-size: 1.2rem;" id="modal-item-title-head">Item da Agenda</h3>
+        <div>
+          <button id="f-delete-btn" class="btn-sm" style="display:inline-flex; border-color:var(--danger); color:var(--danger); margin-right:8px;" onclick="deleteCurrentItem()">🗑️ Excluir</button>
+          <button id="f-star-btn" class="star-btn inactive" onclick="toggleFormStar()">☆</button>
+        </div>
+      </div>
+
+      <div id="legacy-link-box" style="display:none; margin-bottom: 12px; background: rgba(245, 158, 11, 0.1); border: 1px solid var(--warning); padding: 8px 12px; border-radius: 8px; justify-content: space-between; align-items: center;">
+        <span style="font-size: 0.85rem; color: var(--warning);" id="legacy-link-text">🔗 Link antigo</span>
+        <button class="btn-sm" onclick="removeLegacyLink()">Remover Link</button>
+      </div>
+
+      <div class="form-group" id="template-loader-box">
+        <label>Carregar Modelo (Opcional)</label>
+        <select id="f-load-template" class="form-control" onchange="handleSelectTemplate(this.value)"></select>
+      </div>
+
+      <div class="form-group">
+        <label>O que é?</label>
+        <input type="text" id="f-title" class="form-control" placeholder="Título. Ex: Culto de Quinta">
+      </div>
+      <div class="form-group">
+        <label>Descrição detalhada</label>
+        <textarea id="f-desc" class="form-control" placeholder="Anotações e detalhes do compromisso..." oninput="autoResizeTextarea(this)"></textarea>
+      </div>
+
+      <div class="form-group" style="display: flex; gap: 12px;">
+        <div style="flex:1;">
+          <label>Pasta</label>
+          <select id="f-area" class="form-control"></select>
+        </div>
+        <div style="flex:1;">
+          <label>Situação</label>
+          <select id="f-status" class="form-control">
+            <option value="todo">A Fazer</option>
+            <option value="doing">Em andamento</option>
+            <option value="waiting">Aguardando</option>
+            <option value="done">Concluído</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group" style="display: flex; gap: 12px;">
+        <div style="flex:1;">
+          <label>Data</label>
+          <input type="date" id="f-date" class="form-control">
+        </div>
+        <div style="flex:1;">
+          <label>Hora</label>
+          <input type="time" id="f-time" class="form-control">
+        </div>
+      </div>
+
+      <div class="form-group" style="display: flex; gap: 12px;">
+        <div style="flex:1;">
+          <label>Repetir (Gera cópia ao concluir)</label>
+          <select id="f-rep" class="form-control">
+            <option value="none">Não repete</option>
+            <option value="daily">Diariamente</option>
+            <option value="weekly">Semanalmente</option>
+            <option value="monthly">Mensalmente</option>
+          </select>
+        </div>
+        <div style="flex:1;">
+          <label>🔔 Lembrete</label>
+          <select id="f-reminder" class="form-control">
+            <option value="none">Nenhum</option>
+            <option value="at_time">No horário</option>
+            <option value="5m">5 min antes</option>
+            <option value="15m">15 min antes</option>
+            <option value="30m">30 min antes</option>
+            <option value="1h">1 hora antes</option>
+            <option value="2h">2 horas antes</option>
+            <option value="1d">1 dia antes</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Checklist / Subtarefas (Enter cria novo | Backspace em vazio remove)</label>
+        <div id="checklist-container"></div>
+        <button type="button" class="btn-sm" style="margin-top: 8px; width: 100%; justify-content: center;" onclick="addChecklistItem('', false, true)">+ Adicionar subitem</button>
+      </div>
+
+      <!-- Seção de Anexos -->
+      <div class="form-group">
+        <label>📎 Anexos (Máx. 3 MB por arquivo)</label>
+        <div class="drop-zone" id="file-drop-zone" onclick="document.getElementById('file-input').click()">
+          <p style="font-size: 0.85rem; color: var(--muted);">Clique para selecionar ou arraste arquivos aqui (Ctrl+V para colar imagem)</p>
+          <input type="file" id="file-input" multiple style="display:none;" onchange="handleFileSelect(event)">
+        </div>
+        <div class="attachment-list" id="modal-attachment-list"></div>
+      </div>
+
+      <div class="form-group" style="display: flex; align-items: center; gap: 8px; margin-top: 16px;">
+        <input type="checkbox" id="f-save-template"> 
+        <label for="f-save-template" style="margin:0; cursor:pointer;" title="Salva a estrutura deste item como um modelo acessível para futuras tarefas">Salvar como Modelo Reutilizável</label>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+        <button class="btn" style="background: transparent; color: var(--text);" onclick="attemptCloseItemModal()">Cancelar</button>
+        <button class="btn" onclick="saveItem()">Salvar Item</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Pasta -->
+  <div id="folder-modal" class="modal">
+    <div class="modal-content" style="max-width: 400px;">
+      <h3 id="folder-modal-title" style="margin-bottom: 20px;">Nova Pasta</h3>
+      <input type="hidden" id="f-folder-id">
+      
+      <div class="form-group">
+        <label>Nome</label>
+        <input type="text" id="f-folder-name" class="form-control">
+      </div>
+      
+      <div class="form-group">
+        <label>Cor de identificação</label>
+        <input type="color" id="f-folder-color" class="form-control" value="#2dd4bf" style="height: 40px; padding: 4px;">
+      </div>
+
+      <div class="form-group" id="f-folder-parent-group">
+        <label>Pertence à pasta? (Subpasta / Mover)</label>
+        <select id="f-folder-parent" class="form-control">
+          <option value="">Nenhuma (Pasta Principal)</option>
+        </select>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px;">
+        <button class="btn" style="background: transparent; color: var(--text);" onclick="closeFolderModal()">Cancelar</button>
+        <button class="btn" onclick="saveFolder()">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Gerenciar Modelos -->
+  <div id="templates-modal" class="modal">
+    <div class="modal-content">
+      <h3 style="margin-bottom: 16px;">⚙ Gerenciar Modelos</h3>
+      <div id="templates-list-container" style="display: flex; flex-direction: column; gap: 10px; max-height: 50vh; overflow-y: auto;"></div>
+      <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
+        <button class="btn" onclick="closeManageTemplatesModal()">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Alertas e Notificações -->
+  <div id="alerts-modal" class="modal">
+    <div class="modal-content">
+      <h3 style="margin-bottom: 12px;">🔔 Configurar Alertas e Notificações</h3>
+      <p style="font-size: 0.8rem; color: var(--muted); margin-bottom: 16px;">
+        Nota: Como esta é uma aplicação estática sem servidor, os alertas disparam quando a página estiver aberta no navegador.
+      </p>
+
+      <div class="form-group">
+        <button class="btn-sm" style="width:100%; justify-content:center;" onclick="requestNotificationPermission()">Permitir Notificações do Navegador</button>
+      </div>
+
+      <div class="form-group">
+        <label>Horário padrão para itens sem hora</label>
+        <input type="time" id="cfg-default-time" class="form-control" value="08:00" onchange="saveAlertConfig()">
+      </div>
+
+      <div class="form-group" style="display:flex; align-items:center; justify-content:space-between;">
+        <label style="margin:0;">Ativar Resumo Diário</label>
+        <input type="checkbox" id="cfg-daily-summary-active" onchange="saveAlertConfig()">
+      </div>
+
+      <div class="form-group">
+        <label>Horário do Resumo Diário</label>
+        <input type="time" id="cfg-daily-summary-time" class="form-control" value="07:30" onchange="saveAlertConfig()">
+      </div>
+
+      <div class="form-group" style="display:flex; align-items:center; justify-content:space-between;">
+        <label style="margin:0;">Som de Alerta</label>
+        <input type="checkbox" id="cfg-sound-active" checked onchange="saveAlertConfig()">
+      </div>
+
+      <div class="form-group" style="display:flex; align-items:center; justify-content:space-between;">
+        <label style="margin:0;">Modo Não Perturbar</label>
+        <input type="checkbox" id="cfg-dnd-active" onchange="saveAlertConfig()">
+      </div>
+
+      <div class="form-group" style="display:flex; gap:10px;">
+        <div style="flex:1;">
+          <label>Início Não Perturbar</label>
+          <input type="time" id="cfg-dnd-start" class="form-control" value="22:00" onchange="saveAlertConfig()">
+        </div>
+        <div style="flex:1;">
+          <label>Fim Não Perturbar</label>
+          <input type="time" id="cfg-dnd-end" class="form-control" value="07:00" onchange="saveAlertConfig()">
+        </div>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
+        <button class="btn" onclick="closeAlertsModal()">Concluído</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Assistente Gemini -->
+  <div id="gemini-modal" class="modal">
+    <div class="modal-content" style="max-width: 500px; border-top: 4px solid #8b5cf6;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3 style="font-size: 1.2rem; color: #a78bfa;">✨ Assistente Inteligente</h3>
+        <button class="btn-sm" style="border-color:var(--danger); color:var(--danger);" onclick="closeGeminiModal()">✕</button>
+      </div>
+      
+      <p style="font-size:0.85rem; color:var(--muted); margin-bottom: 16px;">
+        Descreva sua tarefa e a IA preencherá todos os dados estruturados para você.
+      </p>
+
+      <div class="form-group">
+        <label>API Key do Gemini (Fica salva no seu navegador localmente)</label>
+        <input type="password" id="gemini-api-key" class="form-control" placeholder="Cole sua chave do Google AI Studio aqui">
+      </div>
+
+      <div class="form-group">
+        <label>Comando para a IA</label>
+        <textarea id="gemini-prompt" class="form-control" placeholder='Ex: "Adicione um treino amanhã às 18h na pasta Saúde e coloque um lembrete de 30min"' style="min-height: 80px;"></textarea>
+      </div>
+
+      <div class="ai-loading" id="gemini-loading">✨ O Gemini está pensando...</div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+        <button class="btn" style="background: transparent; color: var(--text);" onclick="closeGeminiModal()">Cancelar</button>
+        <button class="btn" style="background: linear-gradient(135deg, #8b5cf6, #3b82f6); color: #fff; border: none;" onclick="processGeminiCommand()">✨ Criar Tarefa</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Firebase Config
+    const firebaseConfig = {
+      apiKey: "AIzaSyAvdngV2HMKdAIUmK1f9IF0gm4uEXPdd44",
+      authDomain: "fluxo-de-caixa-59dd1.firebaseapp.com",
+      projectId: "fluxo-de-caixa-59dd1",
+      storageBucket: "fluxo-de-caixa-59dd1.appspot.com",
+      messagingSenderId: "837452325692",
+      appId: "1:837452325692:web:abb7f33bb167d2c13df439"
+    };
+
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const auth = firebase.auth();
+    db.enablePersistence().catch(err => console.log("Offline persistence:", err));
+
+    // Estado da Aplicação
+    let S = { areas: [], items: [], templates: [] };
+    let currentArea = 'all';
+    let searchTerm = '';
+    let currentEditItemId = null;
+    let editingOriginalItem = null;
+    let formStarred = false;
+    let calendarWeekOffset = 0;
+    let calendarMonthOffset = 0; 
+    let longTouchTimer = null;
+    let touchMoved = false;
+    let blockNextClick = false;
+    let blockClickTimer = null;
+    let unsubscribeFirestore = null;
+    let pendingAttachments = []; 
+    let currentDashboardFilter = null; 
+
+    // Preferências em LocalStorage
+    let prefs = { 
+      collapsedDone: true, 
+      viewMode: 'list', 
+      descExpanded: {}, 
+      collapsedFolders: {}, 
+      generalGroupBy: 'period',
+      alertConfig: {
+        defaultTime: '08:00',
+        dailySummaryActive: false,
+        dailySummaryTime: '07:30',
+        soundActive: true,
+        dndActive: false,
+        dndStart: '22:00',
+        dndEnd: '07:00'
+      }
+    };
+
+    try {
+      const savedPrefs = localStorage.getItem('agenda_prefs_v3');
+      if (savedPrefs) prefs = { ...prefs, ...JSON.parse(savedPrefs) };
+    } catch(e) { console.warn('LocalStorage error:', e); }
+
+    function savePrefs() {
+      try { localStorage.setItem('agenda_prefs_v3', JSON.stringify(prefs)); } catch(e){}
+    }
+
+    function generateId(prefix = 'id') {
+      return prefix + '_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+    }
+
+    function toLocalDateStr(d) {
+      if (!d) return '';
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+
+    function compareItemsByDateTime(a, b) {
+      const dateA = a.date || '9999-99-99';
+      const dateB = b.date || '9999-99-99';
+      if (dateA !== dateB) return dateA.localeCompare(dateB);
+      const timeA = a.time || '23:59:59';
+      const timeB = b.time || '23:59:59';
+      return timeA.localeCompare(timeB);
+    }
+
+    function filterItems(val) {
+      searchTerm = val;
+      renderWithScrollPreserved();
+    }
+
+    function escapeHtml(str) {
+      if (typeof str !== 'string') return '';
+      return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    }
+
+    function isValidHttpUrl(string) {
+      if (!string) return false;
+      try {
+        const url = new URL(string);
+        return url.protocol === "http:" || url.protocol === "https:";
+      } catch (_) { return false; }
+    }
+
+    function normalizeAndValidateUrl(urlStr) {
+      if (!urlStr) return '';
+      let testUrl = urlStr.trim();
+      if (!/^https?:\/\//i.test(testUrl)) testUrl = 'https://' + testUrl;
+      return isValidHttpUrl(testUrl) ? testUrl : '';
+    }
+
+    function getTodayBR() { return toLocalDateStr(new Date()); }
+
+    function formatBR(dStr, tStr) {
+      if (!dStr) return '';
+      const p = dStr.split('-');
+      return `${p[2]}/${p[1]}` + (tStr ? ` às ${tStr}` : '');
+    }
+
+    function autoResizeTextarea(el) {
+      if (!el) return;
+      el.style.height = 'auto';
+      el.style.height = Math.max(90, el.scrollHeight) + 'px';
+    }
+
+    function renderWithScrollPreserved() {
+      const mainScroll = window.scrollY;
+      const sidebarScroll = document.getElementById('sidebar-nav-group')?.scrollTop || 0;
+      render();
+      window.scrollTo(0, mainScroll);
+      const sb = document.getElementById('sidebar-nav-group');
+      if (sb) sb.scrollTop = sidebarScroll;
+    }
+
+    // Atalhos globais
+    document.addEventListener('keydown', (e) => {
+      if (e.key === '/' && !['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) {
+        e.preventDefault(); 
+        document.querySelector('.search-input').focus();
+      }
+      if (e.key === 'Escape') {
+        hideContextMenu();
+        if (document.getElementById('item-modal').classList.contains('open')) attemptCloseItemModal();
+        else if (document.getElementById('folder-modal').classList.contains('open')) closeFolderModal();
+        else if (document.getElementById('templates-modal').classList.contains('open')) closeManageTemplatesModal();
+        else if (document.getElementById('alerts-modal').classList.contains('open')) closeAlertsModal();
+        else if (document.getElementById('gemini-modal').classList.contains('open')) closeGeminiModal();
+      }
+    });
+
+    window.addEventListener('scroll', hideContextMenu);
+
+    // Autenticação
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        document.getElementById('auth-overlay').style.display = 'none';
+        document.getElementById('u-avatar').src = user.photoURL || '';
+        document.getElementById('u-name').innerText = user.displayName || user.email;
+        loadData();
+      } else { 
+        if (unsubscribeFirestore) {
+          unsubscribeFirestore();
+          unsubscribeFirestore = null;
+        }
+        document.getElementById('auth-overlay').style.display = 'flex'; 
+      }
+    });
+
+    function loginGoogle() { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
+    function logout() { 
+      if (unsubscribeFirestore) {
+        unsubscribeFirestore();
+        unsubscribeFirestore = null;
+      }
+      auth.signOut(); 
+    }
+
+    function loadData() {
+      if (unsubscribeFirestore) {
+        unsubscribeFirestore();
+        unsubscribeFirestore = null;
+      }
+
+      unsubscribeFirestore = db.collection('shared').doc('agenda-vida').onSnapshot(doc => {
+        if (doc.exists) {
+          const raw = doc.data();
+          if (raw.json) { try { S = JSON.parse(raw.json); } catch (e) { S = raw; } } else { S = raw; }
+        }
+        if (!S.items) S.items = [];
+        if (!S.areas) S.areas = [];
+        if (!S.templates) S.templates = [];
+
+        S.items.forEach(i => {
+          if (!i.status || i.status === 'UNDEFINED') i.status = 'todo';
+          if (!i.attachments) i.attachments = [];
+        });
+
+        render();
+        updateTabTitleAndAlerts();
+      });
+    }
+
+    function saveData() {
+      db.collection('shared').doc('agenda-vida').set({ ...S, json: JSON.stringify(S), t: Date.now() });
+      updateTabTitleAndAlerts();
+    }
+
+    function getFolderConfig(id) { return S.areas.find(a => a.id === id); }
+
+    function getHierarchy(id) {
+      let folder = getFolderConfig(id);
+      if (!folder) return { text: '', color: 'var(--muted)' };
+      let color = folder.color || 'var(--muted)';
+      if (folder.parentId) {
+        let parent = getFolderConfig(folder.parentId);
+        if (parent) return { text: `${parent.name} > ${folder.name}`, color: color };
+      }
+      return { text: folder.name, color: color };
+    }
+
+    // Captura Rápida
+    function handleQuickCapture(e) { if(e.key === 'Enter') processQuickCapture(); }
+    function processQuickCapture() {
+      const input = document.getElementById('quick-input');
+      let text = input.value.trim();
+      if(!text) return;
+
+      const originalText = text;
+      let date = getTodayBR();
+      let time = '';
+      let folderId = currentArea === 'all' ? '' : currentArea;
+      let title = text;
+
+      const timeMatch = text.match(/ ([01]?\d|2[0-3])[:h]([0-5]\d)? /i);
+      if (timeMatch) {
+        time = timeMatch[1].padStart(2, '0') + ':' + (timeMatch[2] || '00');
+        title = title.replace(timeMatch[0], '');
+      }
+      if (/amanh[ãa]/i.test(text)) {
+        let d = new Date();
+        d.setDate(d.getDate() + 1);
+        date = toLocalDateStr(d);
+        title = title.replace(/amanh[ãa]/i, '');
+      }
+      const tagMatch = text.match(/#([\p{L}\p{N}_]+)/u);
+      if (tagMatch) {
+        const fName = tagMatch[1].toLowerCase();
+        const found = S.areas.find(a => a.name.toLowerCase().includes(fName));
+        if (found) folderId = found.id;
+        title = title.replace(tagMatch[0], '');
+      }
+
+      title = title.trim() || originalText;
+
+      S.items.push({ 
+        id: generateId('item'), 
+        title: title, 
+        date: date, 
+        time: time, 
+        area: folderId, 
+        status: 'todo', 
+        rep: 'none',
+        checklist: [],
+        attachments: []
+      });
+      saveData();
+      input.value = '';
+      renderWithScrollPreserved();
+    }
+
+    // Renderização Geral
+    function render() {
+      renderSidebar();
+      renderOverdueBanner();
+      renderHeader();
+      
+      const container = document.getElementById('items-container');
+      container.innerHTML = '';
+
+      let list = S.items.filter(i => {
+        if (currentArea === 'all') return true;
+        return i.area === currentArea || getFolderConfig(i.area)?.parentId === currentArea;
+      });
+
+      if (currentArea === 'all' && currentDashboardFilter) {
+        const today = getTodayBR();
+        if (currentDashboardFilter === 'overdue') list = list.filter(i => i.status !== 'done' && i.date && i.date < today);
+        else if (currentDashboardFilter === 'today') list = list.filter(i => i.status !== 'done' && i.date === today);
+        else if (currentDashboardFilter === 'next7') {
+          let next7 = new Date(); next7.setDate(next7.getDate() + 7);
+          const next7Str = toLocalDateStr(next7);
+          list = list.filter(i => i.status !== 'done' && i.date && i.date > today && i.date <= next7Str);
+        } else if (currentDashboardFilter === 'done_today') list = list.filter(i => i.status === 'done' && i.date === today);
+      }
+
+      if (searchTerm) {
+        const term = searchTerm.toLowerCase();
+        list = list.filter(i => 
+          (i.title && i.title.toLowerCase().includes(term)) || 
+          (i.desc && i.desc.toLowerCase().includes(term)) ||
+          (i.checklist && i.checklist.some(c => c.text && c.text.toLowerCase().includes(term)))
+        );
+      }
+
+      if (list.length === 0) {
+        if (searchTerm) {
+          container.innerHTML = `<div class="empty-state"><p>Nenhum resultado para '${escapeHtml(searchTerm)}'</p></div>`;
+        } else if (currentArea !== 'all') {
+          container.innerHTML = `<div class="empty-state"><p>Nenhum item nesta pasta ainda.</p><button class="btn" onclick="openItemModal()">+ Novo item nesta pasta</button></div>`;
+        } else if (currentDashboardFilter) {
+          container.innerHTML = `<div class="empty-state"><p>Nenhum item encontrado para este filtro.</p></div>`;
+        }
+        return;
+      }
+
+      if (currentArea === 'all' && prefs.generalGroupBy === 'folder' && prefs.viewMode === 'list') {
+        renderViewListByFolder(list, container);
+        return;
+      }
+
+      if (prefs.viewMode === 'cards') renderViewCards(list, container);
+      else if (prefs.viewMode === 'kanban') renderViewKanban(list, container);
+      else if (prefs.viewMode === 'calendar') renderViewCalendar(list, container);
+      else if (prefs.viewMode === 'month') renderViewMonth(list, container);
+      else renderViewList(list, container);
+    }
+
+    function renderOverdueBanner() {
+      const container = document.getElementById('overdue-banner-container');
+      const today = getTodayBR();
+      const overdueItems = S.items.filter(i => i.status !== 'done' && i.date && i.date < today);
+
+      if (overdueItems.length === 0) {
+        container.innerHTML = '';
+        return;
+      }
+
+      container.innerHTML = `
+        <div class="overdue-banner">
+          <div class="overdue-banner-text">⚠ ${overdueItems.length} tarefa(s) atrasada(s)</div>
+          <div style="display:flex; gap:8px;">
+            <button class="btn-sm" onclick="filterDashboard('overdue')">Ver Atrasadas</button>
+            <button class="btn-sm" onclick="postponeAllOverdueToToday()">Adiar todas para hoje</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function postponeAllOverdueToToday() {
+      if (confirm('Deseja realmente adiar todas as tarefas atrasadas para HOJE?')) {
+        const today = getTodayBR();
+        S.items.forEach(i => {
+          if (i.status !== 'done' && i.date && i.date < today) {
+            i.date = today;
+            i.repDay = parseInt(today.split('-')[2], 10);
+          }
+        });
+        saveData();
+        renderWithScrollPreserved();
+      }
+    }
+
+    function setViewMode(mode) {
+      prefs.viewMode = mode;
+      savePrefs();
+      renderWithScrollPreserved();
+    }
+
+    function countPendingItemsInFolder(folderId) {
+      const targetFolders = new Set([folderId]);
+      S.areas.filter(a => a.parentId === folderId).forEach(sub => targetFolders.add(sub.id));
+      return S.items.filter(i => i.status !== 'done' && targetFolders.has(i.area)).length;
+    }
+
+    function renderSidebar() {
+      const pinnedContainer = document.getElementById('pinned-folder-tree');
+      const mainContainer = document.getElementById('folder-tree');
+      pinnedContainer.innerHTML = '';
+      mainContainer.innerHTML = '';
+      
+      const navAll = document.getElementById('nav-all');
+      if (currentArea === 'all') navAll.classList.add('active');
+      else navAll.classList.remove('active');
+
+      const allMain = S.areas.filter(a => !a.parentId);
+      allMain.sort((a, b) => (a.order || 0) - (b.order || 0));
+
+      const pinned = allMain.filter(a => a.pinned);
+      const unpinned = allMain.filter(a => !a.pinned);
+
+      document.getElementById('pinned-folders-section').style.display = pinned.length > 0 ? 'block' : 'none';
+
+      const renderFolderItem = (area, container) => {
+        const isSelected = currentArea === area.id;
+        const subs = S.areas.filter(sub => sub.parentId === area.id);
+        subs.sort((a, b) => (a.order || 0) - (b.order || 0));
+        
+        const hasSubs = subs.length > 0;
+        const isCollapsed = !!prefs.collapsedFolders[area.id];
+        const pendingCount = countPendingItemsInFolder(area.id);
+
+        if (isSelected && hasSubs && isCollapsed) {
+          prefs.collapsedFolders[area.id] = false;
+          savePrefs();
+        }
+
+        const el = document.createElement('div');
+        el.className = `nav-item ${isSelected ? 'active' : ''}`;
+        el.setAttribute('data-folder-id', area.id);
+        el.onclick = () => setArea(area.id);
+        el.ondblclick = () => { if (hasSubs) toggleFolderCollapse(area.id); };
+
+        el.ondragover = (e) => { e.preventDefault(); el.classList.add('drag-over-folder'); };
+        el.ondragleave = () => el.classList.remove('drag-over-folder');
+        el.ondrop = (e) => handleFolderDrop(e, area.id);
+
+        let chevronHtml = hasSubs 
+          ? `<button class="chevron-btn" onclick="toggleFolderCollapse('${area.id}'); event.stopPropagation();">${isCollapsed ? '▸' : '▾'}</button>` 
+          : `<span style="width:28px;"></span>`;
+
+        el.innerHTML = `
+          ${chevronHtml}
+          <span style="display:flex; align-items:center; gap:8px; flex:1; overflow:hidden;">
+            <span class="color-dot" style="background:${escapeHtml(area.color||'#ccc')}"></span> 
+            <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(area.name)}</span>
+          </span>
+          ${pendingCount > 0 ? `<span class="folder-badge">${pendingCount}</span>` : ''}
+          <button class="folder-menu-btn" onclick="toggleFolderMenu('${area.id}', event)">⋮</button>
+          <div id="f-menu-${area.id}" class="dropdown">
+            <button class="dropdown-item" onclick="togglePinFolder('${area.id}'); event.stopPropagation();">${area.pinned ? '📌 Desafixar' : '📌 Fixar no topo'}</button>
+            <button class="dropdown-item" onclick="moveFolderOrder('${area.id}', -1); event.stopPropagation();">⬆ Mover para cima</button>
+            <button class="dropdown-item" onclick="moveFolderOrder('${area.id}', 1); event.stopPropagation();">⬇ Mover para baixo</button>
+            <button class="dropdown-item" onclick="openFolderModal('${area.id}'); event.stopPropagation();">+ Subpasta</button>
+            <button class="dropdown-item" onclick="editFolder('${area.id}'); event.stopPropagation();">Editar / Mover</button>
+            <button class="dropdown-item danger" onclick="deleteFolder('${area.id}'); event.stopPropagation();">Excluir</button>
+          </div>
+        `;
+        container.appendChild(el);
+
+        if (hasSubs && !isCollapsed) {
+          subs.forEach(sub => {
+            const isSubSelected = currentArea === sub.id;
+            const subPending = countPendingItemsInFolder(sub.id);
+            const subEl = document.createElement('div');
+            subEl.className = `nav-item sub ${isSubSelected ? 'active' : ''}`;
+            subEl.onclick = () => setArea(sub.id);
+            subEl.innerHTML = `
+              <span style="display:flex; align-items:center; gap:6px; flex:1; overflow:hidden;">
+                <span class="color-dot" style="background:${escapeHtml(sub.color||'#ccc')}; width:7px; height:7px;"></span> 
+                <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(sub.name)}</span>
+              </span>
+              ${subPending > 0 ? `<span class="folder-badge">${subPending}</span>` : ''}
+              <button class="folder-menu-btn" onclick="toggleFolderMenu('${sub.id}', event)">⋮</button>
+              <div id="f-menu-${sub.id}" class="dropdown">
+                <button class="dropdown-item" onclick="moveFolderOrder('${sub.id}', -1); event.stopPropagation();">⬆ Mover para cima</button>
+                <button class="dropdown-item" onclick="moveFolderOrder('${sub.id}', 1); event.stopPropagation();">⬇ Mover para baixo</button>
+                <button class="dropdown-item" onclick="editFolder('${sub.id}'); event.stopPropagation();">Editar / Mover</button>
+                <button class="dropdown-item danger" onclick="deleteFolder('${sub.id}'); event.stopPropagation();">Excluir</button>
+              </div>
+            `;
+            container.appendChild(subEl);
+          });
+        }
+      };
+
+      pinned.forEach(a => renderFolderItem(a, pinnedContainer));
+      unpinned.forEach(a => renderFolderItem(a, mainContainer));
+    }
+
+    function toggleFolderCollapse(id) {
+      prefs.collapsedFolders[id] = !prefs.collapsedFolders[id];
+      savePrefs();
+      renderWithScrollPreserved();
+    }
+
+    function toggleAllFoldersCollapse(e) {
+      if(e) e.stopPropagation();
+      const mainFolders = S.areas.filter(a => !a.parentId);
+      const allCollapsed = mainFolders.every(a => prefs.collapsedFolders[a.id]);
+      mainFolders.forEach(a => prefs.collapsedFolders[a.id] = !allCollapsed);
+      document.getElementById('btn-toggle-all-folders').innerText = allCollapsed ? 'Recolher todas' : 'Expandir todas';
+      savePrefs();
+      renderWithScrollPreserved();
+    }
+
+    function togglePinFolder(id) {
+      const folder = S.areas.find(a => a.id === id);
+      if (folder) {
+        folder.pinned = !folder.pinned;
+        saveData();
+        renderWithScrollPreserved();
+      }
+    }
+
+    function moveFolderOrder(id, dir) {
+      const folder = S.areas.find(a => a.id === id);
+      if (!folder) return;
+
+      const siblings = S.areas.filter(a => a.parentId === folder.parentId && !!a.pinned === !!folder.pinned);
+      siblings.sort((a, b) => (a.order || 0) - (b.order || 0));
+
+      const idx = siblings.findIndex(a => a.id === id);
+      if (idx === -1) return;
+
+      const targetIdx = idx + dir;
+      if (targetIdx >= 0 && targetIdx < siblings.length) {
+        const temp = siblings[idx].order || 0;
+        siblings[idx].order = siblings[targetIdx].order || 0;
+        siblings[targetIdx].order = temp;
+        
+        if (siblings[idx].order === siblings[targetIdx].order) {
+          siblings[idx].order = idx + dir;
+          siblings[targetIdx].order = idx;
+        }
+
+        saveData();
+        renderWithScrollPreserved();
+      }
+    }
+
+    function handleFolderDrop(e, targetFolderId) {
+      e.preventDefault();
+      document.querySelectorAll('.drag-over-folder').forEach(el => el.classList.remove('drag-over-folder'));
+      if (draggedItemId) {
+        moveItemToArea(draggedItemId, targetFolderId);
+        draggedItemId = null;
+      }
+    }
+
+    function toggleFolderMenu(id, e) {
+      if(e) e.stopPropagation();
+      document.querySelectorAll('.dropdown').forEach(d => { if(d.id !== `f-menu-${id}`) d.classList.remove('show'); });
+      document.getElementById(`f-menu-${id}`)?.classList.toggle('show');
+    }
+
+    document.addEventListener('click', (e) => {
+      if(!e.target.closest('.folder-menu-btn')) {
+        document.querySelectorAll('.dropdown').forEach(d => d.classList.remove('show'));
+      }
+    });
+
+    function filterDashboard(type) {
+      if (currentDashboardFilter === type) currentDashboardFilter = null;
+      else currentDashboardFilter = type;
+      renderWithScrollPreserved();
+    }
+
+    function setGeneralGroupBy(mode) {
+      prefs.generalGroupBy = mode;
+      savePrefs();
+      renderWithScrollPreserved();
+    }
+
+    function renderHeader() {
+      const c = document.getElementById('header-container');
+      const name = (auth.currentUser?.displayName || 'Usuário').split(' ')[0];
+
+      if (currentArea === 'all') {
+        const now = new Date();
+        const hr = now.getHours();
+        const greeting = hr < 12 ? 'Bom dia' : hr < 18 ? 'Boa tarde' : 'Boa noite';
+        
+        const days = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado'];
+        const months = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+        const dateExtStr = `${days[now.getDay()]}, ${now.getDate()} de ${months[now.getMonth()]} de ${now.getFullYear()}`;
+
+        const today = getTodayBR();
+        const overdueCount = S.items.filter(i => i.status !== 'done' && i.date && i.date < today).length;
+        const todayCount = S.items.filter(i => i.status !== 'done' && i.date === today).length;
+        
+        let next7 = new Date(); next7.setDate(next7.getDate() + 7);
+        const next7Str = toLocalDateStr(next7);
+        const next7Count = S.items.filter(i => i.status !== 'done' && i.date && i.date > today && i.date <= next7Str).length;
+        const doneTodayCount = S.items.filter(i => i.status === 'done' && i.date === today).length;
+
+        // Prioridades (Estrela pendentes)
+        const priorityItems = S.items.filter(i => i.starred && i.status !== 'done');
+        let prioritiesHtml = '';
+        if (priorityItems.length > 0) {
+          prioritiesHtml = `
+            <div class="dash-special-block">
+              <div class="dash-special-title">⭐ Prioridades (${priorityItems.length})</div>
+              ${priorityItems.map(i => `<div style="font-size:0.85rem; padding:4px 0; cursor:pointer;" onclick="openItemModal(S.items.find(x=>x.id==='${i.id}'))">★ ${escapeHtml(i.title)}</div>`).join('')}
+            </div>
+          `;
+        }
+
+        // Próximo Compromisso
+        let nextItemHtml = '';
+        const pendingWithTime = S.items.filter(i => i.status !== 'done' && i.date && i.date >= today);
+        pendingWithTime.sort(compareItemsByDateTime);
+
+        if (pendingWithTime.length > 0) {
+          const nextItem = pendingWithTime[0];
+          let timeRemaining = '';
+          if (nextItem.date === today && nextItem.time) {
+            const [h, m] = nextItem.time.split(':').map(Number);
+            const target = new Date(); target.setHours(h, m, 0);
+            const diffMs = target - new Date();
+            if (diffMs > 0) {
+              const diffHrs = Math.floor(diffMs / 3600000);
+              const diffMins = Math.floor((diffMs % 3600000) / 60000);
+              timeRemaining = `(em ${diffHrs > 0 ? diffHrs + 'h ' : ''}${diffMins}min)`;
+            }
+          }
+          nextItemHtml = `
+            <div class="dash-special-block">
+              <div class="dash-special-title">▶ Próximo compromisso</div>
+              <div style="font-size:0.9rem; font-weight:600; cursor:pointer;" onclick="openItemModal(S.items.find(x=>x.id==='${nextItem.id}'))">
+                ${escapeHtml(nextItem.title)} ${nextItem.time ? 'às ' + escapeHtml(nextItem.time) : ''} <span style="color:var(--accent); font-size:0.8rem;">${timeRemaining}</span>
+              </div>
+            </div>
+          `;
+        }
+
+        const filterChip = currentDashboardFilter ? `
+          <div style="margin-bottom:12px;">
+            <button class="chip active" onclick="filterDashboard(null)">Filtro ativo: ${currentDashboardFilter} ✕</button>
+          </div>
+        ` : '';
+
+        c.innerHTML = `
+          <div class="dashboard-hero">
+            <h2>${greeting},${escapeHtml(name)}</h2>
+            <div class="date-str">${dateExtStr}</div>
+
+            <div class="dashboard-cards">
+              <div class="dash-card ${currentDashboardFilter === 'overdue' ? 'active' : ''}" onclick="filterDashboard('overdue')">
+                <div class="dash-card-num" style="color:var(--danger);">${overdueCount}</div>
+                <div class="dash-card-lbl">Atrasados</div>
+              </div>
+              <div class="dash-card ${currentDashboardFilter === 'today' ? 'active' : ''}" onclick="filterDashboard('today')">
+                <div class="dash-card-num" style="color:var(--warning);">${todayCount}</div>
+                <div class="dash-card-lbl">Hoje</div>
+              </div>
+              <div class="dash-card ${currentDashboardFilter === 'next7' ? 'active' : ''}" onclick="filterDashboard('next7')">
+                <div class="dash-card-num" style="color:var(--accent);">${next7Count}</div>
+                <div class="dash-card-lbl">Próx. 7 dias</div>
+              </div>
+              <div class="dash-card ${currentDashboardFilter === 'done_today' ? 'active' : ''}" onclick="filterDashboard('done_today')">
+                <div class="dash-card-num" style="color:#10b981;">${doneTodayCount}</div>
+                <div class="dash-card-lbl">Concluídos Hoje</div>
+              </div>
+            </div>
+
+            ${filterChip}
+            ${prioritiesHtml}${nextItemHtml}
+
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:16px;">
+              <div class="view-selector">
+                <button class="view-btn ${prefs.viewMode === 'list' ? 'active' : ''}" onclick="setViewMode('list')">📋 Lista</button>
+                <button class="view-btn ${prefs.viewMode === 'cards' ? 'active' : ''}" onclick="setViewMode('cards')">🔲 Cards</button>
+                <button class="view-btn ${prefs.viewMode === 'kanban' ? 'active' : ''}" onclick="setViewMode('kanban')">📊 Kanban</button>
+                <button class="view-btn ${prefs.viewMode === 'calendar' ? 'active' : ''}" onclick="setViewMode('calendar')">📅 Semana</button>
+                <button class="view-btn ${prefs.viewMode === 'month' ? 'active' : ''}" onclick="setViewMode('month')">🗓️ Mês</button>
+              </div>
+
+              ${prefs.viewMode === 'list' ? `
+                <div class="view-selector">
+                  <button class="view-btn ${prefs.generalGroupBy === 'period' ? 'active' : ''}" onclick="setGeneralGroupBy('period')">Agrupar: Período</button>
+                  <button class="view-btn ${prefs.generalGroupBy === 'folder' ? 'active' : ''}" onclick="setGeneralGroupBy('folder')">Pasta</button>
+                </div>
+              ` : ''}
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      // Cabeçalho de Pastas Específicas
+      const folder = getFolderConfig(currentArea);
+      const titleText = folder ? `<span class="color-dot" style="background:${escapeHtml(folder.color\vert{}\vert{}'#ccc')}"></span> ${escapeHtml(folder.name)}` : 'Agenda';
+
+      let subchips = '';
+      if (currentArea !== 'all') {
+        const parentId = folder?.parentId || currentArea;
+        const subfolders = S.areas.filter(a => a.parentId === parentId);
+        if (subfolders.length > 0) {
+          const parentFolder = getFolderConfig(parentId);
+          const related = [parentFolder, ...subfolders].filter(Boolean);
+          subchips = `<div class="subfolder-chips">` + related.map(r => `
+            <button class="chip ${r.id === currentArea ? 'active' : ''}" onclick="setArea('${r.id}')">
+              <span class="color-dot" style="background:${escapeHtml(r.color\vert{}\vert{}'#ccc')}"></span> ${escapeHtml(r.name)}
+            </button>`).join('') + `</div>`;
+        }
+      }
+
+      const isSubfolderActive = !!(folder && folder.parentId);
+
+      c.innerHTML = `
+        <div class="folder-header-area">
+          <div class="folder-title">${titleText}</div>
+          <div class="folder-actions">
+            <div class="view-selector">
+              <button class="view-btn ${prefs.viewMode === 'list' ? 'active' : ''}" onclick="setViewMode('list')">📋 Lista</button>
+              <button class="view-btn ${prefs.viewMode === 'cards' ? 'active' : ''}" onclick="setViewMode('cards')">🔲 Cards</button>
+              <button class="view-btn ${prefs.viewMode === 'kanban' ? 'active' : ''}" onclick="setViewMode('kanban')">📊 Kanban</button>
+              <button class="view-btn ${prefs.viewMode === 'calendar' ? 'active' : ''}" onclick="setViewMode('calendar')">📅 Semana</button>
+              <button class="view-btn ${prefs.viewMode === 'month' ? 'active' : ''}" onclick="setViewMode('month')">🗓️ Mês</button>
+            </div>
+            ${(currentArea !== 'all' && !isSubfolderActive) ? `<button class="btn-sm" onclick="openFolderModal('${currentArea}')">+ Subpasta</button>` : ''}
+          </div>
+          ${subchips}
+        </div>
+      `;
+    }
+
+    // Gerador de Card HTML
+    function buildCardHtml(item) {
+      const folderInfo = getHierarchy(item.area);
+      const isDone = item.status === 'done';
+      const today = getTodayBR();
+      const isOverdue = !isDone && item.date && item.date < today;
+
+      const statusBadgeHtml = (item.status === 'doing') ? `<span class="badge-status doing">Em andamento</span>` :
+                              (item.status === 'waiting') ? `<span class="badge-status waiting">Aguardando</span>` : '';
+
+      // Checklist no Card
+      let checklistHtml = '';
+      if (item.checklist && item.checklist.length > 0 && prefs.viewMode !== 'calendar' && prefs.viewMode !== 'month') {
+        const total = item.checklist.length;
+        const doneCount = item.checklist.filter(c => c.done).length;
+        const pct = Math.round((doneCount / total) * 100);
+        const isAllDone = doneCount === total;
+
+        let visibleChecklist = item.checklist;
+        let showMoreBtn = '';
+        if (total > 5 && !prefs.descExpanded[`chk_${item.id}`]) {
+          visibleChecklist = item.checklist.slice(0, 5);
+          showMoreBtn = `<button class="btn-toggle-desc" onclick="toggleChkExpand('${item.id}', event)">Ver todos (${total})</button>`;
+        } else if (total > 5) {
+          showMoreBtn = `<button class="btn-toggle-desc" onclick="toggleChkExpand('${item.id}', event)">Mostrar menos</button>`;
+        }
+
+        const itemsList = visibleChecklist.map((c, idx) => `
+          <div class="card-chk-item ${c.done ? 'done' : ''}">
+            <input type="checkbox" ${c.done ? 'checked' : ''} onclick="toggleCardCheckitem('${item.id}',${idx}, event)">
+            <span>${escapeHtml(c.text)}</span>
+          </div>
+        `).join('');
+
+        checklistHtml = `
+          <div class="card-checklist-box" onclick="event.stopPropagation()">
+            <div style="display:flex; justify-content:space-between; font-size:0.75rem; color:var(--muted); margin-bottom:4px;">
+              <span>Checklist</span> <span>${doneCount}/${total} (${pct}%)</span>
+            </div>
+            <div class="card-chk-progress"><div class="card-chk-progress-bar ${isAllDone ? 'complete' : ''}" style="width:${pct}%;"></div></div>
+            ${!isDone ? itemsList : ''}
+            ${showMoreBtn}${!isDone ? `
+              <div class="card-chk-add">
+                <input type="text" placeholder="+ Adicionar item (Enter)" onkeypress="handleCardChecklistAdd(event, '${item.id}')">
+              </div>
+            ` : ''}
+            ${isAllDone && !isDone ? `
+              <div style="margin-top:8px; text-align:center;">
+                <button class="btn-sm" style="border-color:#10b981; color:#10b981;" onclick="setItemStatus('${item.id}', 'done'); event.stopPropagation();">Concluir tarefa?</button>
+              </div>
+            ` : ''}
+          </div>
+        `;
+      }
+
+      let descHtml = '';
+      if (item.desc) {
+        const isExp = prefs.descExpanded[item.id];
+        const descClass = isExp ? 'card-desc' : 'card-desc collapsed';
+        const btnText = isExp ? 'ver menos' : 'ver mais';
+        const showBtn = item.desc.length > 120 || item.desc.split('\n').length > 3;
+        
+        descHtml = `
+          <div class="${descClass}">${escapeHtml(item.desc)}</div>${showBtn ? `<button class="btn-toggle-desc" onclick="toggleDescExpand('${item.id}', event)">${btnText}</button>` : ''}
+          <button class="btn-sm" style="padding:2px 6px; font-size:0.7rem; margin-top:4px; min-height:auto;" onclick="copyCardDescription('${item.id}', event)">📋 Copiar</button>
+        `;
+      }
+
+      const validLink = normalizeAndValidateUrl(item.link);
+      const attCount = (item.attachments || []).length;
+
+      return `
+        <div class="card ${isDone ? 'status-done' : ''}" 
+             style="border-left-color: ${escapeHtml(folderInfo.color)}"
+             onmousedown="handleCardMouseDown(event)"
+             onmouseup="handleCardMouseUp(event, '${item.id}')"
+             ondblclick="handleCardDblClick(event)"
+             oncontextmenu="handleContextMenuEvent(event, '${item.id}')"
+             ontouchstart="handleTouchStart(event, '${item.id}')"
+             ontouchmove="handleTouchMove()"
+             ontouchend="handleTouchEnd()">
+             
+          <div class="card-drag-handle" onmouseenter="this.parentElement.setAttribute('draggable', 'true')" onmouseleave="this.parentElement.removeAttribute('draggable')" ondragstart="handleDragStart(event, '${item.id}')">⠿</div>
+          <div class="card-check ${isDone ? 'done' : ''}" onclick="toggleStatus('${item.id}', event)"></div>
+          <div class="card-body">
+            <div class="card-title-row">
+              <div class="card-title" style="${isDone ? 'text-decoration:line-through;' : ''}">${escapeHtml(item.title)}</div>
+              <div style="display:flex; align-items:center; gap:2px;">
+                <button class="card-edit-btn" title="Editar" onclick="openItemModal(S.items.find(x=>x.id==='${item.id}')); event.stopPropagation();">✏️</button>
+                ${item.starred ? '<span style="color:var(--warning); font-size:1.1rem;">★</span>' : ''}
+                <button class="item-more-btn" onclick="openMenuFromButton(event, '${item.id}')">⋮</button>
+              </div>
+            </div>
+            
+            <div class="card-meta">
+              ${item.date ? `<span>📅 ${formatBR(item.date, item.time)}</span>` : ''}
+              ${statusBadgeHtml}${folderInfo.text ? `<span>📁 ${escapeHtml(folderInfo.text)}</span>` : ''}
+              ${validLink ? `<a href="${escapeHtml(validLink)}" target="_blank" onclick="event.stopPropagation()" style="color:var(--accent); text-decoration:none;">🔗 Link antigo</a>` : ''}
+              ${attCount > 0 ? `<span>📎 ${attCount}</span>` : ''}
+              ${isOverdue ? `<button class="postpone-btn" onclick="postponeItem('${item.id}', event)">+1 Dia</button>` : ''}
+            </div>
+
+            ${descHtml}${checklistHtml}
+          </div>
+        </div>
+      `;
+    }
+
+    let mouseStartPos = { x: 0, y: 0 };
+    function handleCardMouseDown(e) { mouseStartPos = { x: e.clientX, y: e.clientY }; }
+    function handleCardDblClick(e) { e.stopPropagation(); }
+    function handleCardMouseUp(e, id) {
+      if (blockNextClick) { blockNextClick = false; return; }
+      if (e.target.closest('button') || e.target.closest('.card-check') || e.target.closest('a') || e.target.closest('input') || e.target.closest('.card-checklist-box')) return;
+      
+      const sel = window.getSelection().toString();
+      const dist = Math.hypot(e.clientX - mouseStartPos.x, e.clientY - mouseStartPos.y);
+      if (!sel && dist < 5) openItemModal(S.items.find(x => x.id === id));
+    }
+
+    function copyCardDescription(id, e) {
+      if(e) e.stopPropagation();
+      const item = S.items.find(i => i.id === id);
+      if (item && item.desc) {
+        navigator.clipboard.writeText(item.desc);
+        showToast('Descrição copiada!');
+      }
+    }
+
+    function toggleChkExpand(id, e) {
+      if(e) e.stopPropagation();
+      prefs.descExpanded[`chk_${id}`] = !prefs.descExpanded[`chk_${id}`];
+      savePrefs();
+      renderWithScrollPreserved();
+    }
+
+    function toggleCardCheckitem(itemId, chkIdx, e) {
+      if(e) e.stopPropagation();
+      const item = S.items.find(i => i.id === itemId);
+      if (item && item.checklist && item.checklist[chkIdx]) {
+        item.checklist[chkIdx].done = !item.checklist[chkIdx].done;
+        saveData();
+        renderWithScrollPreserved();
+      }
+    }
+
+    function handleCardChecklistAdd(e, itemId) {
+      if (e.key === 'Enter') {
+        const input = e.target;
+        const txt = input.value.trim();
+        if (txt) {
+          const item = S.items.find(i => i.id === itemId);
+          if (item) {
+            if (!item.checklist) item.checklist = [];
+            item.checklist.push({ text: txt, done: false });
+            saveData();
+            renderWithScrollPreserved();
+          }
+        }
+      }
+    }
+
+    function toggleDescExpand(id, e) {
+      if(e) e.stopPropagation();
+      prefs.descExpanded[id] = !prefs.descExpanded[id];
+      savePrefs();
+      renderWithScrollPreserved();
+    }
+
+    // Visualização Lista por Períodos
+    function renderViewList(list, c) {
+      const today = getTodayBR();
+      const periods = {
+        overdue: { title: '⚠️ Atrasados', items: [] },
+        today: { title: '🔥 Hoje', items: [] },
+        next7: { title: '📆 Próximos', items: [] },
+        later: { title: '📌 Mais adiante / Sem data', items: [] },
+        done: { title: '✅ Concluídos', items: [] }
+      };
+
+      list.forEach(item => {
+        if (item.status === 'done') periods.done.items.push(item);
+        else if (!item.date) periods.later.items.push(item);
+        else if (item.date < today) periods.overdue.items.push(item);
+        else if (item.date === today) periods.today.items.push(item);
+        else periods.next7.items.push(item);
+      });
+
+      Object.entries(periods).forEach(([key, period]) => {
+        if (period.items.length === 0) return;
+        period.items.sort(compareItemsByDateTime);
+
+        const g = document.createElement('div');
+        g.className = 'period-group';
+
+        if (key === 'done') {
+          const isCollapsed = prefs.collapsedDone;
+          const arrow = isCollapsed ? '▸' : '▾';
+          g.innerHTML = `
+            <div class="period-header collapsible" onclick="toggleDoneCollapse()">
+              ${period.title} (${period.items.length}) <span style="font-size:0.9rem;">${arrow}</span>
+            </div>
+            <div class="period-content" style="display: ${isCollapsed ? 'none' : 'block'}"></div>
+          `;
+          const contentDiv = g.querySelector('.period-content');
+          period.items.forEach(item => contentDiv.innerHTML += buildCardHtml(item));
+        } else {
+          g.innerHTML = `<div class="period-header">${period.title} (${period.items.length})</div><div class="period-content"></div>`;
+          const contentDiv = g.querySelector('.period-content');
+          period.items.forEach(item => contentDiv.innerHTML += buildCardHtml(item));
+        }
+
+        c.appendChild(g);
+      });
+    }
+
+    // Visualização Lista Agrupada por Pasta
+    function renderViewListByFolder(list, c) {
+      const foldersMap = {};
+      list.forEach(item => {
+        const areaId = item.area || 'no_folder';
+        if (!foldersMap[areaId]) foldersMap[areaId] = [];
+        foldersMap[areaId].push(item);
+      });
+
+      const sortedFolders = S.areas.slice().sort((a,b) => (a.order || 0) - (b.order || 0));
+      sortedFolders.push({ id: 'no_folder', name: 'Sem Pasta', color: 'var(--muted)' });
+
+      sortedFolders.forEach(folder => {
+        const items = foldersMap[folder.id];
+        if (!items || items.length === 0) return;
+        items.sort(compareItemsByDateTime);
+
+        const g = document.createElement('div');
+        g.className = 'period-group';
+        g.innerHTML = `
+          <div class="period-header" style="color:${escapeHtml(folder.color||'var(--text)')};">
+            <span class="color-dot" style="background:${escapeHtml(folder.color||'#ccc')}"></span> ${escapeHtml(folder.name)} (${items.length})
+          </div>
+          <div class="period-content"></div>
+        `;
+        const contentDiv = g.querySelector('.period-content');
+        items.forEach(item => contentDiv.innerHTML += buildCardHtml(item));
+        c.appendChild(g);
+      });
+    }
+
+    function toggleDoneCollapse() {
+      prefs.collapsedDone = !prefs.collapsedDone;
+      savePrefs();
+      renderWithScrollPreserved();
+    }
+
+    // Visualização Quadrantes Cards
+    function renderViewCards(list, c) {
+      const activeItems = list.filter(i => i.status !== 'done');
+      const doneItems = list.filter(i => i.status === 'done');
+
+      const grid = document.createElement('div');
+      grid.className = 'grid-cards';
+      activeItems.forEach(item => grid.innerHTML += buildCardHtml(item));
+      c.appendChild(grid);
+
+      if (doneItems.length > 0) {
+        const isCollapsed = prefs.collapsedDone;
+        const arrow = isCollapsed ? '▸' : '▾';
+        const g = document.createElement('div');
+        g.className = 'period-group';
+        g.style.marginTop = '28px';
+        g.innerHTML = `
+          <div class="period-header collapsible" onclick="toggleDoneCollapse()">
+            ✅ Concluídos (${doneItems.length}) <span style="font-size:0.9rem;">${arrow}</span>
+          </div>
+          <div class="period-content grid-cards" style="display: ${isCollapsed ? 'none' : 'grid'}"></div>
+        `;
+        const contentDiv = g.querySelector('.period-content');
+        doneItems.forEach(item => contentDiv.innerHTML += buildCardHtml(item));
+        c.appendChild(g);
+      }
+    }
+
+    // Visualização Kanban
+    function renderViewKanban(list, c) {
+      const cols = [
+        { id: 'todo', title: 'A Fazer' },
+        { id: 'doing', title: 'Em andamento' },
+        { id: 'waiting', title: 'Aguardando' },
+        { id: 'done', title: 'Concluído' }
+      ];
+
+      const board = document.createElement('div');
+      board.className = 'kanban-board';
+
+      cols.forEach(col => {
+        const colItems = list.filter(i => (i.status || 'todo') === col.id);
+        const colEl = document.createElement('div');
+        colEl.className = 'kanban-col';
+        
+        let cardsHtml = '';
+        colItems.forEach(item => cardsHtml += buildCardHtml(item));
+
+        colEl.innerHTML = `
+          <div class="kanban-header">
+            <span>${col.title}</span>
+            <span style="background:rgba(255,255,255,0.1); padding:2px 8px; border-radius:10px; font-size:0.75rem;">${colItems.length}</span>
+          </div>
+          <div class="kanban-cards" 
+               ondragover="handleDragOver(event)" 
+               ondragleave="handleDragLeave(event)" 
+               ondrop="handleDrop(event, '${col.id}')">
+            ${cardsHtml}
+          </div>
+        `;
+        board.appendChild(colEl);
+      });
+
+      c.appendChild(board);
+    }
+
+    let draggedItemId = null;
+    function handleDragStart(e, id) { draggedItemId = id; }
+    function handleDragOver(e) { e.preventDefault(); e.currentTarget.classList.add('drag-over'); }
+    function handleDragLeave(e) { e.currentTarget.classList.remove('drag-over'); }
+    function handleDrop(e, targetStatus) {
+      e.preventDefault();
+      e.currentTarget.classList.remove('drag-over');
+      if (draggedItemId) {
+        setItemStatus(draggedItemId, targetStatus);
+        draggedItemId = null;
+      }
+    }
+
+    // Visualização Calendário Semanal
+    function renderViewCalendar(list, c) {
+      const todayStr = getTodayBR();
+      const parts = todayStr.split('-').map(Number);
+      const baseDate = new Date(parts[0], parts[1] - 1, parts[2]);
+      baseDate.setDate(baseDate.getDate() + (calendarWeekOffset * 7));
+
+      const startOfWeek = new Date(baseDate);
+      startOfWeek.setDate(baseDate.getDate() - baseDate.getDay());
+
+      const endOfWeek = new Date(startOfWeek);
+      endOfWeek.setDate(startOfWeek.getDate() + 6);
+
+      const formatLabel = (d) => `${d.getDate()}/${d.getMonth()+1}`;
+
+      c.innerHTML = `
+        <div class="calendar-controls">
+          <button class="btn-sm" onclick="navCalendar(-1)">◀ Semana anterior</button>
+          <span style="font-weight:bold; font-size:0.9rem;">${formatLabel(startOfWeek)} até ${formatLabel(endOfWeek)}</span>
+          <div style="display:flex; gap:6px;">
+            <button class="btn-sm" onclick="navCalendar(0)">Hoje</button>
+            <button class="btn-sm" onclick="navCalendar(1)">Próxima semana ▶</button>
+          </div>
+        </div>
+        <div class="calendar-scroll-container">
+          <div class="calendar-grid" id="cal-grid"></div>
+        </div>
+      `;
+
+      const grid = document.getElementById('cal-grid');
+      const daysOfWeek = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+      
+      for(let i=0; i<7; i++) {
+        const d = new Date(startOfWeek);
+        d.setDate(d.getDate() + i);
+        const dStr = toLocalDateStr(d);
+        
+        const col = document.createElement('div');
+        col.className = 'cal-col';
+        col.innerHTML = `<div class="cal-header" style="${dStr === todayStr ? 'color:var(--accent); font-weight:900;' : ''}">${daysOfWeek[i]}${d.getDate()}</div>`;
+        
+        let itemsForDay = list.filter(it => it.date === dStr && it.status !== 'done');
+        itemsForDay.sort(compareItemsByDateTime);
+
+        itemsForDay.forEach(item => {
+           const folderInfo = getHierarchy(item.area);
+           col.innerHTML += `
+             <div class="cal-item" 
+                  style="border-left-color:${escapeHtml(folderInfo.color)}" 
+                  onclick="openItemModal(S.items.find(x=>x.id==='${item.id}'))"
+                  oncontextmenu="handleContextMenuEvent(event, '${item.id}')">
+               ${item.time ? escapeHtml(item.time)+' ' : ''}${escapeHtml(item.title)}
+             </div>`;
+        });
+        grid.appendChild(col);
+      }
+    }
+
+    function navCalendar(dir) {
+      if (dir === 0) calendarWeekOffset = 0;
+      else calendarWeekOffset += dir;
+      renderWithScrollPreserved();
+    }
+
+    // Visualização Calendário Mensal
+    function renderViewMonth(list, c) {
+      const todayStr = getTodayBR();
+      const now = new Date();
+      const baseDate = new Date(now.getFullYear(), now.getMonth() + calendarMonthOffset, 1);
+      
+      const monthYearStr = baseDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+      const capitalizedMonth = monthYearStr.charAt(0).toUpperCase() + monthYearStr.slice(1);
+
+      c.innerHTML = `
+        <div class="calendar-controls">
+          <button class="btn-sm" onclick="navMonth(-1)">◀ Mês anterior</button>
+          <span style="font-weight:bold; font-size:0.9rem;">${capitalizedMonth}</span>
+          <div style="display:flex; gap:6px;">
+            <button class="btn-sm" onclick="navMonth(0)">Mês Atual</button>
+            <button class="btn-sm" onclick="navMonth(1)">Próximo mês ▶</button>
+          </div>
+        </div>
+        <div class="calendar-scroll-container">
+          <div class="month-grid" style="margin-bottom: 4px; min-height: auto;">
+             <div class="cal-header">Dom</div>
+             <div class="cal-header">Seg</div>
+             <div class="cal-header">Ter</div>
+             <div class="cal-header">Qua</div>
+             <div class="cal-header">Qui</div>
+             <div class="cal-header">Sex</div>
+             <div class="cal-header">Sáb</div>
+          </div>
+          <div class="month-grid" id="month-grid"></div>
+        </div>
+      `;
+
+      const grid = document.getElementById('month-grid');
+      
+      const firstDayIndex = baseDate.getDay();
+      const daysInMonth = new Date(baseDate.getFullYear(), baseDate.getMonth() + 1, 0).getDate();
+      const daysInPrevMonth = new Date(baseDate.getFullYear(), baseDate.getMonth(), 0).getDate();
+      
+      const totalCells = 42; 
+      
+      for (let i = 0; i < totalCells; i++) {
+         let cellDate;
+         let isOtherMonth = false;
+         
+         if (i < firstDayIndex) {
+             cellDate = new Date(baseDate.getFullYear(), baseDate.getMonth() - 1, daysInPrevMonth - firstDayIndex + i + 1);
+             isOtherMonth = true;
+         } else if (i >= firstDayIndex + daysInMonth) {
+             cellDate = new Date(baseDate.getFullYear(), baseDate.getMonth() + 1, i - (firstDayIndex + daysInMonth) + 1);
+             isOtherMonth = true;
+         } else {
+             cellDate = new Date(baseDate.getFullYear(), baseDate.getMonth(), i - firstDayIndex + 1);
+         }
+         
+         const dStr = toLocalDateStr(cellDate);
+         const isToday = dStr === todayStr;
+         
+         const cell = document.createElement('div');
+         cell.className = 'month-cell' + (isOtherMonth ? ' other-month' : '') + (isToday ? ' today' : '');
+         cell.innerHTML = `<div class="month-cell-header" style="${isToday ? 'color:var(--accent); font-weight:900;' : ''}">${cellDate.getDate()}</div>`;
+         
+         let itemsForDay = list.filter(it => it.date === dStr && it.status !== 'done');
+         itemsForDay.sort(compareItemsByDateTime);
+
+         itemsForDay.forEach(item => {
+            const folderInfo = getHierarchy(item.area);
+            cell.innerHTML += `
+              <div class="cal-item" 
+                   style="border-left-color:${escapeHtml(folderInfo.color)}; font-size:0.7rem; padding:4px;" 
+                   onclick="openItemModal(S.items.find(x=>x.id==='${item.id}'))"
+                   oncontextmenu="handleContextMenuEvent(event, '${item.id}')">
+                ${item.time ? escapeHtml(item.time)+' ' : ''}${escapeHtml(item.title)}
+              </div>`;
+         });
+         grid.appendChild(cell);
+      }
+    }
+
+    function navMonth(dir) {
+      if (dir === 0) calendarMonthOffset = 0;
+      else calendarMonthOffset += dir;
+      renderWithScrollPreserved();
+    }
+
+    function makeRepSnapshot(item) {
+      return {
+        title: item.title || '',
+        date: item.date || '',
+        desc: item.desc || '',
+        checklist: (item.checklist || []).map(c => ({ text: c.text, done: !!c.done }))
+      };
+    }
+
+    function isCopyUntouched(copyItem) {
+      if (!copyItem || !copyItem.repSnapshot) return true;
+      const snap = copyItem.repSnapshot;
+
+      if ((copyItem.title || '') !== snap.title) return false;
+      if ((copyItem.date || '') !== snap.date) return false;
+      if ((copyItem.desc || '') !== snap.desc) return false;
+
+      const curChk = copyItem.checklist || [];
+      const snapChk = snap.checklist || [];
+
+      if (curChk.length !== snapChk.length) return false;
+
+      for (let i = 0; i < curChk.length; i++) {
+        if (curChk[i].text !== snapChk[i].text) return false;
+        if (!!curChk[i].done !== !!snapChk[i].done) return false;
+      }
+
+      return true;
+    }
+
+    function addNextOccurrence(item) {
+      if (!item || !item.rep || item.rep === 'none' || !item.date) return;
+      const today = getTodayBR();
+
+      let nextDateStr = '';
+      const parts = item.date.split('-').map(Number);
+      let curYear = parts[0];
+      let curMonth = parts[1] - 1;
+      let curDay = parts[2];
+      const originalRepDay = item.repDay || curDay;
+
+      if (item.rep === 'daily') {
+        const baseDateStr = (item.date < today) ? today : item.date;
+        const bParts = baseDateStr.split('-').map(Number);
+        let d = new Date(bParts[0], bParts[1] - 1, bParts[2]);
+        d.setDate(d.getDate() + 1);
+        nextDateStr = toLocalDateStr(d);
+      } else if (item.rep === 'weekly') {
+        let d = new Date(curYear, curMonth, curDay);
+        do {
+          d.setDate(d.getDate() + 7);
+          nextDateStr = toLocalDateStr(d);
+        } while (nextDateStr <= today);
+      } else if (item.rep === 'monthly') {
+        do {
+          curMonth++;
+          if (curMonth > 11) { curMonth = 0; curYear++; }
+          let lastDayOfTarget = new Date(curYear, curMonth + 1, 0).getDate();
+          let targetDay = Math.min(originalRepDay, lastDayOfTarget);
+          let d = new Date(curYear, curMonth, targetDay);
+          nextDateStr = toLocalDateStr(d);
+        } while (nextDateStr <= today);
+      }
+
+      if (!nextDateStr) return;
+
+      const newItem = {
+        ...item,
+        id: generateId('item'),
+        status: 'todo',
+        date: nextDateStr,
+        repDay: originalRepDay,
+        checklist: (item.checklist || []).map(c => ({ ...c, done: false })),
+        attachments: [], // Cópias NÃO herdam anexos
+        repSourceId: item.id
+      };
+
+      newItem.repSnapshot = makeRepSnapshot(newItem);
+      S.items.push(newItem);
+    }
+
+    function removeUntouchedCopy(sourceId) {
+      const copyIndex = S.items.findIndex(i => i.repSourceId === sourceId && i.status === 'todo');
+      if (copyIndex > -1) {
+        const copyItem = S.items[copyIndex];
+        if (isCopyUntouched(copyItem)) {
+          deleteItemAttachments(copyItem);
+          S.items.splice(copyIndex, 1);
+        }
+      }
+    }
+
+    function setItemStatus(id, newStatus) {
+      const item = S.items.find(i => i.id === id);
+      if (!item) return;
+
+      const wasDone = item.status === 'done';
+      item.status = newStatus;
+
+      if (newStatus === 'done' && !wasDone) {
+        addNextOccurrence(item);
+      } else if (wasDone && newStatus !== 'done') {
+        removeUntouchedCopy(item.id);
+      }
+
+      saveData();
+      renderWithScrollPreserved();
+    }
+
+    function toggleStatus(id, e) {
+      if(e) e.stopPropagation();
+      const item = S.items.find(i => i.id === id);
+      if (!item) return;
+      setItemStatus(id, item.status === 'done' ? 'todo' : 'done');
+    }
+
+    function postponeItem(id, e) {
+      if(e) e.stopPropagation();
+      postponeItemByDays(id, 1);
+    }
+
+    function postponeItemByDays(id, days) {
+      const item = S.items.find(i => i.id === id);
+      if(item) {
+        const today = getTodayBR();
+        let baseDateStr = item.date;
+        if (!baseDateStr || baseDateStr < today) baseDateStr = today;
+        const parts = baseDateStr.split('-').map(Number);
+        let base = new Date(parts[0], parts[1] - 1, parts[2]);
+        base.setDate(base.getDate() + days);
+        const newDateStr = toLocalDateStr(base);
+        item.date = newDateStr;
+        item.repDay = parseInt(newDateStr.split('-')[2], 10);
+        saveData();
+        renderWithScrollPreserved();
+      }
+    }
+
+    function postponeItemToDate(id, targetDate) {
+      if (!targetDate) return;
+      const item = S.items.find(i => i.id === id);
+      if (item) {
+        item.date = targetDate;
+        item.repDay = parseInt(targetDate.split('-')[2], 10);
+        saveData();
+        renderWithScrollPreserved();
+      }
+    }
+
+    function openMenuFromButton(e, id) {
+      e.stopPropagation();
+      const rect = e.currentTarget.getBoundingClientRect();
+      openContextMenuAt(rect.left, rect.bottom, id);
+    }
+
+    function handleContextMenuEvent(e, id) {
+      e.preventDefault();
+      e.stopPropagation();
+      openContextMenuAt(e.clientX, e.clientY, id);
+    }
+
+    // Menu Contextual
+    function openContextMenuAt(clientX, clientY, id) {
+      const item = S.items.find(i => i.id === id);
+      if (!item) return;
+
+      const menu = document.getElementById('context-menu');
+      
+      let foldersOptions = `
+        <button class="ctx-item" onclick="moveItemToArea('${id}', ''); hideContextMenu();">
+          <span>📁 Sem Pasta</span> ${!item.area ? '✓' : ''}
+        </button>
+      ` + S.areas.map(a => `
+        <button class="ctx-item" onclick="moveItemToArea('${id}', '${a.id}'); hideContextMenu();">
+          <span>📁 ${escapeHtml(a.name)}</span>${item.area === a.id ? '✓' : ''}
+        </button>
+      `).join('');
+
+      menu.innerHTML = `
+        <div style="font-size:0.75rem; color:var(--muted); padding:6px 14px; font-weight:bold;">SITUAÇÃO</div>
+        <button class="ctx-item" onclick="setItemStatus('${id}', 'todo'); hideContextMenu();">A Fazer ${item.status === 'todo' ? '✓' : ''}</button>
+        <button class="ctx-item" onclick="setItemStatus('${id}', 'doing'); hideContextMenu();">Em andamento ${item.status === 'doing' ? '✓' : ''}</button>
+        <button class="ctx-item" onclick="setItemStatus('${id}', 'waiting'); hideContextMenu();">Aguardando ${item.status === 'waiting' ? '✓' : ''}</button>
+        <button class="ctx-item" onclick="setItemStatus('${id}', 'done'); hideContextMenu();">Concluído ${item.status === 'done' ? '✓' : ''}</button>
+        
+        <div class="ctx-divider"></div>
+        <button class="ctx-item" onclick="toggleStar('${id}'); hideContextMenu();">${item.starred ? '★ Desmarcar Estrela' : '☆ Marcar Estrela'}</button>
+        
+        <div class="ctx-divider"></div>
+        <div style="font-size:0.75rem; color:var(--muted); padding:6px 14px; font-weight:bold;">ADIAR</div>
+        <button class="ctx-item" onclick="postponeItemByDays('${id}', 1); hideContextMenu();">Amanhã (+1 dia)</button>
+        <button class="ctx-item" onclick="postponeItemByDays('${id}', 7); hideContextMenu();">Daqui a 1 semana</button>
+        <div class="ctx-date-picker">
+          <span style="font-size:0.8rem; color:var(--muted);">Escolher data:</span>
+          <input type="date" value="${item.date \vert{}\vert{} ''}" onchange="postponeItemToDate('${id}', this.value); hideContextMenu();">
+        </div>
+
+        <div class="ctx-divider"></div>
+        <div style="font-size:0.75rem; color:var(--muted); padding:6px 14px; font-weight:bold;">MOVER PARA PASTA</div>
+        ${foldersOptions}
+        
+        <div class="ctx-divider"></div>
+        <button class="ctx-item" onclick="saveItemAsTemplatePrompt('${id}'); hideContextMenu();">📑 Salvar como modelo</button>
+        <button class="ctx-item" onclick="duplicateItem('${id}'); hideContextMenu();">📋 Duplicar</button>
+        <button class="ctx-item" onclick="openItemModal(S.items.find(x=>x.id==='${id}')); hideContextMenu();">✏️ Editar</button>
+        <button class="ctx-item danger" onclick="deleteItemDirect('${id}'); hideContextMenu();">🗑 Excluir</button>
+      `;
+
+      menu.style.display = 'flex';
+
+      let x = clientX || 10;
+      let y = clientY || 10;
+
+      const menuWidth = 210;
+      const menuHeight = menu.offsetHeight || 320;
+
+      if (x + menuWidth > window.innerWidth) x = window.innerWidth - menuWidth - 10;
+      if (y + menuHeight > window.innerHeight) y = window.innerHeight - menuHeight - 10;
+
+      menu.style.left = `${Math.max(10, x)}px`;
+      menu.style.top = `${Math.max(10, y)}px`;
+    }
+
+    function hideContextMenu() {
+      const menu = document.getElementById('context-menu');
+      if (menu) menu.style.display = 'none';
+    }
+
+    document.addEventListener('click', hideContextMenu);
+
+    // Toque longo mobile
+    function handleTouchStart(e, id) {
+      touchMoved = false;
+      const touch = e.touches[0];
+      const x = touch.clientX;
+      const y = touch.clientY;
+
+      if (blockClickTimer) clearTimeout(blockClickTimer);
+
+      longTouchTimer = setTimeout(() => {
+        if (!touchMoved) {
+          blockNextClick = true;
+          openContextMenuAt(x, y, id);
+          blockClickTimer = setTimeout(() => { blockNextClick = false; }, 600);
+        }
+      }, 500);
+    }
+
+    function handleTouchMove() { touchMoved = true; if (longTouchTimer) clearTimeout(longTouchTimer); }
+    function handleTouchEnd() { if (longTouchTimer) clearTimeout(longTouchTimer); }
+
+    function toggleStar(id) {
+      const item = S.items.find(i => i.id === id);
+      if (item) { item.starred = !item.starred; saveData(); renderWithScrollPreserved(); }
+    }
+
+    function moveItemToArea(id, areaId) {
+      const item = S.items.find(i => i.id === id);
+      if (item) { item.area = areaId; saveData(); renderWithScrollPreserved(); }
+    }
+
+    function duplicateItem(id) {
+      const item = S.items.find(i => i.id === id);
+      if (item) {
+        const clone = { 
+          ...item, 
+          id: generateId('item'), 
+          title: item.title + ' (Cópia)',
+          checklist: (item.checklist||[]).map(c=>({...c})),
+          attachments: [] // Cópias NÃO herdam anexos
+        };
+        delete clone.repSourceId;
+        delete clone.repSnapshot;
+        S.items.push(clone);
+        saveData();
+        renderWithScrollPreserved();
+      }
+    }
+
+    function deleteItemAttachments(item) {
+      if (item && item.attachments && item.attachments.length > 0) {
+        item.attachments.forEach(att => {
+          db.collection('shared').doc('agenda-vida').collection('anexos').doc(att.id).collection('chunks').get().then(snap => {
+            const batch = db.batch();
+            snap.docs.forEach(d => batch.delete(d.ref));
+            batch.commit();
+          });
+        });
+      }
+    }
+
+    function deleteItemDirect(id) {
+      if(confirm('Tem certeza que deseja excluir esta tarefa?')) {
+        const item = S.items.find(i => i.id === id);
+        deleteItemAttachments(item);
+        S.items = S.items.filter(i => i.id !== id);
+        saveData();
+        renderWithScrollPreserved();
+      }
+    }
+
+    // Navegação de Pastas
+    function setArea(id) { 
+      currentArea = id; 
+      currentDashboardFilter = null;
+      renderWithScrollPreserved(); 
+      if(window.innerWidth <= 768) {
+        document.getElementById('sidebar').classList.remove('open');
+      }
+    }
+
+    function getFormState() {
+      const chkRows = document.querySelectorAll('#checklist-container .checklist-row');
+      const checklist = Array.from(chkRows).map(r => ({
+        done: r.querySelector('input[type="checkbox"]').checked,
+        text: r.querySelector('.chk-text').value.trim()
+      })).filter(c => c.text.length > 0);
+
+      return {
+        title: document.getElementById('f-title').value.trim(),
+        desc: document.getElementById('f-desc').value,
+        area: document.getElementById('f-area').value,
+        status: document.getElementById('f-status').value,
+        date: document.getElementById('f-date').value,
+        time: document.getElementById('f-time').value,
+        rep: document.getElementById('f-rep').value,
+        reminder: document.getElementById('f-reminder').value,
+        starred: formStarred,
+        checklist: checklist
+      };
+    }
+
+    function hasFormChanged() {
+      const current = getFormState();
+      if (!editingOriginalItem) {
+        let defaultArea = (currentArea !== 'all') ? currentArea : '';
+        if (defaultArea && !S.areas.some(a => a.id === defaultArea)) defaultArea = '';
+        const defaultDate = getTodayBR();
+        return current.title !== '' ||
+               current.desc !== '' ||
+               current.area !== defaultArea ||
+               current.status !== 'todo' ||
+               current.date !== defaultDate ||
+               current.time !== '' ||
+               current.rep !== 'none' ||
+               current.reminder !== 'none' ||
+               current.starred !== false ||
+               current.checklist.length > 0 ||
+               pendingAttachments.length > 0;
+      }
+
+      const orig = editingOriginalItem;
+      let origArea = orig.area || '';
+      if (origArea && !S.areas.some(a => a.id === origArea)) origArea = '';
+
+      if (current.title !== (orig.title || '')) return true;
+      if (current.desc !== (orig.desc || '')) return true;
+      if (current.area !== origArea) return true;
+      if (current.status !== (orig.status || 'todo')) return true;
+      if (current.date !== (orig.date || '')) return true;
+      if (current.time !== (orig.time || '')) return true;
+      if (current.rep !== (orig.rep || 'none')) return true;
+      if (current.reminder !== (orig.reminder || 'none')) return true;
+      if (current.starred !== (!!orig.starred)) return true;
+      if (pendingAttachments.length > 0) return true;
+
+      const origChk = orig.checklist || [];
+      if (current.checklist.length !== origChk.length) return true;
+
+      for (let i = 0; i < current.checklist.length; i++) {
+        if (current.checklist[i].text !== origChk[i].text) return true;
+        if (current.checklist[i].done !== !!origChk[i].done) return true;
+      }
+
+      return false;
+    }
+
+    function attemptCloseItemModal() {
+      if (hasFormChanged()) {
+        if (confirm('Você tem alterações não salvas. Deseja realmente fechar?')) closeItemModal();
+      } else closeItemModal();
+    }
+
+    // Gerenciador de Anexos
+    function renderModalAttachments() {
+      const c = document.getElementById('modal-attachment-list');
+      c.innerHTML = '';
+      
+      const existing = editingOriginalItem?.attachments || [];
+      const all = [...existing, ...pendingAttachments];
+
+      all.forEach((att, idx) => {
+        const isPending = idx >= existing.length;
+        const el = document.createElement('div');
+        el.className = 'attachment-item';
+        
+        let icon = '📄';
+        if (att.type.startsWith('image/')) icon = '🖼';
+        else if (att.type.includes('pdf')) icon = '📕';
+
+        let sizeKb = Math.round(att.size / 1024) + ' KB';
+
+        el.innerHTML = `
+          <div style="display:flex; align-items:center; gap:8px; overflow:hidden;">
+            ${att.dataUrl ? `<img src="${att.dataUrl}" class="attachment-preview">` : `<span style="font-size:1.2rem;">${icon}</span>`}
+            <div style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+              <div style="font-weight:600;">${escapeHtml(att.name)}</div>
+              <div style="font-size:0.7rem; color:var(--muted);">${sizeKb}${isPending ? '(Pendente)' : ''}</div>
+            </div>
+          </div>
+          <div style="display:flex; gap:6px;">
+            ${!isPending ? `<button class="btn-sm" style="padding:2px 6px; min-height:auto;" onclick="downloadAttachment('${att.id}', '${escapeHtml(att.name)}', '${att.type}')">Abrir</button>` : ''}
+            <button class="btn-sm" style="padding:2px 6px; min-height:auto; border-color:var(--danger); color:var(--danger);" onclick="removeAttachment(${idx},${isPending})">✕</button>
+          </div>
+        `;
+        c.appendChild(el);
+      });
+    }
+
+    function compressImage(file, callback) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          const maxDim = 1600;
+
+          if (width > maxDim || height > maxDim) {
+            if (width > height) { height = Math.round((height * maxDim) / width); width = maxDim; }
+            else { width = Math.round((width * maxDim) / height); height = maxDim; }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+          callback(dataUrl, 'image/jpeg');
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function processFile(file) {
+      if (file.size > 3 * 1024 * 1024) {
+        alert(`O arquivo ${file.name} excede o limite máximo de 3 MB.`);
+        return;
+      }
+
+      if (file.type.startsWith('image/')) {
+        compressImage(file, (dataUrl, newType) => {
+          pendingAttachments.push({
+            id: generateId('att'),
+            name: file.name,
+            size: file.size,
+            type: newType,
+            addedAt: Date.now(),
+            dataUrl: dataUrl
+          });
+          renderModalAttachments();
+        });
+      } else {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          pendingAttachments.push({
+            id: generateId('att'),
+            name: file.name,
+            size: file.size,
+            type: file.type || 'application/octet-stream',
+            addedAt: Date.now(),
+            dataUrl: e.target.result
+          });
+          renderModalAttachments();
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    function handleFileSelect(e) {
+      const files = Array.from(e.target.files);
+      files.forEach(processFile);
+      e.target.value = '';
+    }
+
+    // Drag and Drop de arquivos e Colar imagem
+    document.addEventListener('DOMContentLoaded', () => {
+      const dropZone = document.getElementById('file-drop-zone');
+      if (dropZone) {
+        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+        dropZone.addEventListener('drop', (e) => {
+          e.preventDefault();
+          dropZone.classList.remove('dragover');
+          if (e.dataTransfer.files) Array.from(e.dataTransfer.files).forEach(processFile);
+        });
+      }
+
+      window.addEventListener('paste', (e) => {
+        if (document.getElementById('item-modal').classList.contains('open')) {
+          const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+          for (let item of items) {
+            if (item.type.indexOf('image') === 0) {
+              const blob = item.getAsFile();
+              processFile(blob);
+            }
+          }
+        }
+      });
+    });
+
+    function removeAttachment(idx, isPending) {
+      if (confirm('Deseja remover este anexo?')) {
+        if (isPending) {
+          const existingCount = editingOriginalItem?.attachments?.length || 0;
+          pendingAttachments.splice(idx - existingCount, 1);
+        } else {
+          const att = editingOriginalItem.attachments[idx];
+          db.collection('shared').doc('agenda-vida').collection('anexos').doc(att.id).collection('chunks').get().then(snap => {
+            const batch = db.batch();
+            snap.docs.forEach(d => batch.delete(d.ref));
+            batch.commit();
+          });
+          editingOriginalItem.attachments.splice(idx, 1);
+        }
+        renderModalAttachments();
+      }
+    }
+
+    async function saveAttachmentToFirestore(att) {
+      const base64Data = att.dataUrl.split(',')[1];
+      const chunkSize = 700 * 1024; // 700 KB
+      const chunks = [];
+      for (let i = 0; i < base64Data.length; i += chunkSize) {
+        chunks.push(base64Data.substring(i, i + chunkSize));
+      }
+
+      const attRef = db.collection('shared').doc('agenda-vida').collection('anexos').doc(att.id);
+      for (let n = 0; n < chunks.length; n++) {
+        await attRef.collection('chunks').doc(String(n)).set({ chunk: chunks[n] });
+      }
+
+      return {
+        id: att.id,
+        name: att.name,
+        size: att.size,
+        type: att.type,
+        addedAt: att.addedAt
+      };
+    }
+
+    async function downloadAttachment(attId, fileName, fileType) {
+      try {
+        showToast('Baixando anexo...');
+        const snap = await db.collection('shared').doc('agenda-vida').collection('anexos').doc(attId).collection('chunks').get();
+        const chunks = [];
+        snap.docs.forEach(d => {
+          chunks[parseInt(d.id, 10)] = d.data().chunk;
+        });
+
+        const fullBase64 = chunks.join('');
+        const byteCharacters = atob(fullBase64);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: fileType });
+        const url = URL.createObjectURL(blob);
+
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        a.click();
+        URL.revokeObjectURL(url);
+      } catch (err) {
+        alert('Erro ao abrir anexo: ' + err.message);
+      }
+    }
+
+    function removeLegacyLink() {
+      if (editingOriginalItem) {
+        delete editingOriginalItem.link;
+        document.getElementById('legacy-link-box').style.display = 'none';
+      }
+    }
+
+    // Modal de Item
+    function openItemModal(item = null) {
+      hideContextMenu();
+      editingOriginalItem = item ? { ...item } : null;
+      pendingAttachments = [];
+
+      const sArea = document.getElementById('f-area');
+      sArea.innerHTML = '<option value="">Sem Pasta</option>' + S.areas.map(a => `<option value="${a.id}">${escapeHtml(a.name)}</option>`).join('');
+      
+      const sTpl = document.getElementById('f-load-template');
+      const tplLoaderBox = document.getElementById('template-loader-box');
+      
+      if (S.templates && S.templates.length > 0) {
+        tplLoaderBox.style.display = 'block';
+        sTpl.innerHTML = '<option value="">Selecione para carregar...</option>' + S.templates.map(t => `<option value="${t.id}">${escapeHtml(t.title)}</option>`).join('');
+      } else tplLoaderBox.style.display = 'none';
+
+      document.getElementById('checklist-container').innerHTML = '';
+      document.getElementById('f-delete-btn').style.display = item ? 'inline-flex' : 'none';
+      document.getElementById('f-save-template').checked = false;
+      document.getElementById('modal-item-title-head').innerText = item ? 'Editar Item' : 'Novo Item';
+
+      const descEl = document.getElementById('f-desc');
+      const legacyBox = document.getElementById('legacy-link-box');
+
+      if (item && item.link) {
+        legacyBox.style.display = 'flex';
+        document.getElementById('legacy-link-text').innerText = `🔗 Link antigo: ${item.link}`;
+      } else legacyBox.style.display = 'none';
+
+      if (item) {
+        currentEditItemId = item.id;
+        document.getElementById('f-title').value = item.title || '';
+        descEl.value = item.desc || '';
+        
+        let validArea = item.area || '';
+        if (validArea && !S.areas.some(a => a.id === validArea)) validArea = '';
+        document.getElementById('f-area').value = validArea;
+
+        document.getElementById('f-status').value = item.status || 'todo';
+        document.getElementById('f-date').value = item.date || '';
+        document.getElementById('f-time').value = item.time || '';
+        document.getElementById('f-rep').value = item.rep || 'none';
+        document.getElementById('f-reminder').value = item.reminder || 'none';
+        formStarred = !!item.starred;
+
+        if (item.checklist) item.checklist.forEach(c => addChecklistItem(c.text, c.done, false));
+      } else {
+        currentEditItemId = null;
+        document.getElementById('f-title').value = '';
+        descEl.value = '';
+        
+        let initialArea = (currentArea !== 'all') ? currentArea : '';
+        if (initialArea && !S.areas.some(a => a.id === initialArea)) initialArea = '';
+        document.getElementById('f-area').value = initialArea;
+
+        document.getElementById('f-status').value = 'todo';
+        document.getElementById('f-date').value = getTodayBR();
+        document.getElementById('f-time').value = '';
+        document.getElementById('f-rep').value = 'none';
+        document.getElementById('f-reminder').value = 'none';
+        formStarred = false;
+      }
+
+      document.getElementById('f-star-btn').innerText = formStarred ? '★' : '☆';
+      document.getElementById('f-star-btn').className = formStarred ? 'star-btn active' : 'star-btn inactive';
+      
+      renderModalAttachments();
+      document.getElementById('item-modal').classList.add('open');
+
+      requestAnimationFrame(() => autoResizeTextarea(descEl));
+    }
+
+    function closeItemModal() { 
+      document.getElementById('item-modal').classList.remove('open'); 
+      editingOriginalItem = null;
+      pendingAttachments = [];
+    }
+
+    function deleteCurrentItem() {
+      if(currentEditItemId && confirm('Excluir esta tarefa?')) {
+        const item = S.items.find(i => i.id === currentEditItemId);
+        deleteItemAttachments(item);
+        S.items = S.items.filter(i => i.id !== currentEditItemId);
+        saveData();
+        closeItemModal();
+        renderWithScrollPreserved();
+      }
+    }
+
+    function toggleFormStar() {
+      formStarred = !formStarred;
+      const b = document.getElementById('f-star-btn');
+      b.innerText = formStarred ? '★' : '☆';
+      b.className = formStarred ? 'star-btn active' : 'star-btn inactive';
+    }
+
+    // Gerenciador de Subitens do Checklist
+    function addChecklistItem(txt = '', d = false, autoFocus = true, insertAfterRow = null) {
+      const container = document.getElementById('checklist-container');
+      const row = document.createElement('div');
+      row.className = 'checklist-row';
+      
+      row.innerHTML = `
+        <input type="checkbox" ${d ? 'checked' : ''} style="width:18px; height:18px; cursor:pointer;">
+        <input type="text" class="form-control chk-text" value="${escapeHtml(txt)}" placeholder="Subitem..." style="padding:8px;">
+        <button type="button" class="btn-sm" onclick="this.parentElement.remove()">✕</button>
+      `;
+
+      if (insertAfterRow && insertAfterRow.nextSibling) {
+        container.insertBefore(row, insertAfterRow.nextSibling);
+      } else {
+        container.appendChild(row);
+      }
+
+      const input = row.querySelector('.chk-text');
+
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          addChecklistItem('', false, true, row);
+        } else if (e.key === 'Backspace' && input.value === '') {
+          e.preventDefault();
+          const prevRow = row.previousElementSibling;
+          if (prevRow) {
+            const prevInput = prevRow.querySelector('.chk-text');
+            row.remove();
+            if (prevInput) {
+              prevInput.focus();
+              prevInput.setSelectionRange(prevInput.value.length, prevInput.value.length);
+            }
+          }
+        }
+      });
+
+      input.addEventListener('paste', (e) => {
+        const pasteData = (e.clipboardData || window.clipboardData).getData('text');
+        if (pasteData && pasteData.includes('\n')) {
+          e.preventDefault();
+          const lines = pasteData.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+          if (lines.length > 0) {
+            input.value = lines[0];
+            let currentRow = row;
+            for (let i = 1; i < lines.length; i++) {
+              const newRow = addChecklistItem(lines[i], false, false, currentRow);
+              currentRow = newRow;
+            }
+          }
+        }
+      });
+
+      if (autoFocus) setTimeout(() => input.focus(), 50);
+      return row;
+    }
+
+    function handleSelectTemplate(id) {
+      if(!id) return;
+      if (hasFormChanged()) {
+        if (!confirm('Carregar o modelo substituirá o conteúdo atual do formulário. Deseja continuar?')) {
+          document.getElementById('f-load-template').value = '';
+          return;
+        }
+      }
+      loadTemplate(id);
+    }
+
+    function loadTemplate(id) {
+      const t = S.templates.find(x => x.id === id);
+      if(t) {
+        document.getElementById('f-title').value = t.title || '';
+        const descEl = document.getElementById('f-desc');
+        descEl.value = t.desc || '';
+        requestAnimationFrame(() => autoResizeTextarea(descEl));
+        if(t.area) document.getElementById('f-area').value = t.area;
+        document.getElementById('checklist-container').innerHTML = '';
+        (t.checklist||[]).forEach(c => addChecklistItem(c.text, false, false));
+      }
+    }
+
+    function saveItemAsTemplatePrompt(id) {
+      const item = S.items.find(i => i.id === id);
+      if (item) {
+        const tplName = prompt('Digite o nome para o novo modelo:', item.title);
+        if (tplName) {
+          S.templates.push({
+            id: generateId('tpl'),
+            title: tplName.trim(),
+            desc: item.desc || '',
+            area: item.area || '',
+            checklist: (item.checklist || []).map(c => ({ text: c.text, done: false }))
+          });
+          saveData();
+          showToast('Modelo salvo com sucesso!');
+        }
+      }
+    }
+
+    async function saveItem() {
+      const title = document.getElementById('f-title').value.trim();
+      if (!title) return;
+
+      const chkRows = document.querySelectorAll('#checklist-container .checklist-row');
+      const checklist = Array.from(chkRows).map(r => ({
+        done: r.querySelector('input[type="checkbox"]').checked,
+        text: r.querySelector('.chk-text').value.trim()
+      })).filter(c => c.text.length > 0);
+
+      const oldStatus = editingOriginalItem ? (editingOriginalItem.status || 'todo') : null;
+      const newStatus = document.getElementById('f-status').value;
+      const itemDate = document.getElementById('f-date').value;
+
+      let calculatedRepDay = editingOriginalItem?.repDay || null;
+      if (!editingOriginalItem) {
+        if (itemDate) calculatedRepDay = parseInt(itemDate.split('-')[2], 10);
+      } else {
+        if (itemDate !== (editingOriginalItem.date || '')) {
+          if (itemDate) calculatedRepDay = parseInt(itemDate.split('-')[2], 10);
+          else calculatedRepDay = null;
+        }
+      }
+
+      // Envio de Anexos Pendentes
+      const savedAttachmentsMeta = [];
+      if (pendingAttachments.length > 0) {
+        showToast('Enviando anexos...');
+        for (let att of pendingAttachments) {
+          const meta = await saveAttachmentToFirestore(att);
+          savedAttachmentsMeta.push(meta);
+        }
+      }
+
+      const existingAttachments = editingOriginalItem?.attachments || [];
+      const finalAttachments = [...existingAttachments, ...savedAttachmentsMeta];
+
+      const editedFields = {
+        title: title,
+        desc: document.getElementById('f-desc').value,
+        area: document.getElementById('f-area').value,
+        status: newStatus,
+        date: itemDate,
+        time: document.getElementById('f-time').value,
+        rep: document.getElementById('f-rep').value,
+        reminder: document.getElementById('f-reminder').value,
+        repDay: calculatedRepDay,
+        starred: formStarred,
+        checklist: checklist,
+        attachments: finalAttachments
+      };
+
+      if (editingOriginalItem && editingOriginalItem.link) editedFields.link = editingOriginalItem.link;
+
+      let targetItem = null;
+
+      if (currentEditItemId && editingOriginalItem) {
+        const updatedItem = { ...editingOriginalItem, ...editedFields };
+        const idx = S.items.findIndex(x => x.id === currentEditItemId);
+        if (idx > -1) {
+          S.items[idx] = updatedItem;
+          targetItem = S.items[idx];
+        }
+      } else {
+        const newItem = { id: generateId('item'), ...editedFields };
+        S.items.push(newItem);
+        targetItem = newItem;
+      }
+
+      if (targetItem) {
+        if (oldStatus !== 'done' && newStatus === 'done') addNextOccurrence(targetItem);
+        else if (oldStatus === 'done' && newStatus !== 'done') removeUntouchedCopy(targetItem.id);
+      }
+
+      if (document.getElementById('f-save-template').checked) {
+        S.templates.push({ 
+          id: generateId('tpl'), 
+          title: editedFields.title, 
+          desc: editedFields.desc, 
+          area: editedFields.area, 
+          checklist: editedFields.checklist 
+        });
+      }
+
+      saveData();
+      closeItemModal();
+      renderWithScrollPreserved();
+    }
+
+    // Modal Gerenciar Modelos
+    function openManageTemplatesModal() {
+      const container = document.getElementById('templates-list-container');
+      container.innerHTML = '';
+
+      if (!S.templates || S.templates.length === 0) {
+        container.innerHTML = '<p style="color:var(--muted); font-size:0.9rem;">Nenhum modelo salvo.</p>';
+      } else {
+        S.templates.forEach((t, idx) => {
+          const el = document.createElement('div');
+          el.style.cssText = 'display:flex; align-items:center; justify-space-between; background:var(--bg); border:1px solid var(--border); padding:10px; border-radius:8px;';
+          el.innerHTML = `
+            <div style="flex:1; overflow:hidden; margin-right:10px;">
+              <div style="font-weight:600;">${escapeHtml(t.title)}</div>
+              <div style="font-size:0.75rem; color:var(--muted);">${(t.checklist||[]).length} subitens</div>
+            </div>
+            <div style="display:flex; gap:6px;">
+              <button class="btn-sm" onclick="renameTemplate('${t.id}')">Renomear</button>
+              <button class="btn-sm" style="border-color:var(--danger); color:var(--danger);" onclick="deleteTemplate('${t.id}')">Excluir</button>
+            </div>
+          `;
+          container.appendChild(el);
+        });
+      }
+
+      document.getElementById('templates-modal').classList.add('open');
+    }
+
+    function closeManageTemplatesModal() { document.getElementById('templates-modal').classList.remove('open'); }
+
+    function renameTemplate(id) {
+      const t = S.templates.find(x => x.id === id);
+      if (t) {
+        const newName = prompt('Novo nome para o modelo:', t.title);
+        if (newName) {
+          t.title = newName.trim();
+          saveData();
+          openManageTemplatesModal();
+        }
+      }
+    }
+
+    function deleteTemplate(id) {
+      if (confirm('Deseja excluir este modelo?')) {
+        S.templates = S.templates.filter(x => x.id !== id);
+        saveData();
+        openManageTemplatesModal();
+      }
+    }
+
+    // Modal Alertas
+    function openAlertsModal() {
+      const cfg = prefs.alertConfig || {};
+      document.getElementById('cfg-default-time').value = cfg.defaultTime || '08:00';
+      document.getElementById('cfg-daily-summary-active').checked = !!cfg.dailySummaryActive;
+      document.getElementById('cfg-daily-summary-time').value = cfg.dailySummaryTime || '07:30';
+      document.getElementById('cfg-sound-active').checked = cfg.soundActive !== false;
+      document.getElementById('cfg-dnd-active').checked = !!cfg.dndActive;
+      document.getElementById('cfg-dnd-start').value = cfg.dndStart || '22:00';
+      document.getElementById('cfg-dnd-end').value = cfg.dndEnd || '07:00';
+
+      document.getElementById('alerts-modal').classList.add('open');
+    }
+
+    function closeAlertsModal() { document.getElementById('alerts-modal').classList.remove('open'); }
+
+    function saveAlertConfig() {
+      prefs.alertConfig = {
+        defaultTime: document.getElementById('cfg-default-time').value,
+        dailySummaryActive: document.getElementById('cfg-daily-summary-active').checked,
+        dailySummaryTime: document.getElementById('cfg-daily-summary-time').value,
+        soundActive: document.getElementById('cfg-sound-active').checked,
+        dndActive: document.getElementById('cfg-dnd-active').checked,
+        dndStart: document.getElementById('cfg-dnd-start').value,
+        dndEnd: document.getElementById('cfg-dnd-end').value
+      };
+      savePrefs();
+    }
+
+    function requestNotificationPermission() {
+      if ('Notification' in window) {
+        Notification.requestPermission().then(permission => {
+          showToast(`Permissão de notificação: ${permission}`);
+        });
+      }
+    }
+
+    // Sistema de Alertas e Notificações
+    function playAudioBeep() {
+      if (prefs.alertConfig?.soundActive === false) return;
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = 'sine';
+        osc.frequency.value = 587.33; // D5
+        gain.gain.setValueAtTime(0.1, ctx.currentTime);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.2);
+      } catch (e) {}
+    }
+
+    function showToast(msg, actions = null) {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      
+      let actionsHtml = '';
+      if (actions) {
+        actionsHtml = `<div style="display:flex; gap:6px; margin-top:6px; flex-wrap:wrap;">` +
+          actions.map(a => `<button class="btn-sm" onclick="${a.action}; this.closest('.toast').remove();">${a.label}</button>`).join('') +
+          `</div>`;
+      }
+
+      toast.innerHTML = `
+        <div style="font-size:0.85rem; font-weight:600;">${escapeHtml(msg)}</div>${actionsHtml}
+      `;
+
+      container.appendChild(toast);
+      playAudioBeep();
+
+      setTimeout(() => { if (toast.parentNode) toast.remove(); }, 8000);
+    }
+
+    function isDndActiveNow() {
+      const cfg = prefs.alertConfig;
+      if (!cfg || !cfg.dndActive) return false;
+
+      const now = new Date();
+      const curMins = now.getHours() * 60 + now.getMinutes();
+
+      const [sH, sM] = (cfg.dndStart || '22:00').split(':').map(Number);
+      const startMins = sH * 60 + sM;
+
+      const [eH, eM] = (cfg.dndEnd || '07:00').split(':').map(Number);
+      const endMins = eH * 60 + eM;
+
+      if (startMins > endMins) return curMins >= startMins || curMins < endMins;
+      return curMins >= startMins && curMins < endMins;
+    }
+
+    function triggerNotification(title, body, itemId = null) {
+      if (isDndActiveNow()) return;
+
+      if ('Notification' in window && Notification.permission === 'granted') {
+        if (navigator.serviceWorker && navigator.serviceWorker.ready) {
+          navigator.serviceWorker.ready.then(reg => {
+            reg.showNotification(title, { body: body, icon: '[https://cdn-icons-png.flaticon.com/512/2360/2360875.png](https://cdn-icons-png.flaticon.com/512/2360/2360875.png)' });
+          });
+        } else {
+          new Notification(title, { body: body, icon: '[https://cdn-icons-png.flaticon.com/512/2360/2360875.png](https://cdn-icons-png.flaticon.com/512/2360/2360875.png)' });
+        }
+      }
+
+      const actions = itemId ? [
+        { label: 'Concluir', action: `setItemStatus('${itemId}', 'done')` },
+        { label: 'Adiar 10 min', action: `snoozeItem('${itemId}', 10)` },
+        { label: 'Adiar 1 h', action: `snoozeItem('${itemId}', 60)` },
+        { label: 'Abrir', action: `openItemModal(S.items.find(x=>x.id==='${itemId}'))` }
+      ] : null;
+
+      showToast(`${title}:${body}`, actions);
+    }
+
+    function snoozeItem(itemId, mins) {
+      try {
+        const snoozed = JSON.parse(localStorage.getItem('agenda_snoozed') || '{}');
+        snoozed[itemId] = Date.now() + mins * 60000;
+        localStorage.setItem('agenda_snoozed', JSON.stringify(snoozed));
+        showToast(`Alerta adiado por ${mins} minutos.`);
+      } catch(e){}
+    }
+
+    function updateTabTitleAndAlerts() {
+      const today = getTodayBR();
+      const overdueCount = S.items.filter(i => i.status !== 'done' && i.date && i.date < today).length;
+      const todayCount = S.items.filter(i => i.status !== 'done' && i.date === today).length;
+      const totalPending = overdueCount + todayCount;
+
+      document.title = totalPending > 0 ? `(${totalPending}) Minha Agenda Pro` : 'Minha Agenda Pro';
+
+      checkPendingReminders();
+    }
+
+    function checkPendingReminders() {
+      if (isDndActiveNow()) return;
+
+      const now = new Date();
+      const todayStr = toLocalDateStr(now);
+      const firedAlerts = JSON.parse(localStorage.getItem('agenda_fired_alerts') || '{}');
+      const snoozed = JSON.parse(localStorage.getItem('agenda_snoozed') || '{}');
+      const cfg = prefs.alertConfig || {};
+
+      // Verificação do Resumo Diário
+      if (cfg.dailySummaryActive && cfg.dailySummaryTime) {
+        const summaryKey = `summary_${todayStr}`;
+        if (!firedAlerts[summaryKey]) {
+          const [sH, sM] = cfg.dailySummaryTime.split(':').map(Number);
+          const summaryTime = new Date(); summaryTime.setHours(sH, sM, 0);
+          if (now >= summaryTime) {
+            const todayCount = S.items.filter(i => i.status !== 'done' && i.date === todayStr).length;
+            const overdueCount = S.items.filter(i => i.status !== 'done' && i.date && i.date < todayStr).length;
+            triggerNotification('Resumo Diário', `Hoje: ${todayCount} tarefa(s),${overdueCount} atrasada(s).`);
+            firedAlerts[summaryKey] = true;
+          }
+        }
+      }
+
+      S.items.forEach(item => {
+        if (item.status === 'done' || !item.date || item.reminder === 'none') return;
+
+        // Snooze ativo
+        if (snoozed[item.id] && Date.now() < snoozed[item.id]) return;
+
+        const timeStr = item.time || cfg.defaultTime || '08:00';
+        const [y, m, d] = item.date.split('-').map(Number);
+        const [hr, min] = timeStr.split(':').map(Number);
+        
+        const itemDateTime = new Date(y, m - 1, d, hr, min, 0);
+
+        let offsetMs = 0;
+        if (item.reminder === '5m') offsetMs = 5 * 60000;
+        else if (item.reminder === '15m') offsetMs = 15 * 60000;
+        else if (item.reminder === '30m') offsetMs = 30 * 60000;
+        else if (item.reminder === '1h') offsetMs = 60 * 60000;
+        else if (item.reminder === '2h') offsetMs = 120 * 60000;
+        else if (item.reminder === '1d') offsetMs = 24 * 3600000;
+
+        const triggerTime = new Date(itemDateTime.getTime() - offsetMs);
+        const alertKey = `${item.id}|${item.date}\vert{}${item.reminder}`;
+
+        // Dispara se estiver na janela dos últimos 60 min e ainda não tiver disparado
+        if (now >= triggerTime && (now - triggerTime) <= 60 * 60000) {
+          if (!firedAlerts[alertKey]) {
+            triggerNotification('🔔 Lembrete de Tarefa', item.title, item.id);
             firedAlerts[alertKey] = true;
           }
         }
@@ -2957,6 +6004,113 @@
     }
 
     function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
+
+    /* --- LÓGICA DO ASSISTENTE GEMINI --- */
+    let geminiApiKey = localStorage.getItem('agenda_gemini_key') || '';
+
+    function openGeminiModal() {
+      hideContextMenu(); 
+      document.getElementById('gemini-api-key').value = geminiApiKey;
+      document.getElementById('gemini-prompt').value = '';
+      document.getElementById('gemini-loading').classList.remove('active');
+      document.getElementById('gemini-modal').classList.add('open');
+      setTimeout(() => document.getElementById('gemini-prompt').focus(), 100);
+    }
+
+    function closeGeminiModal() {
+      document.getElementById('gemini-modal').classList.remove('open');
+    }
+
+    async function processGeminiCommand() {
+      const keyInput = document.getElementById('gemini-api-key').value.trim();
+      const promptInput = document.getElementById('gemini-prompt').value.trim();
+      
+      if (!keyInput) {
+        showToast('Por favor, insira sua API Key do Gemini.');
+        return;
+      }
+      if (!promptInput) {
+        showToast('Por favor, digite um comando para a IA.');
+        return;
+      }
+
+      geminiApiKey = keyInput;
+      localStorage.setItem('agenda_gemini_key', geminiApiKey);
+
+      const loading = document.getElementById('gemini-loading');
+      loading.classList.add('active');
+      
+      const todayDate = getTodayBR();
+      const foldersContext = S.areas.map(a => `{ id: "${a.id}", name: "${a.name}" }`).join(', ');
+
+      const systemInstruction = `
+        Você é um assistente de produtividade integrado a uma agenda. 
+        Hoje é ${todayDate} (Formato YYYY-MM-DD).
+        As pastas disponíveis do usuário são: [${foldersContext}].
+        
+        Sua tarefa é interpretar o comando do usuário e retornar EXCLUSIVAMENTE um objeto JSON válido representando um item da agenda.
+        NÃO inclua nenhuma marcação markdown como \`\`\`json, retorne APENAS o objeto JSON puro e pronto para ser feito parse.
+        
+        Estrutura do JSON exigida:
+        {
+          "title": "Título claro e conciso da tarefa",
+          "desc": "Detalhes ou anotações extras inferidas do comando, se houver. Se não houver, deixe em branco",
+          "date": "Data no formato YYYY-MM-DD. Se for para hoje, use ${todayDate}. Calcule outras datas a partir de hoje",
+          "time": "Horário no formato HH:MM (ex: 18:00). Se não especificado, retorne vazio ''",
+          "area": "ID da pasta correspondente. Tente mapear pelo nome da pasta fornecida. Se não encontrar uma pasta adequada ou o usuário não mencionar, retorne vazio ''",
+          "status": "todo",
+          "rep": "Opção de repetição: 'none', 'daily', 'weekly', ou 'monthly'. Padrão 'none'",
+          "reminder": "Opção de lembrete exata entre: 'none', 'at_time', '5m', '15m', '30m', '1h', '2h', '1d'. Padrão 'none'",
+          "starred": true ou false (true se o usuário demonstrar que é prioridade, urgente ou importante)
+        }
+      `;
+
+      const payload = {
+        contents: [{
+          parts: [{ text: `Comando do usuário: "${promptInput}"` }]
+        }],
+        systemInstruction: {
+          parts: [{ text: systemInstruction }]
+        },
+        generationConfig: {
+          responseMimeType: "application/json"
+        }
+      };
+
+      try {
+        const response = await fetch(`[https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=$](https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=$){geminiApiKey}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+          throw new Error('Erro na API do Gemini: ' + response.statusText);
+        }
+
+        const data = await response.json();
+        const jsonString = data.candidates[0].content.parts[0].text;
+        
+        const itemData = JSON.parse(jsonString.trim());
+        
+        itemData.id = generateId('item');
+        if (!itemData.status) itemData.status = 'todo';
+        if (!itemData.checklist) itemData.checklist = [];
+        if (!itemData.attachments) itemData.attachments = [];
+        
+        S.items.push(itemData);
+        saveData();
+        renderWithScrollPreserved();
+        closeGeminiModal();
+        showToast('✨ Tarefa criada com sucesso pela IA!');
+        
+      } catch (error) {
+        console.error("Erro no Gemini:", error);
+        showToast('Erro ao processar comando com a IA. Verifique sua chave.');
+      } finally {
+        loading.classList.remove('active');
+      }
+    }
   </script>
 </body>
 </html>
