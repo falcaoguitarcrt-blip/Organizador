@@ -6,12 +6,16 @@
   <title>Minha Agenda Pro</title>
   
   <meta name="theme-color" content="#2dd4bf">
+  <meta name="application-name" content="Minha Agenda Pro">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="manifest" href="manifest.webmanifest">
   <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2360/2360875.png">
   <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/2360/2360875.png">
 
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-auth-compat.js"></script>
 
   <style>
     :root { 
@@ -91,6 +95,16 @@
     .quick-capture { display: flex; gap: 8px; width: 100%; margin-bottom: 24px; }
     .quick-capture input { flex: 1; background: rgba(255,255,255,0.03); border: 1px solid var(--border); color: var(--text); padding: 12px 16px; border-radius: 8px; font-size: 0.95rem; }
     .quick-capture input:focus { border-color: var(--accent); outline: none; }
+    .quick-preview { background: var(--card); border: 1px solid var(--accent); border-radius: 12px; padding: 14px 16px; margin-bottom: 18px; box-shadow: 0 8px 20px rgba(0,0,0,.18); }
+    .quick-preview[hidden] { display: none; }
+    .quick-preview-title { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:10px; }
+    .quick-preview-grid { display:grid; grid-template-columns: repeat(auto-fit,minmax(150px,1fr)); gap:8px; margin:10px 0 12px; }
+    .quick-preview-field { background:rgba(255,255,255,.03); border:1px solid var(--border); border-radius:8px; padding:8px 10px; }
+    .quick-preview-field label { display:block; font-size:.68rem; color:var(--muted); text-transform:uppercase; letter-spacing:.35px; margin-bottom:3px; }
+    .quick-preview-field strong { font-size:.84rem; }
+    .quick-preview-ambiguity { color:#fde68a; font-size:.8rem; margin:8px 0 12px; }
+    .quick-preview-actions { display:flex; justify-content:flex-end; gap:8px; flex-wrap:wrap; }
+    @media(max-width:768px){ .quick-preview-grid{grid-template-columns:1fr 1fr;} }
 
     /* Banner Atrasados */
     .overdue-banner { background: rgba(239, 68, 68, 0.15); border: 1px solid var(--danger); border-radius: 10px; padding: 12px 16px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
@@ -274,8 +288,151 @@
     /* Toasts In-App */
     #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 10000; display: flex; flex-direction: column; gap: 10px; max-width: 340px; width: 90%; }
     .toast { background: var(--card); border: 1px solid var(--accent); border-radius: 12px; padding: 14px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); display: flex; flex-direction: column; gap: 8px; animation: slideIn 0.3s ease; }
+    .history-section { margin-top: 14px; border: 1px solid var(--border); border-radius: 10px; background: rgba(255,255,255,0.02); overflow: hidden; }
+    .history-section[hidden] { display:none; }
+    .history-header { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 12px; border-bottom:1px solid var(--border); }
+    .history-header strong { font-size:.85rem; }
+    .history-list { max-height: 280px; overflow:auto; padding: 8px 12px; }
+    .history-entry { position:relative; padding:10px 0 10px 16px; border-bottom:1px solid rgba(255,255,255,.06); }
+    .history-entry:last-child { border-bottom:0; }
+    .history-entry::before { content:''; position:absolute; left:2px; top:15px; width:7px; height:7px; border-radius:50%; background:var(--accent); box-shadow:0 0 0 3px rgba(45,212,191,.08); }
+    .history-entry.danger::before { background:var(--danger); box-shadow:0 0 0 3px rgba(239,68,68,.08); }
+    .history-top { display:flex; justify-content:space-between; gap:10px; align-items:flex-start; }
+    .history-action { font-size:.8rem; font-weight:700; }
+    .history-meta { font-size:.68rem; color:var(--muted); white-space:nowrap; }
+    .history-source { display:inline-flex; align-items:center; gap:4px; margin-top:3px; font-size:.68rem; color:var(--muted); }
+    .history-change { margin-top:6px; font-size:.76rem; line-height:1.4; color:var(--text); }
+    .history-field { color:var(--muted); font-weight:600; }
+    .history-value-old { color:#fca5a5; text-decoration:line-through; }
+    .history-value-new { color:#86efac; }
+    .history-empty { padding:18px 8px; text-align:center; color:var(--muted); font-size:.8rem; }
+    .history-btn { border-color:var(--border); }
     @keyframes slideIn { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-  </style>
+
+    /* Fase 1: estado de sincronização e dados */
+    .sync-status { display:flex; align-items:center; gap:8px; padding:8px 12px; margin:10px 8px 4px; border:1px solid var(--border); border-radius:8px; background:rgba(255,255,255,0.02); font-size:0.72rem; color:var(--muted); }
+    .sync-dot { width:8px; height:8px; border-radius:50%; background:var(--muted); flex-shrink:0; }
+    .sync-status.ok .sync-dot { background:#10b981; }
+    .sync-status.syncing .sync-dot { background:var(--warning); animation:pulseSync 1.2s infinite; }
+    .sync-status.error .sync-dot { background:var(--danger); }
+    @keyframes pulseSync { 50% { opacity:0.35; } }
+    .data-backup-box { border:1px solid var(--border); background:rgba(255,255,255,0.02); border-radius:12px; padding:14px; margin-bottom:12px; }
+    .data-backup-box h4 { margin-bottom:6px; font-size:0.92rem; }
+    .data-backup-box p { color:var(--muted); font-size:0.78rem; line-height:1.45; }
+    .danger-note { border-color:rgba(239,68,68,0.55); background:rgba(239,68,68,0.08); }
+  
+    /* Fase 2: sistema visual, busca avançada e experiência mobile */
+    :root {
+      --space-1: 4px;
+      --space-2: 8px;
+      --space-3: 12px;
+      --space-4: 16px;
+      --space-5: 20px;
+      --space-6: 24px;
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --font-xs: .72rem;
+      --font-sm: .82rem;
+      --font-md: .95rem;
+      --font-lg: 1.2rem;
+    }
+    .flex-row { display:flex; align-items:center; }
+    .flex-between { display:flex; align-items:center; justify-content:space-between; }
+    .gap-2 { gap:var(--space-2); }
+    .gap-3 { gap:var(--space-3); }
+    .stack-3 { display:flex; flex-direction:column; gap:var(--space-3); }
+    .muted { color:var(--muted); }
+    .text-sm { font-size:var(--font-sm); }
+    .text-xs { font-size:var(--font-xs); }
+    .phase2-search-actions { display:flex; gap:8px; align-items:center; }
+    .search-filter-btn { flex:0 0 auto; }
+    #search-filters-panel { display:none; background:var(--card); border:1px solid var(--border); border-radius:var(--radius-md); padding:14px; margin:-6px 0 16px; }
+    #search-filters-panel.open { display:block; }
+    .filter-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
+    .filter-field label { display:block; font-size:var(--font-xs); color:var(--muted); font-weight:700; margin-bottom:4px; }
+    .filter-field .form-control { min-height:38px; }
+    .filter-footer { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-top:10px; }
+    .filter-result-count { color:var(--muted); font-size:var(--font-xs); }
+    .phase2-mobile-view { display:none; }
+    .myday-hero { background:linear-gradient(135deg, rgba(45,212,191,.08), rgba(255,255,255,.02)); border:1px solid var(--border); border-radius:var(--radius-lg); padding:22px; margin-bottom:22px; }
+    .myday-heading { display:flex; justify-content:space-between; align-items:flex-start; gap:16px; margin-bottom:18px; }
+    .myday-title { font-size:1.55rem; line-height:1.15; font-weight:800; }
+    .myday-subtitle { color:var(--muted); font-size:.86rem; margin-top:5px; }
+    .myday-focus { padding:12px 14px; border:1px solid rgba(245,158,11,.35); background:rgba(245,158,11,.06); border-radius:12px; margin-top:12px; }
+    .myday-focus-title { font-size:.74rem; font-weight:800; text-transform:uppercase; letter-spacing:.45px; color:var(--warning); margin-bottom:8px; }
+    .myday-focus-item { display:flex; gap:9px; align-items:flex-start; padding:6px 0; cursor:pointer; }
+    .myday-focus-index { width:22px; height:22px; border-radius:50%; background:rgba(245,158,11,.12); color:var(--warning); display:flex; align-items:center; justify-content:center; font-size:.7rem; font-weight:800; flex:0 0 22px; }
+    .myday-next { border:1px solid rgba(45,212,191,.35); background:rgba(45,212,191,.05); border-radius:12px; padding:12px 14px; margin-top:12px; }
+    .myday-next-label { font-size:.72rem; color:var(--accent); font-weight:800; text-transform:uppercase; letter-spacing:.45px; margin-bottom:6px; }
+    .timeline-panel { margin-top:14px; border:1px solid var(--border); background:rgba(255,255,255,.02); border-radius:12px; padding:12px; }
+    .timeline-title { font-size:.76rem; color:var(--muted); font-weight:800; text-transform:uppercase; letter-spacing:.45px; margin-bottom:8px; }
+    .timeline-row { display:grid; grid-template-columns:62px 12px 1fr; gap:8px; align-items:start; padding:7px 0; }
+    .timeline-time { font-size:.78rem; color:var(--muted); font-variant-numeric:tabular-nums; }
+    .timeline-dot { width:8px; height:8px; border-radius:50%; background:var(--accent); margin-top:6px; box-shadow:0 0 0 4px rgba(45,212,191,.08); }
+    .timeline-title-text { font-size:.84rem; font-weight:650; cursor:pointer; }
+    .timeline-meta { color:var(--muted); font-size:.71rem; margin-top:2px; }
+    .untimed-note { margin-top:6px; color:var(--muted); font-size:.75rem; }
+    .priority-badge { display:inline-flex; align-items:center; gap:4px; padding:2px 7px; border-radius:999px; font-size:.66rem; font-weight:800; text-transform:uppercase; letter-spacing:.25px; }
+    .priority-high { color:#fecaca; border:1px solid rgba(239,68,68,.55); background:rgba(239,68,68,.12); }
+    .priority-medium { color:#fde68a; border:1px solid rgba(245,158,11,.5); background:rgba(245,158,11,.10); }
+    .priority-low { color:#bbf7d0; border:1px solid rgba(34,197,94,.45); background:rgba(34,197,94,.08); }
+    .tag-chip { display:inline-flex; align-items:center; padding:2px 7px; border-radius:999px; border:1px solid var(--border); color:var(--muted); background:rgba(255,255,255,.03); font-size:.66rem; }
+    .next-action-box { display:flex; align-items:flex-start; gap:7px; margin-top:7px; padding:7px 9px; border-left:3px solid var(--accent); background:rgba(45,212,191,.04); border-radius:6px; }
+    .next-action-label { font-size:.66rem; color:var(--accent); font-weight:800; text-transform:uppercase; white-space:nowrap; }
+    .next-action-text { font-size:.76rem; color:var(--text); }
+    .month-load { margin-top:auto; display:inline-flex; align-self:flex-end; padding:1px 5px; font-size:.64rem; border-radius:999px; color:var(--muted); background:rgba(255,255,255,.05); }
+    .month-cell.weekend { background:rgba(255,255,255,.018); }
+    .month-cell.day-heavy { border-color:rgba(245,158,11,.45); }
+    .month-cell.day-overdue { box-shadow:inset 3px 0 0 var(--danger); }
+    .day-summary-modal .modal-content { max-width:620px; }
+    .day-summary-list { display:flex; flex-direction:column; gap:8px; max-height:55vh; overflow:auto; }
+    .day-summary-item { display:flex; align-items:flex-start; gap:10px; padding:10px 12px; border:1px solid var(--border); background:var(--bg); border-radius:10px; cursor:pointer; }
+    .day-summary-time { width:52px; flex:0 0 52px; color:var(--muted); font-size:.78rem; font-variant-numeric:tabular-nums; }
+    .mobile-bottom-nav { display:none; }
+    .mobile-bottom-nav button { border:0; background:transparent; color:var(--muted); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; font-size:.68rem; min-height:58px; }
+    .mobile-bottom-nav button span:first-child { font-size:1.15rem; line-height:1; }
+    .mobile-bottom-nav button.primary { color:#00120f; background:var(--accent); border-radius:14px; margin:6px; min-height:46px; }
+    @media (max-width: 900px) {
+      .filter-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+    }
+    @media (max-width: 768px) {
+      body { padding-bottom:70px; }
+      #main { padding:12px; }
+      .top-bar { position:sticky; top:0; z-index:80; background:linear-gradient(var(--bg) 78%, transparent); padding-top:4px; padding-bottom:10px; }
+      .search-input { min-width:0; }
+      .phase2-search-actions { width:100%; }
+      .phase2-search-actions .search-input { flex:1; }
+      .search-filter-btn { padding:8px 10px; min-width:42px; }
+      .top-bar > .btn { display:none; }
+      .quick-capture { margin-bottom:14px; }
+      .quick-capture .btn { min-width:72px; }
+      .dashboard-cards { grid-template-columns:repeat(2,minmax(0,1fr)); }
+      .myday-hero { padding:16px; border-radius:14px; }
+      .myday-heading { flex-direction:column; }
+      .view-selector { display:none !important; }
+      .phase2-mobile-view { display:block; min-width:150px; }
+      .folder-actions { justify-content:space-between; }
+      .folder-title { font-size:1.35rem; }
+      .filter-grid { grid-template-columns:1fr; }
+      #search-filters-panel { position:relative; z-index:70; }
+      .modal-content { width:94%; padding:18px; max-height:88vh; }
+      .checklist-row { gap:6px; }
+      .checklist-row .form-control { min-width:0; }
+      .card { padding:12px; border-radius:11px; }
+      .card-edit-btn { opacity:1; }
+      .card-title { font-size:.94rem; }
+      .month-cell { min-height:76px; }
+      .mobile-bottom-nav { position:fixed; left:8px; right:8px; bottom:8px; z-index:500; display:grid; grid-template-columns:repeat(5,1fr); gap:4px; background:rgba(26,35,46,.96); border:1px solid var(--border); border-radius:16px; padding:4px; box-shadow:0 16px 32px rgba(0,0,0,.35); backdrop-filter:blur(12px); }
+      .mobile-bottom-nav button.primary { margin:4px; }
+      #mobile-nav-overlay { position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:90; display:none; }
+      #mobile-nav-overlay.open { display:block; }
+    }
+    @media (min-width:769px) {
+      #mobile-nav-overlay { display:none !important; }
+    }
+    /* =========================\n       FASE 3 — CALENDÁRIO / ALERTAS / PWA\n       ========================= */\n    .phase3-calendar-shell {\n      border:1px solid var(--border);\n      border-radius:14px;\n      background:rgba(255,255,255,.018);\n      overflow:hidden;\n    }\n    .phase3-calendar-toolbar {\n      display:flex; justify-content:space-between; align-items:center; gap:10px;\n      padding:10px 12px; border-bottom:1px solid var(--border); background:var(--card);\n      position:sticky; top:0; z-index:12;\n    }\n    .phase3-calendar-scroll { overflow:auto; max-height:72vh; }\n    .phase3-week-grid {\n      display:grid; grid-template-columns:64px repeat(7,minmax(150px,1fr));\n      min-width:1120px; position:relative;\n    }\n    .phase3-time-head { background:var(--card); border-right:1px solid var(--border); position:sticky; left:0; z-index:11; }\n    .phase3-day-head {\n      background:var(--card); border-right:1px solid var(--border); border-bottom:1px solid var(--border);\n      padding:9px 8px; text-align:center; position:sticky; top:0; z-index:10;\n    }\n    .phase3-day-head.today { color:var(--accent); box-shadow:inset 0 -2px 0 var(--accent); }\n    .phase3-day-name { font-size:.7rem; color:var(--muted); font-weight:800; text-transform:uppercase; letter-spacing:.4px; }\n    .phase3-day-date { font-size:.95rem; font-weight:800; margin-top:2px; }\n    .phase3-time-col { position:relative; background:var(--card); border-right:1px solid var(--border); }\n    .phase3-time-label { height:40px; border-bottom:1px solid rgba(255,255,255,.04); padding:2px 6px; text-align:right; color:var(--muted); font-size:.68rem; }\n    .phase3-day-col { position:relative; background:rgba(255,255,255,.012); border-right:1px solid var(--border); }\n    .phase3-day-col.weekend { background:rgba(255,255,255,.018); }\n    .phase3-slot { height:40px; border-bottom:1px solid rgba(255,255,255,.04); cursor:pointer; position:relative; }\n    .phase3-slot:hover { background:rgba(45,212,191,.055); }\n    .phase3-event {\n      position:absolute; box-sizing:border-box; overflow:hidden; cursor:grab; z-index:4;\n      background:var(--card); border:1px solid rgba(45,212,191,.45); border-left:4px solid var(--accent);\n      border-radius:7px; padding:5px 6px; box-shadow:0 5px 12px rgba(0,0,0,.2);\n    }\n    .phase3-event.dragging { opacity:.5; }\n    .phase3-event-time { font-size:.66rem; color:var(--muted); font-variant-numeric:tabular-nums; }\n    .phase3-event-title { font-size:.72rem; font-weight:750; line-height:1.2; margin-top:2px; }\n    .phase3-event-meta { font-size:.62rem; color:var(--muted); margin-top:2px; }\n    .phase3-now-line { position:absolute; left:0; right:0; height:2px; background:var(--danger); z-index:6; pointer-events:none; }\n    .phase3-now-dot { width:7px; height:7px; border-radius:50%; background:var(--danger); position:absolute; left:-3px; top:-2.5px; }\n    .phase3-drop-indicator { position:absolute; left:0; right:0; height:3px; background:var(--accent); z-index:7; pointer-events:none; display:none; }\n    .phase3-calendar-hint { padding:9px 12px; color:var(--muted); font-size:.72rem; border-top:1px solid var(--border); background:rgba(0,0,0,.08); }\n    .phase3-alert-status { margin-top:10px; padding:9px 10px; border-radius:8px; background:rgba(45,212,191,.06); border:1px solid rgba(45,212,191,.25); color:var(--muted); font-size:.75rem; line-height:1.35; }\n    .phase3-install-ready { border-color:var(--accent)!important; color:var(--accent)!important; display:inline-flex!important; }\n    .phase3-pwa-pill { display:inline-flex; align-items:center; gap:5px; padding:3px 8px; border-radius:999px; border:1px solid var(--border); color:var(--muted); font-size:.65rem; }\n    @media(max-width:768px){\n      .phase3-calendar-toolbar { position:sticky; top:0; }\n      .phase3-calendar-scroll { max-height:68vh; }\n      .phase3-week-grid { grid-template-columns:52px repeat(7,minmax(130px,1fr)); min-width:962px; }\n      .phase3-day-head { padding:8px 5px; }\n      .phase3-event-title { font-size:.68rem; }\n      .phase3-alert-status { font-size:.7rem; }\n    }\n  </style>
+  <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-storage-compat.js"></script>
 </head>
 <body>
 
@@ -325,26 +482,128 @@
       <button class="btn-sm" style="margin: 16px 8px 8px; width: calc(100% - 16px); justify-content: center;" onclick="openFolderModal()">+ Nova Pasta</button>
       <button class="btn-sm" style="margin: 4px 8px; width: calc(100% - 16px); justify-content: center;" onclick="openAlertsModal()">🔔 Alertas</button>
       <button class="btn-sm" style="margin: 4px 8px; width: calc(100% - 16px); justify-content: center;" onclick="openManageTemplatesModal()">⚙ Gerenciar Modelos</button>
+      <div id="sync-status" class="sync-status" title="Estado da sincronização"><span class="sync-dot"></span><span id="sync-status-text">Aguardando conexão...</span></div>
+      <button class="btn-sm" style="margin: 4px 8px; width: calc(100% - 16px); justify-content: center;" onclick="openDataModal()">💾 Backup e Dados</button>
     </div>
   </div>
+
+  <div id="mobile-nav-overlay" onclick="toggleSidebar()"></div>
 
   <!-- Conteúdo Principal -->
   <div id="main">
     <div class="top-bar">
       <button class="mobile-nav-toggle" onclick="toggleSidebar()">☰ Menu</button>
-      <input type="text" class="search-input" placeholder="Buscar (/)..." oninput="filterItems(this.value)">
-      <button class="btn" onclick="openItemModal()">+ Novo item</button>
+      <div class="phase2-search-actions">
+        <input type="text" class="search-input" id="main-search" placeholder="Buscar (/)..." oninput="filterItems(this.value)">
+        <button class="btn-sm search-filter-btn" type="button" title="Filtros avançados" onclick="toggleSearchFilters()">⚙ Filtros</button>
+      </div>
+      <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+        <button class="btn-sm ai-launch-btn" type="button" onclick="openAIAssistant()">✨ Assistente</button>
+        <button class="btn" onclick="openItemModal()">+ Novo item</button>
+      </div>
+    </div>
+
+    <div id="search-filters-panel">
+      <div class="filter-grid">
+        <div class="filter-field"><label>Status</label><select id="filter-status" class="form-control" onchange="updatePhase2Filters()"><option value="all">Todos</option><option value="todo">A Fazer</option><option value="doing">Em andamento</option><option value="waiting">Aguardando</option><option value="done">Concluído</option></select></div>
+        <div class="filter-field"><label>Prioridade</label><select id="filter-priority" class="form-control" onchange="updatePhase2Filters()"><option value="all">Todas</option><option value="high">Alta</option><option value="medium">Média</option><option value="low">Baixa</option></select></div>
+        <div class="filter-field"><label>Pasta</label><select id="filter-folder" class="form-control" onchange="updatePhase2Filters()"><option value="all">Todas</option><option value="none">Sem pasta</option></select></div>
+        <div class="filter-field"><label>Tag</label><input id="filter-tag" class="form-control" placeholder="#trabalho ou trabalho" oninput="updatePhase2Filters()"></div>
+        <div class="filter-field"><label>Data</label><select id="filter-date" class="form-control" onchange="updatePhase2Filters()"><option value="all">Qualquer data</option><option value="today">Hoje</option><option value="tomorrow">Amanhã</option><option value="week">Próximos 7 dias</option><option value="overdue">Atrasados</option><option value="nodate">Sem data</option></select></div>
+        <div class="filter-field"><label>Recorrência</label><select id="filter-recurring" class="form-control" onchange="updatePhase2Filters()"><option value="all">Todos</option><option value="yes">Recorrentes</option><option value="no">Não recorrentes</option></select></div>
+      </div>
+      <div class="filter-footer"><span class="filter-result-count" id="filter-result-count">Filtros inativos</span><button class="btn-sm" type="button" onclick="clearPhase2Filters()">Limpar filtros</button></div>
     </div>
 
     <div id="overdue-banner-container"></div>
 
     <div class="quick-capture">
-      <input type="text" id="quick-input" placeholder="Captura rápida: Ex: Treino amanhã 18h #Academia" onkeypress="handleQuickCapture(event)">
-      <button class="btn" onclick="processQuickCapture()">Salvar</button>
+      <input type="text" id="quick-input" placeholder="Captura rápida: Ex: Reunião sexta às 14h #trabalho prioridade alta lembrar 30 min antes" onkeypress="handleQuickCapture(event)" aria-label="Captura rápida da agenda">
+      <button class="btn" type="button" onclick="processQuickCapture()">Adicionar</button>
     </div>
+    <div id="quick-preview" class="quick-preview" hidden></div>
 
     <div id="header-container"></div>
     <div id="items-container"></div>
+  </div>
+
+  <nav class="mobile-bottom-nav" aria-label="Navegação rápida">
+    <button type="button" onclick="mobileGoToday()"><span>⌂</span><span>Hoje</span></button>
+    <button type="button" onclick="mobileGoCalendar()"><span>📅</span><span>Agenda</span></button>
+    <button type="button" class="primary" onclick="openItemModal()"><span>＋</span><span>Novo</span></button>
+    <button type="button" onclick="mobileGoFolders()"><span>📁</span><span>Pastas</span></button>
+    <button type="button" onclick="openAIAssistant()"><span>✨</span><span>IA</span></button>
+  </nav>
+
+  <!-- Modal Assistente IA — FASE 5 -->
+  <div id="ai-modal" class="modal ai-modal">
+    <div class="modal-content">
+      <div class="ai-header">
+        <div class="ai-header-title">
+          <div class="ai-icon">✨</div>
+          <div>
+            <h3>Assistente da Agenda</h3>
+            <p>Consulta e propõe alterações com confirmação antes de aplicar.</p>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span class="ai-context-pill" id="ai-context-pill">Agenda pronta</span>
+          <button class="btn-sm" type="button" onclick="clearAIConversation()" title="Limpar conversa">🧹</button>
+          <button class="btn-sm" type="button" onclick="closeAIAssistant()" aria-label="Fechar">✕</button>
+        </div>
+      </div>
+      <div class="ai-body">
+        <div class="ai-chat" id="ai-chat" aria-live="polite">
+          <div class="ai-empty" id="ai-empty-state">
+            <strong>O que você quer organizar?</strong>
+            Pergunte sobre sua agenda, peça prioridades, crie tarefas, reagende, monte checklists ou peça um follow-up.
+          </div>
+        </div>
+        <div class="ai-actions-panel" id="ai-actions-panel" hidden>
+          <div class="ai-actions-title">
+            <strong>Alterações propostas</strong>
+            <span style="font-size:.68rem;color:var(--muted);">Nada é aplicado sem sua confirmação.</span>
+          </div>
+          <div class="ai-action-list" id="ai-action-list"></div>
+          <div style="display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin-top:8px;">
+            <button class="btn-sm" type="button" onclick="clearAIProposals()">Cancelar propostas</button>
+            <button class="btn" type="button" onclick="applySelectedAIProposals()">Aplicar selecionadas</button>
+          </div>
+        </div>
+        <div class="ai-compose">
+          <div class="ai-compose-row">
+            <textarea id="ai-input" class="form-control" placeholder="Ex.: Quais são minhas prioridades de hoje?&#10;Ex.: Crie uma reunião sexta às 14h em Trabalho.&#10;Ex.: Passe a reunião de amanhã para sexta." aria-label="Mensagem para o assistente"></textarea>
+            <button class="btn" id="ai-send-btn" type="button" onclick="sendAIMessage()">Enviar</button>
+          </div>
+          <div class="ai-compose-actions">
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+              <button class="btn-sm" type="button" onclick="aiQuickPrompt('O que tenho hoje e o que é prioridade?')">Hoje</button>
+              <button class="btn-sm" type="button" onclick="aiQuickPrompt('Quais tarefas estão atrasadas e o que devo priorizar primeiro?')">Atrasados</button>
+              <button class="btn-sm" type="button" onclick="aiQuickPrompt('Organize minhas tarefas de amanhã e indique o que não tem horário.')">Organizar amanhã</button>
+            </div>
+            <button class="btn-sm" type="button" onclick="toggleAIConfig()">⚙ Conexão</button>
+          </div>
+        </div>
+        <div class="ai-config" id="ai-config" hidden>
+          <div class="ai-config-grid">
+            <div>
+              <label>Endpoint seguro da IA</label>
+              <input id="ai-endpoint" class="form-control" type="url" placeholder="/api/agenda-ai">
+            </div>
+            <div>
+              <label>Limite de itens</label>
+              <input id="ai-context-limit" class="form-control" type="number" min="50" max="500" step="10" value="250">
+            </div>
+          </div>
+          <div class="ai-config-note">Use um backend seu que valide o token Firebase e mantenha a chave do provedor de IA no servidor. A chave da OpenAI nunca deve ficar neste HTML.</div>
+          <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:8px;">
+            <button class="btn-sm" type="button" onclick="testAIConnection()">Testar conexão</button>
+            <button class="btn-sm" type="button" onclick="saveAIConfig()">Salvar conexão</button>
+          </div>
+          <div class="ai-config-note" id="ai-connection-status"></div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Modal de Item -->
@@ -354,6 +613,7 @@
         <h3 style="font-size: 1.2rem;" id="modal-item-title-head">Item da Agenda</h3>
         <div>
           <button id="f-delete-btn" class="btn-sm" style="display:inline-flex; border-color:var(--danger); color:var(--danger); margin-right:8px;" onclick="deleteCurrentItem()">🗑️ Excluir</button>
+          <button id="f-history-btn" class="btn-sm history-btn" style="display:none; margin-right:6px;" type="button" onclick="toggleItemHistory()">🕘 Histórico</button>
           <button id="f-star-btn" class="star-btn inactive" onclick="toggleFormStar()">☆</button>
         </div>
       </div>
@@ -377,6 +637,27 @@
         <textarea id="f-desc" class="form-control" placeholder="Anotações e detalhes do compromisso..." oninput="autoResizeTextarea(this)"></textarea>
       </div>
 
+      <div class="form-group">
+        <div class="flex-row gap-3" style="align-items:flex-start;">
+          <div style="flex:1;">
+            <label>Prioridade</label>
+            <select id="f-priority" class="form-control">
+              <option value="low">Baixa</option>
+              <option value="medium" selected>Média</option>
+              <option value="high">Alta</option>
+            </select>
+          </div>
+          <div style="flex:2;">
+            <label>Tags</label>
+            <input type="text" id="f-tags" class="form-control" placeholder="ex.: trabalho, urgente, financeiro">
+          </div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Próxima ação</label>
+        <input type="text" id="f-next-action" class="form-control" placeholder="Qual é o próximo passo concreto?">
+      </div>
+
       <div class="form-group" style="display: flex; gap: 12px;">
         <div style="flex:1;">
           <label>Pasta</label>
@@ -393,14 +674,26 @@
         </div>
       </div>
 
-      <div class="form-group" style="display: flex; gap: 12px;">
-        <div style="flex:1;">
+      <div class="form-group" style="display: flex; gap: 12px; flex-wrap:wrap;">
+        <div style="flex:1; min-width:150px;">
           <label>Data</label>
           <input type="date" id="f-date" class="form-control">
         </div>
-        <div style="flex:1;">
+        <div style="flex:1; min-width:130px;">
           <label>Hora</label>
           <input type="time" id="f-time" class="form-control">
+        </div>
+        <div style="flex:1; min-width:130px;">
+          <label>Duração</label>
+          <select id="f-duration" class="form-control">
+            <option value="15">15 min</option>
+            <option value="30">30 min</option>
+            <option value="45">45 min</option>
+            <option value="60" selected>1 hora</option>
+            <option value="90">1h 30min</option>
+            <option value="120">2 horas</option>
+            <option value="180">3 horas</option>
+          </select>
         </div>
       </div>
 
@@ -443,6 +736,14 @@
           <input type="file" id="file-input" multiple style="display:none;" onchange="handleFileSelect(event)">
         </div>
         <div class="attachment-list" id="modal-attachment-list"></div>
+      </div>
+
+      <div id="item-history-section" class="history-section" hidden>
+        <div class="history-header">
+          <strong>🕘 Histórico da tarefa</strong>
+          <button type="button" class="btn-sm" onclick="loadItemHistory()">↻ Atualizar</button>
+        </div>
+        <div id="item-history-list" class="history-list"></div>
       </div>
 
       <div class="form-group" style="display: flex; align-items: center; gap: 8px; margin-top: 16px;">
@@ -498,6 +799,48 @@
     </div>
   </div>
 
+
+  <!-- Modal Backup e Dados -->
+  <div id="data-modal" class="modal">
+    <div class="modal-content">
+      <h3 style="margin-bottom: 16px;">💾 Backup e Dados</h3>
+
+      <div class="data-backup-box">
+        <h4>Backup local</h4>
+        <p>Baixe uma cópia completa da sua agenda em JSON. O arquivo inclui tarefas, pastas, modelos e configurações exportáveis.</p>
+        <button class="btn-sm" style="margin-top:10px; width:100%; justify-content:center;" onclick="exportBackup()">⬇ Exportar backup JSON</button>
+      </div>
+
+      <div class="data-backup-box">
+        <h4>Restaurar backup</h4>
+        <p>Importe um arquivo JSON criado por esta agenda. Antes da restauração será criada uma cópia de emergência no navegador.</p>
+        <input type="file" id="backup-file-input" accept="application/json,.json" style="display:none;" onchange="importBackupFile(event)">
+        <button class="btn-sm" style="margin-top:10px; width:100%; justify-content:center;" onclick="document.getElementById('backup-file-input').click()">⬆ Importar backup JSON</button>
+      </div>
+
+      <div class="data-backup-box">
+        <h4>Estrutura de dados</h4>
+        <p id="data-structure-status">Carregando informações...</p>
+      </div>
+
+      <div class="data-backup-box">
+        <h4>🧭 Migrar versão antiga</h4>
+        <p>Use apenas para migrar dados ainda armazenados em <code>shared/agenda-vida</code>. A migração só acontece após sua confirmação.</p>
+        <button class="btn-sm" style="margin-top:10px; width:100%; justify-content:center;" onclick="migrateLegacyFromButton()">↪ Migrar dados antigos para minha conta</button>
+      </div>
+
+      <div class="data-backup-box danger-note">
+        <h4>Recuperação de emergência</h4>
+        <p id="emergency-backup-status">Será criado automaticamente um backup local antes de migrações e restaurações importantes.</p>
+        <button class="btn-sm" style="margin-top:10px; width:100%; justify-content:center;" onclick="downloadEmergencyBackup()">⬇ Baixar último backup de emergência</button>
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; margin-top:20px;">
+        <button class="btn" onclick="closeDataModal()">Fechar</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Modal Alertas e Notificações -->
   <div id="alerts-modal" class="modal">
     <div class="modal-content">
@@ -546,6 +889,12 @@
         </div>
       </div>
 
+      <div class="phase3-alert-status" id="phase3-alert-status">Notificações em primeiro plano ativas quando a página estiver aberta.</div>
+      <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;">
+        <button class="btn-sm" type="button" onclick="phase3TestNotification()">🔔 Testar notificação</button>
+        <button class="btn-sm" type="button" id="phase3-install-btn" style="display:none;" onclick="phase3InstallPWA()">📲 Instalar aplicativo</button>
+      </div>
+
       <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
         <button class="btn" onclick="closeAlertsModal()">Concluído</button>
       </div>
@@ -553,7 +902,7 @@
   </div>
 
   <script>
-    // Firebase Config
+    // Firebase Config / Fase 1
     const firebaseConfig = {
       apiKey: "AIzaSyAvdngV2HMKdAIUmK1f9IF0gm4uEXPdd44",
       authDomain: "fluxo-de-caixa-59dd1.firebaseapp.com",
@@ -566,7 +915,24 @@
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     const auth = firebase.auth();
-    db.enablePersistence().catch(err => console.log("Offline persistence:", err));
+    const storage = firebase.storage();
+    // Dados novos vivem em users/{uid}/items, users/{uid}/folders, users/{uid}/templates e users/{uid}/settings/app.
+    // As Security Rules devem restringir esses caminhos ao request.auth.uid correspondente.
+    const DATA_SCHEMA_VERSION = 2;
+    const LEGACY_SHARED_PATH = 'shared/agenda-vida';
+    const USER_ROOT_COLLECTION = 'users';
+    const USER_ITEMS_COLLECTION = 'items';
+    const USER_AREAS_COLLECTION = 'folders';
+    const USER_TEMPLATES_COLLECTION = 'templates';
+    const USER_SETTINGS_COLLECTION = 'settings';
+    const ITEM_HISTORY_COLLECTION = 'history';
+
+    db.enablePersistence().then(() => {
+      setSyncStatus('ok', 'Offline e nuvem ativos');
+    }).catch(err => {
+      console.warn('Offline persistence:', err);
+      setSyncStatus('error', 'Modo offline limitado');
+    });
 
     // Estado da Aplicação
     let S = { areas: [], items: [], templates: [] };
@@ -581,7 +947,11 @@
     let touchMoved = false;
     let blockNextClick = false;
     let blockClickTimer = null;
-    let unsubscribeFirestore = null;
+    let unsubscribeFirestore = [];
+    let dataReady = false;
+    let isMigrating = false;
+    let saveQueue = Promise.resolve();
+    let lastPersistedSnapshot = null;
     let pendingAttachments = []; 
     let currentDashboardFilter = null; 
 
@@ -605,7 +975,10 @@
 
     try {
       const savedPrefs = localStorage.getItem('agenda_prefs_v3');
-      if (savedPrefs) prefs = { ...prefs, ...JSON.parse(savedPrefs) };
+      if (savedPrefs) {
+        const parsedPrefs = JSON.parse(savedPrefs);
+        prefs = { ...prefs, ...parsedPrefs, alertConfig: { ...prefs.alertConfig, ...(parsedPrefs.alertConfig || {}) } };
+      }
     } catch(e) { console.warn('LocalStorage error:', e); }
 
     function savePrefs() {
@@ -693,10 +1066,534 @@
         else if (document.getElementById('folder-modal').classList.contains('open')) closeFolderModal();
         else if (document.getElementById('templates-modal').classList.contains('open')) closeManageTemplatesModal();
         else if (document.getElementById('alerts-modal').classList.contains('open')) closeAlertsModal();
+        else if (document.getElementById('data-modal').classList.contains('open')) closeDataModal();
+        else if (document.getElementById('ai-modal').classList.contains('open')) closeAIAssistant();
       }
     });
 
     window.addEventListener('scroll', hideContextMenu);
+
+    // Estado de sincronização / infraestrutura de dados
+    function setSyncStatus(kind, label) {
+      const box = document.getElementById('sync-status');
+      const textEl = document.getElementById('sync-status-text');
+      if (!box || !textEl) return;
+      box.classList.remove('ok', 'syncing', 'error');
+      if (kind) box.classList.add(kind);
+      textEl.textContent = label;
+    }
+
+    function userRootRef() {
+      const uid = auth.currentUser?.uid;
+      if (!uid) throw new Error('Usuário não autenticado.');
+      return db.collection(USER_ROOT_COLLECTION).doc(uid);
+    }
+
+    function userCollectionRef(name) {
+      return userRootRef().collection(name);
+    }
+
+    function appSettingsRef() {
+      return userCollectionRef(USER_SETTINGS_COLLECTION).doc('app');
+    }
+
+    function normalizeState() {
+      if (!S || typeof S !== 'object') S = { areas: [], items: [], templates: [] };
+      if (!Array.isArray(S.items)) S.items = [];
+      if (!Array.isArray(S.areas)) S.areas = [];
+      if (!Array.isArray(S.templates)) S.templates = [];
+      S.items.forEach(i => {
+        if (!i.status || i.status === 'UNDEFINED') i.status = 'todo';
+        if (!Array.isArray(i.attachments)) i.attachments = [];
+        if (!Array.isArray(i.checklist)) i.checklist = [];
+      });
+      S.areas.forEach(a => {
+        if (typeof a.order !== 'number') a.order = 0;
+        if (a.parentId === undefined) a.parentId = null;
+        a.pinned = !!a.pinned;
+      });
+      return S;
+    }
+
+    function cloneData(obj) {
+      return JSON.parse(JSON.stringify(obj));
+    }
+
+    function byIdMap(list) {
+      return new Map((list || []).map(x => [x.id, x]));
+    }
+
+    function getChangedDocs(prevList, nextList) {
+      const prev = byIdMap(prevList);
+      const next = byIdMap(nextList);
+      const upserts = [];
+      const deletes = [];
+
+      for (const [id, value] of next) {
+        const before = prev.get(id);
+        if (!before || JSON.stringify(before) !== JSON.stringify(value)) upserts.push(value);
+      }
+      for (const [id] of prev) {
+        if (!next.has(id)) deletes.push(id);
+      }
+      return { upserts, deletes };
+    }
+
+    function chunkArray(arr, size) {
+      const out = [];
+      for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
+      return out;
+    }
+
+    async function commitBatchOperations(operations) {
+      for (const group of chunkArray(operations, 400)) {
+        const batch = db.batch();
+        group.forEach(op => {
+          if (op.type === 'set') batch.set(op.ref, op.data, { merge: false });
+          else if (op.type === 'delete') batch.delete(op.ref);
+        });
+        await batch.commit();
+      }
+    }
+
+    function createEmergencyBackup(reason = 'before-change') {
+      try {
+        const payload = {
+          app: 'Minha Agenda Pro',
+          schemaVersion: DATA_SCHEMA_VERSION,
+          reason,
+          createdAt: new Date().toISOString(),
+          data: cloneData(normalizeState()),
+          prefs: cloneData(prefs)
+        };
+        localStorage.setItem('agenda_emergency_backup_v2', JSON.stringify(payload));
+        localStorage.setItem('agenda_emergency_backup_created_at', payload.createdAt);
+        return true;
+      } catch (e) {
+        console.warn('Emergency backup failed:', e);
+        return false;
+      }
+    }
+
+    async function readCollectionState() {
+      const [itemsSnap, areasSnap, templatesSnap, settingsSnap] = await Promise.all([
+        userCollectionRef(USER_ITEMS_COLLECTION).get(),
+        userCollectionRef(USER_AREAS_COLLECTION).get(),
+        userCollectionRef(USER_TEMPLATES_COLLECTION).get(),
+        appSettingsRef().get()
+      ]);
+
+      const items = itemsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const areas = areasSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const templates = templatesSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const settings = settingsSnap.exists ? settingsSnap.data() : {};
+
+      return { items, areas, templates, settings, hasData: items.length + areas.length + templates.length > 0 };
+    }
+
+    function attachUserListeners() {
+      unsubscribeFirestore.forEach(fn => { try { fn(); } catch (_) {} });
+      unsubscribeFirestore = [];
+      let firstSnapshotState = { items: false, areas: false, templates: false };
+
+      const finalizeSnapshotCycle = () => {
+        if (firstSnapshotState.items && firstSnapshotState.areas && firstSnapshotState.templates) {
+          lastPersistedSnapshot = cloneData(S);
+          setSyncStatus('ok', 'Sincronizado');
+        }
+      };
+
+      const itemsUnsub = userCollectionRef(USER_ITEMS_COLLECTION).onSnapshot(snap => {
+        S.items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        firstSnapshotState.items = true;
+        normalizeState();
+        if (dataReady) render();
+        finalizeSnapshotCycle();
+      }, err => setSyncStatus('error', 'Erro ao sincronizar tarefas'));
+
+      const areasUnsub = userCollectionRef(USER_AREAS_COLLECTION).onSnapshot(snap => {
+        S.areas = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        firstSnapshotState.areas = true;
+        normalizeState();
+        if (dataReady) render();
+        finalizeSnapshotCycle();
+      }, err => setSyncStatus('error', 'Erro ao sincronizar pastas'));
+
+      const templatesUnsub = userCollectionRef(USER_TEMPLATES_COLLECTION).onSnapshot(snap => {
+        S.templates = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        firstSnapshotState.templates = true;
+        normalizeState();
+        if (dataReady) render();
+        finalizeSnapshotCycle();
+      }, err => setSyncStatus('error', 'Erro ao sincronizar modelos'));
+
+      unsubscribeFirestore.push(itemsUnsub, areasUnsub, templatesUnsub);
+    }
+
+    async function writeEntireStateToUser(state, options = {}) {
+      const target = {
+        items: Array.isArray(state.items) ? state.items : [],
+        areas: Array.isArray(state.areas) ? state.areas : [],
+        templates: Array.isArray(state.templates) ? state.templates : []
+      };
+
+      // Segurança operacional: gravamos primeiro o estado desejado e só depois removemos o que sobrou.
+      const upsertOps = [];
+      target.items.forEach(item => { if (item?.id) upsertOps.push({ type:'set', ref:userCollectionRef(USER_ITEMS_COLLECTION).doc(item.id), data:item }); });
+      target.areas.forEach(area => { if (area?.id) upsertOps.push({ type:'set', ref:userCollectionRef(USER_AREAS_COLLECTION).doc(area.id), data:area }); });
+      target.templates.forEach(template => { if (template?.id) upsertOps.push({ type:'set', ref:userCollectionRef(USER_TEMPLATES_COLLECTION).doc(template.id), data:template }); });
+      await commitBatchOperations(upsertOps);
+
+      const targetIds = {
+        [USER_ITEMS_COLLECTION]: new Set(target.items.map(x => x.id).filter(Boolean)),
+        [USER_AREAS_COLLECTION]: new Set(target.areas.map(x => x.id).filter(Boolean)),
+        [USER_TEMPLATES_COLLECTION]: new Set(target.templates.map(x => x.id).filter(Boolean))
+      };
+      const deleteOps = [];
+      for (const collectionName of [USER_ITEMS_COLLECTION, USER_AREAS_COLLECTION, USER_TEMPLATES_COLLECTION]) {
+        const snap = await userCollectionRef(collectionName).get();
+        snap.docs.forEach(d => { if (!targetIds[collectionName].has(d.id)) deleteOps.push({ type:'delete', ref:d.ref }); });
+      }
+      await commitBatchOperations(deleteOps);
+
+      await appSettingsRef().set({
+        schemaVersion: DATA_SCHEMA_VERSION,
+        updatedAt: Date.now(),
+        migratedFromLegacy: !!options.migratedFromLegacy,
+        uid: auth.currentUser.uid
+      }, { merge: true });
+    }
+
+    function parseLegacyState(rawSnapData) {
+      let legacy = rawSnapData;
+      if (rawSnapData?.json) {
+        try { legacy = JSON.parse(rawSnapData.json); } catch (_) {}
+      }
+      if (!legacy || typeof legacy !== 'object') return null;
+      return {
+        items: Array.isArray(legacy.items) ? cloneData(legacy.items) : [],
+        areas: Array.isArray(legacy.areas) ? cloneData(legacy.areas) : [],
+        templates: Array.isArray(legacy.templates) ? cloneData(legacy.templates) : []
+      };
+    }
+
+    function base64ToBlob(base64, type = 'application/octet-stream') {
+      const binary = atob(base64);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      return new Blob([bytes], { type });
+    }
+
+    async function readLegacyAttachmentBase64(attId) {
+      const snap = await db.collection('shared').doc('agenda-vida').collection('anexos').doc(attId).collection('chunks').get();
+      const chunks = [];
+      snap.docs.forEach(d => { chunks[parseInt(d.id, 10)] = d.data().chunk; });
+      return chunks.filter(Boolean).join('');
+    }
+
+    async function migrateLegacyAttachments(state) {
+      let migrated = 0;
+      let failed = 0;
+      for (const item of state.items || []) {
+        for (const att of item.attachments || []) {
+          if (att.storagePath) continue;
+          try {
+            const base64 = await readLegacyAttachmentBase64(att.id);
+            if (!base64) { failed++; continue; }
+            const path = `users/${auth.currentUser.uid}/attachments/${item.id}/${att.id}`;
+            const blob = base64ToBlob(base64, att.type || 'application/octet-stream');
+            await storage.ref(path).put(blob, { contentType: att.type || 'application/octet-stream', customMetadata: { ownerUid: auth.currentUser.uid } });
+            att.storagePath = path;
+            att.legacySource = 'firestore-chunks';
+            migrated++;
+          } catch (e) {
+            console.warn('Attachment migration failed:', att.id, e);
+            failed++;
+          }
+        }
+      }
+      return { migrated, failed };
+    }
+
+    async function attemptLegacyMigration(legacySnap) {
+      if (isMigrating) return false;
+      const legacy = parseLegacyState(legacySnap?.data?.() || legacySnap || {});
+      if (!legacy || (!legacy.items.length && !legacy.areas.length && !legacy.templates.length)) return false;
+
+      const current = await readCollectionState();
+      if (current.hasData) {
+        throw new Error('A conta já possui dados na nova estrutura. Para evitar misturar agendas, faça um backup e restaure/importa de forma controlada.');
+      }
+      if (!createEmergencyBackup('before-legacy-migration')) {
+        throw new Error('Não foi possível criar o backup local de emergência. A migração foi interrompida.');
+      }
+
+      isMigrating = true;
+      setSyncStatus('syncing', 'Migrando dados antigos...');
+      try {
+        const attachmentReport = await migrateLegacyAttachments(legacy);
+        await writeEntireStateToUser(legacy, { migratedFromLegacy: true });
+        localStorage.setItem('agenda_migration_v2_done', JSON.stringify({ uid: auth.currentUser.uid, at: Date.now(), attachmentReport }));
+        return attachmentReport;
+      } finally {
+        isMigrating = false;
+      }
+    }
+
+    async function migrateLegacyFromButton() {
+      if (!auth.currentUser || isMigrating) return;
+      if (!confirm('A migração copiará shared/agenda-vida para a conta atualmente conectada. Os dados antigos não serão apagados. Continuar?')) return;
+      try {
+        const legacySnap = await db.collection('shared').doc('agenda-vida').get();
+        if (!legacySnap.exists) {
+          showToast('Nenhum dado antigo foi encontrado em shared/agenda-vida.');
+          return;
+        }
+        const report = await attemptLegacyMigration(legacySnap);
+        const fresh = await readCollectionState();
+        S = { items: fresh.items, areas: fresh.areas, templates: fresh.templates };
+        normalizeState();
+        lastPersistedSnapshot = cloneData(S);
+        dataReady = true;
+        render();
+        updateTabTitleAndAlerts();
+        setSyncStatus('ok', 'Sincronizado');
+        if (report) showToast(`Migração concluída. Itens: ${S.items.length}. Anexos migrados: ${report.migrated}. Falhas: ${report.failed}.`);
+      } catch (err) {
+        console.error('Explicit legacy migration error:', err);
+        setSyncStatus('error', 'Falha na migração');
+        showToast('A migração não foi concluída: ' + (err.message || err));
+      }
+    }
+
+    async function loadData() {
+      unsubscribeFirestore.forEach(fn => { try { fn(); } catch (_) {} });
+      unsubscribeFirestore = [];
+      dataReady = false;
+      setSyncStatus('syncing', 'Carregando seus dados...');
+
+      try {
+        const current = await readCollectionState();
+        const settings = current.settings || {};
+
+        // A migração legada é explícita no painel Backup e Dados.
+        // Não consultamos shared/agenda-vida automaticamente.
+
+        const fresh = await readCollectionState();
+        S = { items: fresh.items, areas: fresh.areas, templates: fresh.templates };
+        normalizeState();
+        lastPersistedSnapshot = cloneData(S);
+        dataReady = true;
+        attachUserListeners();
+        render();
+        updateTabTitleAndAlerts();
+        setSyncStatus('ok', 'Sincronizado');
+      } catch (err) {
+        console.error('loadData error:', err);
+        setSyncStatus('error', 'Falha ao carregar dados');
+        showToast('Não foi possível carregar sua agenda: ' + (err.message || err));
+      }
+    }
+
+    // =========================
+    // FASE 6 — Histórico de alterações
+    // =========================
+    function itemHistoryRef(itemId) {
+      return userCollectionRef(USER_ITEMS_COLLECTION).doc(itemId).collection(ITEM_HISTORY_COLLECTION);
+    }
+
+    function phase6HistoryClone(value) {
+      if (value === undefined) return null;
+      try { return JSON.parse(JSON.stringify(value)); } catch (_) { return null; }
+    }
+
+    function phase6HistorySnapshot(item) {
+      if (!item) return null;
+      const attachmentMeta = Array.isArray(item.attachments) ? item.attachments.map(a => ({
+        id: a.id || '', name: a.name || '', type: a.type || '', size: Number(a.size || 0), addedAt: a.addedAt || null
+      })) : [];
+      return {
+        title: item.title || '',
+        desc: item.desc || '',
+        area: item.area || '',
+        status: item.status || 'todo',
+        date: item.date || '',
+        time: item.time || '',
+        duration: item.duration ?? null,
+        rep: item.rep || 'none',
+        repDay: item.repDay ?? null,
+        recurrenceRule: item.recurrenceRule || null,
+        reminder: item.reminder || 'none',
+        priority: item.priority || 'medium',
+        starred: !!item.starred,
+        tags: Array.isArray(item.tags) ? [...item.tags] : [],
+        nextAction: item.nextAction || '',
+        waitingFor: item.waitingFor || '',
+        waitingSince: item.waitingSince || '',
+        followUpDate: item.followUpDate || '',
+        checklist: Array.isArray(item.checklist) ? item.checklist.map(c => ({text:c.text || '', done:!!c.done})) : [],
+        attachments: attachmentMeta,
+        link: item.link || ''
+      };
+    }
+
+    const PHASE6_FIELD_LABELS = {
+      title:'Título', desc:'Descrição', area:'Pasta', status:'Situação', date:'Data', time:'Hora', duration:'Duração',
+      rep:'Recorrência', repDay:'Dia da recorrência', recurrenceRule:'Regra de recorrência', reminder:'Lembrete',
+      priority:'Prioridade', starred:'Estrela', tags:'Tags', nextAction:'Próxima ação', waitingFor:'Aguardando',
+      waitingSince:'Aguardando desde', followUpDate:'Follow-up', checklist:'Checklist', attachments:'Anexos', link:'Link'
+    };
+
+    function phase6FormatHistoryValue(field, value) {
+      if (value === null || value === undefined || value === '') return 'vazio';
+      if (field === 'status') return ({todo:'A Fazer', doing:'Em andamento', waiting:'Aguardando', done:'Concluído'})[value] || String(value);
+      if (field === 'priority') return ({low:'Baixa', medium:'Média', high:'Alta'})[value] || String(value);
+      if (field === 'rep') return ({none:'Não repete',daily:'Diária',weekly:'Semanal',monthly:'Mensal'})[value] || String(value);
+      if (field === 'duration') return `${value} min`;
+      if (field === 'starred') return value ? 'marcada' : 'desmarcada';
+      if (field === 'area') return getFolderConfig(value)?.name || (value ? String(value) : 'Sem pasta');
+      if (field === 'date') {
+        try { return formatBR(value, ''); } catch (_) { return String(value); }
+      }
+      if (Array.isArray(value)) {
+        if (field === 'tags') return value.length ? value.map(x => '#'+x).join(', ') : 'nenhuma';
+        if (field === 'checklist') return value.length ? `${value.length} subitem(ns)` : 'vazio';
+        if (field === 'attachments') return value.length ? `${value.length} anexo(s)` : 'nenhum';
+        return JSON.stringify(value);
+      }
+      if (typeof value === 'object') return JSON.stringify(value);
+      const str = String(value);
+      return str.length > 240 ? str.slice(0,237) + '…' : str;
+    }
+
+    function phase6DiffChanges(before, after) {
+      const changes = {};
+      const keys = new Set([...Object.keys(before || {}), ...Object.keys(after || {})]);
+      for (const key of keys) {
+        const b = before ? before[key] : undefined;
+        const a = after ? after[key] : undefined;
+        if (JSON.stringify(b) !== JSON.stringify(a)) changes[key] = { before: phase6HistoryClone(b), after: phase6HistoryClone(a) };
+      }
+      return changes;
+    }
+
+    async function recordItemHistory(itemId, options = {}) {
+      if (!auth.currentUser || !itemId) return;
+      const source = options.source || 'user';
+      const action = options.action || 'edit';
+      const before = options.before || null;
+      const after = options.after || null;
+      const changes = options.changes || phase6DiffChanges(before, after);
+      const displayChanges = Object.entries(changes);
+      if (!displayChanges.length && !['create','delete','restore'].includes(action)) return;
+
+      const payload = {
+        action,
+        source,
+        actorUid: auth.currentUser.uid,
+        actorName: auth.currentUser.displayName || auth.currentUser.email || 'Usuário',
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        createdAtMs: Date.now(),
+        before,
+        after,
+        changes,
+        schemaVersion: 1
+      };
+      try {
+        await itemHistoryRef(itemId).doc(generateId('hist')).set(payload);
+      } catch (e) {
+        console.warn('Histórico não salvo:', e);
+      }
+    }
+
+    function phase6ActionLabel(action) {
+      return ({create:'Tarefa criada',edit:'Tarefa editada',delete:'Tarefa excluída',complete:'Tarefa concluída',reopen:'Tarefa reaberta',
+        reschedule:'Tarefa reagendada',move:'Tarefa movida',priority:'Prioridade alterada',checklist:'Checklist alterado',star:'Estrela alterada',
+        waiting:'Status aguardando',followup:'Follow-up alterado',duplicate:'Tarefa duplicada',restore:'Tarefa restaurada'})[action] || action;
+    }
+
+    function phase6SourceLabel(source) {
+      return source === 'ai' ? '✨ IA' : source === 'system' ? '⚙ Sistema' : source === 'import' ? '📥 Importação' : '👤 Você';
+    }
+
+    function phase6HistoryDate(entry) {
+      const ms = entry.createdAtMs || (entry.createdAt && typeof entry.createdAt.toMillis === 'function' ? entry.createdAt.toMillis() : Date.now());
+      return new Date(ms).toLocaleString('pt-BR', {dateStyle:'short', timeStyle:'short'});
+    }
+
+    function phase6RenderHistory(entries) {
+      const list = document.getElementById('item-history-list');
+      if (!list) return;
+      if (!entries.length) { list.innerHTML = '<div class="history-empty">Nenhuma alteração registrada ainda.</div>'; return; }
+      list.innerHTML = entries.map(entry => {
+        const danger = entry.action === 'delete' ? ' danger' : '';
+        const changes = Object.entries(entry.changes || {});
+        const changesHtml = changes.length ? changes.map(([field, pair]) => {
+          const label = PHASE6_FIELD_LABELS[field] || field;
+          return `<div class="history-change"><span class="history-field">${escapeHtml(label)}:</span> ${entry.action === 'create' ? `<span class="history-value-new">${escapeHtml(phase6FormatHistoryValue(field, pair.after))}</span>` : entry.action === 'delete' ? `<span class="history-value-old">${escapeHtml(phase6FormatHistoryValue(field, pair.before))}</span>` : `<span class="history-value-old">${escapeHtml(phase6FormatHistoryValue(field, pair.before))}</span> → <span class="history-value-new">${escapeHtml(phase6FormatHistoryValue(field, pair.after))}</span>`}</div>`;
+        }).join('') : '<div class="history-change">Sem detalhes de campo.</div>';
+        return `<div class="history-entry${danger}"><div class="history-top"><span class="history-action">${escapeHtml(phase6ActionLabel(entry.action))}</span><span class="history-meta">${escapeHtml(phase6HistoryDate(entry))}</span></div><div class="history-source">${escapeHtml(phase6SourceLabel(entry.source))}${entry.actorName ? ` · ${escapeHtml(entry.actorName)}` : ''}</div>${changesHtml}</div>`;
+      }).join('');
+    }
+
+    async function loadItemHistory() {
+      const item = currentEditItemId ? S.items.find(i => i.id === currentEditItemId) : null;
+      const section = document.getElementById('item-history-section');
+      const list = document.getElementById('item-history-list');
+      if (!item || !section || !list) return;
+      list.innerHTML = '<div class="history-empty">Carregando histórico…</div>';
+      try {
+        const snap = await itemHistoryRef(item.id).orderBy('createdAtMs', 'desc').limit(100).get();
+        phase6RenderHistory(snap.docs.map(d => ({id:d.id, ...d.data()})));
+      } catch (e) {
+        console.warn('Falha ao carregar histórico:', e);
+        list.innerHTML = '<div class="history-empty">Não foi possível carregar o histórico agora.</div>';
+      }
+    }
+
+    function toggleItemHistory() {
+      const section = document.getElementById('item-history-section');
+      if (!section || !currentEditItemId) return;
+      section.hidden = !section.hidden;
+      if (!section.hidden) loadItemHistory();
+    }
+
+    function saveData() {
+      if (!auth.currentUser || isMigrating) return Promise.resolve();
+      normalizeState();
+      const nextState = cloneData(S);
+      const previousState = lastPersistedSnapshot ? cloneData(lastPersistedSnapshot) : { items: [], areas: [], templates: [] };
+
+      const itemDiff = getChangedDocs(previousState.items, nextState.items);
+      const areaDiff = getChangedDocs(previousState.areas, nextState.areas);
+      const templateDiff = getChangedDocs(previousState.templates, nextState.templates);
+
+      if (!itemDiff.upserts.length && !itemDiff.deletes.length && !areaDiff.upserts.length && !areaDiff.deletes.length && !templateDiff.upserts.length && !templateDiff.deletes.length) {
+        return Promise.resolve();
+      }
+
+      setSyncStatus('syncing', 'Salvando...');
+      saveQueue = saveQueue.then(async () => {
+        const ops = [];
+        itemDiff.upserts.forEach(x => ops.push({ type:'set', ref:userCollectionRef(USER_ITEMS_COLLECTION).doc(x.id), data:x }));
+        itemDiff.deletes.forEach(id => ops.push({ type:'delete', ref:userCollectionRef(USER_ITEMS_COLLECTION).doc(id) }));
+        areaDiff.upserts.forEach(x => ops.push({ type:'set', ref:userCollectionRef(USER_AREAS_COLLECTION).doc(x.id), data:x }));
+        areaDiff.deletes.forEach(id => ops.push({ type:'delete', ref:userCollectionRef(USER_AREAS_COLLECTION).doc(id) }));
+        templateDiff.upserts.forEach(x => ops.push({ type:'set', ref:userCollectionRef(USER_TEMPLATES_COLLECTION).doc(x.id), data:x }));
+        templateDiff.deletes.forEach(id => ops.push({ type:'delete', ref:userCollectionRef(USER_TEMPLATES_COLLECTION).doc(id) }));
+
+        await commitBatchOperations(ops);
+        await appSettingsRef().set({ schemaVersion: DATA_SCHEMA_VERSION, updatedAt: Date.now(), uid: auth.currentUser.uid }, { merge: true });
+        lastPersistedSnapshot = nextState;
+        setSyncStatus('ok', 'Sincronizado');
+        updateTabTitleAndAlerts();
+      }).catch(err => {
+        console.error('saveData error:', err);
+        setSyncStatus('error', 'Falha ao salvar');
+        showToast('Falha ao salvar alterações: ' + (err.message || err));
+      });
+      return saveQueue;
+    }
 
     // Autenticação
     auth.onAuthStateChanged(user => {
@@ -705,115 +1602,446 @@
         document.getElementById('u-avatar').src = user.photoURL || '';
         document.getElementById('u-name').innerText = user.displayName || user.email;
         loadData();
-      } else { 
-        if (unsubscribeFirestore) {
-          unsubscribeFirestore();
-          unsubscribeFirestore = null;
-        }
-        document.getElementById('auth-overlay').style.display = 'flex'; 
+      } else {
+        unsubscribeFirestore.forEach(fn => { try { fn(); } catch (_) {} });
+        unsubscribeFirestore = [];
+        dataReady = false;
+        document.getElementById('auth-overlay').style.display = 'flex';
+        setSyncStatus('error', 'Não autenticado');
       }
     });
 
-    function loginGoogle() { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
-    function logout() { 
-      if (unsubscribeFirestore) {
-        unsubscribeFirestore();
-        unsubscribeFirestore = null;
-      }
-      auth.signOut(); 
-    }
-
-    function loadData() {
-      if (unsubscribeFirestore) {
-        unsubscribeFirestore();
-        unsubscribeFirestore = null;
-      }
-
-      unsubscribeFirestore = db.collection('shared').doc('agenda-vida').onSnapshot(doc => {
-        if (doc.exists) {
-          const raw = doc.data();
-          if (raw.json) { try { S = JSON.parse(raw.json); } catch (e) { S = raw; } } else { S = raw; }
-        }
-        if (!S.items) S.items = [];
-        if (!S.areas) S.areas = [];
-        if (!S.templates) S.templates = [];
-
-        S.items.forEach(i => {
-          if (!i.status || i.status === 'UNDEFINED') i.status = 'todo';
-          if (!i.attachments) i.attachments = [];
-        });
-
-        render();
-        updateTabTitleAndAlerts();
+    function loginGoogle() {
+      return auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).catch(err => {
+        showToast('Não foi possível entrar com o Google: ' + (err.message || err));
       });
     }
 
-    function saveData() {
-      db.collection('shared').doc('agenda-vida').set({ ...S, json: JSON.stringify(S), t: Date.now() });
-      updateTabTitleAndAlerts();
+    function logout() {
+      unsubscribeFirestore.forEach(fn => { try { fn(); } catch (_) {} });
+      unsubscribeFirestore = [];
+      return auth.signOut();
     }
 
-    function getFolderConfig(id) { return S.areas.find(a => a.id === id); }
+    // Utilitário de migração usado apenas pela rotina acima.
+    // Mantemos a função separada para facilitar auditoria e eventual remoção da compatibilidade legada.
 
-    function getHierarchy(id) {
-      let folder = getFolderConfig(id);
-      if (!folder) return { text: '', color: 'var(--muted)' };
-      let color = folder.color || 'var(--muted)';
-      if (folder.parentId) {
-        let parent = getFolderConfig(folder.parentId);
-        if (parent) return { text: `${parent.name} > ${folder.name}`, color: color };
+    // Captura Rápida — FASE 4
+    let phase4QuickPending = null;
+
+    function phase4NormalizeText(value) {
+      return String(value || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase();
+    }
+
+    function phase4CleanSpaces(value) {
+      return String(value || '')
+        .replace(/\s+/g, ' ')
+        .replace(/\s+([,.;])/g, '$1')
+        .replace(/(^[\s,.;:]+|[\s,.;:]+$)/g, '')
+        .trim();
+    }
+
+    function phase4DaysInMonth(year, monthIndex) {
+      return new Date(year, monthIndex + 1, 0).getDate();
+    }
+
+    function phase4ValidDate(year, month, day) {
+      const d = new Date(year, month - 1, day);
+      return d.getFullYear() === year && d.getMonth() === month - 1 && d.getDate() === day;
+    }
+
+    function phase4TodayDate() {
+      const todayStr = getTodayBR();
+      const [y, m, d] = todayStr.split('-').map(Number);
+      return new Date(y, m - 1, d);
+    }
+
+    function phase4DateFromWeekday(weekday, forceNextWeek = false) {
+      const today = phase4TodayDate();
+      const current = today.getDay();
+      let delta = (weekday - current + 7) % 7;
+      if (delta === 0 || forceNextWeek) delta += 7;
+      const d = new Date(today);
+      d.setDate(d.getDate() + delta);
+      return toLocalDateStr(d);
+    }
+
+    function phase4DateFromDayOffset(days) {
+      const d = phase4TodayDate();
+      d.setDate(d.getDate() + Number(days || 0));
+      return toLocalDateStr(d);
+    }
+
+    function phase4DateFromDayOfMonth(day) {
+      const today = phase4TodayDate();
+      const year = today.getFullYear();
+      const month = today.getMonth();
+      const safeDay = Math.min(day, phase4DaysInMonth(year, month));
+      let candidate = new Date(year, month, safeDay);
+      if (candidate < today) {
+        const nextMonth = new Date(year, month + 1, 1);
+        const nextDay = Math.min(day, phase4DaysInMonth(nextMonth.getFullYear(), nextMonth.getMonth()));
+        candidate = new Date(nextMonth.getFullYear(), nextMonth.getMonth(), nextDay);
       }
-      return { text: folder.name, color: color };
+      return toLocalDateStr(candidate);
     }
 
-    // Captura Rápida
-    function handleQuickCapture(e) { if(e.key === 'Enter') processQuickCapture(); }
+    function phase4ParseTime(text) {
+      const matches = [];
+      const explicitRe = /(?:^|\s)(?:às|as)\s*(\d{1,2})(?:(?:\s*:\s*)([0-5]\d)|(?:\s*h(?:\s*([0-5]\d))?)|(?:\s+horas?)|(?=\s|$))/giu;
+      const compactRe = /(?<![\d/])\b([01]?\d|2[0-3])\s*(?:h(?:oras?)?|:\s*([0-5]\d))\b/giu;
+
+      for (const m of text.matchAll(explicitRe)) {
+        const hh = Number(m[1]);
+        const mm = Number(m[2] ?? m[3] ?? 0);
+        if (hh <= 23 && mm <= 59) {
+          const leadingSpace = m[0].startsWith(' ') ? 1 : 0;
+          const full = m[0].slice(leadingSpace);
+          const index = (m.index ?? 0) + leadingSpace;
+          matches.push({ full, index, hh, mm });
+        }
+      }
+
+      for (const m of text.matchAll(compactRe)) {
+        const start = m.index ?? 0;
+        const overlapsExplicit = matches.some(x => start >= x.index && start < x.index + x.full.length);
+        if (overlapsExplicit) continue;
+        const hh = Number(m[1]);
+        const mm = Number(m[2] ?? 0);
+        if (hh <= 23 && mm <= 59) matches.push({ full:m[0], index:start, hh, mm });
+      }
+
+      matches.sort((a,b)=>a.index-b.index);
+      const unique = matches.filter((m,idx)=>idx===0 || m.index !== matches[idx-1].index);
+      if (!unique.length) return {time:'', cleaned:text, ambiguity:''};
+
+      const first = unique[0];
+      const time = `${String(first.hh).padStart(2,'0')}:${String(first.mm).padStart(2,'0')}`;
+      let cleaned = text;
+      for (let i=unique.length-1;i>=0;i--) {
+        const m = unique[i];
+        cleaned = cleaned.slice(0,m.index) + ' ' + cleaned.slice(m.index + m.full.length);
+      }
+      cleaned = phase4CleanSpaces(cleaned);
+
+      return {
+        time,
+        cleaned,
+        ambiguity: unique.length > 1
+          ? `Mais de um horário foi informado: ${unique.map(x=>`${String(x.hh).padStart(2,'0')}:${String(x.mm).padStart(2,'0')}`).join(' e ')}.`
+          : ''
+      };
+    }
+
+    function phase4ParseDateAndRecurrence(text) {
+      let cleaned = text;
+      let date = getTodayBR();
+      let rep = 'none';
+      let recurrenceRule = null;
+      const dateSignals = [];
+
+      const weekdaySpecs = [
+        {name:'domingo', day:0, re:/\bdomingo(?:-feira)?\b/iu},
+        {name:'segunda', day:1, re:/\bsegunda(?:-feira)?s?\b/iu},
+        {name:'terça', day:2, re:/\b(?:terça|terca)(?:-feira)?s?\b/iu},
+        {name:'quarta', day:3, re:/\bquarta(?:-feira)?s?\b/iu},
+        {name:'quinta', day:4, re:/\bquinta(?:-feira)?s?\b/iu},
+        {name:'sexta', day:5, re:/\bsexta(?:-feira)?s?\b/iu},
+        {name:'sábado', day:6, re:/\b(?:sábado|sabado)(?:-feira)?s?\b/iu}
+      ];
+
+      const todoDiaNumber = cleaned.match(/(?:^|\s)(?:todo\s+dia|todos?\s+os\s+dias?)\s+(\d{1,2})(?=\s|$)/iu);
+      if (todoDiaNumber) {
+        rep = 'monthly';
+        const day = Number(todoDiaNumber[1]);
+        if (day >= 1 && day <= 31) {
+          date = phase4DateFromDayOfMonth(day);
+          recurrenceRule = {frequency:'monthly', interval:1, dayOfMonth:day, anchorDate:date};
+          cleaned = phase4CleanSpaces(cleaned.replace(todoDiaNumber[0], ' '));
+          dateSignals.push('monthly-day');
+        }
+      }
+
+      if (!todoDiaNumber) {
+        const daily = cleaned.match(/(?:^|\s)(?:todos?\s+os\s+dias|todo\s+dia|diariamente)(?=\s|$)/iu);
+        if (daily) {
+          rep = 'daily';
+          recurrenceRule = {frequency:'daily', interval:1, anchorDate:getTodayBR()};
+          cleaned = phase4CleanSpaces(cleaned.replace(daily[0], ' '));
+        }
+      }
+
+      const weekly = cleaned.match(/(?:^|\s)(?:toda?s?|todas?\s+as|todos?\s+os)\s+((?:domingo|segunda|terça|terca|quarta|quinta|sexta|sábado|sabado)(?:-feira)?s?)(?=\s|$)/iu);
+      const genericWeekly = cleaned.match(/(?:^|\s)semanalmente(?=\s|$)/iu);
+      if (weekly || genericWeekly) {
+        rep = 'weekly';
+        const candidate = weekly
+          ? weekdaySpecs.find(x => x.re.test(weekly[1]))
+          : weekdaySpecs.find(x => x.re.test(cleaned));
+        const forceNext = /(?:^|\s)(?:pr[oó]xima|proxima)(?=\s)/iu.test(cleaned);
+
+        if (candidate) {
+          date = phase4DateFromWeekday(candidate.day, forceNext);
+          recurrenceRule = {frequency:'weekly', interval:1, dayOfWeek:candidate.day, anchorDate:date};
+          if (weekly) cleaned = phase4CleanSpaces(cleaned.replace(weekly[0], ' '));
+          else cleaned = phase4CleanSpaces(cleaned.replace(candidate.re, ' '));
+          cleaned = phase4CleanSpaces(cleaned.replace(/(?:^|\s)(?:pr[oó]xima|proxima)(?=\s)/iu, ' '));
+          dateSignals.push('weekly-day');
+        } else {
+          const fallbackDay = phase4TodayDate().getDay();
+          recurrenceRule = {frequency:'weekly', interval:1, dayOfWeek:fallbackDay, anchorDate:getTodayBR()};
+        }
+        if (genericWeekly) cleaned = phase4CleanSpaces(cleaned.replace(genericWeekly[0], ' '));
+      }
+
+      const monthlyWithDay = cleaned.match(/(?:^|\s)(?:todo\s+m[eê]s|mensalmente)\s+dia\s+(\d{1,2})(?=\s|$)/iu);
+      if (monthlyWithDay) {
+        rep = 'monthly';
+        const day = Number(monthlyWithDay[1]);
+        if (day >= 1 && day <= 31) {
+          date = phase4DateFromDayOfMonth(day);
+          recurrenceRule = {frequency:'monthly', interval:1, dayOfMonth:day, anchorDate:date};
+          cleaned = phase4CleanSpaces(cleaned.replace(monthlyWithDay[0], ' '));
+          dateSignals.push('monthly-day');
+        }
+      } else {
+        const monthlyGeneric = cleaned.match(/(?:^|\s)(?:todo\s+m[eê]s|mensalmente)(?=\s|$)/iu);
+        if (monthlyGeneric) {
+          rep = 'monthly';
+          const day = phase4TodayDate().getDate();
+          date = phase4DateFromDayOfMonth(day);
+          recurrenceRule = {frequency:'monthly', interval:1, dayOfMonth:day, anchorDate:date};
+          cleaned = phase4CleanSpaces(cleaned.replace(monthlyGeneric[0], ' '));
+        }
+      }
+
+      const offset = cleaned.match(/(?:^|\s)(?:em|daqui\s+a)\s+(\d+)\s+(dia|dias|semana|semanas)(?=\s|$)/iu);
+      if (offset) {
+        const amount = Number(offset[1]);
+        const days = /semana/i.test(offset[2]) ? amount * 7 : amount;
+        date = phase4DateFromDayOffset(days);
+        cleaned = phase4CleanSpaces(cleaned.replace(offset[0], ' '));
+        dateSignals.push('offset');
+      }
+
+      const exactDate = cleaned.match(/(?:^|\s)(?:dia\s+)?(\d{1,2})[\/-](\d{1,2})(?:[\/-](\d{4}))?(?=\s|$)/iu);
+      if (exactDate) {
+        const day = Number(exactDate[1]);
+        const month = Number(exactDate[2]);
+        const year = Number(exactDate[3] || phase4TodayDate().getFullYear());
+        if (phase4ValidDate(year, month, day)) {
+          date = toLocalDateStr(new Date(year, month - 1, day));
+          cleaned = phase4CleanSpaces(cleaned.replace(exactDate[0], ' '));
+          dateSignals.push('exact');
+        }
+      }
+
+      const afterTomorrow = cleaned.match(/(?:^|\s)depois\s+de\s+amanh[aã](?=\s|$)/iu);
+      if (afterTomorrow) {
+        date = phase4DateFromDayOffset(2);
+        cleaned = phase4CleanSpaces(cleaned.replace(afterTomorrow[0], ' '));
+        dateSignals.push('phrase');
+      } else {
+        const tomorrow = cleaned.match(/(?:^|\s)amanh[aã](?=\s|$)/iu);
+        if (tomorrow) {
+          date = phase4DateFromDayOffset(1);
+          cleaned = phase4CleanSpaces(cleaned.replace(tomorrow[0], ' '));
+          dateSignals.push('phrase');
+        } else {
+          const today = cleaned.match(/(?:^|\s)hoje(?=\s|$)/iu);
+          if (today) {
+            date = getTodayBR();
+            cleaned = phase4CleanSpaces(cleaned.replace(today[0], ' '));
+            dateSignals.push('phrase');
+          }
+        }
+      }
+
+      if (!weekly && !genericWeekly) {
+        const weekdayMatches = weekdaySpecs.filter(x => x.re.test(cleaned));
+        if (weekdayMatches.length > 0) {
+          const selected = weekdayMatches[0];
+          const forceNext = /(?:^|\s)(?:pr[oó]xima|proxima)(?=\s)/iu.test(cleaned);
+          date = phase4DateFromWeekday(selected.day, forceNext);
+          cleaned = phase4CleanSpaces(cleaned.replace(selected.re, ' '));
+          cleaned = phase4CleanSpaces(cleaned.replace(/(?:^|\s)(?:pr[oó]xima|proxima)(?=\s)/iu, ' '));
+          dateSignals.push('weekday');
+        }
+      }
+
+      const uniqueSignals = [...new Set(dateSignals)];
+      return {
+        date,
+        rep,
+        recurrenceRule,
+        cleaned:phase4CleanSpaces(cleaned),
+        ambiguity:uniqueSignals.length > 1 ? 'Mais de uma indicação de data foi encontrada. Revise a interpretação antes de adicionar.' : ''
+      };
+    }
+
+    function phase4ParseReminder(text) {
+      const normalized = phase4NormalizeText(text);
+      const patterns = [
+        { re:/\b(?:me\s+)?lembr(?:ar|e|a-me)\s+1\s*(?:h|hora|horas)\s+antes\b/iu, value:'1h' },
+        { re:/\b(?:me\s+)?lembr(?:ar|e|a-me)\s+2\s*(?:h|hora|horas)\s+antes\b/iu, value:'2h' },
+        { re:/\b(?:me\s+)?lembr(?:ar|e|a-me)\s+1\s*(?:d|dia|dias)\s+antes\b/iu, value:'1d' },
+        { re:/\b(?:me\s+)?lembr(?:ar|e|a-me)\s+30\s*(?:m|min|mins|minuto|minutos)\s+antes\b/iu, value:'30m' },
+        { re:/\b(?:me\s+)?lembr(?:ar|e|a-me)\s+15\s*(?:m|min|mins|minuto|minutos)\s+antes\b/iu, value:'15m' },
+        { re:/\b(?:me\s+)?lembr(?:ar|e|a-me)\s+5\s*(?:m|min|mins|minuto|minutos)\s+antes\b/iu, value:'5m' },
+        { re:/\b(?:me\s+)?(?:lembrete|avise)\s+(?:no\s+horario|na\s+hora)\b/iu, value:'at_time' },
+        { re:/\b(?:me\s+)?(?:lembrete|avise)\s+(?:de\s+)?1\s*(?:h|hora|horas)\s+antes\b/iu, value:'1h' },
+        { re:/\b(?:me\s+)?(?:lembrete|avise)\s+(?:de\s+)?2\s*(?:h|hora|horas)\s+antes\b/iu, value:'2h' },
+        { re:/\b(?:me\s+)?(?:lembrete|avise)\s+(?:de\s+)?30\s*(?:m|min|mins|minuto|minutos)\s+antes\b/iu, value:'30m' },
+        { re:/\b(?:me\s+)?(?:lembrete|avise)\s+(?:de\s+)?15\s*(?:m|min|mins|minuto|minutos)\s+antes\b/iu, value:'15m' },
+        { re:/\b(?:me\s+)?(?:lembrete|avise)\s+(?:de\s+)?5\s*(?:m|min|mins|minuto|minutos)\s+antes\b/iu, value:'5m' },
+        { re:/\b(?:lembrete|avise)\s+(?:no\s+horario|na\s+hora)\b/iu, value:'at_time' }
+      ];
+      const found = patterns.filter(p => p.re.test(normalized));
+      if (!found.length) return { reminder:'none', cleaned:text };
+      let cleaned = text;
+      found.forEach(p => cleaned = cleaned.replace(new RegExp(p.re.source,'iu'), ' '));
+      const ambiguous = [...new Set(found.map(p=>p.value))].length > 1;
+      return { reminder:found[0].value, cleaned:phase4CleanSpaces(cleaned), ambiguity:ambiguous ? 'Mais de um lembrete foi informado.' : '' };
+    }
+
+    function phase4ParsePriority(text) {
+      const normalized = phase4NormalizeText(text);
+      let priority = 'medium';
+      let match = normalized.match(/\bprioridade\s+(alta|high|urgente)\b/iu);
+      if (match) priority = 'high';
+      else if ((match = normalized.match(/\bprioridade\s+(baixa|low)\b/iu))) priority = 'low';
+      else if ((match = normalized.match(/\bprioridade\s+(m[eé]dia|medium)\b/iu))) priority = 'medium';
+      else if (/\burgente\b/iu.test(normalized)) priority = 'high';
+
+      let cleaned = text;
+      const patterns = [
+        /\bprioridade\s+(alta|baixa|m[eé]dia|high|medium|low|urgente)\b/iu,
+        /\burgente\b/iu
+      ];
+      patterns.forEach(re => { cleaned = cleaned.replace(new RegExp(re.source,'iu'), ' '); });
+      return { priority, cleaned:phase4CleanSpaces(cleaned) };
+    }
+
+    function phase4ParseTags(text) {
+      const tags = [...text.matchAll(/#([\p{L}\p{N}_-]+)/gu)].map(m => m[1].toLowerCase());
+      const uniqueTags = [...new Set(tags)];
+      const cleaned = phase4CleanSpaces(text.replace(/#([\p{L}\p{N}_-]+)/gu, ' '));
+      let folderId = currentArea === 'all' ? '' : currentArea;
+      const folderCandidates = S.areas.filter(a => a?.name).map(a => ({ folder:a, norm:phase4NormalizeText(a.name).replace(/\s+/g,'') }));
+      for (const tag of uniqueTags) {
+        const normTag = phase4NormalizeText(tag).replace(/\s+/g,'');
+        const exact = folderCandidates.find(x => x.norm === normTag);
+        if (exact) { folderId = exact.folder.id; break; }
+      }
+      return { tags:uniqueTags, folderId, cleaned };
+    }
+
+    function phase4ParseQuickCapture(text) {
+      const originalText = phase4CleanSpaces(text);
+      let working = originalText;
+      const ambiguities = [];
+
+      const timePart = phase4ParseTime(working);
+      working = timePart.cleaned;
+      if (timePart.ambiguity) ambiguities.push(timePart.ambiguity);
+
+      const datePart = phase4ParseDateAndRecurrence(working);
+      working = datePart.cleaned;
+      if (datePart.ambiguity) ambiguities.push(datePart.ambiguity);
+
+      const reminderPart = phase4ParseReminder(working);
+      working = reminderPart.cleaned;
+      if (reminderPart.ambiguity) ambiguities.push(reminderPart.ambiguity);
+
+      const priorityPart = phase4ParsePriority(working);
+      working = priorityPart.cleaned;
+
+      const tagPart = phase4ParseTags(working);
+      working = tagPart.cleaned;
+
+      const noTimeMatch = working.match(/\bsem\s+hor[aá]\s*rio\b/iu);
+      if (noTimeMatch) working = phase4CleanSpaces(working.replace(new RegExp(noTimeMatch[0],'iu'), ' '));
+
+      working = phase4CleanSpaces(working.replace(/[|]+/g, ' '));
+      if (ambiguities.length && /hor[áa]rio/i.test(ambiguities.join(' '))) working = working.replace(/\s+e\s*$/u, '');
+      const title = phase4CleanSpaces(working) || originalText;
+      const item = {
+        id: generateId('item'),
+        title,
+        date: datePart.date || getTodayBR(),
+        time: noTimeMatch ? '' : (timePart.time || ''),
+        area: tagPart.folderId,
+        status:'todo',
+        rep:datePart.rep || 'none',
+        recurrenceRule:datePart.recurrenceRule || undefined,
+        repDay:datePart.recurrenceRule?.dayOfMonth || null,
+        reminder:reminderPart.reminder || 'none',
+        priority:priorityPart.priority || 'medium',
+        starred:false,
+        tags:tagPart.tags,
+        nextAction:'',
+        checklist:[],
+        attachments:[],
+        duration:60
+      };
+
+      if (!item.recurrenceRule) delete item.recurrenceRule;
+      if (!item.repDay) delete item.repDay;
+
+      return { item, originalText, ambiguities:[...new Set(ambiguities.filter(Boolean))] };
+    }
+
+    function phase4RenderQuickPreview(parsed) {
+      const box = document.getElementById('quick-preview');
+      if (!box) return;
+      phase4QuickPending = parsed.item;
+      const folder = parsed.item.area ? getFolderConfig(parsed.item.area) : null;
+      const tagsText = parsed.item.tags?.length ? parsed.item.tags.map(t=>'#'+t).join(' ') : 'Nenhuma';
+      const dateText = parsed.item.date ? formatBR(parsed.item.date, parsed.item.time) : 'Sem data';
+      const repeatText = parsed.item.rep === 'daily' ? 'Diária' : parsed.item.rep === 'weekly' ? 'Semanal' : parsed.item.rep === 'monthly' ? 'Mensal' : 'Não repete';
+      const priorityText = priorityLabel(parsed.item.priority);
+      box.innerHTML = `<div class="quick-preview-title"><strong>Confirme a interpretação</strong><button class="btn-sm" type="button" onclick="phase4CancelQuickPreview()">✕</button></div><div class="quick-preview-grid"><div class="quick-preview-field"><label>Título</label><strong>${escapeHtml(parsed.item.title)}</strong></div><div class="quick-preview-field"><label>Quando</label><strong>${escapeHtml(dateText || 'Hoje')}</strong></div><div class="quick-preview-field"><label>Repetição</label><strong>${escapeHtml(repeatText)}</strong></div><div class="quick-preview-field"><label>Pasta</label><strong>${escapeHtml(folder?.name || 'Sem pasta')}</strong></div><div class="quick-preview-field"><label>Prioridade</label><strong>${escapeHtml(priorityText)}</strong></div><div class="quick-preview-field"><label>Lembrete</label><strong>${escapeHtml(parsed.item.reminder || 'Nenhum')}</strong></div><div class="quick-preview-field"><label>Tags</label><strong>${escapeHtml(tagsText)}</strong></div></div><div class="quick-preview-ambiguity">⚠ ${parsed.ambiguities.map(escapeHtml).join(' ')}</div><div class="quick-preview-actions"><button class="btn-sm" type="button" onclick="phase4CancelQuickPreview()">Cancelar</button><button class="btn" type="button" onclick="phase4ConfirmQuickCapture()">Adicionar à agenda</button></div>`;
+      box.hidden = false;
+    }
+
+    function phase4CancelQuickPreview() {
+      phase4QuickPending = null;
+      const box = document.getElementById('quick-preview');
+      if (box) { box.hidden = true; box.innerHTML = ''; }
+    }
+
+    function phase4ConfirmQuickCapture() {
+      if (!phase4QuickPending) return;
+      S.items.push({...phase4QuickPending, tags:[...(phase4QuickPending.tags || [])]});
+      saveData();
+      phase4CancelQuickPreview();
+      const input = document.getElementById('quick-input');
+      if (input) input.value = '';
+      renderWithScrollPreserved();
+      showToast('Item adicionado à agenda.');
+    }
+
+    function handleQuickCapture(e) { if(e.key === 'Enter') { e.preventDefault(); processQuickCapture(); } }
+
     function processQuickCapture() {
       const input = document.getElementById('quick-input');
-      let text = input.value.trim();
-      if(!text) return;
+      const text = input?.value?.trim();
+      if (!text) return;
 
-      const originalText = text;
-      let date = getTodayBR();
-      let time = '';
-      let folderId = currentArea === 'all' ? '' : currentArea;
-      let title = text;
-
-      const timeMatch = text.match(/ ([01]?\d|2[0-3])[:h]([0-5]\d)? /i);
-      if (timeMatch) {
-        time = timeMatch[1].padStart(2, '0') + ':' + (timeMatch[2] || '00');
-        title = title.replace(timeMatch[0], '');
-      }
-      if (/amanh[ãa]/i.test(text)) {
-        let d = new Date();
-        d.setDate(d.getDate() + 1);
-        date = toLocalDateStr(d);
-        title = title.replace(/amanh[ãa]/i, '');
-      }
-      const tagMatch = text.match(/#([\p{L}\p{N}_]+)/u);
-      if (tagMatch) {
-        const fName = tagMatch[1].toLowerCase();
-        const found = S.areas.find(a => a.name.toLowerCase().includes(fName));
-        if (found) folderId = found.id;
-        title = title.replace(tagMatch[0], '');
+      const parsed = phase4ParseQuickCapture(text);
+      if (parsed.ambiguities.length > 0) {
+        phase4RenderQuickPreview(parsed);
+        return;
       }
 
-      title = title.trim() || originalText;
-
-      S.items.push({ 
-        id: generateId('item'), 
-        title: title, 
-        date: date, 
-        time: time, 
-        area: folderId, 
-        status: 'todo', 
-        rep: 'none',
-        checklist: [],
-        attachments: []
-      });
+      S.items.push(parsed.item);
       saveData();
       input.value = '';
       renderWithScrollPreserved();
+      showToast(`Adicionado: ${parsed.item.title}`);
     }
 
     // Renderização Geral
@@ -1398,8 +2626,10 @@
       if(e) e.stopPropagation();
       const item = S.items.find(i => i.id === itemId);
       if (item && item.checklist && item.checklist[chkIdx]) {
+        const before = phase6HistorySnapshot(item);
         item.checklist[chkIdx].done = !item.checklist[chkIdx].done;
-        saveData();
+        const after = phase6HistorySnapshot(item);
+        saveData().then(() => recordItemHistory(itemId, { action:'checklist', source:'user', before, after }));
         renderWithScrollPreserved();
       }
     }
@@ -1411,9 +2641,11 @@
         if (txt) {
           const item = S.items.find(i => i.id === itemId);
           if (item) {
+            const before = phase6HistorySnapshot(item);
             if (!item.checklist) item.checklist = [];
             item.checklist.push({ text: txt, done: false });
-            saveData();
+            const after = phase6HistorySnapshot(item);
+            saveData().then(() => recordItemHistory(itemId, { action:'checklist', source:'user', before, after }));
             renderWithScrollPreserved();
           }
         }
@@ -1768,6 +3000,27 @@
       return true;
     }
 
+    function isCopyUntouched(copyItem) {
+      if (!copyItem || !copyItem.repSnapshot) return true;
+      const snap = copyItem.repSnapshot;
+      const same = (a,b) => JSON.stringify(a) === JSON.stringify(b);
+      if ((copyItem.title||'') !== (snap.title||'')) return false;
+      if ((copyItem.date||'') !== (snap.date||'')) return false;
+      if ((copyItem.time||'') !== (snap.time||'')) return false;
+      if (phase3EnsureDurationValue(copyItem.duration) !== phase3EnsureDurationValue(snap.duration)) return false;
+      if ((copyItem.desc||'') !== (snap.desc||'')) return false;
+      if ((copyItem.area||'') !== (snap.area||'')) return false;
+      if ((copyItem.priority||'medium') !== (snap.priority||'medium')) return false;
+      if (!same(Array.isArray(copyItem.tags)?copyItem.tags:[], Array.isArray(snap.tags)?snap.tags:[])) return false;
+      if ((copyItem.nextAction||'') !== (snap.nextAction||'')) return false;
+      const curChk=copyItem.checklist||[]; const snapChk=snap.checklist||[];
+      if (curChk.length !== snapChk.length) return false;
+      for(let i=0;i<curChk.length;i++){
+        if(curChk[i].text!==snapChk[i].text || !!curChk[i].done!==!!snapChk[i].done) return false;
+      }
+      return true;
+    }
+
     function addNextOccurrence(item) {
       if (!item || !item.rep || item.rep === 'none' || !item.date) return;
       const today = getTodayBR();
@@ -1833,7 +3086,8 @@
     function setItemStatus(id, newStatus) {
       const item = S.items.find(i => i.id === id);
       if (!item) return;
-
+      const before = phase6HistorySnapshot(item);
+      const beforeIds = new Set(S.items.map(x => x.id));
       const wasDone = item.status === 'done';
       item.status = newStatus;
 
@@ -1843,7 +3097,16 @@
         removeUntouchedCopy(item.id);
       }
 
-      saveData();
+      const after = phase6HistorySnapshot(item);
+      const action = newStatus === 'done' ? 'complete' : (wasDone && newStatus !== 'done' ? 'reopen' : 'edit');
+      const source = newStatus === 'waiting' ? 'user' : 'user';
+      saveData().then(async () => {
+        await recordItemHistory(item.id, { action, source, before, after });
+        const created = S.items.filter(x => !beforeIds.has(x.id));
+        for (const createdItem of created) {
+          await recordItemHistory(createdItem.id, { action:'create', source:'system', before:null, after:phase6HistorySnapshot(createdItem) });
+        }
+      });
       renderWithScrollPreserved();
     }
 
@@ -1991,12 +3254,22 @@
 
     function toggleStar(id) {
       const item = S.items.find(i => i.id === id);
-      if (item) { item.starred = !item.starred; saveData(); renderWithScrollPreserved(); }
+      if (!item) return;
+      const before = phase6HistorySnapshot(item);
+      item.starred = !item.starred;
+      const after = phase6HistorySnapshot(item);
+      saveData().then(() => recordItemHistory(id, { action:'star', source:'user', before, after }));
+      renderWithScrollPreserved();
     }
 
     function moveItemToArea(id, areaId) {
       const item = S.items.find(i => i.id === id);
-      if (item) { item.area = areaId; saveData(); renderWithScrollPreserved(); }
+      if (!item) return;
+      const before = phase6HistorySnapshot(item);
+      item.area = areaId;
+      const after = phase6HistorySnapshot(item);
+      saveData().then(() => recordItemHistory(id, { action:'move', source:'user', before, after }));
+      renderWithScrollPreserved();
     }
 
     function duplicateItem(id) {
@@ -2007,34 +3280,47 @@
           id: generateId('item'), 
           title: item.title + ' (Cópia)',
           checklist: (item.checklist||[]).map(c=>({...c})),
-          attachments: [] // Cópias NÃO herdam anexos
+          attachments: []
         };
         delete clone.repSourceId;
         delete clone.repSnapshot;
         S.items.push(clone);
-        saveData();
+        saveData().then(() => recordItemHistory(clone.id, { action:'create', source:'user', before:null, after:phase6HistorySnapshot(clone) }));
         renderWithScrollPreserved();
       }
     }
 
-    function deleteItemAttachments(item) {
-      if (item && item.attachments && item.attachments.length > 0) {
-        item.attachments.forEach(att => {
-          db.collection('shared').doc('agenda-vida').collection('anexos').doc(att.id).collection('chunks').get().then(snap => {
+    async function deleteItemAttachments(item) {
+      if (!item || !item.attachments || item.attachments.length === 0) return;
+      for (const att of item.attachments) {
+        try {
+          if (att.storagePath) {
+            await storage.ref(att.storagePath).delete();
+          }
+        } catch (e) {
+          console.warn('Storage attachment delete failed:', att.id, e);
+        }
+        // Compatibilidade: remove chunks antigos quando ainda existirem.
+        try {
+          const snap = await db.collection('shared').doc('agenda-vida').collection('anexos').doc(att.id).collection('chunks').get();
+          const batches = chunkArray(snap.docs, 400);
+          for (const docs of batches) {
             const batch = db.batch();
-            snap.docs.forEach(d => batch.delete(d.ref));
-            batch.commit();
-          });
-        });
+            docs.forEach(d => batch.delete(d.ref));
+            await batch.commit();
+          }
+        } catch (_) {}
       }
     }
 
     function deleteItemDirect(id) {
       if(confirm('Tem certeza que deseja excluir esta tarefa?')) {
         const item = S.items.find(i => i.id === id);
+        if (!item) return;
+        const before = phase6HistorySnapshot(item);
         deleteItemAttachments(item);
         S.items = S.items.filter(i => i.id !== id);
-        saveData();
+        saveData().then(() => recordItemHistory(id, { action:'delete', source:'user', before, after:null }));
         renderWithScrollPreserved();
       }
     }
@@ -2102,7 +3388,7 @@
       if (current.rep !== (orig.rep || 'none')) return true;
       if (current.reminder !== (orig.reminder || 'none')) return true;
       if (current.starred !== (!!orig.starred)) return true;
-      if (pendingAttachments.length > 0) return true;
+      if (pendingAttachments.length > 0 || pendingAttachmentDeletes.length > 0) return true;
 
       const origChk = orig.checklist || [];
       if (current.checklist.length !== origChk.length) return true;
@@ -2149,7 +3435,7 @@
             </div>
           </div>
           <div style="display:flex; gap:6px;">
-            ${!isPending ? `<button class="btn-sm" style="padding:2px 6px; min-height:auto;" onclick="downloadAttachment('${att.id}', '${escapeHtml(att.name)}', '${att.type}')">Abrir</button>` : ''}
+            ${!isPending ? `<button class="btn-sm" style="padding:2px 6px; min-height:auto;" onclick="downloadAttachment('${att.id}', '${escapeHtml(att.name)}', '${att.type}', '${escapeHtml(att.storagePath || '')}')">Abrir</button>` : ''}
             <button class="btn-sm" style="padding:2px 6px; min-height:auto; border-color:var(--danger); color:var(--danger);" onclick="removeAttachment(${idx}, ${isPending})">✕</button>
           </div>
         `;
@@ -2252,70 +3538,65 @@
       });
     });
 
+    let pendingAttachmentDeletes = [];
+
     function removeAttachment(idx, isPending) {
-      if (confirm('Deseja remover este anexo?')) {
-        if (isPending) {
-          const existingCount = editingOriginalItem?.attachments?.length || 0;
-          pendingAttachments.splice(idx - existingCount, 1);
-        } else {
-          const att = editingOriginalItem.attachments[idx];
-          db.collection('shared').doc('agenda-vida').collection('anexos').doc(att.id).collection('chunks').get().then(snap => {
-            const batch = db.batch();
-            snap.docs.forEach(d => batch.delete(d.ref));
-            batch.commit();
-          });
-          editingOriginalItem.attachments.splice(idx, 1);
-        }
-        renderModalAttachments();
+      if (!confirm('Deseja remover este anexo?')) return;
+      if (isPending) {
+        const existingCount = editingOriginalItem?.attachments?.length || 0;
+        pendingAttachments.splice(idx - existingCount, 1);
+      } else {
+        const att = editingOriginalItem?.attachments?.[idx];
+        if (!att) return;
+        if (!Array.isArray(pendingAttachmentDeletes)) pendingAttachmentDeletes = [];
+        pendingAttachmentDeletes.push({ ...att });
+        // Não mutar a tarefa original. Trabalhamos com uma cópia profunda do array.
+        editingOriginalItem.attachments = (editingOriginalItem.attachments || []).filter((_, i) => i !== idx);
       }
+      renderModalAttachments();
     }
 
-    async function saveAttachmentToFirestore(att) {
-      const base64Data = att.dataUrl.split(',')[1];
-      const chunkSize = 700 * 1024; // 700 KB
-      const chunks = [];
-      for (let i = 0; i < base64Data.length; i += chunkSize) {
-        chunks.push(base64Data.substring(i, i + chunkSize));
-      }
-
-      const attRef = db.collection('shared').doc('agenda-vida').collection('anexos').doc(att.id);
-      for (let n = 0; n < chunks.length; n++) {
-        await attRef.collection('chunks').doc(String(n)).set({ chunk: chunks[n] });
-      }
+    async function saveAttachmentToFirestore(att, itemId) {
+      if (!att?.dataUrl) throw new Error('Anexo sem dados.');
+      const comma = att.dataUrl.indexOf(',');
+      const base64Data = comma >= 0 ? att.dataUrl.slice(comma + 1) : att.dataUrl;
+      const path = `users/${auth.currentUser.uid}/attachments/${itemId}/${att.id}`;
+      const blob = base64ToBlob(base64Data, att.type || 'application/octet-stream');
+      const ref = storage.ref(path);
+      await ref.put(blob, {
+        contentType: att.type || 'application/octet-stream',
+        customMetadata: { ownerUid: auth.currentUser.uid }
+      });
 
       return {
         id: att.id,
         name: att.name,
         size: att.size,
         type: att.type,
-        addedAt: att.addedAt
+        addedAt: att.addedAt,
+        storagePath: path
       };
     }
 
-    async function downloadAttachment(attId, fileName, fileType) {
+    async function downloadAttachment(attId, fileName, fileType, storagePath = null) {
       try {
         showToast('Baixando anexo...');
-        const snap = await db.collection('shared').doc('agenda-vida').collection('anexos').doc(attId).collection('chunks').get();
-        const chunks = [];
-        snap.docs.forEach(d => {
-          chunks[parseInt(d.id, 10)] = d.data().chunk;
-        });
-
-        const fullBase64 = chunks.join('');
-        const byteCharacters = atob(fullBase64);
-        const byteNumbers = new Array(byteCharacters.length);
-        for (let i = 0; i < byteCharacters.length; i++) {
-          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        let blob;
+        if (storagePath) {
+          const bytes = await storage.ref(storagePath).getBytes();
+          blob = new Blob([bytes], { type: fileType || 'application/octet-stream' });
+        } else {
+          const fullBase64 = await readLegacyAttachmentBase64(attId);
+          blob = base64ToBlob(fullBase64, fileType || 'application/octet-stream');
         }
-        const byteArray = new Uint8Array(byteNumbers);
-        const blob = new Blob([byteArray], { type: fileType });
         const url = URL.createObjectURL(blob);
-
         const a = document.createElement('a');
         a.href = url;
         a.download = fileName;
+        document.body.appendChild(a);
         a.click();
-        URL.revokeObjectURL(url);
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
       } catch (err) {
         alert('Erro ao abrir anexo: ' + err.message);
       }
@@ -2331,8 +3612,9 @@
     // Modal de Item
     function openItemModal(item = null) {
       hideContextMenu();
-      editingOriginalItem = item ? { ...item } : null;
+      editingOriginalItem = item ? cloneData(item) : null;
       pendingAttachments = [];
+      pendingAttachmentDeletes = [];
 
       const sArea = document.getElementById('f-area');
       sArea.innerHTML = '<option value="">Sem Pasta</option>' + S.areas.map(a => `<option value="${a.id}">${escapeHtml(a.name)}</option>`).join('');
@@ -2347,6 +3629,9 @@
 
       document.getElementById('checklist-container').innerHTML = '';
       document.getElementById('f-delete-btn').style.display = item ? 'inline-flex' : 'none';
+      document.getElementById('f-history-btn').style.display = item ? 'inline-flex' : 'none';
+      document.getElementById('item-history-section').hidden = true;
+      document.getElementById('item-history-list').innerHTML = '';
       document.getElementById('f-save-template').checked = false;
       document.getElementById('modal-item-title-head').innerText = item ? 'Editar Item' : 'Novo Item';
 
@@ -2405,14 +3690,18 @@
       document.getElementById('item-modal').classList.remove('open'); 
       editingOriginalItem = null;
       pendingAttachments = [];
+      pendingAttachmentDeletes = [];
     }
 
     function deleteCurrentItem() {
       if(currentEditItemId && confirm('Excluir esta tarefa?')) {
         const item = S.items.find(i => i.id === currentEditItemId);
+        if (!item) return;
+        const itemId = item.id;
+        const before = phase6HistorySnapshot(item);
         deleteItemAttachments(item);
-        S.items = S.items.filter(i => i.id !== currentEditItemId);
-        saveData();
+        S.items = S.items.filter(i => i.id !== itemId);
+        saveData().then(() => recordItemHistory(itemId, { action:'delete', source:'user', before, after:null }));
         closeItemModal();
         renderWithScrollPreserved();
       }
@@ -2528,6 +3817,9 @@
     async function saveItem() {
       const title = document.getElementById('f-title').value.trim();
       if (!title) return;
+      const stableItemId = currentEditItemId || generateId('item');
+      const historyBefore = editingOriginalItem ? phase6HistorySnapshot(editingOriginalItem) : null;
+      const historyBeforeIds = new Set(S.items.map(x => x.id));
 
       const chkRows = document.querySelectorAll('#checklist-container .checklist-row');
       const checklist = Array.from(chkRows).map(r => ({
@@ -2554,7 +3846,7 @@
       if (pendingAttachments.length > 0) {
         showToast('Enviando anexos...');
         for (let att of pendingAttachments) {
-          const meta = await saveAttachmentToFirestore(att);
+          const meta = await saveAttachmentToFirestore(att, stableItemId);
           savedAttachmentsMeta.push(meta);
         }
       }
@@ -2589,7 +3881,7 @@
           targetItem = S.items[idx];
         }
       } else {
-        const newItem = { id: generateId('item'), ...editedFields };
+        const newItem = { id: stableItemId, ...editedFields };
         S.items.push(newItem);
         targetItem = newItem;
       }
@@ -2609,10 +3901,158 @@
         });
       }
 
-      saveData();
+      // Exclui anexos removidos somente depois que a tarefa foi salva com sucesso.
+      const attachmentsToDelete = pendingAttachmentDeletes.slice();
+      await saveData();
+      for (const att of attachmentsToDelete) {
+        try {
+          if (att.storagePath) await storage.ref(att.storagePath).delete();
+        } catch (e) {
+          console.warn('Removed attachment cleanup failed:', att.id, e);
+        }
+        try {
+          const snap = await db.collection('shared').doc('agenda-vida').collection('anexos').doc(att.id).collection('chunks').get();
+          for (const docs of chunkArray(snap.docs, 400)) {
+            const batch = db.batch();
+            docs.forEach(d => batch.delete(d.ref));
+            await batch.commit();
+          }
+        } catch (_) {}
+      }
+      const historyAfter = targetItem ? phase6HistorySnapshot(targetItem) : null;
+      const historyAction = historyBefore ? ((historyBefore.status !== 'done' && historyAfter?.status === 'done') ? 'complete' : (historyBefore.status === 'done' && historyAfter?.status !== 'done') ? 'reopen' : 'edit') : 'create';
+      await recordItemHistory(stableItemId, { action:historyAction, source:'user', before:historyBefore, after:historyAfter });
+      const historyCreated = S.items.filter(x => !historyBeforeIds.has(x.id));
+      for (const createdItem of historyCreated) {
+        if (createdItem.id === stableItemId) continue;
+        await recordItemHistory(createdItem.id, { action:'create', source:'system', before:null, after:phase6HistorySnapshot(createdItem) });
+      }
+      pendingAttachmentDeletes = [];
       closeItemModal();
       renderWithScrollPreserved();
     }
+
+
+    // Backup / restauração
+    async function buildBackupPayload() {
+      const payload = {
+        app: 'Minha Agenda Pro',
+        schemaVersion: DATA_SCHEMA_VERSION,
+        exportedAt: new Date().toISOString(),
+        user: { uid: auth.currentUser?.uid || '', email: auth.currentUser?.email || '', displayName: auth.currentUser?.displayName || '' },
+        data: cloneData(normalizeState()),
+        prefs: cloneData(prefs),
+        attachmentsIncluded: false
+      };
+      let included = 0;
+      for (const item of payload.data.items || []) {
+        for (const att of item.attachments || []) {
+          if (!att.storagePath) continue;
+          try {
+            const bytes = await storage.ref(att.storagePath).getBytes();
+            let binary = '';
+            const chunkSize = 0x8000;
+            for (let i = 0; i < bytes.length; i += chunkSize) {
+              binary += String.fromCharCode(...bytes.subarray(i, Math.min(i + chunkSize, bytes.length)));
+            }
+            att.dataUrl = `data:${att.type || 'application/octet-stream'};base64,${btoa(binary)}`;
+            included++;
+          } catch (e) { console.warn('Could not include attachment in backup:', att.id, e); }
+        }
+      }
+      const attachmentCount = (payload.data.items || []).reduce((n, i) => n + (i.attachments || []).length, 0);
+      payload.attachmentsIncluded = attachmentCount === 0 || included === attachmentCount;
+      return payload;
+    }
+
+    function downloadJsonFile(filename, payload) {
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    async function exportBackup() {
+      try {
+        const payload = await buildBackupPayload();
+        createEmergencyBackup('manual-export');
+        const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+        downloadJsonFile(`minha_agenda_backup_${stamp}.json`, payload);
+        showToast('Backup exportado com sucesso.');
+      } catch (e) { showToast('Não foi possível exportar o backup: ' + e.message); }
+    }
+
+    async function importBackupFile(event) {
+      const file = event.target.files?.[0];
+      event.target.value = '';
+      if (!file) return;
+      try {
+        const raw = await file.text();
+        const payload = JSON.parse(raw);
+        const data = payload?.data || payload;
+        if (!data || !Array.isArray(data.items) || !Array.isArray(data.areas) || !Array.isArray(data.templates)) throw new Error('Arquivo de backup inválido ou incompatível.');
+        if (!confirm('A restauração substituirá os dados atuais desta conta. Deseja continuar?')) return;
+        if (!createEmergencyBackup('before-restore')) throw new Error('Não foi possível criar o backup de emergência. Restauração cancelada.');
+        setSyncStatus('syncing', 'Restaurando backup...');
+        const restoreData = cloneData(data);
+        for (const item of restoreData.items) {
+          for (const att of item.attachments || []) {
+            if (att.dataUrl) {
+              try {
+                const comma = att.dataUrl.indexOf(',');
+                const base64 = comma >= 0 ? att.dataUrl.slice(comma + 1) : att.dataUrl;
+                const path = `users/${auth.currentUser.uid}/attachments/${item.id}/${att.id}`;
+                const blob = base64ToBlob(base64, att.type || 'application/octet-stream');
+                await storage.ref(path).put(blob, { contentType: att.type || 'application/octet-stream', customMetadata:{ ownerUid: auth.currentUser.uid } });
+                att.storagePath = path;
+              } catch (e) { console.warn('Attachment restore failed:', att.id, e); }
+            }
+            delete att.dataUrl;
+          }
+        }
+        await writeEntireStateToUser(restoreData, { migratedFromLegacy: false });
+        S = cloneData(restoreData);
+        if (payload.prefs) {
+          prefs = { ...prefs, ...payload.prefs, alertConfig: { ...prefs.alertConfig, ...(payload.prefs.alertConfig || {}) } };
+          savePrefs();
+        }
+        lastPersistedSnapshot = cloneData(S);
+        render();
+        updateTabTitleAndAlerts();
+        setSyncStatus('ok', 'Backup restaurado');
+        showToast('Backup restaurado com sucesso.');
+      } catch (e) {
+        setSyncStatus('error', 'Falha na restauração');
+        showToast('Falha ao restaurar backup: ' + e.message);
+      }
+    }
+
+    function downloadEmergencyBackup() {
+      try {
+        const raw = localStorage.getItem('agenda_emergency_backup_v2');
+        if (!raw) { showToast('Nenhum backup de emergência local foi encontrado.'); return; }
+        const payload = JSON.parse(raw);
+        const stamp = new Date(payload.createdAt || Date.now()).toISOString().replace(/[:.]/g, '-');
+        downloadJsonFile(`minha_agenda_emergency_${stamp}.json`, payload);
+        showToast('Backup de emergência exportado.');
+      } catch (e) { showToast('Não foi possível baixar o backup de emergência: ' + e.message); }
+    }
+
+    function openDataModal() {
+      const status = document.getElementById('data-structure-status');
+      const emergency = document.getElementById('emergency-backup-status');
+      if (status) status.innerHTML = `Conta: <strong>${escapeHtml(auth.currentUser?.email || 'não autenticada')}</strong><br>Modelo: <strong>v${DATA_SCHEMA_VERSION}</strong><br>Tarefas: <strong>${S.items.length}</strong> · Pastas: <strong>${S.areas.length}</strong> · Modelos: <strong>${S.templates.length}</strong>`;
+      const created = localStorage.getItem('agenda_emergency_backup_created_at');
+      if (emergency) emergency.textContent = created ? `Último backup de emergência local: ${new Date(created).toLocaleString('pt-BR')}.` : 'Nenhum backup de emergência local foi criado ainda.';
+      document.getElementById('data-modal').classList.add('open');
+    }
+
+    function closeDataModal() { document.getElementById('data-modal').classList.remove('open'); }
 
     // Modal Gerenciar Modelos
     function openManageTemplatesModal() {
@@ -2915,15 +4355,20 @@
 
       if(confirm(msg)) {
         const deletedIds = new Set([id, ...subfolders.map(s => s.id)]);
+        const historyOps = [];
 
         S.areas = S.areas.filter(a => !deletedIds.has(a.id));
 
         S.items.forEach(item => {
-          if (deletedIds.has(item.area)) item.area = '';
+          if (deletedIds.has(item.area)) {
+            const before = phase6HistorySnapshot(item);
+            item.area = '';
+            historyOps.push({ itemId:item.id, action:'move', source:'user', before, after:phase6HistorySnapshot(item) });
+          }
         });
 
         if(deletedIds.has(currentArea)) currentArea = 'all';
-        saveData();
+        saveData().then(async () => { for (const op of historyOps) await recordItemHistory(op.itemId, op); });
         renderWithScrollPreserved();
       }
     }
@@ -2958,6 +4403,1358 @@
     }
 
     function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
+
+    // =========================
+    // FASE 2 — UX/UI E FLUXO DIÁRIO
+    // =========================
+    let phase2Filters = {
+      status: 'all', priority: 'all', folder: 'all', tag: '', date: 'all', recurring: 'all'
+    };
+
+    const _phase2NormalizeState = normalizeState;
+    normalizeState = function() {
+      const state = _phase2NormalizeState();
+      state.items.forEach(i => {
+        if (!Array.isArray(i.tags)) i.tags = [];
+        i.tags = i.tags.map(t => String(t).replace(/^#/, '').trim().toLowerCase()).filter(Boolean);
+        i.priority = ['high','medium','low'].includes(i.priority) ? i.priority : 'medium';
+        i.nextAction = typeof i.nextAction === 'string' ? i.nextAction.trim() : '';
+      });
+      return state;
+    };
+
+    function normalizeTags(value) {
+      if (Array.isArray(value)) return [...new Set(value.map(v => String(v).replace(/^#/,'').trim().toLowerCase()).filter(Boolean))];
+      return [...new Set(String(value || '').split(/[,;\n]+/).map(v => v.replace(/^#/,'').trim().toLowerCase()).filter(Boolean))];
+    }
+
+    function priorityLabel(p) {
+      return p === 'high' ? 'Alta' : p === 'low' ? 'Baixa' : 'Média';
+    }
+
+    function phase2GetFilterValues() {
+      phase2Filters.status = document.getElementById('filter-status')?.value || 'all';
+      phase2Filters.priority = document.getElementById('filter-priority')?.value || 'all';
+      phase2Filters.folder = document.getElementById('filter-folder')?.value || 'all';
+      phase2Filters.tag = (document.getElementById('filter-tag')?.value || '').trim().replace(/^#/,'').toLowerCase();
+      phase2Filters.date = document.getElementById('filter-date')?.value || 'all';
+      phase2Filters.recurring = document.getElementById('filter-recurring')?.value || 'all';
+    }
+
+    function updateFilterFolderOptions() {
+      const select = document.getElementById('filter-folder');
+      if (!select) return;
+      const current = phase2Filters.folder || 'all';
+      const folders = [...S.areas].sort((a,b) => (a.order || 0) - (b.order || 0));
+      select.innerHTML = '<option value="all">Todas</option><option value="none">Sem pasta</option>' + folders.map(a => `<option value="${escapeHtml(a.id)}">${escapeHtml(a.name)}</option>`).join('');
+      select.value = [...select.options].some(o => o.value === current) ? current : 'all';
+    }
+
+    function updatePhase2Filters() {
+      phase2GetFilterValues();
+      const active = Object.entries(phase2Filters).some(([k,v]) => (k === 'tag' ? !!v : v !== 'all'));
+      savePrefs();
+      renderWithScrollPreserved();
+      updateFilterResultCount();
+      if (!active) return;
+    }
+
+    function clearPhase2Filters() {
+      phase2Filters = { status:'all', priority:'all', folder:'all', tag:'', date:'all', recurring:'all' };
+      ['filter-status','filter-priority','filter-folder','filter-date','filter-recurring'].forEach(id => { const el = document.getElementById(id); if (el) el.value = 'all'; });
+      const tag = document.getElementById('filter-tag'); if (tag) tag.value = '';
+      renderWithScrollPreserved();
+      updateFilterResultCount();
+    }
+
+    function toggleSearchFilters() {
+      const panel = document.getElementById('search-filters-panel');
+      if (!panel) return;
+      updateFilterFolderOptions();
+      panel.classList.toggle('open');
+      if (panel.classList.contains('open')) updateFilterResultCount();
+    }
+
+    function getPhase2FilteredList(list) {
+      const today = getTodayBR();
+      let next7 = new Date(); next7.setDate(next7.getDate() + 7);
+      const next7Str = toLocalDateStr(next7);
+      const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate()+1);
+      const tomorrowStr = toLocalDateStr(tomorrow);
+      const f = phase2Filters;
+      return (list || []).filter(item => {
+        if (f.status !== 'all' && (item.status || 'todo') !== f.status) return false;
+        if (f.priority !== 'all' && (item.priority || 'medium') !== f.priority) return false;
+        if (f.folder !== 'all') {
+          if (f.folder === 'none') { if (item.area) return false; }
+          else if (item.area !== f.folder) return false;
+        }
+        if (f.tag && !(item.tags || []).some(t => t === f.tag || t.includes(f.tag))) return false;
+        if (f.recurring === 'yes' && (!item.rep || item.rep === 'none')) return false;
+        if (f.recurring === 'no' && item.rep && item.rep !== 'none') return false;
+        if (f.date === 'today' && item.date !== today) return false;
+        if (f.date === 'tomorrow' && item.date !== tomorrowStr) return false;
+        if (f.date === 'week' && !(item.date && item.date >= today && item.date <= next7Str)) return false;
+        if (f.date === 'overdue' && !(item.status !== 'done' && item.date && item.date < today)) return false;
+        if (f.date === 'nodate' && item.date) return false;
+        return true;
+      });
+    }
+
+    function updateFilterResultCount() {
+      const el = document.getElementById('filter-result-count');
+      if (!el) return;
+      const list = getPhase2FilteredList(S.items);
+      const active = Object.entries(phase2Filters).some(([k,v]) => k === 'tag' ? !!v : v !== 'all');
+      el.textContent = active ? `${list.length} item(ns) correspondem aos filtros` : 'Filtros inativos';
+    }
+
+    // Wrap visualizações para aplicar os filtros sem alterar a lógica central de renderização.
+    const _p2List = renderViewList;
+    const _p2Folder = renderViewListByFolder;
+    const _p2Cards = renderViewCards;
+    const _p2Kanban = renderViewKanban;
+    const _p2Calendar = renderViewCalendar;
+    const _p2Month = renderViewMonth;
+    renderViewList = function(list, c) { _p2List(getPhase2FilteredList(list), c); };
+    renderViewListByFolder = function(list, c) { _p2Folder(getPhase2FilteredList(list), c); };
+    renderViewCards = function(list, c) { _p2Cards(getPhase2FilteredList(list), c); };
+    renderViewKanban = function(list, c) { _p2Kanban(getPhase2FilteredList(list), c); };
+    renderViewCalendar = function(list, c) { _p2Calendar(getPhase2FilteredList(list), c); };
+    renderViewMonth = function(list, c) { _p2Month(getPhase2FilteredList(list), c); phase2DecorateMonth(c); };
+
+    function buildPhase2PriorityHtml(item) {
+      const p = item.priority || 'medium';
+      return `<span class="priority-badge priority-${p}">${p === 'high' ? '🔥' : p === 'low' ? '↓' : '•'} ${priorityLabel(p)}</span>`;
+    }
+
+    function buildPhase2TagsHtml(item) {
+      return (item.tags || []).slice(0, 4).map(t => `<span class="tag-chip">#${escapeHtml(t)}</span>`).join('');
+    }
+
+    const _p2BuildCardHtml = buildCardHtml;
+    buildCardHtml = function(item) {
+      let html = _p2BuildCardHtml(item);
+      html = html.replace(/onmousedown="handleCardMouseDown\(event\)"\s+onmouseup="handleCardMouseUp\(event, '[^']+'\)"\s+ondblclick="handleCardDblClick\(event\)"/g, `onclick="handleSimpleCardClick(event, '${item.id}')"`);
+      html = html.replace(/\s+ondblclick="handleCardDblClick\(event\)"/g, '');
+      const extra = `
+        <div class="card-meta" style="margin-top:7px; gap:5px;">
+          ${buildPhase2PriorityHtml(item)}
+          ${buildPhase2TagsHtml(item)}
+        </div>
+        ${item.nextAction ? `<div class="next-action-box"><span class="next-action-label">Próxima ação</span><span class="next-action-text">${escapeHtml(item.nextAction)}</span></div>` : ''}
+      `;
+      const marker = '\n          </div>\n        </div>\n      ';
+      const idx = html.lastIndexOf(marker);
+      if (idx >= 0) return html.slice(0, idx) + extra + html.slice(idx);
+      return html;
+    };
+
+    function handleSimpleCardClick(e, id) {
+      if (blockNextClick) { blockNextClick = false; return; }
+      if (e.target.closest('button') || e.target.closest('.card-check') || e.target.closest('a') || e.target.closest('input') || e.target.closest('.card-checklist-box')) return;
+      const selection = window.getSelection ? window.getSelection().toString() : '';
+      if (selection) return;
+      openItemModal(S.items.find(x => x.id === id));
+    }
+
+    // Formulário enriquecido.
+    const _p2OpenItemModal = openItemModal;
+    openItemModal = function(item = null) {
+      _p2OpenItemModal(item);
+      const priority = document.getElementById('f-priority');
+      const tags = document.getElementById('f-tags');
+      const nextAction = document.getElementById('f-next-action');
+      if (!priority || !tags || !nextAction) return;
+      priority.value = item?.priority || 'medium';
+      tags.value = normalizeTags(item?.tags || []).join(', ');
+      nextAction.value = item?.nextAction || '';
+    };
+
+    const _p2GetFormState = getFormState;
+    getFormState = function() {
+      const base = _p2GetFormState();
+      return { ...base,
+        priority: document.getElementById('f-priority')?.value || 'medium',
+        tags: normalizeTags(document.getElementById('f-tags')?.value || ''),
+        nextAction: (document.getElementById('f-next-action')?.value || '').trim()
+      };
+    };
+
+    const _p2HasFormChanged = hasFormChanged;
+    hasFormChanged = function() {
+      if (_p2HasFormChanged()) return true;
+      if (!editingOriginalItem) {
+        const cur = getFormState();
+        return cur.priority !== 'medium' || cur.tags.length > 0 || !!cur.nextAction;
+      }
+      const cur = getFormState();
+      const orig = editingOriginalItem;
+      if (cur.priority !== (orig.priority || 'medium')) return true;
+      if (JSON.stringify(cur.tags) !== JSON.stringify(normalizeTags(orig.tags || []))) return true;
+      if (cur.nextAction !== (orig.nextAction || '')) return true;
+      return false;
+    };
+
+    const _p2SaveItem = saveItem;
+    saveItem = async function() {
+      const beforeIds = new Set(S.items.map(i => i.id));
+      const editingId = currentEditItemId;
+      const values = {
+        priority: document.getElementById('f-priority')?.value || 'medium',
+        tags: normalizeTags(document.getElementById('f-tags')?.value || ''),
+        nextAction: (document.getElementById('f-next-action')?.value || '').trim()
+      };
+      await _p2SaveItem();
+      let target = editingId ? S.items.find(i => i.id === editingId) : S.items.find(i => !beforeIds.has(i.id));
+      if (!target && editingId) target = S.items.find(i => i.id === editingId);
+      if (target) {
+        target.priority = values.priority;
+        target.tags = values.tags;
+        target.nextAction = values.nextAction;
+        saveData();
+        renderWithScrollPreserved();
+      }
+    };
+
+    // Templates enriquecidos.
+    const _p2AddNextOccurrence = addNextOccurrence;
+    addNextOccurrence = function(item) {
+      const before = new Set(S.items.map(i => i.id));
+      _p2AddNextOccurrence(item);
+      const created = S.items.find(i => !before.has(i.id));
+      if (created) {
+        created.priority = item.priority || 'medium';
+        created.tags = normalizeTags(item.tags || []);
+        created.nextAction = item.nextAction || '';
+      }
+    };
+
+    const _p2SaveTemplate = saveItemAsTemplatePrompt;
+    saveItemAsTemplatePrompt = function(id) {
+      const item = S.items.find(i => i.id === id);
+      if (!item) return;
+      const tplName = prompt('Digite o nome para o novo modelo:', item.title);
+      if (!tplName) return;
+      S.templates.push({
+        id:generateId('tpl'), title:tplName.trim(), desc:item.desc || '', area:item.area || '',
+        checklist:(item.checklist || []).map(c => ({text:c.text,done:false})),
+        priority:item.priority || 'medium', tags:normalizeTags(item.tags || []), nextAction:item.nextAction || ''
+      });
+      saveData(); showToast('Modelo salvo com sucesso!');
+    };
+
+    // Reforça defaults ao carregar um template.
+    const _p2LoadTemplate = loadTemplate;
+    loadTemplate = function(id) {
+      _p2LoadTemplate(id);
+      const t = S.templates.find(x => x.id === id);
+      if (!t) return;
+      const p = document.getElementById('f-priority'); if (p) p.value = t.priority || 'medium';
+      const tg = document.getElementById('f-tags'); if (tg) tg.value = normalizeTags(t.tags || []).join(', ');
+      const na = document.getElementById('f-next-action'); if (na) na.value = t.nextAction || '';
+    };
+
+    // Melhorias de navegação mobile.
+    function mobileGoToday() { currentArea='all'; currentDashboardFilter='today'; prefs.viewMode='list'; renderWithScrollPreserved(); }
+    function mobileGoCalendar() { currentArea='all'; currentDashboardFilter=null; prefs.viewMode='calendar'; renderWithScrollPreserved(); }
+    function mobileGoFolders() { if (window.innerWidth <= 768) { document.getElementById('sidebar').classList.add('open'); document.getElementById('mobile-nav-overlay').classList.add('open'); } }
+    function mobileFocusSearch() { const input=document.getElementById('main-search'); if (input) { input.focus(); input.scrollIntoView({behavior:'smooth', block:'center'}); } }
+    const _p2ToggleSidebar = toggleSidebar;
+    toggleSidebar = function() { _p2ToggleSidebar(); document.getElementById('mobile-nav-overlay')?.classList.toggle('open', document.getElementById('sidebar')?.classList.contains('open')); };
+
+    // Calendário mensal: carga do dia, atrasados e abertura da agenda daquele dia.
+    function phase2DecorateMonth(container) {
+      if (!container) return;
+      const grid = container.querySelector('#month-grid');
+      if (!grid) return;
+      const now = new Date();
+      const base = new Date(now.getFullYear(), now.getMonth() + calendarMonthOffset, 1);
+      const firstDay = base.getDay();
+      [...grid.children].forEach((cell, idx) => {
+        const d = new Date(base.getFullYear(), base.getMonth(), idx - firstDay + 1);
+        const dStr = toLocalDateStr(d);
+        const dayItems = S.items.filter(i => i.date === dStr && i.status !== 'done');
+        const overdue = dayItems.some(i => i.date < getTodayBR());
+        if (d.getDay() === 0 || d.getDay() === 6) cell.classList.add('weekend');
+        if (dayItems.length >= 4) cell.classList.add('day-heavy');
+        if (overdue) cell.classList.add('day-overdue');
+        if (dayItems.length > 0) {
+          const badge = document.createElement('span'); badge.className='month-load'; badge.textContent=`${dayItems.length} ${dayItems.length===1?'item':'itens'}`; cell.appendChild(badge);
+        }
+        cell.title = dayItems.length ? `${dayItems.length} item(ns)` : 'Nenhum item pendente';
+        cell.addEventListener('click', e => { if (e.target.closest('.cal-item')) return; openDaySummaryModal(dStr); });
+      });
+    }
+
+    function ensureDaySummaryModal() {
+      if (document.getElementById('day-summary-modal')) return;
+      const el = document.createElement('div');
+      el.id='day-summary-modal'; el.className='modal day-summary-modal';
+      el.innerHTML=`<div class="modal-content"><div class="flex-between" style="margin-bottom:14px;"><div><h3 id="day-summary-title">Agenda do dia</h3><div id="day-summary-subtitle" class="muted text-sm"></div></div><button class="btn-sm" onclick="closeDaySummaryModal()">Fechar</button></div><div id="day-summary-list" class="day-summary-list"></div></div>`;
+      document.body.appendChild(el);
+    }
+
+    function openDaySummaryModal(dateStr) {
+      ensureDaySummaryModal();
+      const d = new Date(dateStr + 'T12:00:00');
+      const title = d.toLocaleDateString('pt-BR',{weekday:'long', day:'2-digit', month:'long', year:'numeric'});
+      document.getElementById('day-summary-title').textContent = title.charAt(0).toUpperCase()+title.slice(1);
+      const items = S.items.filter(i => i.date === dateStr).sort(compareItemsByDateTime);
+      const box = document.getElementById('day-summary-list');
+      if (!items.length) box.innerHTML='<div class="empty-state"><p>Nenhum item para este dia.</p></div>';
+      else box.innerHTML = items.map(i => `<div class="day-summary-item ${i.status==='done'?'status-done':''}" onclick="closeDaySummaryModal(); openItemModal(S.items.find(x=>x.id==='${i.id}'))"><div class="day-summary-time">${escapeHtml(i.time || '—')}</div><div style="flex:1;"><div style="font-weight:700;">${escapeHtml(i.title)}</div><div class="card-meta">${buildPhase2PriorityHtml(i)} ${buildPhase2TagsHtml(i)}</div></div></div>`).join('');
+      document.getElementById('day-summary-subtitle').textContent = `${items.length} item(ns) no total`;
+      document.getElementById('day-summary-modal').classList.add('open');
+    }
+    function closeDaySummaryModal() { document.getElementById('day-summary-modal')?.classList.remove('open'); }
+
+    // Dashboard “Meu Dia”.
+    function phase2BuildMyDayData() {
+      const today = getTodayBR();
+      const pending = S.items.filter(i => i.status !== 'done');
+      const overdue = pending.filter(i => i.date && i.date < today);
+      const todayItems = pending.filter(i => i.date === today).sort(compareItemsByDateTime);
+      const timedToday = todayItems.filter(i => i.time);
+      const noTimeToday = todayItems.filter(i => !i.time);
+      const focusMap = new Map();
+      [...overdue, ...todayItems.filter(i=>i.priority==='high'), ...todayItems.filter(i=>i.starred)].forEach(i => focusMap.set(i.id,i));
+      const focus = [...focusMap.values()].sort((a,b) => {
+        const score = i => (i.date && i.date < today ? 100 : 0) + (i.priority==='high'?40:0) + (i.starred?15:0) + (i.time?5:0);
+        return score(b)-score(a) || compareItemsByDateTime(a,b);
+      }).slice(0,3);
+      let next = pending.filter(i => i.date && i.date >= today).sort((a,b)=>{
+        const dateCmp=compareItemsByDateTime(a,b); return dateCmp;
+      })[0] || null;
+      return {today, pending, overdue, todayItems, timedToday, noTimeToday, focus, next};
+    }
+
+    const _p2RenderHeader = renderHeader;
+    renderHeader = function() {
+      if (currentArea !== 'all') {
+        _p2RenderHeader();
+        phase2RefreshHeaderControls();
+        updateFilterFolderOptions();
+        return;
+      }
+      const c = document.getElementById('header-container');
+      if (!c) return;
+      updateFilterFolderOptions();
+      const data = phase2BuildMyDayData();
+      const now = new Date();
+      const name = (auth.currentUser?.displayName || 'Usuário').split(' ')[0];
+      const greeting = now.getHours() < 12 ? 'Bom dia' : now.getHours() < 18 ? 'Boa tarde' : 'Boa noite';
+      const dateExt = now.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});
+      const overdueCount = data.overdue.length;
+      const todayCount = data.todayItems.length;
+      const next7End = new Date(now); next7End.setDate(next7End.getDate()+7);
+      const next7Count = data.pending.filter(i => i.date && i.date > data.today && i.date <= toLocalDateStr(next7End)).length;
+      const doneToday = S.items.filter(i=>i.status==='done' && i.date===data.today).length;
+      const activeFilter = currentDashboardFilter;
+      const focusHtml = data.focus.length ? `<div class="myday-focus"><div class="myday-focus-title">🎯 Foco sugerido</div>${data.focus.map((i,idx)=>`<div class="myday-focus-item" onclick="openItemModal(S.items.find(x=>x.id==='${i.id}'))"><span class="myday-focus-index">${idx+1}</span><div><div style="font-size:.84rem;font-weight:700;">${escapeHtml(i.title)}</div><div class="card-meta">${i.date && i.date < data.today ? '⚠ Atrasada' : (i.time ? 'Hoje às '+escapeHtml(i.time) : 'Hoje')} ${buildPhase2PriorityHtml(i)}</div></div></div>`).join('')}</div>` : '';
+      const nextHtml = data.next ? `<div class="myday-next"><div class="myday-next-label">▶ Próximo compromisso</div><div style="font-size:.9rem;font-weight:750;cursor:pointer;" onclick="openItemModal(S.items.find(x=>x.id==='${data.next.id}'))">${escapeHtml(data.next.title)} ${data.next.time ? 'às '+escapeHtml(data.next.time):''}</div></div>` : '';
+      const timelineHtml = `<div class="timeline-panel"><div class="timeline-title">Linha do tempo de hoje</div>${data.timedToday.length ? data.timedToday.map(i=>`<div class="timeline-row"><div class="timeline-time">${escapeHtml(i.time)}</div><div class="timeline-dot"></div><div><div class="timeline-title-text" onclick="openItemModal(S.items.find(x=>x.id==='${i.id}'))">${escapeHtml(i.title)}</div><div class="timeline-meta">${i.priority ? priorityLabel(i.priority) : ''} ${i.area ? '• '+escapeHtml(getHierarchy(i.area).text) : ''}</div></div></div>`).join('') : '<div class="muted text-sm">Nenhum compromisso com horário definido hoje.</div>'}${data.noTimeToday.length ? `<div class="untimed-note">+ ${data.noTimeToday.length} item(ns) de hoje sem horário definido.</div>` : ''}</div>`;
+      c.innerHTML = `<div class="myday-hero"><div class="myday-heading"><div><div class="myday-title">${greeting}, ${escapeHtml(name)}</div><div class="myday-subtitle">Meu Dia • ${dateExt}</div></div><select class="form-control phase2-mobile-view" onchange="setViewMode(this.value)"><option value="list" ${prefs.viewMode==='list'?'selected':''}>📋 Lista</option><option value="cards" ${prefs.viewMode==='cards'?'selected':''}>🔲 Cards</option><option value="kanban" ${prefs.viewMode==='kanban'?'selected':''}>📊 Kanban</option><option value="calendar" ${prefs.viewMode==='calendar'?'selected':''}>📅 Semana</option><option value="month" ${prefs.viewMode==='month'?'selected':''}>🗓️ Mês</option></select></div><div class="dashboard-cards"><div class="dash-card ${activeFilter==='overdue'?'active':''}" onclick="filterDashboard('overdue')"><div class="dash-card-num" style="color:var(--danger);">${overdueCount}</div><div class="dash-card-lbl">Atrasados</div></div><div class="dash-card ${activeFilter==='today'?'active':''}" onclick="filterDashboard('today')"><div class="dash-card-num" style="color:var(--warning);">${todayCount}</div><div class="dash-card-lbl">Hoje</div></div><div class="dash-card ${activeFilter==='next7'?'active':''}" onclick="filterDashboard('next7')"><div class="dash-card-num" style="color:var(--accent);">${next7Count}</div><div class="dash-card-lbl">Próx. 7 dias</div></div><div class="dash-card ${activeFilter==='done_today'?'active':''}" onclick="filterDashboard('done_today')"><div class="dash-card-num" style="color:#10b981;">${doneToday}</div><div class="dash-card-lbl">Concluídos hoje</div></div></div>${activeFilter?`<div style="margin-top:10px;"><button class="chip active" onclick="filterDashboard(null)">Filtro ativo ✕</button></div>`:''}${focusHtml}${nextHtml}${timelineHtml}<div class="flex-between" style="margin-top:15px;"><div class="view-selector"><button class="view-btn ${prefs.viewMode==='list'?'active':''}" onclick="setViewMode('list')">📋 Lista</button><button class="view-btn ${prefs.viewMode==='cards'?'active':''}" onclick="setViewMode('cards')">🔲 Cards</button><button class="view-btn ${prefs.viewMode==='kanban'?'active':''}" onclick="setViewMode('kanban')">📊 Kanban</button><button class="view-btn ${prefs.viewMode==='calendar'?'active':''}" onclick="setViewMode('calendar')">📅 Semana</button><button class="view-btn ${prefs.viewMode==='month'?'active':''}" onclick="setViewMode('month')">🗓️ Mês</button></div>${prefs.viewMode==='list'?`<div class="view-selector"><button class="view-btn ${prefs.generalGroupBy==='period'?'active':''}" onclick="setGeneralGroupBy('period')">Período</button><button class="view-btn ${prefs.generalGroupBy==='folder'?'active':''}" onclick="setGeneralGroupBy('folder')">Pasta</button></div>`:''}</div></div>`;
+      phase2RefreshHeaderControls();
+    };
+
+    function phase2RefreshHeaderControls() {
+      const folderHeader = document.querySelector('#header-container .folder-header-area');
+      if (!folderHeader) return;
+      const action = folderHeader.querySelector('.folder-actions');
+      if (action && !action.querySelector('.phase2-mobile-view')) {
+        const select = document.createElement('select'); select.className='form-control phase2-mobile-view'; select.style.maxWidth='180px';
+        select.innerHTML = `<option value="list">📋 Lista</option><option value="cards">🔲 Cards</option><option value="kanban">📊 Kanban</option><option value="calendar">📅 Semana</option><option value="month">🗓️ Mês</option>`;
+        select.value=prefs.viewMode; select.onchange=()=>setViewMode(select.value); action.appendChild(select);
+      }
+    }
+
+    // Limpeza visual de alguns elementos recorrentes, sem reescrever as seções antigas.
+    function phase2ReplaceLegacyInlineClasses() {
+      document.querySelectorAll('.dropdown-item, .ctx-item, .view-btn, .btn-sm, .btn').forEach(el => {
+        if (!el.getAttribute('aria-label') && el.textContent.trim().length === 0 && el.title) el.setAttribute('aria-label', el.title);
+      });
+    }
+
+    const _p2Render = render;
+    render = function() {
+      updateFilterFolderOptions();
+      _p2Render();
+      const empty = document.getElementById('items-container');
+      if (empty && Object.entries(phase2Filters).some(([k,v]) => k === 'tag' ? !!v : v !== 'all') && empty.textContent.trim() === '') {
+        empty.innerHTML = '<div class="empty-state"><p>Nenhum item corresponde aos filtros atuais.</p><button class="btn-sm" onclick="clearPhase2Filters()">Limpar filtros</button></div>';
+      }
+      updateFilterResultCount();
+      phase2ReplaceLegacyInlineClasses();
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+      updateFilterFolderOptions();
+      phase2ReplaceLegacyInlineClasses();
+    });
+
+
+    // =========================
+    // FASE 3 — CALENDÁRIO / RECORRÊNCIA / ALERTAS / PWA
+    // =========================
+    const PHASE3_CAL_START_HOUR = 6;
+    const PHASE3_CAL_END_HOUR = 23;
+    const PHASE3_CAL_SLOT_MIN = 60;
+    let phase3DraggingCalendarItem = null;
+
+    // Snapshot de recorrência enriquecido. Permite detectar alterações relevantes
+    // feitas pelo usuário em uma ocorrência antes de decidir removê-la ao reabrir a série.
+    function makeRepSnapshot(item) {
+      return {
+        title: item.title || '',
+        date: item.date || '',
+        time: item.time || '',
+        duration: phase3EnsureDurationValue(item.duration),
+        desc: item.desc || '',
+        area: item.area || '',
+        priority: item.priority || 'medium',
+        tags: Array.isArray(item.tags) ? [...item.tags] : [],
+        nextAction: item.nextAction || '',
+        checklist: (item.checklist || []).map(c => ({ text: c.text, done: !!c.done }))
+      };
+    }
+    let phase3DeferredInstallPrompt = null;
+    let phase3ServiceWorkerRegistration = null;
+
+    function phase3EnsureDurationValue(value) {
+      const n = parseInt(value, 10);
+      return Number.isFinite(n) && n > 0 ? Math.min(n, 1440) : 60;
+    }
+
+    function phase3FormatMinutes(total) {
+      const h = Math.floor(total / 60);
+      const m = total % 60;
+      if (h && m) return `${h}h ${String(m).padStart(2,'0')}min`;
+      if (h) return `${h}h`;
+      return `${m}min`;
+    }
+
+    function phase3DateAddDays(dateStr, days) {
+      const [y,m,d] = dateStr.split('-').map(Number);
+      const dt = new Date(y, m-1, d);
+      dt.setDate(dt.getDate()+days);
+      return toLocalDateStr(dt);
+    }
+
+    function phase3DateWeekday(dateStr) {
+      const [y,m,d] = dateStr.split('-').map(Number);
+      return new Date(y,m-1,d).getDay();
+    }
+
+    function phase3BuildRecurrenceRule(item) {
+      if (!item || !item.rep || item.rep === 'none' || !item.date) return null;
+      const rule = item.recurrenceRule || {};
+      return {
+        frequency: item.rep,
+        interval: Number(rule.interval) > 0 ? Number(rule.interval) : 1,
+        dayOfWeek: Number.isInteger(rule.dayOfWeek) ? rule.dayOfWeek : phase3DateWeekday(item.date),
+        dayOfMonth: Number(rule.dayOfMonth) > 0 ? Number(rule.dayOfMonth) : Number(item.date.split('-')[2]),
+        anchorDate: rule.anchorDate || item.date
+      };
+    }
+
+    function phase3NextRecurringDate(item) {
+      if (!item || !item.date || !item.rep || item.rep === 'none') return '';
+      const rule = phase3BuildRecurrenceRule(item);
+      if (!rule) return '';
+      const interval = rule.interval || 1;
+      const today = getTodayBR();
+      let candidate = item.date;
+
+      if (rule.frequency === 'daily') {
+        candidate = phase3DateAddDays(item.date, interval);
+        while (candidate <= today) candidate = phase3DateAddDays(candidate, interval);
+        return candidate;
+      }
+
+      if (rule.frequency === 'weekly') {
+        // A ocorrência pode ter sido adiada para outro dia, mas a série continua
+        // obedecendo ao dia da semana original definido na regra.
+        const currentWeekday = phase3DateWeekday(item.date);
+        let delta = ((rule.dayOfWeek - currentWeekday) + 7) % 7;
+        if (delta === 0) delta = 7;
+        delta += 7 * (interval - 1);
+        candidate = phase3DateAddDays(item.date, delta);
+        while (candidate <= today) candidate = phase3DateAddDays(candidate, 7 * interval);
+        return candidate;
+      }
+
+      if (rule.frequency === 'monthly') {
+        const [y,m] = item.date.split('-').map(Number);
+        let year = y;
+        let monthIndex = m - 1;
+        do {
+          monthIndex += interval;
+          year += Math.floor(monthIndex / 12);
+          monthIndex = ((monthIndex % 12) + 12) % 12;
+          const lastDay = new Date(year, monthIndex + 1, 0).getDate();
+          const day = Math.min(rule.dayOfMonth || Number(item.date.split('-')[2]), lastDay);
+          candidate = toLocalDateStr(new Date(year, monthIndex, day));
+        } while (candidate <= today);
+        return candidate;
+      }
+      return '';
+    }
+
+    function addNextOccurrence(item) {
+      if (!item || !item.rep || item.rep === 'none' || !item.date) return;
+      const nextDateStr = phase3NextRecurringDate(item);
+      if (!nextDateStr) return;
+
+      const rule = phase3BuildRecurrenceRule(item);
+      const newItem = {
+        ...item,
+        id: generateId('item'),
+        status: 'todo',
+        date: nextDateStr,
+        time: item.time || '',
+        duration: phase3EnsureDurationValue(item.duration),
+        rep: item.rep,
+        repDay: rule?.dayOfMonth || Number(nextDateStr.split('-')[2]),
+        recurrenceRule: rule,
+        checklist: (item.checklist || []).map(c => ({...c, done:false})),
+        attachments: [],
+        repSourceId: item.id,
+        createdFromOccurrenceId: item.id
+      };
+      newItem.repSnapshot = makeRepSnapshot(newItem);
+      S.items.push(newItem);
+    }
+
+    // Adiar altera SOMENTE a ocorrência atual. A regra de recorrência permanece intacta.
+    function postponeItemByDays(id, days) {
+      const item = S.items.find(i => i.id === id);
+      if (!item) return;
+      const before = phase6HistorySnapshot(item);
+      const today = getTodayBR();
+      let baseDate = item.date;
+      if (!baseDate || baseDate < today) baseDate = today;
+      const newDate = phase3DateAddDays(baseDate, Number(days) || 0);
+      item.date = newDate;
+      const after = phase6HistorySnapshot(item);
+      saveData().then(() => recordItemHistory(id, { action:'reschedule', source:'user', before, after }));
+      renderWithScrollPreserved();
+    }
+
+    function postponeItemToDate(id, targetDate) {
+      if (!targetDate) return;
+      const item = S.items.find(i => i.id === id);
+      if (!item) return;
+      const before = phase6HistorySnapshot(item);
+      item.date = targetDate;
+      const after = phase6HistorySnapshot(item);
+      saveData().then(() => recordItemHistory(id, { action:'reschedule', source:'user', before, after }));
+      renderWithScrollPreserved();
+    }
+
+    // Duração e regra são persistidas depois da rotina existente salvar o item.
+    const phase3OriginalOpenItemModal = openItemModal;
+    openItemModal = function(item = null) {
+      phase3OriginalOpenItemModal(item);
+      const duration = document.getElementById('f-duration');
+      if (duration) duration.value = String(phase3EnsureDurationValue(item?.duration || 60));
+    };
+
+    const phase3OriginalGetFormState = getFormState;
+    getFormState = function() {
+      const base = phase3OriginalGetFormState();
+      return {...base, duration: phase3EnsureDurationValue(document.getElementById('f-duration')?.value || 60)};
+    };
+
+    const phase3OriginalHasFormChanged = hasFormChanged;
+    hasFormChanged = function() {
+      if (phase3OriginalHasFormChanged()) return true;
+      const currentDuration = phase3EnsureDurationValue(document.getElementById('f-duration')?.value || 60);
+      const originalDuration = phase3EnsureDurationValue(editingOriginalItem?.duration || 60);
+      if (!editingOriginalItem) return currentDuration !== 60;
+      return currentDuration !== originalDuration;
+    };
+
+    const phase3OriginalSaveItem = saveItem;
+    saveItem = async function() {
+      const editingId = currentEditItemId;
+      const beforeIds = new Set(S.items.map(i => i.id));
+      const selectedRep = document.getElementById('f-rep')?.value || 'none';
+      const selectedDate = document.getElementById('f-date')?.value || '';
+      const selectedDuration = phase3EnsureDurationValue(document.getElementById('f-duration')?.value || 60);
+      await phase3OriginalSaveItem();
+      let target = editingId ? S.items.find(i => i.id === editingId) : S.items.find(i => !beforeIds.has(i.id));
+      if (!target && editingId) target = S.items.find(i => i.id === editingId);
+      if (!target) return;
+
+      const currentRule = target.recurrenceRule || {};
+      const dayOfWeek = Number.isInteger(currentRule.dayOfWeek)
+        ? currentRule.dayOfWeek
+        : (selectedDate ? phase3DateWeekday(selectedDate) : phase3DateWeekday(target.date || selectedDate || getTodayBR()));
+      const dayOfMonth = Number(currentRule.dayOfMonth) > 0
+        ? Number(currentRule.dayOfMonth)
+        : (selectedDate ? Number(selectedDate.split('-')[2]) : Number((target.date || getTodayBR()).split('-')[2]));
+
+      target.duration = selectedDuration;
+      if (selectedRep !== 'none' && selectedDate) {
+        // Se o usuário alterou explicitamente a data/regra no formulário, essa alteração redefine a âncora da série.
+        const originalDate = editingOriginalItem?.date || '';
+        const explicitDateChange = !editingOriginalItem || selectedDate !== originalDate || selectedRep !== (editingOriginalItem?.rep || 'none');
+        if (explicitDateChange || !target.recurrenceRule) {
+          target.recurrenceRule = {
+            frequency: selectedRep,
+            interval: 1,
+            dayOfWeek: phase3DateWeekday(selectedDate),
+            dayOfMonth: Number(selectedDate.split('-')[2]),
+            anchorDate: selectedDate
+          };
+        } else {
+          target.recurrenceRule = {
+            ...target.recurrenceRule,
+            frequency: selectedRep,
+            interval: target.recurrenceRule.interval || 1
+          };
+        }
+        target.repDay = target.recurrenceRule.dayOfMonth;
+      } else {
+        delete target.recurrenceRule;
+      }
+      await saveData();
+      renderWithScrollPreserved();
+    };
+
+    // ===== Time blocking =====
+    function phase3WeekDates() {
+      const todayStr = getTodayBR();
+      const [y,m,d] = todayStr.split('-').map(Number);
+      const base = new Date(y,m-1,d);
+      base.setDate(base.getDate() + calendarWeekOffset * 7);
+      const start = new Date(base);
+      start.setDate(base.getDate() - base.getDay());
+      return Array.from({length:7}, (_,idx)=>{
+        const dt = new Date(start); dt.setDate(start.getDate()+idx);
+        return toLocalDateStr(dt);
+      });
+    }
+
+    function phase3MinuteFromTime(timeStr) {
+      if (!timeStr) return PHASE3_CAL_START_HOUR * 60;
+      const [h,m] = timeStr.split(':').map(Number);
+      return (h * 60) + m;
+    }
+
+    function phase3TimeStringFromMinutes(total) {
+      const mins = Math.max(0, Math.min(1439, Math.round(total / 15) * 15));
+      const h = Math.floor(mins/60);
+      const m = mins % 60;
+      return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+    }
+
+    function phase3PositionForMinute(minute) {
+      return (minute - PHASE3_CAL_START_HOUR*60) / PHASE3_CAL_SLOT_MIN * 40;
+    }
+
+    function phase3BuildCalendarEvent(item, dayStr, lane, laneCount) {
+      const minute = phase3MinuteFromTime(item.time);
+      const duration = phase3EnsureDurationValue(item.duration);
+      const top = Math.max(0, phase3PositionForMinute(minute));
+      const height = Math.max(22, (duration / PHASE3_CAL_SLOT_MIN) * 40 - 3);
+      const leftPct = lane * (100/laneCount);
+      const widthPct = (100/laneCount);
+      const hierarchy = getHierarchy(item.area);
+      return `<div class="phase3-event" draggable="true" data-id="${item.id}" data-day="${dayStr}"\n            style="top:${top}px; left:calc(${leftPct}% + 2px); width:calc(${widthPct}% - 4px); height:${height}px; border-left-color:${escapeHtml(hierarchy.color)}"\n            title="${escapeHtml(item.title)} • ${escapeHtml(item.time || '')} • ${phase3FormatMinutes(duration)}"\n            ondragstart="phase3CalendarDragStart(event,'${item.id}')" ondragend="phase3CalendarDragEnd(event)"\n            onclick="phase3CalendarEventClick(event,'${item.id}')"\n            oncontextmenu="handleContextMenuEvent(event,'${item.id}')">\n        <div class="phase3-event-time">${escapeHtml(item.time || '')} • ${phase3FormatMinutes(duration)}</div>\n        <div class="phase3-event-title">${escapeHtml(item.title)}</div>\n        <div class="phase3-event-meta">${item.priority ? priorityLabel(item.priority) : ''}${hierarchy.text ? ' • ' + escapeHtml(hierarchy.text) : ''}</div>\n      </div>`;
+    }
+
+    function phase3ArrangeLanes(items) {
+      const sorted = items.filter(i=>i.time).sort((a,b)=>phase3MinuteFromTime(a.time)-phase3MinuteFromTime(b.time));
+      const placed = [];
+      const lanes = [];
+      sorted.forEach(item=>{
+        const start = phase3MinuteFromTime(item.time);
+        const end = start + phase3EnsureDurationValue(item.duration);
+        let lane = 0;
+        while (lane < lanes.length && lanes[lane] > start) lane++;
+        lanes[lane] = end;
+        placed.push({item, lane});
+      });
+      const laneCount = Math.max(1, lanes.length);
+      return placed.map(x=>({...x, laneCount}));
+    }
+
+    function phase3CalendarNowOffset() {
+      const now = new Date();
+      if (now.getHours() < PHASE3_CAL_START_HOUR || now.getHours() > PHASE3_CAL_END_HOUR) return null;
+      return phase3PositionForMinute(now.getHours()*60 + now.getMinutes());
+    }
+
+    function renderViewCalendar(list, c) {
+      const week = phase3WeekDates();
+      const dayNames = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+      const start = week[0], end = week[6];
+      const sortedWeekStart = new Date(start+'T12:00:00');
+      const monthLabel = sortedWeekStart.toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
+      const today = getTodayBR();
+
+      const header = `<div class="phase3-calendar-toolbar">\n        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">\n          <button class="btn-sm" onclick="navCalendar(-1)">◀ Semana anterior</button>\n          <button class="btn-sm" onclick="navCalendar(0)">Hoje</button>\n          <span class="phase3-pwa-pill">📅 ${String(monthLabel).charAt(0).toUpperCase()+String(monthLabel).slice(1)} • ${formatBR(start)} – ${formatBR(end)}</span>\n        </div>\n        <button class="btn-sm" onclick="navCalendar(1)">Próxima semana ▶</button>\n      </div>`;
+
+      const body = document.createElement('div');
+      body.className = 'phase3-calendar-scroll';
+      const grid = document.createElement('div');
+      grid.className = 'phase3-week-grid';
+
+      const headCorner = document.createElement('div');
+      headCorner.className='phase3-time-head'; headCorner.style.height='58px'; grid.appendChild(headCorner);
+      week.forEach((dStr,idx)=>{
+        const d = new Date(dStr+'T12:00:00');
+        const head = document.createElement('div');
+        head.className = 'phase3-day-head'+(dStr===today?' today':'');
+        head.innerHTML = `<div class="phase3-day-name">${dayNames[idx]}</div><div class="phase3-day-date">${d.getDate()}/${d.getMonth()+1}</div>`;
+        grid.appendChild(head);
+      });
+
+      const timeCol = document.createElement('div');
+      timeCol.className='phase3-time-col';
+      timeCol.style.marginTop='0';
+      for(let h=PHASE3_CAL_START_HOUR; h<PHASE3_CAL_END_HOUR; h++){
+        const el=document.createElement('div'); el.className='phase3-time-label'; el.textContent=`${String(h).padStart(2,'0')}:00`; timeCol.appendChild(el);
+      }
+      grid.appendChild(timeCol);
+
+      week.forEach((dStr,idx)=>{
+        const col=document.createElement('div');
+        col.className='phase3-day-col'+(idx===0||idx===6?' weekend':'');
+        col.dataset.date=dStr;
+        for(let h=PHASE3_CAL_START_HOUR; h<PHASE3_CAL_END_HOUR; h++){
+          const slot=document.createElement('div');
+          slot.className='phase3-slot';
+          slot.dataset.date=dStr;
+          slot.dataset.minute=String(h*60);
+          slot.title=`Criar item em ${formatBR(dStr)} às ${String(h).padStart(2,'0')}:00`;
+          slot.addEventListener('click',()=>openItemModalAtCalendarSlot(dStr,h*60));
+          slot.addEventListener('dragover',phase3CalendarDragOver);
+          slot.addEventListener('drop',phase3CalendarDrop);
+          col.appendChild(slot);
+        }
+        const items = (list||[]).filter(i=>i.date===dStr && i.status!=='done' && i.time);
+        phase3ArrangeLanes(items).forEach(x=>{
+          col.insertAdjacentHTML('beforeend',phase3BuildCalendarEvent(x.item,dStr,x.lane,x.laneCount));
+        });
+        grid.appendChild(col);
+      });
+
+      const nowOffset = (new Date().getDay() === 0 || true) ? phase3CalendarNowOffset() : null;
+      if (nowOffset !== null) {
+        const nowIdx = phase3WeekDates().findIndex(d=>d===today);
+        if(nowIdx>=0){
+          const dayCol = grid.children[1+7+1+nowIdx];
+          if(dayCol){
+            const line=document.createElement('div'); line.className='phase3-now-line'; line.style.top=`${nowOffset}px`;
+            line.innerHTML='<span class="phase3-now-dot"></span>'; dayCol.appendChild(line);
+          }
+        }
+      }
+
+      body.appendChild(grid);
+      c.innerHTML = header;
+      c.querySelector('.phase3-calendar-toolbar').insertAdjacentHTML('afterend','');
+      c.appendChild(body);
+      const hint=document.createElement('div'); hint.className='phase3-calendar-hint';
+      hint.textContent='Clique em um horário para criar. Arraste um compromisso para mudar data/hora. A duração define a altura do bloco.';
+      c.appendChild(hint);
+    }
+
+    function openItemModalAtCalendarSlot(dateStr, minute){
+      openItemModal();
+      const dateEl=document.getElementById('f-date'); const timeEl=document.getElementById('f-time');
+      if(dateEl) dateEl.value=dateStr;
+      if(timeEl) timeEl.value=phase3TimeStringFromMinutes(minute);
+      const duration=document.getElementById('f-duration'); if(duration) duration.value='60';
+      if(timeEl) timeEl.focus();
+    }
+
+    function phase3CalendarEventClick(e,id){
+      e.stopPropagation();
+      if(e.defaultPrevented) return;
+      openItemModal(S.items.find(x=>x.id===id));
+    }
+
+    function phase3CalendarDragStart(e,id){
+      phase3DraggingCalendarItem=id;
+      e.dataTransfer.effectAllowed='move';
+      e.dataTransfer.setData('text/plain',id);
+      e.currentTarget.classList.add('dragging');
+    }
+    function phase3CalendarDragEnd(e){
+      phase3DraggingCalendarItem=null;
+      document.querySelectorAll('.phase3-event.dragging').forEach(el=>el.classList.remove('dragging'));
+    }
+    function phase3CalendarDragOver(e){
+      e.preventDefault();
+      e.dataTransfer.dropEffect='move';
+      e.currentTarget.style.background='rgba(45,212,191,.08)';
+    }
+    function phase3CalendarDrop(e){
+      e.preventDefault();
+      e.currentTarget.style.background='';
+      const id=phase3DraggingCalendarItem || e.dataTransfer.getData('text/plain');
+      const item=S.items.find(x=>x.id===id);
+      if(!item) return;
+      const dateStr=e.currentTarget.dataset.date;
+      const baseMin=Number(e.currentTarget.dataset.minute||0);
+      const rect=e.currentTarget.getBoundingClientRect();
+      const relMin=((e.clientY-rect.top)/40)*60;
+      const snapped=Math.round(relMin/15)*15;
+      const targetMin=Math.max(0,Math.min(23*60+45,baseMin+snapped));
+      item.date=dateStr;
+      item.time=phase3TimeStringFromMinutes(targetMin);
+      // Dragging é alteração da ocorrência atual, sem alterar regra de recorrência.
+      saveData();
+      renderWithScrollPreserved();
+    }
+
+    // ===== Alertas =====
+    function phase3SetAlertStatus(msg, kind=''){
+      const el=document.getElementById('phase3-alert-status'); if(!el) return;
+      el.textContent=msg; el.className='phase3-alert-status'+(kind?` ${kind}`:'');
+    }
+
+    function phase3TestNotification(){
+      if(!('Notification' in window)){ phase3SetAlertStatus('Este navegador não oferece notificações.','error'); return; }
+      if(Notification.permission!=='granted'){
+        requestNotificationPermission();
+        return;
+      }
+      triggerNotification('🔔 Teste da Minha Agenda Pro','As notificações estão funcionando neste dispositivo.');
+    }
+
+    async function phase3RegisterServiceWorker(){
+      if(!('serviceWorker' in navigator)){
+        phase3SetAlertStatus('Service Worker não disponível neste navegador. Os alertas locais continuarão quando a página estiver aberta.');
+        return;
+      }
+      if(location.protocol==='file:'){
+        phase3SetAlertStatus('Abra a agenda em HTTPS ou localhost para ativar PWA e Service Worker.');
+        return;
+      }
+      try{
+        phase3ServiceWorkerRegistration=await navigator.serviceWorker.register('./service-worker.js',{scope:'./'});
+        await navigator.serviceWorker.ready;
+        phase3SetAlertStatus('PWA ativa. Notificações em segundo plano via push ficam preparadas; lembretes agendados ainda dependem do backend de envio.','');
+        const installBtn=document.getElementById('phase3-install-btn');
+        if(phase3DeferredInstallPrompt && installBtn) installBtn.classList.add('phase3-install-ready');
+      }catch(err){
+        console.warn('Service Worker error:',err);
+        phase3SetAlertStatus('PWA não pôde ser ativada neste ambiente.','error');
+      }
+    }
+
+    function triggerNotification(title, body, itemId = null) {
+      if(isDndActiveNow()) return;
+      if('Notification' in window && Notification.permission==='granted'){
+        const show = reg => {
+          const options={body,icon:'./icons/icon-192.png',badge:'./icons/icon-192.png',tag:itemId?`agenda-${itemId}`:`agenda-${Date.now()}`,renotify:false,data:{itemId}};
+          if(reg?.showNotification) return reg.showNotification(title,options);
+          return new Notification(title,options);
+        };
+        if(phase3ServiceWorkerRegistration) show(phase3ServiceWorkerRegistration);
+        else if(navigator.serviceWorker?.ready) navigator.serviceWorker.ready.then(show).catch(()=>show(null));
+        else show(null);
+      }
+
+      const actions = itemId ? [
+        { label:'Concluir', action:`setItemStatus('${itemId}','done')` },
+        { label:'Adiar 10 min', action:`snoozeItem('${itemId}',10)` },
+        { label:'Adiar 1 h', action:`snoozeItem('${itemId}',60)` },
+        { label:'Abrir', action:`openItemModal(S.items.find(x=>x.id==='${itemId}'))` }
+      ] : null;
+      showToast(`${title}: ${body}`, actions);
+    }
+
+    function checkPendingReminders(){
+      if(isDndActiveNow()) return;
+      const now=new Date();
+      const todayStr=toLocalDateStr(now);
+      let firedAlerts={}; let snoozed={}; const cfg=prefs.alertConfig||{};
+      try{ firedAlerts=JSON.parse(localStorage.getItem('agenda_fired_alerts')||'{}'); }catch(_){ }
+      try{ snoozed=JSON.parse(localStorage.getItem('agenda_snoozed')||'{}'); }catch(_){ }
+
+      // Limpa estados muito antigos para evitar crescimento indefinido.
+      const retentionMs=45*24*3600000;
+      Object.keys(firedAlerts).forEach(k=>{ if(Number(firedAlerts[k]) && Date.now()-Number(firedAlerts[k])>retentionMs) delete firedAlerts[k]; });
+      Object.keys(snoozed).forEach(k=>{ if(Number(snoozed[k]) + retentionMs < Date.now()) delete snoozed[k]; });
+
+      if(cfg.dailySummaryActive && cfg.dailySummaryTime){
+        const summaryKey=`summary_${todayStr}`;
+        const [sH,sM]=cfg.dailySummaryTime.split(':').map(Number);
+        const summaryTime=new Date(); summaryTime.setHours(sH,sM,0,0);
+        if(now>=summaryTime && !firedAlerts[summaryKey]){
+          const todayCount=S.items.filter(i=>i.status!=='done'&&i.date===todayStr).length;
+          const overdueCount=S.items.filter(i=>i.status!=='done'&&i.date&&i.date<todayStr).length;
+          triggerNotification('Resumo Diário',`Hoje: ${todayCount} tarefa(s), ${overdueCount} atrasada(s).`);
+          firedAlerts[summaryKey]=Date.now();
+        }
+      }
+
+      S.items.forEach(item=>{
+        if(item.status==='done'||!item.date||item.reminder==='none') return;
+        if(snoozed[item.id] && Date.now()<Number(snoozed[item.id])) return;
+        const timeStr=item.time||cfg.defaultTime||'08:00';
+        const [y,m,d]=item.date.split('-').map(Number); const [hr,min]=timeStr.split(':').map(Number);
+        const itemDateTime=new Date(y,m-1,d,hr,min,0);
+        let offsetMs=0;
+        if(item.reminder==='at_time') offsetMs=0;
+        else if(item.reminder==='5m') offsetMs=5*60000; else if(item.reminder==='15m') offsetMs=15*60000; else if(item.reminder==='30m') offsetMs=30*60000; else if(item.reminder==='1h') offsetMs=60*60000; else if(item.reminder==='2h') offsetMs=120*60000; else if(item.reminder==='1d') offsetMs=24*3600000;
+        const triggerTime=new Date(itemDateTime.getTime()-offsetMs);
+        const alertKey=`${item.id}|${item.date}|${item.reminder}`;
+        if(now>=triggerTime && now-triggerTime<=60*60000 && !firedAlerts[alertKey]){
+          triggerNotification('🔔 Lembrete de Tarefa',item.title,item.id);
+          firedAlerts[alertKey]=Date.now();
+        }
+      });
+      try{localStorage.setItem('agenda_fired_alerts',JSON.stringify(firedAlerts));}catch(_){ }
+      try{localStorage.setItem('agenda_snoozed',JSON.stringify(snoozed));}catch(_){ }
+    }
+
+    // PWA install prompt
+    window.addEventListener('beforeinstallprompt',(e)=>{
+      e.preventDefault(); phase3DeferredInstallPrompt=e;
+      const btn=document.getElementById('phase3-install-btn');
+      if(btn) btn.classList.add('phase3-install-ready');
+    });
+    async function phase3InstallPWA(){
+      if(!phase3DeferredInstallPrompt) return;
+      phase3DeferredInstallPrompt.prompt();
+      try{await phase3DeferredInstallPrompt.userChoice;}finally{phase3DeferredInstallPrompt=null; const btn=document.getElementById('phase3-install-btn'); if(btn) btn.classList.remove('phase3-install-ready');}
+    }
+    window.addEventListener('appinstalled',()=>{
+      phase3DeferredInstallPrompt=null;
+      phase3SetAlertStatus('Aplicativo instalado neste dispositivo.');
+    });
+
+    // Clique em notificações do Service Worker pode reabrir a tarefa correspondente.
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.addEventListener('message', (event) => {
+        if (event.data?.type !== 'AGENDA_NOTIFICATION_CLICK') return;
+        const itemId = event.data.itemId;
+        if (!itemId) return;
+        const open = () => {
+          const item = S.items.find(x => x.id === itemId);
+          if (item) openItemModal(item);
+        };
+        if (auth.currentUser && dataReady) open();
+        else setTimeout(open, 1200);
+      });
+    }
+
+
+    // =========================
+    // FASE 5 — COPILOTO IA
+    // =========================
+    const AI_CONFIG_STORAGE_KEY = 'agenda_ai_config_v1';
+    const AI_HISTORY_STORAGE_KEY = 'agenda_ai_history_v1';
+    let aiConversation = [];
+    let aiPendingActions = [];
+    let aiSending = false;
+
+    const DEFAULT_AI_CONFIG = { endpoint: '/api/agenda-ai', contextLimit: 250 };
+
+    function getAIConfig() {
+      try {
+        const raw = localStorage.getItem(AI_CONFIG_STORAGE_KEY);
+        const parsed = raw ? JSON.parse(raw) : {};
+        return { ...DEFAULT_AI_CONFIG, ...parsed };
+      } catch (_) { return { ...DEFAULT_AI_CONFIG }; }
+    }
+
+    function saveAIConfig() {
+      const endpoint = (document.getElementById('ai-endpoint')?.value || '').trim() || DEFAULT_AI_CONFIG.endpoint;
+      const contextLimit = Math.min(500, Math.max(50, parseInt(document.getElementById('ai-context-limit')?.value || DEFAULT_AI_CONFIG.contextLimit, 10) || DEFAULT_AI_CONFIG.contextLimit));
+      try { localStorage.setItem(AI_CONFIG_STORAGE_KEY, JSON.stringify({ endpoint, contextLimit })); } catch (_) {}
+      phase5SetAIStatus('Configuração salva.');
+      updateAIContextPill();
+    }
+
+    function loadAIConfig() {
+      const cfg = getAIConfig();
+      const endpoint = document.getElementById('ai-endpoint');
+      const limit = document.getElementById('ai-context-limit');
+      if (endpoint) endpoint.value = cfg.endpoint;
+      if (limit) limit.value = cfg.contextLimit;
+    }
+
+    function toggleAIConfig() {
+      const el = document.getElementById('ai-config');
+      if (!el) return;
+      el.hidden = !el.hidden;
+      if (!el.hidden) loadAIConfig();
+    }
+
+    function phase5SetAIStatus(msg, error = false) {
+      const el = document.getElementById('ai-connection-status');
+      if (!el) return;
+      el.textContent = msg || '';
+      el.style.color = error ? 'var(--danger)' : 'var(--muted)';
+    }
+
+    function updateAIContextPill(extra='') {
+      const el = document.getElementById('ai-context-pill');
+      if (!el) return;
+      const cfg = getAIConfig();
+      const n = Math.min(cfg.contextLimit, S.items.length);
+      el.textContent = `${n} tarefas no contexto${extra ? ' · '+extra : ''}`;
+    }
+
+    function aiHistoryStorageKey() {
+      const uid = auth.currentUser?.uid || 'anonymous';
+      return `${AI_HISTORY_STORAGE_KEY}_${uid}`;
+    }
+
+    function saveAIConversation() {
+      try { localStorage.setItem(aiHistoryStorageKey(), JSON.stringify(aiConversation.slice(-12))); } catch (_) {}
+    }
+
+    function loadAIConversation() {
+      try {
+        const raw = localStorage.getItem(aiHistoryStorageKey());
+        const parsed = raw ? JSON.parse(raw) : [];
+        aiConversation = Array.isArray(parsed) ? parsed : [];
+      } catch (_) { aiConversation = []; }
+    }
+
+    function clearAIConversation() {
+      aiConversation = [];
+      aiPendingActions = [];
+      try { localStorage.removeItem(aiHistoryStorageKey()); } catch (_) {}
+      renderAIChat();
+      clearAIProposals();
+    }
+
+    function openAIAssistant() {
+      const modal = document.getElementById('ai-modal');
+      if (!modal) return;
+      loadAIConversation();
+      loadAIConfig();
+      modal.classList.add('open');
+      updateAIContextPill();
+      renderAIChat();
+      setTimeout(() => document.getElementById('ai-input')?.focus(), 60);
+    }
+
+    function closeAIAssistant() {
+      document.getElementById('ai-modal')?.classList.remove('open');
+    }
+
+    function aiQuickPrompt(text) {
+      const input = document.getElementById('ai-input');
+      if (!input) return;
+      input.value = text;
+      input.focus();
+    }
+
+    function renderAIChat() {
+      const chat = document.getElementById('ai-chat');
+      if (!chat) return;
+      if (!aiConversation.length) {
+        chat.innerHTML = `<div class="ai-empty" id="ai-empty-state"><strong>O que você quer organizar?</strong>Pergunte sobre sua agenda, peça prioridades, crie tarefas, reagende, monte checklists ou peça um follow-up.</div>`;
+        return;
+      }
+      chat.innerHTML = aiConversation.map(m => {
+        const role = m.role === 'user' ? 'user' : (m.role === 'system' ? 'system' : 'assistant');
+        return `<div class="ai-message ${role}"><div class="ai-bubble">${escapeHtml(m.content || '')}</div></div>`;
+      }).join('') + (aiSending ? `<div class="ai-message assistant"><div class="ai-bubble ai-pulse">Pensando…</div></div>` : '');
+      chat.scrollTop = chat.scrollHeight;
+    }
+
+    function buildAIContext() {
+      const cfg = getAIConfig();
+      const limit = Math.min(500, Math.max(50, Number(cfg.contextLimit) || 250));
+      const sortedItems = [...S.items].sort(compareItemsByDateTime).slice(0, limit);
+      return {
+        today: getTodayBR(),
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Sao_Paulo',
+        currentArea,
+        currentAreaName: currentArea === 'all' ? 'Agenda Geral' : (getFolderConfig(currentArea)?.name || 'Agenda'),
+        folders: S.areas.map(a => ({ id:a.id, name:a.name, parentId:a.parentId || null, color:a.color || '' })),
+        items: sortedItems.map(i => ({
+          id:i.id, title:i.title || '', desc:i.desc || '', date:i.date || '', time:i.time || '', duration:phase3EnsureDurationValue(i.duration),
+          status:i.status || 'todo', priority:i.priority || 'medium', starred:!!i.starred, tags:Array.isArray(i.tags)?i.tags:[],
+          nextAction:i.nextAction || '', reminder:i.reminder || 'none', rep:i.rep || 'none', waitingFor:i.waitingFor || '',
+          waitingSince:i.waitingSince || '', followUpDate:i.followUpDate || '', checklist:(i.checklist||[]).map(c=>({text:c.text||'',done:!!c.done})),
+          hasAttachments:Array.isArray(i.attachments) && i.attachments.length>0
+        })),
+        truncated: S.items.length > sortedItems.length,
+        totalItems: S.items.length
+      };
+    }
+
+    function safeAIJson(value, fallback) {
+      try { return JSON.parse(value); } catch (_) { return fallback; }
+    }
+
+    function normalizeAIAction(action) {
+      if (!action || typeof action !== 'object') return null;
+      const allowed = new Set(['create_task','update_task','delete_task','complete_task','reschedule_task','create_checklist','set_waiting','create_followup']);
+      if (!allowed.has(action.type)) return null;
+      return { ...action, danger: action.type === 'delete_task' };
+    }
+
+    function aiActionLabel(type) {
+      const labels = {create_task:'Criar tarefa',update_task:'Editar tarefa',delete_task:'Excluir tarefa',complete_task:'Concluir tarefa',reschedule_task:'Reagendar',create_checklist:'Criar checklist',set_waiting:'Marcar como aguardando',create_followup:'Criar follow-up'};
+      return labels[type] || type;
+    }
+
+    function getAIActionDescription(action) {
+      const item = action.itemId ? S.items.find(i => i.id === action.itemId) : null;
+      const title = action.title || action.name || item?.title || 'Tarefa';
+      if (action.type === 'create_task') return `Criar “${title}”${action.date ? ` em ${formatBR(action.date, action.time)}` : ''}`;
+      if (action.type === 'update_task') return `Alterar “${title}”`;
+      if (action.type === 'delete_task') return `Excluir “${title}”`;
+      if (action.type === 'complete_task') return `Concluir “${title}”`;
+      if (action.type === 'reschedule_task') return `Mover “${title}” para ${formatBR(action.date, action.time)}`;
+      if (action.type === 'create_checklist') return `Adicionar ${Array.isArray(action.items)?action.items.length:0} subitens em “${title}”`;
+      if (action.type === 'set_waiting') return `Marcar “${title}” como aguardando${action.waitingFor ? ` ${action.waitingFor}` : ''}`;
+      if (action.type === 'create_followup') return `Criar follow-up “${title}”${action.date ? ` em ${formatBR(action.date, action.time)}` : ''}`;
+      return title;
+    }
+
+    function renderAIProposals() {
+      const panel = document.getElementById('ai-actions-panel');
+      const list = document.getElementById('ai-action-list');
+      if (!panel || !list) return;
+      if (!aiPendingActions.length) { panel.hidden = true; list.innerHTML = ''; return; }
+      panel.hidden = false;
+      list.innerHTML = aiPendingActions.map((a, idx) => {
+        const danger = a.danger ? ' danger' : '';
+        const meta = [];
+        if (a.date) meta.push(formatBR(a.date, a.time));
+        if (a.priority) meta.push(priorityLabel(a.priority));
+        if (a.reminder && a.reminder !== 'none') meta.push(`🔔 ${a.reminder}`);
+        if (Array.isArray(a.tags) && a.tags.length) meta.push(a.tags.map(t=>'#'+t).join(' '));
+        return `<div class="ai-action-card${danger}"><div class="ai-action-row"><input type="checkbox" class="ai-action-check" data-index="${idx}" checked><div class="ai-action-main"><div class="ai-action-type">${escapeHtml(aiActionLabel(a.type))}${a.danger ? ' · CONFIRMAÇÃO EXTRA' : ''}</div><div class="ai-action-desc">${escapeHtml(getAIActionDescription(a))}</div><div class="ai-action-meta">${meta.map(x=>`<span class="ai-chip">${escapeHtml(String(x))}</span>`).join('')}</div></div></div></div>`;
+      }).join('');
+      list.scrollTop = list.scrollHeight;
+    }
+
+    function clearAIProposals() {
+      aiPendingActions = [];
+      renderAIProposals();
+    }
+
+    function phase5ValidDate(date) { return !date || /^\d{4}-\d{2}-\d{2}$/.test(date); }
+    function phase5ValidTime(time) { return !time || /^([01]\d|2[0-3]):[0-5]\d$/.test(time); }
+    function phase5ValidPriority(priority) { return !priority || ['low','medium','high'].includes(priority); }
+    function phase5ValidReminder(reminder) { return !reminder || ['none','at_time','5m','15m','30m','1h','2h','1d'].includes(reminder); }
+
+    function validateAIAction(action) {
+      if (!action || typeof action !== 'object') return {ok:false, error:'Ação inválida.'};
+      if (!phase5ValidDate(action.date) || !phase5ValidTime(action.time)) return {ok:false,error:'Data ou horário inválido.'};
+      if (!phase5ValidPriority(action.priority)) return {ok:false,error:'Prioridade inválida.'};
+      if (!phase5ValidReminder(action.reminder)) return {ok:false,error:'Lembrete inválido.'};
+      if (action.type === 'create_task' || action.type === 'create_followup') {
+        if (!String(action.title || '').trim()) return {ok:false,error:'Título ausente.'};
+        if (action.folderId && !S.areas.some(a=>a.id===action.folderId)) return {ok:false,error:'Pasta não encontrada.'};
+      }
+      if (action.itemId && !S.items.some(i=>i.id===action.itemId)) return {ok:false,error:'Tarefa não encontrada.'};
+      return {ok:true};
+    }
+
+    function aiFindTask(id) { return S.items.find(i => i.id === id) || null; }
+
+    function applyAIAction(action) {
+      const valid = validateAIAction(action);
+      if (!valid.ok) throw new Error(valid.error);
+      if (action.type === 'create_task' || action.type === 'create_followup') {
+        const item = {
+          id: generateId('item'),
+          title: String(action.title || '').trim(),
+          desc: String(action.desc || ''),
+          area: action.folderId || '',
+          status: action.status || 'todo',
+          date: action.date || '',
+          time: action.time || '',
+          duration: phase3EnsureDurationValue(action.duration),
+          rep: action.rep || 'none',
+          reminder: action.reminder || 'none',
+          priority: action.priority || 'medium',
+          starred: !!action.starred,
+          tags: Array.isArray(action.tags) ? [...new Set(action.tags.map(x=>String(x).toLowerCase().replace(/^#/,'')).filter(Boolean))] : [],
+          nextAction: String(action.nextAction || ''),
+          checklist: Array.isArray(action.checklist) ? action.checklist.map(x=>({text:String(x?.text||x||''),done:false})).filter(x=>x.text) : [],
+          attachments: []
+        };
+        if (action.type === 'create_followup') item.nextAction = item.nextAction || `Acompanhar: ${item.title}`;
+        if (action.waitingFor) { item.waitingFor = String(action.waitingFor); item.waitingSince = action.waitingSince || getTodayBR(); item.followUpDate = action.followUpDate || item.date || ''; item.status = 'waiting'; }
+        S.items.push(item);
+        return item;
+      }
+      const item = aiFindTask(action.itemId);
+      if (!item) throw new Error('Tarefa não encontrada.');
+      if (action.type === 'delete_task') {
+        const idx = S.items.findIndex(i=>i.id===item.id);
+        if (idx<0) throw new Error('Tarefa não encontrada.');
+        deleteItemAttachments(item);
+        S.items.splice(idx,1);
+        return item;
+      }
+      if (action.type === 'complete_task') {
+        const wasDone = item.status === 'done';
+        item.status = 'done';
+        if (!wasDone) addNextOccurrence(item);
+        return item;
+      }
+      if (action.type === 'reschedule_task') {
+        if (action.date) item.date = action.date;
+        if (action.time !== undefined) item.time = action.time || '';
+        return item;
+      }
+      if (action.type === 'create_checklist') {
+        if (!Array.isArray(item.checklist)) item.checklist=[];
+        (action.items||[]).forEach(x=>{const text=String(x?.text||x||'').trim(); if(text) item.checklist.push({text,done:false});});
+        return item;
+      }
+      if (action.type === 'set_waiting') {
+        item.status = 'waiting';
+        item.waitingFor = String(action.waitingFor || item.waitingFor || '');
+        item.waitingSince = item.waitingSince || getTodayBR();
+        item.followUpDate = action.followUpDate || item.followUpDate || '';
+        return item;
+      }
+      if (action.type === 'update_task') {
+        const oldStatus = item.status || 'todo';
+        const fields = ['title','desc','area','status','date','time','duration','rep','reminder','priority','starred','nextAction','waitingFor','waitingSince','followUpDate'];
+        fields.forEach(k=>{if(action[k] !== undefined){ if(k==='area' && action[k] && !S.areas.some(a=>a.id===action[k])) throw new Error('Pasta não encontrada.'); item[k]=action[k]; }});
+        if (Array.isArray(action.tags)) item.tags=[...new Set(action.tags.map(x=>String(x).toLowerCase().replace(/^#/,'')).filter(Boolean))];
+        if (Array.isArray(action.checklist)) item.checklist=action.checklist.map(x=>({text:String(x?.text||x||''),done:!!x?.done})).filter(x=>x.text);
+        if (oldStatus !== 'done' && item.status === 'done') addNextOccurrence(item);
+        return item;
+      }
+      throw new Error('Ação não suportada.');
+    }
+
+    async function applySelectedAIProposals() {
+      const checks = [...document.querySelectorAll('.ai-action-check')];
+      const selected = checks.filter(c=>c.checked).map(c=>aiPendingActions[Number(c.dataset.index)]).filter(Boolean);
+      if (!selected.length) { showToast('Selecione pelo menos uma proposta.'); return; }
+      if (selected.some(a=>a.danger)) {
+        if (!confirm('Há uma ou mais ações destrutivas. Deseja realmente aplicar as exclusões?')) return;
+      }
+      createEmergencyBackup('before-ai-actions');
+      try {
+        const applied=[];
+        const historyOps=[];
+        for (const action of selected) {
+          const beforeMap = new Map(S.items.map(item => [item.id, phase6HistorySnapshot(item)]));
+          const result = applyAIAction(action);
+          const afterIds = new Set(S.items.map(item => item.id));
+
+          if (result) {
+            const before = beforeMap.get(result.id) || null;
+            const after = afterIds.has(result.id) ? phase6HistorySnapshot(result) : null;
+            let histAction = 'edit';
+            if (action.type === 'create_task' || action.type === 'create_followup') histAction = 'create';
+            else if (action.type === 'delete_task') histAction = 'delete';
+            else if (action.type === 'complete_task') histAction = 'complete';
+            else if (action.type === 'reschedule_task') histAction = 'reschedule';
+            else if (action.type === 'create_checklist') histAction = 'checklist';
+            else if (action.type === 'set_waiting') histAction = 'waiting';
+            historyOps.push({itemId: result.id, action:histAction, before, after, source:'ai'});
+          }
+
+          for (const newId of S.items.map(item=>item.id).filter(id=>!beforeMap.has(id))) {
+            const newItem = S.items.find(item=>item.id===newId);
+            historyOps.push({itemId:newId, action:'create', before:null, after:phase6HistorySnapshot(newItem), source:'system'});
+          }
+          applied.push(action);
+        }
+        await saveData();
+        for (const op of historyOps) await recordItemHistory(op.itemId, op);
+        renderWithScrollPreserved();
+        clearAIProposals();
+        addAIMessage('assistant', `${applied.length} alteração(ões) aplicada(s) com sucesso.`);
+      } catch (err) {
+        showToast('Não foi possível aplicar as propostas: ' + (err.message || err));
+      }
+    }
+
+    function addAIMessage(role, content) {
+      aiConversation.push({ role, content:String(content||'') });
+      aiConversation = aiConversation.slice(-12);
+      saveAIConversation();
+      renderAIChat();
+    }
+
+    async function testAIConnection() {
+      if (!auth.currentUser) { phase5SetAIStatus('Faça login primeiro.', true); return; }
+      saveAIConfig();
+      phase5SetAIStatus('Testando…');
+      try {
+        const token = await auth.currentUser.getIdToken();
+        const cfg = getAIConfig();
+        const response = await fetch(cfg.endpoint, { method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`}, body:JSON.stringify({ healthCheck:true, message:'ping', context:{today:getTodayBR()}, conversation:[] }) });
+        const body = await response.json().catch(()=>({}));
+        if (!response.ok || body.ok === false) throw new Error(body.error || `HTTP ${response.status}`);
+        phase5SetAIStatus('Conexão funcionando.');
+      } catch (e) { phase5SetAIStatus('Falha na conexão: ' + (e.message || e), true); }
+    }
+
+    async function sendAIMessage() {
+      if (aiSending) return;
+      const input = document.getElementById('ai-input');
+      const text = (input?.value || '').trim();
+      if (!text) return;
+      if (!auth.currentUser) { showToast('Faça login para usar o assistente.'); return; }
+      saveAIConfig();
+      const cfg = getAIConfig();
+      aiSending = true;
+      addAIMessage('user', text);
+      input.value = '';
+      renderAIChat();
+      const btn = document.getElementById('ai-send-btn');
+      if (btn) { btn.disabled=true; btn.textContent='…'; }
+      try {
+        const token = await auth.currentUser.getIdToken();
+        const response = await fetch(cfg.endpoint, {
+          method:'POST',
+          headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},
+          body:JSON.stringify({
+            message:text,
+            context:buildAIContext(),
+            conversation:aiConversation.filter(m=>m.role==='user'||m.role==='assistant').slice(-10),
+            locale:'pt-BR'
+          })
+        });
+        const body = await response.json().catch(()=>({}));
+        if (!response.ok) throw new Error(body.error || `HTTP ${response.status}`);
+        if (body.message) addAIMessage('assistant', body.message);
+        const actions=(Array.isArray(body.proposedActions)?body.proposedActions:[]).map(normalizeAIAction).filter(Boolean);
+        aiPendingActions=actions;
+        renderAIProposals();
+        updateAIContextPill(actions.length ? `${actions.length} proposta(s)` : 'resposta pronta');
+      } catch (e) {
+        addAIMessage('system', 'Não consegui acessar a IA agora. Verifique o endpoint em ⚙ Conexão.');
+        phase5SetAIStatus(e.message || String(e), true);
+      } finally {
+        aiSending=false;
+        if (btn) { btn.disabled=false; btn.textContent='Enviar'; }
+        renderAIChat();
+      }
+    }
+
+    document.addEventListener('keydown', e => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k' && !['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName)) {
+        e.preventDefault(); openAIAssistant();
+      }
+      if (e.key === 'Escape' && document.getElementById('ai-modal')?.classList.contains('open')) closeAIAssistant();
+    });
+
+    // Fase 6 — Histórico ativo: cada mutação de tarefa gera eventos em users/{uid}/items/{itemId}/history.
+    // Inicialização PWA
+    document.addEventListener('DOMContentLoaded',()=>{
+      loadAIConfig();
+      phase3RegisterServiceWorker();
+      setTimeout(()=>phase3SetAlertStatus('A página pode verificar lembretes enquanto estiver aberta. Push agendado em segundo plano requer backend/FCM.'),500);
+    });
+
   </script>
 </body>
 </html>
