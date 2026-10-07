@@ -10,6 +10,8 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
+  <link rel="apple-touch-icon" sizes="192x192" href="./icons/icon-192.png">
   <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2360/2360875.png">
   <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/2360/2360875.png">
 
@@ -431,7 +433,548 @@
     @media (min-width:769px) {
       #mobile-nav-overlay { display:none !important; }
     }
-    /* =========================\n       FASE 3 — CALENDÁRIO / ALERTAS / PWA\n       ========================= */\n    .phase3-calendar-shell {\n      border:1px solid var(--border);\n      border-radius:14px;\n      background:rgba(255,255,255,.018);\n      overflow:hidden;\n    }\n    .phase3-calendar-toolbar {\n      display:flex; justify-content:space-between; align-items:center; gap:10px;\n      padding:10px 12px; border-bottom:1px solid var(--border); background:var(--card);\n      position:sticky; top:0; z-index:12;\n    }\n    .phase3-calendar-scroll { overflow:auto; max-height:72vh; }\n    .phase3-week-grid {\n      display:grid; grid-template-columns:64px repeat(7,minmax(150px,1fr));\n      min-width:1120px; position:relative;\n    }\n    .phase3-time-head { background:var(--card); border-right:1px solid var(--border); position:sticky; left:0; z-index:11; }\n    .phase3-day-head {\n      background:var(--card); border-right:1px solid var(--border); border-bottom:1px solid var(--border);\n      padding:9px 8px; text-align:center; position:sticky; top:0; z-index:10;\n    }\n    .phase3-day-head.today { color:var(--accent); box-shadow:inset 0 -2px 0 var(--accent); }\n    .phase3-day-name { font-size:.7rem; color:var(--muted); font-weight:800; text-transform:uppercase; letter-spacing:.4px; }\n    .phase3-day-date { font-size:.95rem; font-weight:800; margin-top:2px; }\n    .phase3-time-col { position:relative; background:var(--card); border-right:1px solid var(--border); }\n    .phase3-time-label { height:40px; border-bottom:1px solid rgba(255,255,255,.04); padding:2px 6px; text-align:right; color:var(--muted); font-size:.68rem; }\n    .phase3-day-col { position:relative; background:rgba(255,255,255,.012); border-right:1px solid var(--border); }\n    .phase3-day-col.weekend { background:rgba(255,255,255,.018); }\n    .phase3-slot { height:40px; border-bottom:1px solid rgba(255,255,255,.04); cursor:pointer; position:relative; }\n    .phase3-slot:hover { background:rgba(45,212,191,.055); }\n    .phase3-event {\n      position:absolute; box-sizing:border-box; overflow:hidden; cursor:grab; z-index:4;\n      background:var(--card); border:1px solid rgba(45,212,191,.45); border-left:4px solid var(--accent);\n      border-radius:7px; padding:5px 6px; box-shadow:0 5px 12px rgba(0,0,0,.2);\n    }\n    .phase3-event.dragging { opacity:.5; }\n    .phase3-event-time { font-size:.66rem; color:var(--muted); font-variant-numeric:tabular-nums; }\n    .phase3-event-title { font-size:.72rem; font-weight:750; line-height:1.2; margin-top:2px; }\n    .phase3-event-meta { font-size:.62rem; color:var(--muted); margin-top:2px; }\n    .phase3-now-line { position:absolute; left:0; right:0; height:2px; background:var(--danger); z-index:6; pointer-events:none; }\n    .phase3-now-dot { width:7px; height:7px; border-radius:50%; background:var(--danger); position:absolute; left:-3px; top:-2.5px; }\n    .phase3-drop-indicator { position:absolute; left:0; right:0; height:3px; background:var(--accent); z-index:7; pointer-events:none; display:none; }\n    .phase3-calendar-hint { padding:9px 12px; color:var(--muted); font-size:.72rem; border-top:1px solid var(--border); background:rgba(0,0,0,.08); }\n    .phase3-alert-status { margin-top:10px; padding:9px 10px; border-radius:8px; background:rgba(45,212,191,.06); border:1px solid rgba(45,212,191,.25); color:var(--muted); font-size:.75rem; line-height:1.35; }\n    .phase3-install-ready { border-color:var(--accent)!important; color:var(--accent)!important; display:inline-flex!important; }\n    .phase3-pwa-pill { display:inline-flex; align-items:center; gap:5px; padding:3px 8px; border-radius:999px; border:1px solid var(--border); color:var(--muted); font-size:.65rem; }\n    @media(max-width:768px){\n      .phase3-calendar-toolbar { position:sticky; top:0; }\n      .phase3-calendar-scroll { max-height:68vh; }\n      .phase3-week-grid { grid-template-columns:52px repeat(7,minmax(130px,1fr)); min-width:962px; }\n      .phase3-day-head { padding:8px 5px; }\n      .phase3-event-title { font-size:.68rem; }\n      .phase3-alert-status { font-size:.7rem; }\n    }\n  </style>
+
+    /* =========================
+       M4 — FORMULÁRIO MOBILE
+       Apenas experiência de criação/edição em telas pequenas.
+       Não altera dados, Firebase ou modelo de negócio.
+       ========================= */
+    @media (max-width:768px) {
+      #item-modal {
+        padding:0;
+        align-items:stretch;
+        justify-content:stretch;
+        overscroll-behavior:contain;
+      }
+      #item-modal-content {
+        width:100%;
+        max-width:none;
+        height:100dvh;
+        max-height:none;
+        margin:0;
+        border-radius:0;
+        border-left:0;
+        border-right:0;
+        border-top:0;
+        padding:0;
+        display:flex;
+        flex-direction:column;
+        overflow:hidden;
+        background:var(--card);
+      }
+      #item-modal-content > div:first-child {
+        flex:0 0 auto;
+        position:sticky;
+        top:0;
+        z-index:5;
+        margin:0 !important;
+        padding:12px 14px;
+        background:var(--card);
+        border-bottom:1px solid var(--border);
+        min-height:60px;
+      }
+      #item-modal-content > div:first-child h3 {
+        font-size:1.05rem !important;
+        line-height:1.25;
+        max-width:42vw;
+        overflow-wrap:anywhere;
+      }
+      #item-modal-content > div:first-child .btn-sm,
+      #item-modal-content > div:first-child .star-btn {
+        min-width:42px;
+        min-height:42px;
+      }
+      #item-modal-content > div:not(:first-child):not(:last-child) {
+        flex:0 0 auto;
+      }
+      #item-modal-content > div:nth-child(n+2):not(:last-child) {
+        margin-left:14px;
+        margin-right:14px;
+      }
+      #item-modal-content > div:nth-child(3) {
+        margin-top:12px;
+      }
+      #item-modal-content .form-group {
+        margin-bottom:14px;
+      }
+      #item-modal-content .form-group > .flex-row,
+      #item-modal-content .form-group[style*="display: flex"] {
+        flex-direction:column !important;
+        align-items:stretch !important;
+        gap:12px !important;
+      }
+      #item-modal-content .form-group[style*="display: flex"] > div {
+        width:100% !important;
+        flex:1 1 auto !important;
+        min-width:0 !important;
+      }
+      #item-modal-content label {
+        display:block;
+        margin-bottom:6px;
+        line-height:1.3;
+      }
+      #item-modal-content .form-control,
+      #item-modal-content textarea,
+      #item-modal-content select,
+      #item-modal-content input[type="text"],
+      #item-modal-content input[type="date"],
+      #item-modal-content input[type="time"],
+      #item-modal-content input[type="number"] {
+        width:100%;
+        min-height:46px;
+        box-sizing:border-box;
+      }
+      #item-modal-content textarea#f-desc {
+        min-height:110px;
+        max-height:240px;
+        resize:vertical;
+      }
+      #item-modal-content #checklist-container {
+        display:flex;
+        flex-direction:column;
+        gap:8px;
+      }
+      #item-modal-content .checklist-row {
+        width:100%;
+        align-items:center;
+      }
+      #item-modal-content .checklist-row .form-control {
+        min-height:46px;
+      }
+      #item-modal-content .drop-zone {
+        min-height:92px;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        text-align:center;
+        padding:14px;
+      }
+      #item-modal-content .attachment-list {
+        max-width:100%;
+        overflow:hidden;
+      }
+      #item-modal-content #item-history-section {
+        max-height:320px;
+        overflow:auto;
+        margin-bottom:14px;
+      }
+      #item-modal-content > div:last-child {
+        position:sticky;
+        bottom:0;
+        z-index:6;
+        flex:0 0 auto;
+        margin:0 !important;
+        padding:10px 14px calc(10px + env(safe-area-inset-bottom));
+        background:color-mix(in srgb, var(--card) 94%, transparent);
+        border-top:1px solid var(--border);
+        backdrop-filter:blur(12px);
+        display:grid !important;
+        grid-template-columns:1fr 1.25fr;
+        gap:8px !important;
+      }
+      #item-modal-content > div:last-child .btn {
+        width:100%;
+        min-height:48px;
+        margin:0 !important;
+      }
+      #item-modal-content::before {
+        content:"";
+        display:block;
+        flex:0 0 0;
+      }
+      #item-modal-content {
+        overflow-y:auto;
+        overflow-x:hidden;
+      }
+      #item-modal-content > div:first-child,
+      #item-modal-content > div:last-child {
+        position:sticky;
+      }
+    }
+
+    @media (max-width:360px) {
+      #item-modal-content > div:first-child {
+        padding-left:10px;
+        padding-right:10px;
+      }
+      #item-modal-content > div:nth-child(n+2):not(:last-child) {
+        margin-left:10px;
+        margin-right:10px;
+      }
+      #item-modal-content > div:last-child {
+        padding-left:10px;
+        padding-right:10px;
+      }
+      #item-modal-content > div:first-child h3 {
+        max-width:34vw;
+      }
+    }
+
+    /* =========================
+       M2 — CAMADA RESPONSIVA MOBILE
+       Não altera dados, Firebase ou lógica de negócio.
+       ========================= */
+    @media (max-width:768px) {
+      html, body { width:100%; max-width:100%; overflow-x:hidden; }
+      body { min-width:0; -webkit-text-size-adjust:100%; text-size-adjust:100%; }
+      #main { min-width:0; width:100%; max-width:none; padding:12px 10px 18px; }
+      #main > * { min-width:0; max-width:100%; }
+
+      button, [role="button"], .btn, .btn-sm, .view-btn, .chip, .item-more-btn {
+        -webkit-tap-highlight-color:transparent;
+      }
+      .btn, .btn-sm { min-height:44px; }
+      .item-more-btn { min-width:40px; min-height:40px; }
+      .form-control, .search-input, .quick-capture input, input, select, textarea {
+        font-size:16px;
+        max-width:100%;
+      }
+
+      .top-bar {
+        width:100%;
+        align-items:stretch;
+        gap:8px;
+        margin-bottom:12px;
+      }
+      .mobile-nav-toggle { align-self:flex-start; min-height:44px; }
+      .phase2-search-actions { width:100%; min-width:0; }
+      .phase2-search-actions .search-input { min-width:0; width:100%; }
+      .search-filter-btn { flex:0 0 auto; min-height:44px; }
+      .top-bar > div:last-child {
+        width:100%;
+        display:grid !important;
+        grid-template-columns:1fr 1fr;
+        gap:8px !important;
+      }
+      .top-bar > div:last-child .btn,
+      .top-bar > div:last-child .btn-sm { width:100%; }
+
+      .quick-capture { width:100%; min-width:0; margin-bottom:14px; }
+      .quick-capture input { min-width:0; width:100%; }
+      .quick-capture .btn { flex:0 0 auto; min-width:76px; }
+
+      .dashboard-hero, .myday-hero {
+        width:100%; max-width:100%; padding:14px; overflow:hidden;
+      }
+      .dashboard-cards { grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+      .dash-card { min-width:0; padding:10px 7px; }
+      .dash-card-num { font-size:1.25rem; }
+      .dash-card-lbl { font-size:.7rem; line-height:1.2; }
+      .folder-title { min-width:0; max-width:100%; overflow-wrap:anywhere; }
+      .folder-actions { gap:6px; }
+      .folder-actions > * { max-width:100%; }
+
+      #search-filters-panel, .quick-preview, .overdue-banner {
+        width:100%; max-width:100%; overflow:hidden;
+      }
+      .filter-grid { grid-template-columns:1fr; }
+      .filter-field { min-width:0; }
+      .quick-preview-grid { grid-template-columns:1fr; }
+      .quick-preview-actions { justify-content:stretch; }
+      .quick-preview-actions .btn, .quick-preview-actions .btn-sm { flex:1 1 140px; }
+
+      .grid-cards { grid-template-columns:1fr; min-width:0; }
+      .card, .grid-cards .card { min-width:0; max-width:100%; }
+      .card-body, .card-title, .card-desc { min-width:0; overflow-wrap:anywhere; }
+
+      .kanban-board {
+        width:100%; max-width:100%; min-width:0;
+        overscroll-behavior-x:contain;
+        -webkit-overflow-scrolling:touch;
+      }
+      .kanban-col { flex:0 0 270px; }
+
+      .calendar-controls, .phase3-calendar-toolbar {
+        width:100%; min-width:0; flex-wrap:wrap; gap:8px;
+      }
+      .calendar-controls > * { max-width:100%; }
+
+      .modal {
+        padding:10px;
+        align-items:flex-start;
+        overflow-y:auto;
+      }
+      .modal-content {
+        width:100%; max-width:100%; max-height:calc(100vh - 20px);
+        margin:0; padding:16px; border-radius:14px;
+      }
+      .day-summary-modal .modal-content { max-width:100%; }
+      .day-summary-list { max-height:60vh; }
+
+      #context-menu { max-width:calc(100vw - 20px); min-width:0; }
+
+      .mobile-bottom-nav {
+        left:6px; right:6px; bottom:6px; padding:4px;
+        padding-bottom:calc(4px + env(safe-area-inset-bottom));
+      }
+      .mobile-bottom-nav button { min-width:0; min-height:54px; padding:5px 2px; }
+      .mobile-bottom-nav button span:last-child {
+        white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%;
+      }
+
+      .phase3-calendar-shell, .phase3-calendar-scroll, .calendar-scroll-container,
+      .month-grid, .calendar-grid { max-width:100%; }
+      .subfolder-chips {
+        max-width:100%; overflow-x:auto; flex-wrap:nowrap; padding-bottom:3px;
+        -webkit-overflow-scrolling:touch;
+      }
+    }
+
+    @media (max-width:380px) {
+      #main { padding-left:8px; padding-right:8px; }
+      .top-bar > div:last-child { grid-template-columns:1fr; }
+      .dashboard-cards { grid-template-columns:1fr 1fr; gap:6px; }
+      .dash-card { padding:9px 5px; }
+      .quick-capture { gap:6px; }
+      .quick-capture .btn { min-width:70px; padding-left:10px; padding-right:10px; }
+      .mobile-bottom-nav { left:4px; right:4px; }
+      .mobile-bottom-nav button { font-size:.62rem; }
+    }
+
+    /* =========================\n       FASE 3 — CALENDÁRIO / ALERTAS / PWA\n       ========================= */\n    .phase3-calendar-shell {\n      border:1px solid var(--border);\n      border-radius:14px;\n      background:rgba(255,255,255,.018);\n      overflow:hidden;\n    }\n    .phase3-calendar-toolbar {\n      display:flex; justify-content:space-between; align-items:center; gap:10px;\n      padding:10px 12px; border-bottom:1px solid var(--border); background:var(--card);\n      position:sticky; top:0; z-index:12;\n    }\n    .phase3-calendar-scroll { overflow:auto; max-height:72vh; }\n    .phase3-week-grid {\n      display:grid; grid-template-columns:64px repeat(7,minmax(150px,1fr));\n      min-width:1120px; position:relative;\n    }\n    .phase3-time-head { background:var(--card); border-right:1px solid var(--border); position:sticky; left:0; z-index:11; }\n    .phase3-day-head {\n      background:var(--card); border-right:1px solid var(--border); border-bottom:1px solid var(--border);\n      padding:9px 8px; text-align:center; position:sticky; top:0; z-index:10;\n    }\n    .phase3-day-head.today { color:var(--accent); box-shadow:inset 0 -2px 0 var(--accent); }\n    .phase3-day-name { font-size:.7rem; color:var(--muted); font-weight:800; text-transform:uppercase; letter-spacing:.4px; }\n    .phase3-day-date { font-size:.95rem; font-weight:800; margin-top:2px; }\n    .phase3-time-col { position:relative; background:var(--card); border-right:1px solid var(--border); }\n    .phase3-time-label { height:40px; border-bottom:1px solid rgba(255,255,255,.04); padding:2px 6px; text-align:right; color:var(--muted); font-size:.68rem; }\n    .phase3-day-col { position:relative; background:rgba(255,255,255,.012); border-right:1px solid var(--border); }\n    .phase3-day-col.weekend { background:rgba(255,255,255,.018); }\n    .phase3-slot { height:40px; border-bottom:1px solid rgba(255,255,255,.04); cursor:pointer; position:relative; }\n    .phase3-slot:hover { background:rgba(45,212,191,.055); }\n    .phase3-event {\n      position:absolute; box-sizing:border-box; overflow:hidden; cursor:grab; z-index:4;\n      background:var(--card); border:1px solid rgba(45,212,191,.45); border-left:4px solid var(--accent);\n      border-radius:7px; padding:5px 6px; box-shadow:0 5px 12px rgba(0,0,0,.2);\n    }\n    .phase3-event.dragging { opacity:.5; }\n    .phase3-event-time { font-size:.66rem; color:var(--muted); font-variant-numeric:tabular-nums; }\n    .phase3-event-title { font-size:.72rem; font-weight:750; line-height:1.2; margin-top:2px; }\n    .phase3-event-meta { font-size:.62rem; color:var(--muted); margin-top:2px; }\n    .phase3-now-line { position:absolute; left:0; right:0; height:2px; background:var(--danger); z-index:6; pointer-events:none; }\n    .phase3-now-dot { width:7px; height:7px; border-radius:50%; background:var(--danger); position:absolute; left:-3px; top:-2.5px; }\n    .phase3-drop-indicator { position:absolute; left:0; right:0; height:3px; background:var(--accent); z-index:7; pointer-events:none; display:none; }\n    .phase3-calendar-hint { padding:9px 12px; color:var(--muted); font-size:.72rem; border-top:1px solid var(--border); background:rgba(0,0,0,.08); }\n    .phase3-alert-status { margin-top:10px; padding:9px 10px; border-radius:8px; background:rgba(45,212,191,.06); border:1px solid rgba(45,212,191,.25); color:var(--muted); font-size:.75rem; line-height:1.35; }\n    .phase3-install-ready { border-color:var(--accent)!important; color:var(--accent)!important; display:inline-flex!important; }\n    .phase3-pwa-pill { display:inline-flex; align-items:center; gap:5px; padding:3px 8px; border-radius:999px; border:1px solid var(--border); color:var(--muted); font-size:.65rem; }\n    @media(max-width:768px){\n      .phase3-calendar-toolbar { position:sticky; top:0; }\n      .phase3-calendar-scroll { max-height:68vh; }\n      .phase3-week-grid { grid-template-columns:52px repeat(7,minmax(130px,1fr)); min-width:962px; }\n      .phase3-day-head { padding:8px 5px; }\n      .phase3-event-title { font-size:.68rem; }\n      .phase3-alert-status { font-size:.7rem; }\n    }\n  
+    /* =========================
+       M3 — NAVEGAÇÃO MOBILE COMO APP
+       Camada exclusiva de apresentação/interação mobile.
+       Não altera dados, Firebase ou modelo de negócio.
+       ========================= */
+    .mobile-drawer-header { display:none; }
+    .mobile-drawer-close { border:0; background:transparent; color:var(--muted); font-size:1.2rem; width:42px; height:42px; border-radius:10px; cursor:pointer; }
+    .mobile-bottom-nav button { position:relative; }
+    .mobile-bottom-nav button.active:not(.primary) { color:var(--accent); background:rgba(45,212,191,.10); border-radius:12px; }
+    .mobile-bottom-nav button.active:not(.primary)::after { content:""; position:absolute; bottom:2px; left:50%; transform:translateX(-50%); width:18px; height:3px; border-radius:99px; background:var(--accent); }
+    @media (max-width:768px) {
+      #sidebar { width:min(88vw, 340px); box-shadow:18px 0 40px rgba(0,0,0,.38); z-index:600; }
+      #sidebar .nav-group { padding-bottom:18px; }
+      .mobile-drawer-header { display:flex; align-items:center; justify-content:space-between; min-height:58px; padding:8px 12px 8px 16px; border-bottom:1px solid var(--border); position:sticky; top:0; z-index:2; background:var(--card); }
+      .mobile-drawer-header strong { font-size:.92rem; color:var(--text); }
+      .mobile-drawer-close { min-width:42px; min-height:42px; }
+      #mobile-nav-overlay { z-index:550; backdrop-filter:blur(2px); }
+      body.mobile-drawer-open { overflow:hidden; }
+      .mobile-bottom-nav { bottom:max(8px, env(safe-area-inset-bottom)); }
+      .mobile-bottom-nav button { min-height:52px; }
+      .mobile-bottom-nav button span:last-child { font-size:.68rem; }
+      .mobile-bottom-nav button.primary { min-height:46px; }
+    }
+    @media (min-width:769px) { .mobile-drawer-header { display:none !important; } }
+  
+    /* =========================
+       M5 — SEMANA MOBILE
+       Apenas apresentação mobile. A lógica, dados e filtros existentes permanecem intactos.
+       ========================= */
+    @media (max-width: 768px) {
+      .weekly-compact-wrap {
+        overflow-x: hidden !important;
+      }
+      .weekly-compact-grid {
+        grid-template-columns: 1fr !important;
+        width: 100% !important;
+        gap: 8px !important;
+      }
+      .weekly-compact-grid > section {
+        min-height: 0 !important;
+        width: 100% !important;
+      }
+      .weekly-compact-grid > section > div:first-child {
+        display: grid !important;
+        grid-template-columns: auto 1fr auto !important;
+        align-items: center !important;
+        gap: 8px !important;
+        text-align: left !important;
+        padding: 9px 10px !important;
+      }
+      .weekly-compact-grid > section > div:first-child > div:nth-child(3) {
+        margin-top: 0 !important;
+        text-align: right !important;
+      }
+      .weekly-compact-grid > section > div:nth-child(2) {
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 6px !important;
+        padding: 6px !important;
+      }
+      .weekly-compact-grid > section > div:nth-child(2) > button {
+        min-height: 62px !important;
+      }
+      .weekly-compact-grid > section > div:nth-child(2) > div {
+        grid-column: 1 / -1;
+      }
+    }
+
+    @media (max-width: 430px) {
+      .weekly-compact-grid > section > div:nth-child(2) {
+        grid-template-columns: 1fr !important;
+      }
+    }
+
+    /* =========================
+       M6 — LISTA, CARDS, KANBAN E MÊS MOBILE
+       Somente camada visual/ergonômica. Não altera dados ou lógica.
+       ========================= */
+    @media (max-width:768px) {
+      /* Seletor de visualizações: confortável para toque sem ocupar duas linhas */
+      .view-selector {
+        width:100%;
+        max-width:100%;
+        overflow-x:auto;
+        overflow-y:hidden;
+        display:flex !important;
+        flex-wrap:nowrap !important;
+        gap:6px !important;
+        padding-bottom:3px;
+        -webkit-overflow-scrolling:touch;
+        scrollbar-width:none;
+      }
+      .view-selector::-webkit-scrollbar { display:none; }
+      .view-selector .view-btn {
+        flex:0 0 auto;
+        min-height:42px;
+        white-space:nowrap;
+      }
+
+      /* LISTA: leitura vertical, sem apertar título/metadados */
+      .period-group { min-width:0; width:100%; }
+      .period-header {
+        min-height:42px;
+        display:flex;
+        align-items:center;
+        gap:6px;
+        overflow-wrap:anywhere;
+      }
+      .period-content:not(.grid-cards) {
+        min-width:0;
+      }
+      .period-content:not(.grid-cards) > .card {
+        width:100%;
+        min-width:0;
+        margin-bottom:8px;
+      }
+
+      /* CARDS: um card por linha, mais área para toque */
+      .grid-cards {
+        grid-template-columns:minmax(0,1fr) !important;
+        gap:9px !important;
+        width:100%;
+      }
+      .grid-cards .card {
+        width:100%;
+        min-width:0;
+        padding:13px;
+      }
+      .grid-cards .card .card-title-row {
+        gap:6px;
+      }
+      .grid-cards .card .card-meta {
+        row-gap:5px;
+      }
+      .grid-cards .card .card-check,
+      .grid-cards .card .item-more-btn,
+      .grid-cards .card .card-edit-btn {
+        min-width:40px;
+        min-height:40px;
+      }
+
+      /* KANBAN: quatro colunas continuam intactas, mas com navegação horizontal natural */
+      .kanban-board {
+        width:calc(100vw - 20px);
+        max-width:none;
+        min-width:0;
+        gap:9px;
+        padding:2px 2px 14px;
+        scroll-snap-type:x proximity;
+        overscroll-behavior-x:contain;
+      }
+      .kanban-col {
+        flex:0 0 min(82vw, 300px);
+        min-width:0;
+        max-width:none;
+        min-height:300px;
+        padding:10px;
+        scroll-snap-align:start;
+      }
+      .kanban-header {
+        min-height:38px;
+        margin-bottom:9px;
+      }
+      .kanban-cards { gap:8px; }
+      .kanban-col .card {
+        min-width:0;
+        padding:11px;
+      }
+      .kanban-col .card-drag-handle { display:none; }
+
+      /* MÊS: mantém a grade mensal completa sem quebrar a lógica do calendário.
+         A grade pode ser deslizada horizontalmente quando a tela for estreita. */
+      .calendar-controls {
+        display:grid;
+        grid-template-columns:1fr 1fr;
+        gap:7px;
+        padding:9px;
+        margin-bottom:9px;
+      }
+      .calendar-controls > span {
+        grid-column:1 / -1;
+        grid-row:1;
+        text-align:center;
+        min-height:34px;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+      }
+      .calendar-controls > button:first-child { grid-column:1; grid-row:2; }
+      .calendar-controls > div {
+        display:contents !important;
+      }
+      .calendar-controls > div > button:first-child { grid-column:1; grid-row:2; }
+      .calendar-controls > div > button:last-child { grid-column:2; grid-row:2; }
+      .calendar-scroll-container {
+        width:100%;
+        overflow-x:auto;
+        overflow-y:hidden;
+        -webkit-overflow-scrolling:touch;
+        border-radius:8px;
+        scrollbar-width:thin;
+      }
+      .month-grid {
+        min-width:620px !important;
+        gap:3px !important;
+      }
+      .month-cell {
+        min-height:78px !important;
+        padding:4px !important;
+        border-radius:6px;
+      }
+      .month-cell-header {
+        font-size:.68rem;
+        margin-bottom:3px;
+      }
+      .month-cell .cal-item {
+        font-size:.65rem;
+        padding:5px 5px;
+        margin-bottom:4px;
+        line-height:1.2;
+      }
+
+      /* Reduz espaços que, no celular, empurram o conteúdo para baixo sem agregar informação. */
+      .calendar-scroll-container + * { max-width:100%; }
+      .empty-state { padding:28px 14px; }
+    }
+
+    @media (max-width:380px) {
+      .view-selector .view-btn { padding-left:9px; padding-right:9px; font-size:.72rem; }
+      .grid-cards .card { padding:11px; }
+      .kanban-col { flex-basis:84vw; }
+      .month-grid { min-width:590px !important; }
+    }
+
+
+    /* M7 — GESTOS MOBILE: camada de interação, sem alterar lógica de dados */
+    @media (max-width: 768px) {
+      .m7-touch-target { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+      .m7-longpress-active { transform: scale(.985); opacity: .88; transition: transform .08s ease, opacity .08s ease; }
+      .item-card, .task-card, .kanban-item, .calendar-item, .week-item, .month-item { -webkit-touch-callout: none; }
+    }
+
+</style>
   <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-storage-compat.js"></script>
 </head>
 <body>
@@ -453,6 +996,7 @@
 
   <!-- Sidebar -->
   <div id="sidebar">
+    <div class="mobile-drawer-header"><strong>Minha Agenda Pro</strong><button type="button" class="mobile-drawer-close" onclick="toggleSidebar()" aria-label="Fechar menu">✕</button></div>
     <div class="user-profile">
       <img id="u-avatar" class="user-avatar" src="" alt="Avatar">
       <div class="user-info">
@@ -528,11 +1072,11 @@
   </div>
 
   <nav class="mobile-bottom-nav" aria-label="Navegação rápida">
-    <button type="button" onclick="mobileGoToday()"><span>⌂</span><span>Hoje</span></button>
-    <button type="button" onclick="mobileGoCalendar()"><span>📅</span><span>Agenda</span></button>
-    <button type="button" class="primary" onclick="openItemModal()"><span>＋</span><span>Novo</span></button>
-    <button type="button" onclick="mobileGoFolders()"><span>📁</span><span>Pastas</span></button>
-    <button type="button" onclick="openAIAssistant()"><span>✨</span><span>IA</span></button>
+    <button type="button" id="mobile-nav-today" onclick="mobileGoToday()"><span>⌂</span><span>Hoje</span></button>
+    <button type="button" id="mobile-nav-agenda" onclick="mobileGoCalendar()"><span>📅</span><span>Agenda</span></button>
+    <button type="button" id="mobile-nav-new" class="primary" onclick="openItemModal()"><span>＋</span><span>Novo</span></button>
+    <button type="button" id="mobile-nav-folders" onclick="mobileGoFolders()"><span>📁</span><span>Pastas</span></button>
+    <button type="button" id="mobile-nav-ai" onclick="openAIAssistant()"><span>✨</span><span>IA</span></button>
   </nav>
 
   <!-- Modal Assistente IA — FASE 5 -->
@@ -3475,6 +4019,9 @@
       renderWithScrollPreserved(); 
       if(window.innerWidth <= 768) {
         document.getElementById('sidebar').classList.remove('open');
+        document.getElementById('mobile-nav-overlay')?.classList.remove('open');
+        document.body.classList.remove('mobile-drawer-open');
+        setMobileNavActive('folders');
       }
     }
 
@@ -4798,13 +5345,49 @@
       const na = document.getElementById('f-next-action'); if (na) na.value = t.nextAction || '';
     };
 
-    // Melhorias de navegação mobile.
-    function mobileGoToday() { currentArea='all'; currentDashboardFilter='today'; prefs.viewMode='list'; renderWithScrollPreserved(); }
-    function mobileGoCalendar() { currentArea='all'; currentDashboardFilter=null; prefs.viewMode='calendar'; renderWithScrollPreserved(); }
-    function mobileGoFolders() { if (window.innerWidth <= 768) { document.getElementById('sidebar').classList.add('open'); document.getElementById('mobile-nav-overlay').classList.add('open'); } }
+    // M3 — Navegação mobile como aplicativo.
+    function setMobileNavActive(key) {
+      if (window.innerWidth > 768) return;
+      const ids = ['mobile-nav-today','mobile-nav-agenda','mobile-nav-new','mobile-nav-folders','mobile-nav-ai'];
+      ids.forEach(id => document.getElementById(id)?.classList.remove('active'));
+      const map = { today:'mobile-nav-today', agenda:'mobile-nav-agenda', newItem:'mobile-nav-new', folders:'mobile-nav-folders', ai:'mobile-nav-ai' };
+      document.getElementById(map[key])?.classList.add('active');
+    }
+    function closeMobileDrawer() {
+      if (window.innerWidth <= 768) {
+        document.getElementById('sidebar')?.classList.remove('open');
+        document.getElementById('mobile-nav-overlay')?.classList.remove('open');
+        document.body.classList.remove('mobile-drawer-open');
+      }
+    }
+    function mobileGoToday() { currentArea='all'; currentDashboardFilter='today'; prefs.viewMode='list'; closeMobileDrawer(); setMobileNavActive('today'); renderWithScrollPreserved(); }
+    function mobileGoCalendar() { currentArea='all'; currentDashboardFilter=null; prefs.viewMode='calendar'; closeMobileDrawer(); setMobileNavActive('agenda'); renderWithScrollPreserved(); }
+    function mobileGoFolders() { if (window.innerWidth <= 768) { document.getElementById('sidebar').classList.add('open'); document.getElementById('mobile-nav-overlay').classList.add('open'); document.body.classList.add('mobile-drawer-open'); setMobileNavActive('folders'); } }
     function mobileFocusSearch() { const input=document.getElementById('main-search'); if (input) { input.focus(); input.scrollIntoView({behavior:'smooth', block:'center'}); } }
     const _p2ToggleSidebar = toggleSidebar;
-    toggleSidebar = function() { _p2ToggleSidebar(); document.getElementById('mobile-nav-overlay')?.classList.toggle('open', document.getElementById('sidebar')?.classList.contains('open')); };
+    toggleSidebar = function() { _p2ToggleSidebar(); const isOpen = document.getElementById('sidebar')?.classList.contains('open'); document.getElementById('mobile-nav-overlay')?.classList.toggle('open', isOpen); document.body.classList.toggle('mobile-drawer-open', !!isOpen && window.innerWidth <= 768); };
+
+    const _m3OpenItemModal = openItemModal;
+    openItemModal = function(...args) {
+      setMobileNavActive('newItem');
+      closeMobileDrawer();
+      const result = _m3OpenItemModal(...args);
+      if (window.innerWidth <= 768) {
+        requestAnimationFrame(() => {
+          const modal = document.getElementById('item-modal');
+          const content = document.getElementById('item-modal-content');
+          if (modal) modal.dataset.mobileSheet = 'true';
+          if (content) {
+            content.scrollTop = 0;
+            const title = document.getElementById('f-title');
+            if (title) title.scrollIntoView({block:'nearest', inline:'nearest'});
+          }
+        });
+      }
+      return result;
+    };
+    const _m3OpenAIAssistant = openAIAssistant;
+    openAIAssistant = function(...args) { setMobileNavActive('ai'); closeMobileDrawer(); return _m3OpenAIAssistant(...args); };
 
     // Calendário mensal: carga do dia, atrasados e abertura da agenda daquele dia.
     function phase2DecorateMonth(container) {
@@ -5986,5 +6569,52 @@
     });
 
   </script>
+
+<script>
+/* M7 — GESTOS MOBILE
+   Long press opens the existing item modal/context action without changing data logic.
+   Swipe is intentionally limited to horizontal navigation containers so normal scrolling remains intact. */
+(function(){
+  if (window.__M7_GESTURES__) return;
+  window.__M7_GESTURES__ = true;
+  let pressTimer = null, pressTarget = null, startX = 0, startY = 0, longFired = false;
+  const LONG_MS = 520, MOVE_PX = 12;
+  const selector = '.item-card, .task-card, .kanban-item, .calendar-item, .week-item, .month-item';
+
+  function clearPress(){
+    if (pressTimer) clearTimeout(pressTimer);
+    pressTimer = null;
+    if (pressTarget) pressTarget.classList.remove('m7-longpress-active');
+    pressTarget = null;
+  }
+
+  document.addEventListener('touchstart', function(e){
+    if (window.innerWidth > 768 || !e.touches || e.touches.length !== 1) return;
+    const target = e.target.closest(selector);
+    if (!target) return;
+    startX=e.touches[0].clientX; startY=e.touches[0].clientY;
+    pressTarget=target; longFired=false;
+    target.classList.add('m7-longpress-active');
+    pressTimer=setTimeout(function(){
+      longFired=true;
+      target.classList.remove('m7-longpress-active');
+      const id = target.dataset.itemId || target.dataset.id || target.getAttribute('data-item-id');
+      if (id && typeof window.openItemModal === 'function' && typeof S !== 'undefined' && Array.isArray(S.items)) {
+        const item=S.items.find(x=>String(x.id)===String(id));
+        if (item) { window.openItemModal(item); e.preventDefault(); }
+      }
+    }, LONG_MS);
+  }, {passive:false});
+
+  document.addEventListener('touchmove', function(e){
+    if (!pressTimer || !e.touches || e.touches.length !== 1) return;
+    const dx=e.touches[0].clientX-startX, dy=e.touches[0].clientY-startY;
+    if (Math.hypot(dx,dy)>MOVE_PX) clearPress();
+  }, {passive:true});
+  document.addEventListener('touchend', clearPress, {passive:true});
+  document.addEventListener('touchcancel', clearPress, {passive:true});
+})();
+</script>
+
 </body>
 </html>
