@@ -4855,7 +4855,13 @@
     // Dashboard “Meu Dia”.
     function phase2BuildMyDayData() {
       const today = getTodayBR();
-      const pending = S.items.filter(i => i.status !== 'done');
+      // Na Agenda geral, quando a Semana está ativa, o filtro de pastas
+      // também controla os indicadores do Meu Dia. Em pastas específicas,
+      // ou nas outras visualizações, nenhum filtro semanal é aplicado.
+      const dashboardItems = (currentArea === 'all' && prefs.viewMode === 'calendar')
+        ? S.items.filter(i => weeklyFolderIsVisible(i))
+        : S.items;
+      const pending = dashboardItems.filter(i => i.status !== 'done');
       const overdue = pending.filter(i => i.date && i.date < today);
       const todayItems = pending.filter(i => i.date === today).sort(compareItemsByDateTime);
       const timedToday = todayItems.filter(i => i.time);
@@ -4892,7 +4898,9 @@
       const todayCount = data.todayItems.length;
       const next7End = new Date(now); next7End.setDate(next7End.getDate()+7);
       const next7Count = data.pending.filter(i => i.date && i.date > data.today && i.date <= toLocalDateStr(next7End)).length;
-      const doneToday = S.items.filter(i=>i.status==='done' && i.date===data.today).length;
+      const doneToday = ((currentArea === 'all' && prefs.viewMode === 'calendar')
+        ? S.items.filter(i => weeklyFolderIsVisible(i))
+        : S.items).filter(i=>i.status==='done' && i.date===data.today).length;
       const activeFilter = currentDashboardFilter;
       const focusHtml = data.focus.length ? `<div class="myday-focus"><div class="myday-focus-title">🎯 Foco sugerido</div>${data.focus.map((i,idx)=>`<div class="myday-focus-item" onclick="openItemModal(S.items.find(x=>x.id==='${i.id}'))"><span class="myday-focus-index">${idx+1}</span><div><div style="font-size:.84rem;font-weight:700;">${escapeHtml(i.title)}</div><div class="card-meta">${i.date && i.date < data.today ? '⚠ Atrasada' : (i.time ? 'Hoje às '+escapeHtml(i.time) : 'Hoje')} ${buildPhase2PriorityHtml(i)}</div></div></div>`).join('')}</div>` : '';
       const nextHtml = data.next ? `<div class="myday-next"><div class="myday-next-label">▶ Próximo compromisso</div><div style="font-size:.9rem;font-weight:750;cursor:pointer;" onclick="openItemModal(S.items.find(x=>x.id==='${data.next.id}'))">${escapeHtml(data.next.title)} ${data.next.time ? 'às '+escapeHtml(data.next.time):''}</div></div>` : '';
