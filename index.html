@@ -1765,6 +1765,22 @@
     // Utilitário de migração usado apenas pela rotina acima.
     // Mantemos a função separada para facilitar auditoria e eventual remoção da compatibilidade legada.
 
+    // Acesso seguro às pastas usado por todas as visualizações.
+    function getFolderConfig(id) {
+      return S.areas.find(a => a.id === id);
+    }
+
+    function getHierarchy(id) {
+      const folder = getFolderConfig(id);
+      if (!folder) return { text: '', color: 'var(--muted)' };
+      const color = folder.color || 'var(--muted)';
+      if (folder.parentId) {
+        const parent = getFolderConfig(folder.parentId);
+        if (parent) return { text: `${parent.name} > ${folder.name}`, color };
+      }
+      return { text: folder.name || '', color };
+    }
+
     // Captura Rápida — FASE 4
     let phase4QuickPending = null;
 
