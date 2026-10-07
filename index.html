@@ -5251,12 +5251,13 @@
       const startDate = new Date(week[0] + 'T12:00:00');
       const monthLabel = startDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
       const dateRange = `${formatBR(week[0])} – ${formatBR(week[6])}`;
+      const weeklyFilterEnabled = currentArea === 'all';
       const mainFolders = getWeeklyMainFolders();
       const allFolderIds = mainFolders.map(f => f.id);
       const selectedFolderIds = Array.isArray(prefs.weeklyMainFolders) ? prefs.weeklyMainFolders : [];
       const showingAll = prefs.weeklyMainFolders === null || prefs.weeklyMainFolders === undefined;
       const rawWeekList = list || [];
-      const weekList = rawWeekList.filter(item => weeklyFolderIsVisible(item));
+      const weekList = weeklyFilterEnabled ? rawWeekList.filter(item => weeklyFolderIsVisible(item)) : rawWeekList;
 
       c.innerHTML = `
         <div class="calendar-controls" style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
@@ -5268,11 +5269,12 @@
             📅 ${String(monthLabel).charAt(0).toUpperCase()+String(monthLabel).slice(1)} • ${dateRange}
           </div>
           <div style="display:flex;gap:6px;align-items:center;">
-            <button type="button" class="btn-sm" id="weekly-folder-filter-btn">📁 Pastas</button>
+            ${weeklyFilterEnabled ? '<button type="button" class="btn-sm" id="weekly-folder-filter-btn">📁 Pastas</button>' : ''}
             <button class="btn-sm" onclick="navCalendar(1)">Próxima semana ▶</button>
           </div>
         </div>
 
+        ${weeklyFilterEnabled ? `
         <div id="weekly-folder-filter-panel" style="display:none;margin:-2px 0 10px auto;max-width:430px;padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:var(--card);box-shadow:0 8px 24px rgba(0,0,0,.22);">
           <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;">
             <strong style="font-size:.78rem;">Pastas principais visíveis</strong>
@@ -5295,15 +5297,15 @@
             }).join('')}
           </div>
           ${!mainFolders.length ? `<div style="font-size:.72rem;color:var(--muted);padding:7px 3px;">Nenhuma pasta principal cadastrada.</div>` : ''}
-        </div>
+        </div>` : ''}
 
         <div class="weekly-compact-wrap" style="overflow-x:auto;padding-bottom:4px;">
           <div class="weekly-compact-grid" style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;width:100%;"></div>
         </div>
       `;
 
-      const filterBtn = c.querySelector('#weekly-folder-filter-btn');
-      const panel = c.querySelector('#weekly-folder-filter-panel');
+      const filterBtn = weeklyFilterEnabled ? c.querySelector('#weekly-folder-filter-btn') : null;
+      const panel = weeklyFilterEnabled ? c.querySelector('#weekly-folder-filter-panel') : null;
       if (filterBtn && panel) {
         filterBtn.onclick = (event) => {
           event.stopPropagation();
@@ -5311,11 +5313,11 @@
         };
       }
 
-      const allCheck = c.querySelector('#weekly-folder-all');
+      const allCheck = weeklyFilterEnabled ? c.querySelector('#weekly-folder-all') : null;
       if (allCheck) {
         allCheck.onchange = () => setWeeklyAllFolders(allCheck.checked);
       }
-      c.querySelectorAll('.weekly-folder-check').forEach(check => {
+      if (weeklyFilterEnabled) c.querySelectorAll('.weekly-folder-check').forEach(check => {
         check.onchange = () => toggleWeeklyMainFolder(check.dataset.folderId, check.checked);
       });
 
