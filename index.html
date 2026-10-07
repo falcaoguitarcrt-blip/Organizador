@@ -5123,14 +5123,15 @@
 
     // ===== Time blocking =====
     function phase3WeekDates() {
+      // A Semana é uma janela móvel de 7 dias: dia-base + próximos 6 dias.
+      // "Hoje" volta para o dia atual; anterior/próxima avançam ou recuam 7 dias.
       const todayStr = getTodayBR();
       const [y,m,d] = todayStr.split('-').map(Number);
-      const base = new Date(y,m-1,d);
+      const base = new Date(y, m - 1, d);
       base.setDate(base.getDate() + calendarWeekOffset * 7);
-      const start = new Date(base);
-      start.setDate(base.getDate() - base.getDay());
       return Array.from({length:7}, (_,idx)=>{
-        const dt = new Date(start); dt.setDate(start.getDate()+idx);
+        const dt = new Date(base);
+        dt.setDate(base.getDate() + idx);
         return toLocalDateStr(dt);
       });
     }
@@ -5219,7 +5220,7 @@
         </div>
 
         <div class="weekly-compact-wrap" style="overflow-x:auto;padding-bottom:4px;">
-          <div class="weekly-compact-grid" style="display:grid;grid-template-columns:repeat(7,minmax(150px,1fr));gap:7px;min-width:1050px;"></div>
+          <div class="weekly-compact-grid" style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;width:100%;"></div>
         </div>
       `;
 
@@ -5238,19 +5239,19 @@
 
         const isToday = dStr === today;
         const column = document.createElement('section');
-        column.style.cssText = `display:flex;flex-direction:column;min-height:310px;border:1px solid ${isToday ? 'rgba(45,212,191,.65)' : 'var(--border)'};border-radius:10px;overflow:hidden;background:${isToday ? 'rgba(45,212,191,.035)' : 'rgba(255,255,255,.012)'};`;
+        column.style.cssText = `display:flex;flex-direction:column;min-height:300px;min-width:0;border:1px solid ${isToday ? 'rgba(45,212,191,.65)' : 'var(--border)'};border-radius:10px;overflow:hidden;background:${isToday ? 'rgba(45,212,191,.035)' : 'rgba(255,255,255,.012)'};`;
 
         const header = document.createElement('div');
-        header.style.cssText = `padding:9px 8px 8px;text-align:center;background:${isToday ? 'rgba(45,212,191,.10)' : 'rgba(255,255,255,.025)'};border-bottom:1px solid var(--border);`;
+        header.style.cssText = `padding:8px 5px 7px;text-align:center;background:${isToday ? 'rgba(45,212,191,.10)' : 'rgba(255,255,255,.025)'};border-bottom:1px solid var(--border);`;
         header.innerHTML = `
           <div style="font-size:.68rem;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:${isToday ? 'var(--accent)' : 'var(--muted)'};">${dayNames[idx]}</div>
-          <div style="font-size:1rem;font-weight:800;margin-top:2px;">${d.getDate()}/${d.getMonth()+1}</div>
+          <div style="font-size:.94rem;font-weight:800;margin-top:2px;">${d.getDate()}/${d.getMonth()+1}</div>
           <div style="font-size:.62rem;color:var(--muted);margin-top:3px;">${itemsForDay.length} ${itemsForDay.length === 1 ? 'item' : 'itens'} ${isToday ? '• HOJE' : ''}</div>
         `;
         column.appendChild(header);
 
         const body = document.createElement('div');
-        body.style.cssText = 'display:flex;flex-direction:column;gap:5px;padding:6px;flex:1;';
+        body.style.cssText = 'display:flex;flex-direction:column;gap:5px;padding:5px;flex:1;min-width:0;';
 
         if (!itemsForDay.length) {
           body.innerHTML = `<div style="padding:12px 5px;text-align:center;color:var(--muted);font-size:.68rem;">Sem compromissos</div>`;
