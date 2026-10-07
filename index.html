@@ -5244,7 +5244,7 @@
         const header = document.createElement('div');
         header.style.cssText = `padding:8px 5px 7px;text-align:center;background:${isToday ? 'rgba(45,212,191,.10)' : 'rgba(255,255,255,.025)'};border-bottom:1px solid var(--border);`;
         header.innerHTML = `
-          <div style="font-size:.68rem;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:${isToday ? 'var(--accent)' : 'var(--muted)'};">${dayNames[idx]}</div>
+          <div style="font-size:.68rem;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:${isToday ? 'var(--accent)' : 'var(--muted)'};">${dayNames[d.getDay()]}</div>
           <div style="font-size:.94rem;font-weight:800;margin-top:2px;">${d.getDate()}/${d.getMonth()+1}</div>
           <div style="font-size:.62rem;color:var(--muted);margin-top:3px;">${itemsForDay.length} ${itemsForDay.length === 1 ? 'item' : 'itens'} ${isToday ? '• HOJE' : ''}</div>
         `;
