@@ -825,7 +825,7 @@
 
       <div class="data-backup-box">
         <h4>🧭 Migrar versão antiga</h4>
-        <p>Use apenas para migrar dados ainda armazenados em <code>shared/agenda-vida</code>. A migração só acontece após sua confirmação.</p>
+        <p>A agenda tenta recuperar automaticamente dados antigos de <code>shared/agenda-vida</code> quando sua conta nova ainda não os possui. Esta opção é uma recuperação manual adicional e nunca apaga a origem.</p>
         <button class="btn-sm" style="margin-top:10px; width:100%; justify-content:center;" onclick="migrateLegacyFromButton()">↪ Migrar dados antigos para minha conta</button>
       </div>
 
@@ -1315,26 +1315,155 @@
       return { migrated, failed };
     }
 
+    function mergeLegacyStateSafely(current, legacy) {
+      const mergeById = (legacyList, currentList) => {
+        const currentMap = new Map((currentList || []).filter(x => x?.id).map(x => [x.id, cloneData(x)]));
+        for (const legacyItem of legacyList || []) {
+          if (!legacyItem?.id) continue;
+          const existing = currentMap.get(legacyItem.id);
+          if (!existing) {
+            currentMap.set(legacyItem.id, cloneData(legacyItem));
+            continue;
+          }
+          // Em conflito de mesmo ID, os dados já existentes na nova estrutura vencem.
+          // Campos exclusivos do legado são preservados.
+          const merged = { ...cloneData(legacyItem), ...cloneData(existing) };
+          if (Array.isArray(legacyItem.attachments) || Array.isArray(existing.attachments)) {
+            const attMap = new Map();
+            for (const att of legacyItem.attachments || []) if (att?.id) attMap.set(att.id, cloneData(att));
+            for (const att of existing.attachments || []) if (att?.id) attMap.set(att.id, cloneData(att));
+            merged.attachments = Array.from(attMap.values());
+          }
+          currentMap.set(legacyItem.id, merged);
+        }
+        return Array.from(currentMap.values());
+      };
+
+      return {
+        items: mergeById(legacy.items, current.items),
+        areas: mergeById(legacy.areas, current.areas),
+        templates: mergeById(legacy.templates, current.templates)
+      };
+    }
+
+    async function writeStateAdditiveToUser(state, options = {}) {
+      const target = {
+        items: Array.isArray(state.items) ? state.items : [],
+        areas: Array.isArray(state.areas) ? state.areas : [],
+        templates: Array.isArray(state.templates) ? state.templates : []
+      };
+      const ops = [];
+      target.items.forEach(item => { if (item?.id) ops.push({ type:'set', ref:userCollectionRef(USER_ITEMS_COLLECTION).doc(item.id), data:item }); });
+      target.areas.forEach(area => { if (area?.id) ops.push({ type:'set', ref:userCollectionRef(USER_AREAS_COLLECTION).doc(area.id), data:area }); });
+      target.templates.forEach(template => { if (template?.id) ops.push({ type:'set', ref:userCollectionRef(USER_TEMPLATES_COLLECTION).doc(template.id), data:template }); });
+      await commitBatchOperations(ops);
+      await appSettingsRef().set({
+        schemaVersion: DATA_SCHEMA_VERSION,
+        updatedAt: Date.now(),
+        migratedFromLegacy: !!options.migratedFromLegacy,
+        legacyRecoveryVersion: options.migratedFromLegacy ? 3 : firebase.firestore.FieldValue.delete(),
+        legacyRecoveryAt: options.migratedFromLegacy ? Date.now() : firebase.firestore.FieldValue.delete(),
+        uid: auth.currentUser.uid
+      }, { merge: true });
+    }
+
+    async function fetchLegacyState() {
+      const legacyRef = db.collection('shared').doc('agenda-vida');
+      try {
+        const legacySnap = await legacyRef.get();
+        if (legacySnap.exists) return parseLegacyState(legacySnap.data());
+      } catch (err) {
+        console.warn('Legacy data server read failed:', err);
+        // Segunda chance: recuperar o documento do cache local do Firestore,
+        // útil quando a agenda antiga já foi aberta neste mesmo navegador.
+        try {
+          const cachedSnap = await legacyRef.get({ source: 'cache' });
+          if (cachedSnap.exists) {
+            return parseLegacyState(cachedSnap.data());
+          }
+        } catch (cacheErr) {
+          console.warn('Legacy cache read failed:', cacheErr);
+        }
+        return { __unreadable: true, error: err };
+      }
+      try {
+        const cachedSnap = await legacyRef.get({ source: 'cache' });
+        if (cachedSnap.exists) return parseLegacyState(cachedSnap.data());
+      } catch (cacheErr) {
+        console.warn('Legacy cache-only read failed:', cacheErr);
+      }
+      return null;
+    }
+
+    async function recoverLegacyAutomatically(current) {
+      if (!auth.currentUser || isMigrating) return { recovered: false };
+      if (current.settings?.legacyRecoveryVersion === 3) return { recovered: false, alreadyDone: true };
+
+      const legacy = await fetchLegacyState();
+      if (!legacy) return { recovered: false };
+      if (legacy.__unreadable) return { recovered: false, unreadable: true, error: legacy.error };
+      if (!legacy.items.length && !legacy.areas.length && !legacy.templates.length) return { recovered: false };
+
+      if (!createEmergencyBackup('before-automatic-legacy-recovery')) {
+        throw new Error('Não foi possível criar o backup local de emergência. A recuperação foi interrompida.');
+      }
+
+      isMigrating = true;
+      setSyncStatus('syncing', 'Recuperando agenda antiga com segurança...');
+      try {
+        const legacyForMigration = cloneData(legacy);
+        try {
+          localStorage.setItem('agenda_legacy_recovery_snapshot_v3', JSON.stringify({
+            uid: auth.currentUser.uid, at: Date.now(), data: legacyForMigration
+          }));
+        } catch (snapshotErr) {
+          console.warn('Could not save local legacy recovery snapshot:', snapshotErr);
+        }
+        const attachmentReport = await migrateLegacyAttachments(legacyForMigration);
+        const merged = mergeLegacyStateSafely(current, legacyForMigration);
+        await writeStateAdditiveToUser(merged, { migratedFromLegacy: true });
+        localStorage.setItem('agenda_migration_v3_done', JSON.stringify({ uid: auth.currentUser.uid, at: Date.now(), attachmentReport }));
+        return {
+          recovered: true,
+          attachmentReport,
+          merged,
+          counts: {
+            items: merged.items.length,
+            areas: merged.areas.length,
+            templates: merged.templates.length
+          }
+        };
+      } finally {
+        isMigrating = false;
+      }
+    }
+
     async function attemptLegacyMigration(legacySnap) {
       if (isMigrating) return false;
       const legacy = parseLegacyState(legacySnap?.data?.() || legacySnap || {});
       if (!legacy || (!legacy.items.length && !legacy.areas.length && !legacy.templates.length)) return false;
 
       const current = await readCollectionState();
-      if (current.hasData) {
-        throw new Error('A conta já possui dados na nova estrutura. Para evitar misturar agendas, faça um backup e restaure/importa de forma controlada.');
-      }
       if (!createEmergencyBackup('before-legacy-migration')) {
         throw new Error('Não foi possível criar o backup local de emergência. A migração foi interrompida.');
       }
 
       isMigrating = true;
-      setSyncStatus('syncing', 'Migrando dados antigos...');
+      setSyncStatus('syncing', 'Migrando dados antigos com segurança...');
       try {
-        const attachmentReport = await migrateLegacyAttachments(legacy);
-        await writeEntireStateToUser(legacy, { migratedFromLegacy: true });
-        localStorage.setItem('agenda_migration_v2_done', JSON.stringify({ uid: auth.currentUser.uid, at: Date.now(), attachmentReport }));
-        return attachmentReport;
+        const legacyForMigration = cloneData(legacy);
+        try {
+          localStorage.setItem('agenda_legacy_recovery_snapshot_v3', JSON.stringify({
+            uid: auth.currentUser.uid, at: Date.now(), data: legacyForMigration
+          }));
+        } catch (snapshotErr) {
+          console.warn('Could not save local legacy recovery snapshot:', snapshotErr);
+        }
+        const attachmentReport = await migrateLegacyAttachments(legacyForMigration);
+        const merged = mergeLegacyStateSafely(current, legacyForMigration);
+        await writeStateAdditiveToUser(merged, { migratedFromLegacy: true });
+        localStorage.setItem('agenda_migration_v3_done', JSON.stringify({ uid: auth.currentUser.uid, at: Date.now(), attachmentReport }));
+        return { ...attachmentReport, mergedCounts: { items: merged.items.length, areas: merged.areas.length, templates: merged.templates.length } };
       } finally {
         isMigrating = false;
       }
@@ -1342,7 +1471,7 @@
 
     async function migrateLegacyFromButton() {
       if (!auth.currentUser || isMigrating) return;
-      if (!confirm('A migração copiará shared/agenda-vida para a conta atualmente conectada. Os dados antigos não serão apagados. Continuar?')) return;
+      if (!confirm('A recuperação copiará os dados antigos para sua conta SEM apagar a origem. Se já houver dados novos, eles serão preservados e apenas os registros antigos ausentes serão acrescentados. Continuar?')) return;
       try {
         const legacySnap = await db.collection('shared').doc('agenda-vida').get();
         if (!legacySnap.exists) {
@@ -1358,11 +1487,11 @@
         render();
         updateTabTitleAndAlerts();
         setSyncStatus('ok', 'Sincronizado');
-        if (report) showToast(`Migração concluída. Itens: ${S.items.length}. Anexos migrados: ${report.migrated}. Falhas: ${report.failed}.`);
+        if (report) showToast(`Recuperação concluída. Itens: ${S.items.length}. Anexos migrados: ${report.migrated}. Falhas: ${report.failed}.`);
       } catch (err) {
         console.error('Explicit legacy migration error:', err);
-        setSyncStatus('error', 'Falha na migração');
-        showToast('A migração não foi concluída: ' + (err.message || err));
+        setSyncStatus('error', 'Falha na recuperação');
+        showToast('A recuperação não foi concluída: ' + (err.message || err));
       }
     }
 
@@ -1373,16 +1502,26 @@
       setSyncStatus('syncing', 'Carregando seus dados...');
 
       try {
-        const current = await readCollectionState();
-        const settings = current.settings || {};
+        let current = await readCollectionState();
 
-        // A migração legada é explícita no painel Backup e Dados.
-        // Não consultamos shared/agenda-vida automaticamente.
+        // Recuperação automática e NÃO DESTRUTIVA do legado.
+        // O documento shared/agenda-vida é somente lido; jamais é apagado ou sobrescrito aqui.
+        const recovery = await recoverLegacyAutomatically(current);
+        if (recovery.recovered) {
+          current = await readCollectionState();
+          S = { items: current.items, areas: current.areas, templates: current.templates };
+          normalizeState();
+          lastPersistedSnapshot = cloneData(S);
+          showToast(`Agenda antiga recuperada. ${recovery.counts.items} tarefas, ${recovery.counts.areas} pastas e ${recovery.counts.templates} modelos preservados.`);
+        } else {
+          S = { items: current.items, areas: current.areas, templates: current.templates };
+          normalizeState();
+          lastPersistedSnapshot = cloneData(S);
+          if (recovery.unreadable) {
+            showToast('Os dados antigos continuam preservados no Firebase, mas as Rules atuais não permitem a leitura automática.');
+          }
+        }
 
-        const fresh = await readCollectionState();
-        S = { items: fresh.items, areas: fresh.areas, templates: fresh.templates };
-        normalizeState();
-        lastPersistedSnapshot = cloneData(S);
         dataReady = true;
         attachUserListeners();
         render();
