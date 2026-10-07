@@ -5197,32 +5197,33 @@
     }
 
     function renderViewCalendar(list, c) {
-      // Semana em formato de agenda cronológica, sem grade por hora.
+      // Semana compacta: os 7 dias ficam visíveis ao mesmo tempo.
+      // Cada coluna lista os compromissos em ordem cronológica, sem grade por horário.
       const week = phase3WeekDates();
-      const dayNames = ['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];
+      const dayNames = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
       const today = getTodayBR();
       const startDate = new Date(week[0] + 'T12:00:00');
       const monthLabel = startDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
       const dateRange = `${formatBR(week[0])} – ${formatBR(week[6])}`;
 
       c.innerHTML = `
-        <div class="calendar-controls" style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
-          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+        <div class="calendar-controls" style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+          <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
             <button class="btn-sm" onclick="navCalendar(-1)">◀ Semana anterior</button>
             <button class="btn-sm" onclick="navCalendar(0)">Hoje</button>
           </div>
-          <div style="font-weight:800;font-size:.95rem;text-align:center;">
+          <div style="font-weight:800;font-size:.92rem;text-align:center;flex:1;min-width:190px;">
             📅 ${String(monthLabel).charAt(0).toUpperCase()+String(monthLabel).slice(1)} • ${dateRange}
           </div>
           <button class="btn-sm" onclick="navCalendar(1)">Próxima semana ▶</button>
         </div>
-        <div id="weekly-agenda-list" style="display:flex;flex-direction:column;gap:10px;"></div>
-        <div style="margin-top:10px;padding:10px 12px;color:var(--muted);font-size:.72rem;border:1px solid var(--border);border-radius:10px;background:rgba(255,255,255,.015);">
-          Os compromissos aparecem em ordem de horário. Itens sem horário ficam por último no dia.
+
+        <div class="weekly-compact-wrap" style="overflow-x:auto;padding-bottom:4px;">
+          <div class="weekly-compact-grid" style="display:grid;grid-template-columns:repeat(7,minmax(150px,1fr));gap:7px;min-width:1050px;"></div>
         </div>
       `;
 
-      const container = document.getElementById('weekly-agenda-list');
+      const grid = c.querySelector('.weekly-compact-grid');
 
       week.forEach((dStr, idx) => {
         const d = new Date(dStr + 'T12:00:00');
@@ -5235,57 +5236,55 @@
             return String(a.title || '').localeCompare(String(b.title || ''), 'pt-BR');
           });
 
-        const dayBox = document.createElement('section');
-        dayBox.style.cssText = `border:1px solid ${dStr===today ? 'rgba(45,212,191,.55)' : 'var(--border)'};border-radius:12px;background:${dStr===today ? 'rgba(45,212,191,.035)' : 'rgba(255,255,255,.012)'};overflow:hidden;`;
+        const isToday = dStr === today;
+        const column = document.createElement('section');
+        column.style.cssText = `display:flex;flex-direction:column;min-height:310px;border:1px solid ${isToday ? 'rgba(45,212,191,.65)' : 'var(--border)'};border-radius:10px;overflow:hidden;background:${isToday ? 'rgba(45,212,191,.035)' : 'rgba(255,255,255,.012)'};`;
 
         const header = document.createElement('div');
-        header.style.cssText = `display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 14px;background:${dStr===today ? 'rgba(45,212,191,.09)' : 'rgba(255,255,255,.025)'};border-bottom:1px solid var(--border);`;
+        header.style.cssText = `padding:9px 8px 8px;text-align:center;background:${isToday ? 'rgba(45,212,191,.10)' : 'rgba(255,255,255,.025)'};border-bottom:1px solid var(--border);`;
         header.innerHTML = `
-          <div style="display:flex;align-items:center;gap:10px;min-width:0;">
-            <div style="font-size:.76rem;text-transform:uppercase;letter-spacing:.4px;font-weight:800;color:${dStr===today ? 'var(--accent)' : 'var(--muted)'};">${dayNames[idx]}</div>
-            <div style="font-size:1rem;font-weight:800;">${d.getDate()}/${d.getMonth()+1}</div>
-            ${dStr===today ? '<span style="font-size:.66rem;font-weight:800;color:var(--accent);border:1px solid rgba(45,212,191,.4);padding:3px 7px;border-radius:999px;">HOJE</span>' : ''}
-          </div>
-          <span style="font-size:.7rem;color:var(--muted);">${itemsForDay.length} ${itemsForDay.length===1 ? 'item' : 'itens'}</span>
+          <div style="font-size:.68rem;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:${isToday ? 'var(--accent)' : 'var(--muted)'};">${dayNames[idx]}</div>
+          <div style="font-size:1rem;font-weight:800;margin-top:2px;">${d.getDate()}/${d.getMonth()+1}</div>
+          <div style="font-size:.62rem;color:var(--muted);margin-top:3px;">${itemsForDay.length} ${itemsForDay.length === 1 ? 'item' : 'itens'} ${isToday ? '• HOJE' : ''}</div>
         `;
-        dayBox.appendChild(header);
+        column.appendChild(header);
 
         const body = document.createElement('div');
-        body.style.cssText = 'padding:8px;display:flex;flex-direction:column;gap:6px;';
+        body.style.cssText = 'display:flex;flex-direction:column;gap:5px;padding:6px;flex:1;';
 
         if (!itemsForDay.length) {
-          body.innerHTML = `<div style="padding:9px 10px;color:var(--muted);font-size:.76rem;">Nenhum compromisso neste dia.</div>`;
+          body.innerHTML = `<div style="padding:12px 5px;text-align:center;color:var(--muted);font-size:.68rem;">Sem compromissos</div>`;
         } else {
           itemsForDay.forEach(item => {
             const hierarchy = getHierarchy(item.area);
-            const timeLabel = item.time || 'Sem horário';
+            const timeLabel = item.time || '—';
             const priority = item.priority === 'high' ? 'Alta' : item.priority === 'medium' ? 'Média' : item.priority === 'low' ? 'Baixa' : '';
-            const row = document.createElement('div');
-            row.style.cssText = `display:flex;align-items:center;gap:10px;padding:9px 10px;border:1px solid var(--border);border-left:4px solid ${escapeHtml(hierarchy.color || 'var(--accent)')};border-radius:9px;background:var(--card);cursor:pointer;transition:background .15s,border-color .15s;`;
+            const row = document.createElement('button');
+            row.type = 'button';
+            row.style.cssText = `width:100%;text-align:left;padding:7px 7px;border:1px solid var(--border);border-left:3px solid ${escapeHtml(hierarchy.color || 'var(--accent)')};border-radius:7px;background:var(--card);color:var(--text);cursor:pointer;min-height:56px;`;
             row.title = `${item.title || ''}${item.time ? ' • ' + item.time : ''}`;
             row.onclick = () => openItemModal(S.items.find(x => x.id === item.id));
             row.oncontextmenu = (event) => handleContextMenuEvent(event, item.id);
-            row.onmouseenter = () => { row.style.background = 'rgba(255,255,255,.045)'; };
-            row.onmouseleave = () => { row.style.background = 'var(--card)'; };
             row.innerHTML = `
-              <div style="width:62px;flex:0 0 62px;text-align:center;font-size:.76rem;font-weight:800;color:${item.time ? 'var(--text)' : 'var(--muted)'};font-variant-numeric:tabular-nums;">${escapeHtml(timeLabel)}</div>
-              <div style="width:1px;height:28px;background:var(--border);flex:0 0 1px;"></div>
-              <div style="flex:1;min-width:0;">
-                <div style="font-size:.84rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(item.title || 'Sem título')}</div>
-                <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:3px;font-size:.66rem;color:var(--muted);">
-                  ${hierarchy.text ? `<span>📁 ${escapeHtml(hierarchy.text)}</span>` : ''}
-                  ${priority ? `<span>• ${escapeHtml(priority)}</span>` : ''}
-                  ${item.duration ? `<span>• ${escapeHtml(phase3FormatMinutes(phase3EnsureDurationValue(item.duration)))}</span>` : ''}
-                </div>
+              <div style="font-size:.67rem;font-weight:800;color:${item.time ? 'var(--accent)' : 'var(--muted)'};font-variant-numeric:tabular-nums;margin-bottom:3px;">${escapeHtml(timeLabel)}</div>
+              <div style="font-size:.72rem;font-weight:700;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${escapeHtml(item.title || 'Sem título')}</div>
+              <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:3px;font-size:.57rem;color:var(--muted);white-space:nowrap;overflow:hidden;">
+                ${hierarchy.text ? `<span>📁 ${escapeHtml(hierarchy.text)}</span>` : ''}
+                ${priority ? `<span>• ${escapeHtml(priority)}</span>` : ''}
               </div>
-              <div style="color:var(--muted);font-size:.8rem;">›</div>
             `;
             body.appendChild(row);
           });
         }
-        dayBox.appendChild(body);
-        container.appendChild(dayBox);
+
+        column.appendChild(body);
+        grid.appendChild(column);
       });
+
+      const note = document.createElement('div');
+      note.style.cssText = 'margin-top:7px;color:var(--muted);font-size:.68rem;text-align:center;';
+      note.textContent = 'Os compromissos de cada dia estão em ordem de horário. Clique em um compromisso para editar.';
+      c.appendChild(note);
     }
 
     function openItemModalAtCalendarSlot(dateStr, minute){
