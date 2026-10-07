@@ -5213,11 +5213,22 @@
       const minute = phase3MinuteFromTime(item.time);
       const duration = phase3EnsureDurationValue(item.duration);
       const top = Math.max(0, phase3PositionForMinute(minute));
-      const height = Math.max(22, (duration / PHASE3_CAL_SLOT_MIN) * 40 - 3);
+      const height = Math.max(28, (duration / PHASE3_CAL_SLOT_MIN) * 40 - 4);
       const leftPct = lane * (100/laneCount);
       const widthPct = (100/laneCount);
       const hierarchy = getHierarchy(item.area);
-      return `<div class="phase3-event" draggable="true" data-id="${item.id}" data-day="${dayStr}"\n            style="top:${top}px; left:calc(${leftPct}% + 2px); width:calc(${widthPct}% - 4px); height:${height}px; border-left-color:${escapeHtml(hierarchy.color)}"\n            title="${escapeHtml(item.title)} • ${escapeHtml(item.time || '')} • ${phase3FormatMinutes(duration)}"\n            ondragstart="phase3CalendarDragStart(event,'${item.id}')" ondragend="phase3CalendarDragEnd(event)"\n            onclick="phase3CalendarEventClick(event,'${item.id}')"\n            oncontextmenu="handleContextMenuEvent(event,'${item.id}')">\n        <div class="phase3-event-time">${escapeHtml(item.time || '')} • ${phase3FormatMinutes(duration)}</div>\n        <div class="phase3-event-title">${escapeHtml(item.title)}</div>\n        <div class="phase3-event-meta">${item.priority ? priorityLabel(item.priority) : ''}${hierarchy.text ? ' • ' + escapeHtml(hierarchy.text) : ''}</div>\n      </div>`;
+      const borderColor = escapeHtml(hierarchy.color || 'var(--accent)');
+      const meta = `${item.priority ? priorityLabel(item.priority) : ''}${hierarchy.text ? (item.priority ? ' • ' : '') + escapeHtml(hierarchy.text) : ''}`;
+      return `<div class="phase3-event" draggable="true" data-id="${item.id}" data-day="${dayStr}"
+            style="position:absolute;box-sizing:border-box;overflow:hidden;cursor:grab;z-index:4;top:${top}px;left:calc(${leftPct}% + 3px);width:calc(${widthPct}% - 6px);height:${height}px;background:#1a232e;border:1px solid rgba(45,212,191,.45);border-left:4px solid ${borderColor};border-radius:8px;padding:6px 7px;box-shadow:0 4px 12px rgba(0,0,0,.28);color:#f1f5f9;line-height:1.15;"
+            title="${escapeHtml(item.title)} • ${escapeHtml(item.time || '')} • ${phase3FormatMinutes(duration)}"
+            ondragstart="phase3CalendarDragStart(event,'${item.id}')" ondragend="phase3CalendarDragEnd(event)"
+            onclick="phase3CalendarEventClick(event,'${item.id}')"
+            oncontextmenu="handleContextMenuEvent(event,'${item.id}')">
+        <div style="font-size:.65rem;color:#94a3b8;font-variant-numeric:tabular-nums;">${escapeHtml(item.time || '')} • ${phase3FormatMinutes(duration)}</div>
+        <div style="font-size:.75rem;font-weight:700;line-height:1.2;margin-top:3px;white-space:normal;word-break:break-word;">${escapeHtml(item.title)}</div>
+        ${meta ? `<div style="font-size:.61rem;color:#94a3b8;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${meta}</div>` : ''}
+      </div>`;
     }
 
     function phase3ArrangeLanes(items) {
@@ -5246,76 +5257,89 @@
       const week = phase3WeekDates();
       const dayNames = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
       const start = week[0], end = week[6];
-      const sortedWeekStart = new Date(start+'T12:00:00');
-      const monthLabel = sortedWeekStart.toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
+      const startDate = new Date(start + 'T12:00:00');
+      const monthLabel = startDate.toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
       const today = getTodayBR();
+      const gridMinWidth = 58 + (7 * 150);
+      const slotHeight = 40;
+      const hours = [];
+      for(let h=PHASE3_CAL_START_HOUR; h<PHASE3_CAL_END_HOUR; h++) hours.push(h);
 
-      const header = `<div class="phase3-calendar-toolbar">\n        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">\n          <button class="btn-sm" onclick="navCalendar(-1)">◀ Semana anterior</button>\n          <button class="btn-sm" onclick="navCalendar(0)">Hoje</button>\n          <span class="phase3-pwa-pill">📅 ${String(monthLabel).charAt(0).toUpperCase()+String(monthLabel).slice(1)} • ${formatBR(start)} – ${formatBR(end)}</span>\n        </div>\n        <button class="btn-sm" onclick="navCalendar(1)">Próxima semana ▶</button>\n      </div>`;
+      c.innerHTML = `<div class="phase3-calendar-toolbar" style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:10px 12px;margin-bottom:10px;">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          <button class="btn-sm" onclick="navCalendar(-1)">◀ Semana anterior</button>
+          <button class="btn-sm" onclick="navCalendar(0)">Hoje</button>
+          <span class="phase3-pwa-pill">📅 ${String(monthLabel).charAt(0).toUpperCase()+String(monthLabel).slice(1)} • ${formatBR(start)} – ${formatBR(end)}</span>
+        </div>
+        <button class="btn-sm" onclick="navCalendar(1)">Próxima semana ▶</button>
+      </div>
+      <div style="border:1px solid var(--border);border-radius:12px;background:rgba(255,255,255,.015);overflow:hidden;">
+        <div style="overflow:auto;max-height:72vh;-webkit-overflow-scrolling:touch;">
+          <div id="phase3-week-grid" style="display:grid;grid-template-columns:58px repeat(7,minmax(150px,1fr));min-width:${gridMinWidth}px;position:relative;"></div>
+        </div>
+        <div style="padding:8px 12px;color:var(--muted);font-size:.7rem;border-top:1px solid var(--border);background:rgba(0,0,0,.08);">Clique em um horário para criar um item. Arraste um compromisso para outro horário ou dia para reagendar.</div>
+      </div>`;
 
-      const body = document.createElement('div');
-      body.className = 'phase3-calendar-scroll';
-      const grid = document.createElement('div');
-      grid.className = 'phase3-week-grid';
+      const grid = document.getElementById('phase3-week-grid');
+      const corner = document.createElement('div');
+      corner.style.cssText='height:58px;background:var(--card);border-right:1px solid var(--border);border-bottom:1px solid var(--border);position:sticky;left:0;top:0;z-index:12;';
+      grid.appendChild(corner);
 
-      const headCorner = document.createElement('div');
-      headCorner.className='phase3-time-head'; headCorner.style.height='58px'; grid.appendChild(headCorner);
       week.forEach((dStr,idx)=>{
         const d = new Date(dStr+'T12:00:00');
         const head = document.createElement('div');
-        head.className = 'phase3-day-head'+(dStr===today?' today':'');
-        head.innerHTML = `<div class="phase3-day-name">${dayNames[idx]}</div><div class="phase3-day-date">${d.getDate()}/${d.getMonth()+1}</div>`;
+        head.style.cssText='height:58px;background:var(--card);border-right:1px solid var(--border);border-bottom:1px solid var(--border);padding:8px;text-align:center;position:sticky;top:0;z-index:10;';
+        if(dStr===today) head.style.boxShadow='inset 0 -2px 0 var(--accent)';
+        head.innerHTML=`<div style="font-size:.68rem;color:${dStr===today?'var(--accent)':'var(--muted)'};font-weight:800;text-transform:uppercase;">${dayNames[idx]}</div><div style="font-size:.92rem;font-weight:800;margin-top:3px;">${d.getDate()}/${d.getMonth()+1}</div>`;
         grid.appendChild(head);
       });
 
-      const timeCol = document.createElement('div');
-      timeCol.className='phase3-time-col';
-      timeCol.style.marginTop='0';
-      for(let h=PHASE3_CAL_START_HOUR; h<PHASE3_CAL_END_HOUR; h++){
-        const el=document.createElement('div'); el.className='phase3-time-label'; el.textContent=`${String(h).padStart(2,'0')}:00`; timeCol.appendChild(el);
-      }
+      const timeCol=document.createElement('div');
+      timeCol.style.cssText='position:relative;background:var(--card);border-right:1px solid var(--border);';
+      hours.forEach(h=>{
+        const el=document.createElement('div');
+        el.style.cssText=`height:${slotHeight}px;border-bottom:1px solid rgba(255,255,255,.055);padding:2px 6px;text-align:right;color:var(--muted);font-size:.67rem;font-variant-numeric:tabular-nums;`;
+        el.textContent=`${String(h).padStart(2,'0')}:00`;
+        timeCol.appendChild(el);
+      });
       grid.appendChild(timeCol);
 
       week.forEach((dStr,idx)=>{
         const col=document.createElement('div');
         col.className='phase3-day-col'+(idx===0||idx===6?' weekend':'');
         col.dataset.date=dStr;
-        for(let h=PHASE3_CAL_START_HOUR; h<PHASE3_CAL_END_HOUR; h++){
+        col.style.cssText='position:relative;background:rgba(255,255,255,.012);border-right:1px solid var(--border);min-width:0;';
+        hours.forEach(h=>{
           const slot=document.createElement('div');
           slot.className='phase3-slot';
           slot.dataset.date=dStr;
           slot.dataset.minute=String(h*60);
           slot.title=`Criar item em ${formatBR(dStr)} às ${String(h).padStart(2,'0')}:00`;
+          slot.style.cssText=`height:${slotHeight}px;border-bottom:1px solid rgba(255,255,255,.055);cursor:pointer;position:relative;`;
+          slot.addEventListener('mouseenter',()=>slot.style.background='rgba(45,212,191,.055)');
+          slot.addEventListener('mouseleave',()=>slot.style.background='');
           slot.addEventListener('click',()=>openItemModalAtCalendarSlot(dStr,h*60));
           slot.addEventListener('dragover',phase3CalendarDragOver);
           slot.addEventListener('drop',phase3CalendarDrop);
           col.appendChild(slot);
-        }
-        const items = (list||[]).filter(i=>i.date===dStr && i.status!=='done' && i.time);
-        phase3ArrangeLanes(items).forEach(x=>{
-          col.insertAdjacentHTML('beforeend',phase3BuildCalendarEvent(x.item,dStr,x.lane,x.laneCount));
         });
+        const items=(list||[]).filter(i=>i.date===dStr && i.status!=='done' && i.time);
+        phase3ArrangeLanes(items).forEach(x=>col.insertAdjacentHTML('beforeend',phase3BuildCalendarEvent(x.item,dStr,x.lane,x.laneCount)));
         grid.appendChild(col);
       });
 
-      const nowOffset = (new Date().getDay() === 0 || true) ? phase3CalendarNowOffset() : null;
-      if (nowOffset !== null) {
-        const nowIdx = phase3WeekDates().findIndex(d=>d===today);
+      const nowOffset=phase3CalendarNowOffset();
+      if(nowOffset!==null){
+        const nowIdx=week.findIndex(d=>d===today);
         if(nowIdx>=0){
-          const dayCol = grid.children[1+7+1+nowIdx];
+          const dayCol=grid.children[8+nowIdx];
           if(dayCol){
-            const line=document.createElement('div'); line.className='phase3-now-line'; line.style.top=`${nowOffset}px`;
-            line.innerHTML='<span class="phase3-now-dot"></span>'; dayCol.appendChild(line);
+            const line=document.createElement('div');
+            line.style.cssText=`position:absolute;left:0;right:0;top:${nowOffset}px;height:2px;background:var(--danger);z-index:6;pointer-events:none;`;
+            dayCol.appendChild(line);
           }
         }
       }
-
-      body.appendChild(grid);
-      c.innerHTML = header;
-      c.querySelector('.phase3-calendar-toolbar').insertAdjacentHTML('afterend','');
-      c.appendChild(body);
-      const hint=document.createElement('div'); hint.className='phase3-calendar-hint';
-      hint.textContent='Clique em um horário para criar. Arraste um compromisso para mudar data/hora. A duração define a altura do bloco.';
-      c.appendChild(hint);
     }
 
     function openItemModalAtCalendarSlot(dateStr, minute){
