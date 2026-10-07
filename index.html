@@ -962,6 +962,7 @@
       descExpanded: {}, 
       collapsedFolders: {}, 
       generalGroupBy: 'period',
+      weeklyMainFolders: null,
       alertConfig: {
         defaultTime: '08:00',
         dailySummaryActive: false,
@@ -1779,6 +1780,50 @@
         if (parent) return { text: `${parent.name} > ${folder.name}`, color };
       }
       return { text: folder.name || '', color };
+    }
+
+    function getMainFolderId(id) {
+      let current = getFolderConfig(id);
+      const seen = new Set();
+      while (current && current.parentId && !seen.has(current.id)) {
+        seen.add(current.id);
+        current = getFolderConfig(current.parentId);
+      }
+      return current?.id || null;
+    }
+
+    function getWeeklyMainFolders() {
+      return S.areas
+        .filter(a => !a.parentId)
+        .sort((a,b) => (a.order || 0) - (b.order || 0) || String(a.name || '').localeCompare(String(b.name || ''), 'pt-BR'));
+    }
+
+    function weeklyFolderIsVisible(item) {
+      if (prefs.weeklyMainFolders === null || prefs.weeklyMainFolders === undefined) return true;
+      const selected = Array.isArray(prefs.weeklyMainFolders) ? prefs.weeklyMainFolders : [];
+      const mainId = getMainFolderId(item.area);
+      return mainId ? selected.includes(mainId) : false;
+    }
+
+    function toggleWeeklyMainFolder(folderId, checked) {
+      const allIds = getWeeklyMainFolders().map(f => f.id);
+      let selected = prefs.weeklyMainFolders === null || prefs.weeklyMainFolders === undefined
+        ? [...allIds]
+        : [...(Array.isArray(prefs.weeklyMainFolders) ? prefs.weeklyMainFolders : [])];
+      if (checked) {
+        if (!selected.includes(folderId)) selected.push(folderId);
+      } else {
+        selected = selected.filter(id => id !== folderId);
+      }
+      prefs.weeklyMainFolders = selected.length === allIds.length ? null : selected;
+      savePrefs();
+      renderWithScrollPreserved();
+    }
+
+    function setWeeklyAllFolders(checked) {
+      prefs.weeklyMainFolders = checked ? null : [];
+      savePrefs();
+      renderWithScrollPreserved();
     }
 
     // Captura Rápida — FASE 4
@@ -5198,14 +5243,20 @@
     }
 
     function renderViewCalendar(list, c) {
-      // Semana compacta: os 7 dias ficam visíveis ao mesmo tempo.
-      // Cada coluna lista os compromissos em ordem cronológica, sem grade por horário.
+      // Semana compacta: 7 dias visíveis ao mesmo tempo, iniciando no dia-base.
+      // O filtro de pastas afeta somente esta visualização.
       const week = phase3WeekDates();
       const dayNames = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
       const today = getTodayBR();
       const startDate = new Date(week[0] + 'T12:00:00');
       const monthLabel = startDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
       const dateRange = `${formatBR(week[0])} – ${formatBR(week[6])}`;
+      const mainFolders = getWeeklyMainFolders();
+      const allFolderIds = mainFolders.map(f => f.id);
+      const selectedFolderIds = Array.isArray(prefs.weeklyMainFolders) ? prefs.weeklyMainFolders : [];
+      const showingAll = prefs.weeklyMainFolders === null || prefs.weeklyMainFolders === undefined;
+      const rawWeekList = list || [];
+      const weekList = rawWeekList.filter(item => weeklyFolderIsVisible(item));
 
       c.innerHTML = `
         <div class="calendar-controls" style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
@@ -5216,7 +5267,34 @@
           <div style="font-weight:800;font-size:.92rem;text-align:center;flex:1;min-width:190px;">
             📅 ${String(monthLabel).charAt(0).toUpperCase()+String(monthLabel).slice(1)} • ${dateRange}
           </div>
-          <button class="btn-sm" onclick="navCalendar(1)">Próxima semana ▶</button>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <button type="button" class="btn-sm" id="weekly-folder-filter-btn">📁 Pastas</button>
+            <button class="btn-sm" onclick="navCalendar(1)">Próxima semana ▶</button>
+          </div>
+        </div>
+
+        <div id="weekly-folder-filter-panel" style="display:none;margin:-2px 0 10px auto;max-width:430px;padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:var(--card);box-shadow:0 8px 24px rgba(0,0,0,.22);">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;">
+            <strong style="font-size:.78rem;">Pastas principais visíveis</strong>
+            <span style="font-size:.66rem;color:var(--muted);">${showingAll ? 'Todas' : selectedFolderIds.length + ' selecionada(s)'}</span>
+          </div>
+          <label style="display:flex;align-items:center;gap:7px;padding:6px 4px;border-bottom:1px solid var(--border);font-size:.75rem;cursor:pointer;">
+            <input type="checkbox" id="weekly-folder-all" ${showingAll ? 'checked' : ''}>
+            <strong>Mostrar todas</strong>
+          </label>
+          <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 10px;margin-top:6px;max-height:240px;overflow:auto;">
+            ${mainFolders.map(folder => {
+              const count = rawWeekList.filter(item => item.status !== 'done' && week.includes(item.date) && getMainFolderId(item.area) === folder.id).length;
+              const checked = showingAll || selectedFolderIds.includes(folder.id);
+              return `<label style="display:flex;align-items:center;gap:7px;padding:6px 3px;font-size:.72rem;cursor:pointer;min-width:0;">
+                <input type="checkbox" class="weekly-folder-check" data-folder-id="${escapeHtml(folder.id)}" ${checked ? 'checked' : ''}>
+                <span style="width:7px;height:7px;border-radius:50%;background:${escapeHtml(folder.color || '#999')};flex:none;"></span>
+                <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;">${escapeHtml(folder.name)}</span>
+                <span style="color:var(--muted);font-size:.62rem;">${count}</span>
+              </label>`;
+            }).join('')}
+          </div>
+          ${!mainFolders.length ? `<div style="font-size:.72rem;color:var(--muted);padding:7px 3px;">Nenhuma pasta principal cadastrada.</div>` : ''}
         </div>
 
         <div class="weekly-compact-wrap" style="overflow-x:auto;padding-bottom:4px;">
@@ -5224,11 +5302,28 @@
         </div>
       `;
 
+      const filterBtn = c.querySelector('#weekly-folder-filter-btn');
+      const panel = c.querySelector('#weekly-folder-filter-panel');
+      if (filterBtn && panel) {
+        filterBtn.onclick = (event) => {
+          event.stopPropagation();
+          panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+        };
+      }
+
+      const allCheck = c.querySelector('#weekly-folder-all');
+      if (allCheck) {
+        allCheck.onchange = () => setWeeklyAllFolders(allCheck.checked);
+      }
+      c.querySelectorAll('.weekly-folder-check').forEach(check => {
+        check.onchange = () => toggleWeeklyMainFolder(check.dataset.folderId, check.checked);
+      });
+
       const grid = c.querySelector('.weekly-compact-grid');
 
-      week.forEach((dStr, idx) => {
+      week.forEach((dStr) => {
         const d = new Date(dStr + 'T12:00:00');
-        const itemsForDay = (list || [])
+        const itemsForDay = weekList
           .filter(item => item.date === dStr && item.status !== 'done')
           .sort((a, b) => {
             const aTime = a.time || '99:99';
@@ -5284,7 +5379,7 @@
 
       const note = document.createElement('div');
       note.style.cssText = 'margin-top:7px;color:var(--muted);font-size:.68rem;text-align:center;';
-      note.textContent = 'Os compromissos de cada dia estão em ordem de horário. Clique em um compromisso para editar.';
+      note.textContent = showingAll ? 'Mostrando todas as pastas principais. Os compromissos de cada dia estão em ordem de horário.' : 'Filtro de pastas ativo. Os compromissos de cada dia estão em ordem de horário.';
       c.appendChild(note);
     }
 
