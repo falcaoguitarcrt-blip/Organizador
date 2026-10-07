@@ -2978,63 +2978,6 @@
     }
 
     // Visualização Calendário Semanal
-    function renderViewCalendar(list, c) {
-      const todayStr = getTodayBR();
-      const parts = todayStr.split('-').map(Number);
-      const baseDate = new Date(parts[0], parts[1] - 1, parts[2]);
-      baseDate.setDate(baseDate.getDate() + (calendarWeekOffset * 7));
-
-      const startOfWeek = new Date(baseDate);
-      startOfWeek.setDate(baseDate.getDate() - baseDate.getDay());
-
-      const endOfWeek = new Date(startOfWeek);
-      endOfWeek.setDate(startOfWeek.getDate() + 6);
-
-      const formatLabel = (d) => `${d.getDate()}/${d.getMonth()+1}`;
-
-      c.innerHTML = `
-        <div class="calendar-controls">
-          <button class="btn-sm" onclick="navCalendar(-1)">◀ Semana anterior</button>
-          <span style="font-weight:bold; font-size:0.9rem;">${formatLabel(startOfWeek)} até ${formatLabel(endOfWeek)}</span>
-          <div style="display:flex; gap:6px;">
-            <button class="btn-sm" onclick="navCalendar(0)">Hoje</button>
-            <button class="btn-sm" onclick="navCalendar(1)">Próxima semana ▶</button>
-          </div>
-        </div>
-        <div class="calendar-scroll-container">
-          <div class="calendar-grid" id="cal-grid"></div>
-        </div>
-      `;
-
-      const grid = document.getElementById('cal-grid');
-      const daysOfWeek = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
-      
-      for(let i=0; i<7; i++) {
-        const d = new Date(startOfWeek);
-        d.setDate(d.getDate() + i);
-        const dStr = toLocalDateStr(d);
-        
-        const col = document.createElement('div');
-        col.className = 'cal-col';
-        col.innerHTML = `<div class="cal-header" style="${dStr === todayStr ? 'color:var(--accent); font-weight:900;' : ''}">${daysOfWeek[i]} ${d.getDate()}</div>`;
-        
-        let itemsForDay = list.filter(it => it.date === dStr && it.status !== 'done');
-        itemsForDay.sort(compareItemsByDateTime);
-
-        itemsForDay.forEach(item => {
-           const folderInfo = getHierarchy(item.area);
-           col.innerHTML += `
-             <div class="cal-item" 
-                  style="border-left-color:${escapeHtml(folderInfo.color)}" 
-                  onclick="openItemModal(S.items.find(x=>x.id==='${item.id}'))"
-                  oncontextmenu="handleContextMenuEvent(event, '${item.id}')">
-               ${item.time ? escapeHtml(item.time)+' ' : ''}${escapeHtml(item.title)}
-             </div>`;
-        });
-        grid.appendChild(col);
-      }
-    }
-
     function navCalendar(dir) {
       if (dir === 0) calendarWeekOffset = 0;
       else calendarWeekOffset += dir;
@@ -5254,92 +5197,95 @@
     }
 
     function renderViewCalendar(list, c) {
+      // Semana em formato de agenda cronológica, sem grade por hora.
       const week = phase3WeekDates();
-      const dayNames = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
-      const start = week[0], end = week[6];
-      const startDate = new Date(start + 'T12:00:00');
-      const monthLabel = startDate.toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
+      const dayNames = ['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];
       const today = getTodayBR();
-      const gridMinWidth = 58 + (7 * 150);
-      const slotHeight = 40;
-      const hours = [];
-      for(let h=PHASE3_CAL_START_HOUR; h<PHASE3_CAL_END_HOUR; h++) hours.push(h);
+      const startDate = new Date(week[0] + 'T12:00:00');
+      const monthLabel = startDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+      const dateRange = `${formatBR(week[0])} – ${formatBR(week[6])}`;
 
-      c.innerHTML = `<div class="phase3-calendar-toolbar" style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:10px 12px;margin-bottom:10px;">
-        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-          <button class="btn-sm" onclick="navCalendar(-1)">◀ Semana anterior</button>
-          <button class="btn-sm" onclick="navCalendar(0)">Hoje</button>
-          <span class="phase3-pwa-pill">📅 ${String(monthLabel).charAt(0).toUpperCase()+String(monthLabel).slice(1)} • ${formatBR(start)} – ${formatBR(end)}</span>
+      c.innerHTML = `
+        <div class="calendar-controls" style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+            <button class="btn-sm" onclick="navCalendar(-1)">◀ Semana anterior</button>
+            <button class="btn-sm" onclick="navCalendar(0)">Hoje</button>
+          </div>
+          <div style="font-weight:800;font-size:.95rem;text-align:center;">
+            📅 ${String(monthLabel).charAt(0).toUpperCase()+String(monthLabel).slice(1)} • ${dateRange}
+          </div>
+          <button class="btn-sm" onclick="navCalendar(1)">Próxima semana ▶</button>
         </div>
-        <button class="btn-sm" onclick="navCalendar(1)">Próxima semana ▶</button>
-      </div>
-      <div style="border:1px solid var(--border);border-radius:12px;background:rgba(255,255,255,.015);overflow:hidden;">
-        <div style="overflow:auto;max-height:72vh;-webkit-overflow-scrolling:touch;">
-          <div id="phase3-week-grid" style="display:grid;grid-template-columns:58px repeat(7,minmax(150px,1fr));min-width:${gridMinWidth}px;position:relative;"></div>
+        <div id="weekly-agenda-list" style="display:flex;flex-direction:column;gap:10px;"></div>
+        <div style="margin-top:10px;padding:10px 12px;color:var(--muted);font-size:.72rem;border:1px solid var(--border);border-radius:10px;background:rgba(255,255,255,.015);">
+          Os compromissos aparecem em ordem de horário. Itens sem horário ficam por último no dia.
         </div>
-        <div style="padding:8px 12px;color:var(--muted);font-size:.7rem;border-top:1px solid var(--border);background:rgba(0,0,0,.08);">Clique em um horário para criar um item. Arraste um compromisso para outro horário ou dia para reagendar.</div>
-      </div>`;
+      `;
 
-      const grid = document.getElementById('phase3-week-grid');
-      const corner = document.createElement('div');
-      corner.style.cssText='height:58px;background:var(--card);border-right:1px solid var(--border);border-bottom:1px solid var(--border);position:sticky;left:0;top:0;z-index:12;';
-      grid.appendChild(corner);
+      const container = document.getElementById('weekly-agenda-list');
 
-      week.forEach((dStr,idx)=>{
-        const d = new Date(dStr+'T12:00:00');
-        const head = document.createElement('div');
-        head.style.cssText='height:58px;background:var(--card);border-right:1px solid var(--border);border-bottom:1px solid var(--border);padding:8px;text-align:center;position:sticky;top:0;z-index:10;';
-        if(dStr===today) head.style.boxShadow='inset 0 -2px 0 var(--accent)';
-        head.innerHTML=`<div style="font-size:.68rem;color:${dStr===today?'var(--accent)':'var(--muted)'};font-weight:800;text-transform:uppercase;">${dayNames[idx]}</div><div style="font-size:.92rem;font-weight:800;margin-top:3px;">${d.getDate()}/${d.getMonth()+1}</div>`;
-        grid.appendChild(head);
-      });
+      week.forEach((dStr, idx) => {
+        const d = new Date(dStr + 'T12:00:00');
+        const itemsForDay = (list || [])
+          .filter(item => item.date === dStr && item.status !== 'done')
+          .sort((a, b) => {
+            const aTime = a.time || '99:99';
+            const bTime = b.time || '99:99';
+            if (aTime !== bTime) return aTime.localeCompare(bTime);
+            return String(a.title || '').localeCompare(String(b.title || ''), 'pt-BR');
+          });
 
-      const timeCol=document.createElement('div');
-      timeCol.style.cssText='position:relative;background:var(--card);border-right:1px solid var(--border);';
-      hours.forEach(h=>{
-        const el=document.createElement('div');
-        el.style.cssText=`height:${slotHeight}px;border-bottom:1px solid rgba(255,255,255,.055);padding:2px 6px;text-align:right;color:var(--muted);font-size:.67rem;font-variant-numeric:tabular-nums;`;
-        el.textContent=`${String(h).padStart(2,'0')}:00`;
-        timeCol.appendChild(el);
-      });
-      grid.appendChild(timeCol);
+        const dayBox = document.createElement('section');
+        dayBox.style.cssText = `border:1px solid ${dStr===today ? 'rgba(45,212,191,.55)' : 'var(--border)'};border-radius:12px;background:${dStr===today ? 'rgba(45,212,191,.035)' : 'rgba(255,255,255,.012)'};overflow:hidden;`;
 
-      week.forEach((dStr,idx)=>{
-        const col=document.createElement('div');
-        col.className='phase3-day-col'+(idx===0||idx===6?' weekend':'');
-        col.dataset.date=dStr;
-        col.style.cssText='position:relative;background:rgba(255,255,255,.012);border-right:1px solid var(--border);min-width:0;';
-        hours.forEach(h=>{
-          const slot=document.createElement('div');
-          slot.className='phase3-slot';
-          slot.dataset.date=dStr;
-          slot.dataset.minute=String(h*60);
-          slot.title=`Criar item em ${formatBR(dStr)} às ${String(h).padStart(2,'0')}:00`;
-          slot.style.cssText=`height:${slotHeight}px;border-bottom:1px solid rgba(255,255,255,.055);cursor:pointer;position:relative;`;
-          slot.addEventListener('mouseenter',()=>slot.style.background='rgba(45,212,191,.055)');
-          slot.addEventListener('mouseleave',()=>slot.style.background='');
-          slot.addEventListener('click',()=>openItemModalAtCalendarSlot(dStr,h*60));
-          slot.addEventListener('dragover',phase3CalendarDragOver);
-          slot.addEventListener('drop',phase3CalendarDrop);
-          col.appendChild(slot);
-        });
-        const items=(list||[]).filter(i=>i.date===dStr && i.status!=='done' && i.time);
-        phase3ArrangeLanes(items).forEach(x=>col.insertAdjacentHTML('beforeend',phase3BuildCalendarEvent(x.item,dStr,x.lane,x.laneCount)));
-        grid.appendChild(col);
-      });
+        const header = document.createElement('div');
+        header.style.cssText = `display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 14px;background:${dStr===today ? 'rgba(45,212,191,.09)' : 'rgba(255,255,255,.025)'};border-bottom:1px solid var(--border);`;
+        header.innerHTML = `
+          <div style="display:flex;align-items:center;gap:10px;min-width:0;">
+            <div style="font-size:.76rem;text-transform:uppercase;letter-spacing:.4px;font-weight:800;color:${dStr===today ? 'var(--accent)' : 'var(--muted)'};">${dayNames[idx]}</div>
+            <div style="font-size:1rem;font-weight:800;">${d.getDate()}/${d.getMonth()+1}</div>
+            ${dStr===today ? '<span style="font-size:.66rem;font-weight:800;color:var(--accent);border:1px solid rgba(45,212,191,.4);padding:3px 7px;border-radius:999px;">HOJE</span>' : ''}
+          </div>
+          <span style="font-size:.7rem;color:var(--muted);">${itemsForDay.length} ${itemsForDay.length===1 ? 'item' : 'itens'}</span>
+        `;
+        dayBox.appendChild(header);
 
-      const nowOffset=phase3CalendarNowOffset();
-      if(nowOffset!==null){
-        const nowIdx=week.findIndex(d=>d===today);
-        if(nowIdx>=0){
-          const dayCol=grid.children[8+nowIdx];
-          if(dayCol){
-            const line=document.createElement('div');
-            line.style.cssText=`position:absolute;left:0;right:0;top:${nowOffset}px;height:2px;background:var(--danger);z-index:6;pointer-events:none;`;
-            dayCol.appendChild(line);
-          }
+        const body = document.createElement('div');
+        body.style.cssText = 'padding:8px;display:flex;flex-direction:column;gap:6px;';
+
+        if (!itemsForDay.length) {
+          body.innerHTML = `<div style="padding:9px 10px;color:var(--muted);font-size:.76rem;">Nenhum compromisso neste dia.</div>`;
+        } else {
+          itemsForDay.forEach(item => {
+            const hierarchy = getHierarchy(item.area);
+            const timeLabel = item.time || 'Sem horário';
+            const priority = item.priority === 'high' ? 'Alta' : item.priority === 'medium' ? 'Média' : item.priority === 'low' ? 'Baixa' : '';
+            const row = document.createElement('div');
+            row.style.cssText = `display:flex;align-items:center;gap:10px;padding:9px 10px;border:1px solid var(--border);border-left:4px solid ${escapeHtml(hierarchy.color || 'var(--accent)')};border-radius:9px;background:var(--card);cursor:pointer;transition:background .15s,border-color .15s;`;
+            row.title = `${item.title || ''}${item.time ? ' • ' + item.time : ''}`;
+            row.onclick = () => openItemModal(S.items.find(x => x.id === item.id));
+            row.oncontextmenu = (event) => handleContextMenuEvent(event, item.id);
+            row.onmouseenter = () => { row.style.background = 'rgba(255,255,255,.045)'; };
+            row.onmouseleave = () => { row.style.background = 'var(--card)'; };
+            row.innerHTML = `
+              <div style="width:62px;flex:0 0 62px;text-align:center;font-size:.76rem;font-weight:800;color:${item.time ? 'var(--text)' : 'var(--muted)'};font-variant-numeric:tabular-nums;">${escapeHtml(timeLabel)}</div>
+              <div style="width:1px;height:28px;background:var(--border);flex:0 0 1px;"></div>
+              <div style="flex:1;min-width:0;">
+                <div style="font-size:.84rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(item.title || 'Sem título')}</div>
+                <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:3px;font-size:.66rem;color:var(--muted);">
+                  ${hierarchy.text ? `<span>📁 ${escapeHtml(hierarchy.text)}</span>` : ''}
+                  ${priority ? `<span>• ${escapeHtml(priority)}</span>` : ''}
+                  ${item.duration ? `<span>• ${escapeHtml(phase3FormatMinutes(phase3EnsureDurationValue(item.duration)))}</span>` : ''}
+                </div>
+              </div>
+              <div style="color:var(--muted);font-size:.8rem;">›</div>
+            `;
+            body.appendChild(row);
+          });
         }
-      }
+        dayBox.appendChild(body);
+        container.appendChild(dayBox);
+      });
     }
 
     function openItemModalAtCalendarSlot(dateStr, minute){
