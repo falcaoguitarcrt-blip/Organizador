@@ -2,7 +2,7 @@
   "name": "Minha Agenda Pro",
   "short_name": "Agenda Pro",
   "description": "Agenda pessoal com tarefas, planejamento, recorrência, alertas e IA.",
-  "start_url": "./minha_agenda_pro_faseJ_correcao1.html",
+  "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait-primary",
