@@ -1,11 +1,15 @@
 {
   "name": "Minha Agenda Pro",
   "short_name": "Agenda Pro",
-  "description": "Agenda pessoal com tarefas, pastas, calendário e sincronização em nuvem.",
-  "start_url": "./",
+  "description": "Agenda pessoal com tarefas, planejamento, recorrência, alertas e IA.",
+  "start_url": "./minha_agenda_pro_faseJ_correcao1.html",
   "scope": "./",
   "display": "standalone",
+  "orientation": "portrait-primary",
   "background_color": "#121820",
   "theme_color": "#2dd4bf",
-  "lang": "pt-BR"
+  "icons": [
+    {"src":"./icons/icon-192.png","sizes":"192x192","type":"image/png","purpose":"any maskable"},
+    {"src":"./icons/icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}
+  ]
 }
