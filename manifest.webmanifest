@@ -1,0 +1,11 @@
+{
+  "name": "Minha Agenda Pro",
+  "short_name": "Agenda Pro",
+  "description": "Agenda pessoal com tarefas, pastas, calendário e sincronização em nuvem.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#121820",
+  "theme_color": "#2dd4bf",
+  "lang": "pt-BR"
+}
