@@ -8,6 +8,7 @@
   <meta name="theme-color" content="#2dd4bf">
   <meta name="application-name" content="Minha Agenda Pro">
   <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.svg">
@@ -6818,7 +6819,7 @@
       const chat = document.getElementById('ai-chat');
       if (!chat) return;
       if (!aiConversation.length) {
-        chat.innerHTML = `<div class="ai-empty" id="ai-empty-state"><strong>O que você quer organizar?</strong>Pergunte sobre sua agenda, peça prioridades, crie tarefas, reagende, monte checklists ou peça um follow-up.</div>`;
+        chat.innerHTML = `<div class="ai-empty"><strong>O que você quer organizar?</strong>Pergunte sobre sua agenda, peça prioridades, crie tarefas, reagende, monte checklists ou peça um follow-up.</div>`;
         return;
       }
       chat.innerHTML = aiConversation.map(m => {
