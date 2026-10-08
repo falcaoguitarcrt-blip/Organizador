@@ -4333,6 +4333,28 @@
     }
     function m9bRuleFromFormSafe(type,existing,date){try{return m9bRuleFromForm();}catch(_){return m9bNormalizeRule(existing,date);}}
     function m9bSeriesId(item){return item?.recurrenceSeriesId||item?.repSourceId||item?.id||'';}
+
+    function m9bRecurrenceEquivalent(a,b){return JSON.stringify(m9bNormalizeRule(a||null,'')||null)===JSON.stringify(m9bNormalizeRule(b||null,'')||null);}
+    function m9bApplyRuleToSeries(item,rule,mode){
+      var series=m9bSeriesId(item);if(!series)return;
+      S.items.forEach(function(x){
+        if(!x||m9bSeriesId(x)!==series)return;
+        if(mode==='future' && x.date<item.date)return;
+        if(mode==='future' && x.id===item.id)return;
+        if(mode==='all' || mode==='future'){
+          x.recurrenceRule=m9bCloneRule(rule);
+          x.rep=rule?.type==='weekly'&&Number(rule.interval)===2?'biweekly':(rule?.type||'none');
+        }
+      });
+    }
+    function m9bAskRecurrenceScope(){
+      var answer=window.prompt('Esta tarefa faz parte de uma série recorrente.\n\nDigite 1 para alterar somente esta ocorrência.\nDigite 2 para alterar esta e as próximas.\nDigite 3 para alterar todas da série.\n\nCancelar mantém a alteração sem salvar.','2');
+      if(answer===null)return 'cancel';
+      if(answer==='1')return 'one';
+      if(answer==='2')return 'future';
+      if(answer==='3')return 'all';
+      showToast('Opção inválida. A alteração não foi salva.');return 'cancel';
+    }
     function getFormState() {
       const chkRows = document.querySelectorAll('#checklist-container .checklist-row');
       const checklist = Array.from(chkRows).map(r => ({
@@ -4889,6 +4911,19 @@
       }
 
       if (targetItem) {
+        var oldRule = editingOriginalItem ? m9bGetRule(editingOriginalItem) : null;
+        var newRule = editedFields.recurrenceRule || null;
+        if (editingOriginalItem && oldRule && !m9bRecurrenceEquivalent(oldRule, newRule)) {
+          var scope = m9bAskRecurrenceScope();
+          if (scope === 'cancel') { closeItemModal(); return; }
+          targetItem.recurrenceSeriesId = targetItem.recurrenceSeriesId || m9bSeriesId(editingOriginalItem);
+          if (scope === 'one') {
+            targetItem.recurrenceRule = null;
+            targetItem.rep = 'none';
+          } else {
+            m9bApplyRuleToSeries(targetItem, newRule, scope);
+          }
+        }
         if (oldStatus !== 'done' && newStatus === 'done') addNextOccurrence(targetItem);
         else if (oldStatus === 'done' && newStatus !== 'done') removeUntouchedCopy(targetItem.id);
       }
