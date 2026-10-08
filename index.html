@@ -3610,7 +3610,7 @@
     // M9-A — visualização focada no dia para pastas específicas.
     // Somente reorganiza a apresentação; não filtra/exclui/modifica itens.
     function m9FolderSectionKey(section) {
-      return ${currentArea}::${section};
+      return `${currentArea}::${section}`;
     }
 
     function m9IsFolderSectionOpen(section) {
@@ -3631,7 +3631,7 @@
       const date = new Date(y, m - 1, d);
       const weekday = date.toLocaleDateString('pt-BR', { weekday:'long' });
       const capitalized = weekday.charAt(0).toUpperCase() + weekday.slice(1);
-      return ${capitalized}, ${String(d).padStart(2,'0')}/${String(m).padStart(2,'0')}/${y};
+      return `${capitalized}, ${String(d).padStart(2,'0')}/${String(m).padStart(2,'0')}/${y}`;
     }
 
     function m9BuildFolderSection(c, cfg) {
