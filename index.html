@@ -976,6 +976,69 @@
 
 </style>
   <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-storage-compat.js"></script>
+
+    /* M9-A — VISUALIZAÇÃO POR DIA EM PASTAS ESPECÍFICAS */
+    .m9-folder-day-section {
+      margin: 0 0 18px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: rgba(255,255,255,0.015);
+      overflow: hidden;
+    }
+    .m9-folder-day-header {
+      width: 100%;
+      min-height: 46px;
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border: 0;
+      color: var(--text);
+      background: transparent;
+      cursor: pointer;
+      text-align: left;
+      font: inherit;
+    }
+    .m9-folder-day-header:hover { background: rgba(255,255,255,0.04); }
+    .m9-folder-day-title { font-weight: 800; font-size: 0.86rem; }
+    .m9-folder-day-subtitle { color: var(--muted); font-size: 0.76rem; }
+    .m9-folder-day-count {
+      margin-left: auto;
+      color: var(--muted);
+      font-size: 0.75rem;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .m9-folder-day-arrow {
+      width: 20px;
+      text-align: center;
+      color: var(--muted);
+      flex: 0 0 20px;
+    }
+    .m9-folder-day-content { padding: 0 12px 12px; }
+    .m9-folder-day-content.m9-list-mode > .card { margin-bottom: 8px; }
+    .m9-folder-day-content.m9-cards-mode {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 12px;
+    }
+    .m9-folder-day-content.m9-cards-mode .card { margin: 0; }
+    .m9-folder-day-empty {
+      padding: 12px 4px 4px;
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+    @media (max-width: 768px) {
+      .m9-folder-day-section { margin-bottom: 12px; border-radius: 10px; }
+      .m9-folder-day-header { min-height: 48px; padding: 10px 12px; }
+      .m9-folder-day-content { padding: 0 9px 9px; }
+      .m9-folder-day-content.m9-cards-mode { grid-template-columns: minmax(0,1fr); gap: 9px; }
+      .m9-folder-day-content.m9-cards-mode .card { width: 100%; min-width: 0; }
+      .m9-folder-day-title { font-size: 0.82rem; }
+      .m9-folder-day-subtitle { font-size: 0.72rem; }
+    }
+
+
 </head>
 <body>
 
@@ -1497,7 +1560,10 @@
     let saveQueue = Promise.resolve();
     let lastPersistedSnapshot = null;
     let pendingAttachments = []; 
-    let currentDashboardFilter = null; 
+    let currentDashboardFilter = null;
+    // M9-A — controle visual temporário das seções por dia dentro de pastas específicas.
+    // Não é persistido nem altera dados/Firebase/LocalStorage.
+    const folderDateSections = Object.create(null); 
 
     // Preferências em LocalStorage
     let prefs = { 
@@ -2838,6 +2904,13 @@
         return;
       }
 
+      // M9-A: somente pastas específicas usam a visão focada no dia.
+      // Agenda Geral, Semana, Mês e Kanban mantêm suas renderizações atuais.
+      if (currentArea !== 'all' && (prefs.viewMode === 'list' || prefs.viewMode === 'cards')) {
+        renderFolderFocusedByDay(list, container, prefs.viewMode);
+        return;
+      }
+
       if (prefs.viewMode === 'cards') renderViewCards(list, container);
       else if (prefs.viewMode === 'kanban') renderViewKanban(list, container);
       else if (prefs.viewMode === 'calendar') renderViewCalendar(list, container);
@@ -3401,6 +3474,162 @@
       prefs.descExpanded[id] = !prefs.descExpanded[id];
       savePrefs();
       renderWithScrollPreserved();
+    }
+
+
+    // M9-A — visualização focada no dia para pastas específicas.
+    // Somente reorganiza a apresentação; não filtra/exclui/modifica itens.
+    function m9FolderSectionKey(section) {
+      return \${currentArea}::\${section};
+    }
+
+    function m9IsFolderSectionOpen(section) {
+      const key = m9FolderSectionKey(section);
+      if (folderDateSections[key] === undefined) return section === 'today';
+      return !!folderDateSections[key];
+    }
+
+    function toggleFolderDateSection(section) {
+      const key = m9FolderSectionKey(section);
+      folderDateSections[key] = !m9IsFolderSectionOpen(section);
+      renderWithScrollPreserved();
+    }
+
+    function m9FormatDayHeading(dateStr) {
+      if (!dateStr) return 'Sem data';
+      const [y,m,d] = dateStr.split('-').map(Number);
+      const date = new Date(y, m - 1, d);
+      const weekday = date.toLocaleDateString('pt-BR', { weekday:'long' });
+      const capitalized = weekday.charAt(0).toUpperCase() + weekday.slice(1);
+      return \${capitalized}, \${String(d).padStart(2,'0')}/\${String(m).padStart(2,'0')}/\${y};
+    }
+
+    function m9BuildFolderSection(c, cfg) {
+      const { key, title, subtitle, items, mode, openDefault } = cfg;
+      const section = document.createElement('section');
+      section.className = 'm9-folder-day-section';
+
+      if (folderDateSections[m9FolderSectionKey(key)] === undefined && openDefault) {
+        folderDateSections[m9FolderSectionKey(key)] = true;
+      }
+
+      const isOpen = m9IsFolderSectionOpen(key);
+      const header = document.createElement('button');
+      header.type = 'button';
+      header.className = 'm9-folder-day-header';
+      header.setAttribute('aria-expanded', String(isOpen));
+      header.onclick = () => toggleFolderDateSection(key);
+      header.innerHTML = \`
+        <span class="m9-folder-day-arrow">\${isOpen ? '▾' : '▸'}</span>
+        <span class="m9-folder-day-title">\${escapeHtml(title)}</span>
+        \${subtitle ? \`<span class="m9-folder-day-subtitle">\${escapeHtml(subtitle)}</span>\` : ''}
+        <span class="m9-folder-day-count">\${items.length}</span>
+      \`;
+      section.appendChild(header);
+
+      const content = document.createElement('div');
+      content.className = \`m9-folder-day-content \${mode === 'cards' ? 'm9-cards-mode' : 'm9-list-mode'}\`;
+      content.style.display = isOpen ? (mode === 'cards' ? 'grid' : 'block') : 'none';
+
+      if (!items.length) {
+        content.innerHTML = \`<div class="m9-folder-day-empty">Nenhum item para este período.</div>\`;
+      } else {
+        items.sort(compareItemsByDateTime);
+        items.forEach(item => { content.insertAdjacentHTML('beforeend', buildCardHtml(item)); });
+      }
+      section.appendChild(content);
+      c.appendChild(section);
+    }
+
+    function renderFolderFocusedByDay(list, c, mode) {
+      const today = getTodayBR();
+      const overdue = list.filter(i => i.status !== 'done' && i.date && i.date < today);
+      const todayItems = list.filter(i => i.status !== 'done' && i.date === today);
+      const future = list.filter(i => i.status !== 'done' && i.date && i.date > today);
+      const noDate = list.filter(i => i.status !== 'done' && !i.date);
+      const done = list.filter(i => i.status === 'done');
+
+      // Hoje é sempre a primeira seção e fica aberta por padrão.
+      m9BuildFolderSection(c, {
+        key: 'today',
+        title: '🔥 Hoje',
+        subtitle: formatBR(today),
+        items: todayItems,
+        mode,
+        openDefault: true
+      });
+
+      if (overdue.length) {
+        m9BuildFolderSection(c, {
+          key: 'overdue',
+          title: '⚠️ Atrasados',
+          subtitle: 'antes de hoje',
+          items: overdue,
+          mode,
+          openDefault: false
+        });
+      }
+
+      if (future.length) {
+        const byDate = {};
+        future.forEach(item => {
+          if (!byDate[item.date]) byDate[item.date] = [];
+          byDate[item.date].push(item);
+        });
+        const futureWrap = document.createElement('section');
+        futureWrap.className = 'm9-folder-day-section';
+        const futureOpen = m9IsFolderSectionOpen('future');
+        const futureHeader = document.createElement('button');
+        futureHeader.type = 'button';
+        futureHeader.className = 'm9-folder-day-header';
+        futureHeader.setAttribute('aria-expanded', String(futureOpen));
+        futureHeader.onclick = () => toggleFolderDateSection('future');
+        futureHeader.innerHTML = \`
+          <span class="m9-folder-day-arrow">\${futureOpen ? '▾' : '▸'}</span>
+          <span class="m9-folder-day-title">📆 Próximos dias</span>
+          <span class="m9-folder-day-subtitle">outros dias</span>
+          <span class="m9-folder-day-count">\${future.length}</span>
+        \`;
+        futureWrap.appendChild(futureHeader);
+        const futureContent = document.createElement('div');
+        futureContent.className = 'm9-folder-day-content';
+        futureContent.style.display = futureOpen ? 'block' : 'none';
+        Object.keys(byDate).sort().forEach(dateStr => {
+          const dateItems = byDate[dateStr].sort(compareItemsByDateTime);
+          const day = document.createElement('div');
+          day.style.marginBottom = '14px';
+          day.innerHTML = \`<div class="period-header" style="margin:2px 0 8px;">📅 \${escapeHtml(m9FormatDayHeading(dateStr))} <span style="color:var(--muted); font-size:.72rem;">(\${dateItems.length})</span></div>\`;
+          const inner = document.createElement('div');
+          inner.className = mode === 'cards' ? 'grid-cards' : '';
+          dateItems.forEach(item => inner.insertAdjacentHTML('beforeend', buildCardHtml(item)));
+          day.appendChild(inner);
+          futureContent.appendChild(day);
+        });
+        futureWrap.appendChild(futureContent);
+        c.appendChild(futureWrap);
+      }
+
+      if (noDate.length) {
+        m9BuildFolderSection(c, {
+          key: 'nodate',
+          title: '📌 Sem data',
+          subtitle: 'itens sem data definida',
+          items: noDate,
+          mode,
+          openDefault: false
+        });
+      }
+
+      if (done.length) {
+        m9BuildFolderSection(c, {
+          key: 'done',
+          title: '✅ Concluídos',
+          subtitle: 'tarefas concluídas',
+          items: done,
+          mode,
+          openDefault: false
+        });
+      }
     }
 
     // Visualização Lista por Períodos
