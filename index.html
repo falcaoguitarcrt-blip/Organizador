@@ -976,6 +976,28 @@
 
 </style>
   <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-storage-compat.js"></script>
+    /* M9-C — FILTRO GLOBAL DE PASTAS NA AGENDA GERAL */
+    .m9c-general-folder-filter { margin:10px 0 14px; position:relative; z-index:20; }
+    .m9c-general-folder-filter-row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+    .m9c-general-folder-filter-btn { display:inline-flex; align-items:center; gap:7px; min-height:38px; padding:8px 12px; border:1px solid var(--border); border-radius:10px; background:rgba(255,255,255,.035); color:var(--text); cursor:pointer; font-weight:700; font-size:.78rem; }
+    .m9c-general-folder-filter-btn:hover { border-color:var(--accent); background:rgba(45,212,191,.06); }
+    .m9c-general-folder-filter-btn.active { border-color:var(--accent); background:rgba(45,212,191,.10); }
+    .m9c-general-folder-filter-panel { display:none; margin-top:7px; width:min(430px,100%); padding:10px 12px; border:1px solid var(--border); border-radius:12px; background:var(--card); box-shadow:0 12px 28px rgba(0,0,0,.24); }
+    .m9c-general-folder-filter-panel.open { display:block; }
+    .m9c-general-folder-filter-actions { display:flex; gap:6px; flex-wrap:wrap; padding-bottom:8px; margin-bottom:7px; border-bottom:1px solid var(--border); }
+    .m9c-general-folder-filter-list { display:flex; flex-direction:column; gap:2px; max-height:260px; overflow:auto; }
+    .m9c-general-folder-option { display:flex; align-items:center; gap:8px; padding:7px 4px; border-radius:7px; cursor:pointer; font-size:.76rem; }
+    .m9c-general-folder-option:hover { background:rgba(255,255,255,.035); }
+    .m9c-general-folder-option input { width:17px; height:17px; flex:0 0 17px; }
+    .m9c-general-folder-dot { width:8px; height:8px; border-radius:50%; flex:none; }
+    .m9c-general-folder-name { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .m9c-general-folder-count { color:var(--muted); font-size:.65rem; }
+    .m9c-general-folder-hint { color:var(--muted); font-size:.67rem; margin-top:6px; line-height:1.35; }
+    @media(max-width:768px){
+      .m9c-general-folder-filter-panel { width:100%; }
+      .m9c-general-folder-filter-btn { width:100%; justify-content:space-between; }
+    }
+
     /* M9-B — RECORRÊNCIA COMPLETA */
     .m9b-recurrence-panel{margin-top:10px;padding:12px;border:1px solid var(--border);border-radius:10px;background:rgba(255,255,255,.025)}
     .m9b-recurrence-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
@@ -2433,6 +2455,91 @@
       return mainId ? selected.includes(mainId) : false;
     }
 
+    // M9-C: o filtro global usa somente as pastas principais.
+    // Subpastas são herdadas automaticamente pelo getMainFolderId().
+    // A seleção é a mesma preferência local já existente da Semana.
+    function generalFolderIsVisible(item) {
+      if (currentArea !== 'all') return true;
+      return weeklyFolderIsVisible(item);
+    }
+
+    function getGeneralFolderFilteredItems(list) {
+      const source = Array.isArray(list) ? list : S.items;
+      return currentArea === 'all' ? source.filter(generalFolderIsVisible) : source;
+    }
+
+    function getGeneralFolderSelectionState() {
+      const mainFolders = getWeeklyMainFolders();
+      const allIds = mainFolders.map(f => f.id);
+      const showingAll = prefs.weeklyMainFolders === null || prefs.weeklyMainFolders === undefined;
+      const selected = showingAll ? allIds : (Array.isArray(prefs.weeklyMainFolders) ? prefs.weeklyMainFolders : []);
+      return { mainFolders, allIds, selected, showingAll };
+    }
+
+    function generalFolderFilterLabel() {
+      const state = getGeneralFolderSelectionState();
+      if (state.showingAll) return '📁 Pastas: Todas';
+      return '📁 Pastas: ' + state.selected.length + ' selecionada' + (state.selected.length === 1 ? '' : 's');
+    }
+
+    function renderGeneralFolderFilter() {
+      if (currentArea !== 'all') return '';
+      const state = getGeneralFolderSelectionState();
+      const selectedSet = new Set(state.selected);
+      const rows = state.mainFolders.map(folder => {
+        const checked = state.showingAll || selectedSet.has(folder.id);
+        const count = S.items.filter(item => item.status !== 'done' && getMainFolderId(item.area) === folder.id).length;
+        return '<label class="m9c-general-folder-option">' +
+          '<input type="checkbox" class="m9c-general-folder-check" data-folder-id="' + escapeHtml(folder.id) + '" ' + (checked ? 'checked' : '') + '>' +
+          '<span class="m9c-general-folder-dot" style="background:' + escapeHtml(folder.color || '#999') + ';"></span>' +
+          '<span class="m9c-general-folder-name">' + escapeHtml(folder.name) + '</span>' +
+          '<span class="m9c-general-folder-count">' + count + '</span>' +
+        '</label>';
+      }).join('');
+      return '<div class="m9c-general-folder-filter">' +
+        '<div class="m9c-general-folder-filter-row">' +
+          '<button type="button" class="m9c-general-folder-filter-btn ' + (!state.showingAll ? 'active' : '') + '" id="m9c-general-folder-filter-btn" aria-expanded="false">' +
+            '<span>' + escapeHtml(generalFolderFilterLabel()) + ' ▼</span>' +
+          '</button>' +
+        '</div>' +
+        '<div class="m9c-general-folder-filter-panel" id="m9c-general-folder-filter-panel">' +
+          '<div class="m9c-general-folder-filter-actions">' +
+            '<button type="button" class="btn-sm" id="m9c-general-folder-select-all">Selecionar todas</button>' +
+            '<button type="button" class="btn-sm" id="m9c-general-folder-clear">Limpar seleção</button>' +
+          '</div>' +
+          '<div class="m9c-general-folder-filter-list">' +
+            '<label class="m9c-general-folder-option">' +
+              '<input type="checkbox" id="m9c-general-folder-all" ' + (state.showingAll ? 'checked' : '') + '>' +
+              '<strong>Todas</strong>' +
+            '</label>' +
+            rows +
+          '</div>' +
+          '<div class="m9c-general-folder-hint">Selecionar uma pasta principal inclui automaticamente as respectivas subpastas.</div>' +
+        '</div>' +
+      '</div>';
+    }
+
+    function wireGeneralFolderFilter() {
+      if (currentArea !== 'all') return;
+      const btn = document.getElementById('m9c-general-folder-filter-btn');
+      const panel = document.getElementById('m9c-general-folder-filter-panel');
+      if (!btn || !panel) return;
+      btn.onclick = function(event) {
+        event.stopPropagation();
+        const open = panel.classList.toggle('open');
+        btn.setAttribute('aria-expanded', String(open));
+      };
+      const all = document.getElementById('m9c-general-folder-all');
+      if (all) all.onchange = function() { setWeeklyAllFolders(all.checked); };
+      const selectAll = document.getElementById('m9c-general-folder-select-all');
+      if (selectAll) selectAll.onclick = function() { setWeeklyAllFolders(true); };
+      const clear = document.getElementById('m9c-general-folder-clear');
+      if (clear) clear.onclick = function() { setWeeklyAllFolders(false); };
+      document.querySelectorAll('.m9c-general-folder-check').forEach(function(check) {
+        check.onchange = function() { toggleWeeklyMainFolder(check.dataset.folderId, check.checked); };
+      });
+    }
+
     function toggleWeeklyMainFolder(folderId, checked) {
       const allIds = getWeeklyMainFolders().map(f => f.id);
       let selected = prefs.weeklyMainFolders === null || prefs.weeklyMainFolders === undefined
@@ -2885,6 +2992,10 @@
         if (currentArea === 'all') return true;
         return i.area === currentArea || getFolderConfig(i.area)?.parentId === currentArea;
       });
+
+      // M9-C: somente a Agenda Geral recebe o filtro global de pastas.
+      // Nenhum item é removido dos dados, apenas da lista de apresentação.
+      list = getGeneralFolderFilteredItems(list);
 
       if (currentArea === 'all' && currentDashboardFilter) {
         const today = getTodayBR();
@@ -5788,9 +5899,7 @@
       // Na Agenda geral, quando a Semana está ativa, o filtro de pastas
       // também controla os indicadores do Meu Dia. Em pastas específicas,
       // ou nas outras visualizações, nenhum filtro semanal é aplicado.
-      const dashboardItems = (currentArea === 'all' && prefs.viewMode === 'calendar')
-        ? S.items.filter(i => weeklyFolderIsVisible(i))
-        : S.items;
+      const dashboardItems = getGeneralFolderFilteredItems(S.items);
       const pending = dashboardItems.filter(i => i.status !== 'done');
       const overdue = pending.filter(i => i.date && i.date < today);
       const todayItems = pending.filter(i => i.date === today).sort(compareItemsByDateTime);
@@ -5828,15 +5937,15 @@
       const todayCount = data.todayItems.length;
       const next7End = new Date(now); next7End.setDate(next7End.getDate()+7);
       const next7Count = data.pending.filter(i => i.date && i.date > data.today && i.date <= toLocalDateStr(next7End)).length;
-      const doneToday = ((currentArea === 'all' && prefs.viewMode === 'calendar')
-        ? S.items.filter(i => weeklyFolderIsVisible(i))
-        : S.items).filter(i=>i.status==='done' && i.date===data.today).length;
+      const doneToday = getGeneralFolderFilteredItems(S.items)
+        .filter(i=>i.status==='done' && i.date===data.today).length;
       const activeFilter = currentDashboardFilter;
       const focusHtml = data.focus.length ? `<div class="myday-focus"><div class="myday-focus-title">🎯 Foco sugerido</div>${data.focus.map((i,idx)=>`<div class="myday-focus-item" onclick="openItemModal(S.items.find(x=>x.id==='${i.id}'))"><span class="myday-focus-index">${idx+1}</span><div><div style="font-size:.84rem;font-weight:700;">${escapeHtml(i.title)}</div><div class="card-meta">${i.date && i.date < data.today ? '⚠ Atrasada' : (i.time ? 'Hoje às '+escapeHtml(i.time) : 'Hoje')} ${buildPhase2PriorityHtml(i)}</div></div></div>`).join('')}</div>` : '';
       const nextHtml = data.next ? `<div class="myday-next"><div class="myday-next-label">▶ Próximo compromisso</div><div style="font-size:.9rem;font-weight:750;cursor:pointer;" onclick="openItemModal(S.items.find(x=>x.id==='${data.next.id}'))">${escapeHtml(data.next.title)} ${data.next.time ? 'às '+escapeHtml(data.next.time):''}</div></div>` : '';
       const timelineHtml = `<div class="timeline-panel"><div class="timeline-title">Linha do tempo de hoje</div>${data.timedToday.length ? data.timedToday.map(i=>`<div class="timeline-row"><div class="timeline-time">${escapeHtml(i.time)}</div><div class="timeline-dot"></div><div><div class="timeline-title-text" onclick="openItemModal(S.items.find(x=>x.id==='${i.id}'))">${escapeHtml(i.title)}</div><div class="timeline-meta">${i.priority ? priorityLabel(i.priority) : ''} ${i.area ? '• '+escapeHtml(getHierarchy(i.area).text) : ''}</div></div></div>`).join('') : '<div class="muted text-sm">Nenhum compromisso com horário definido hoje.</div>'}${data.noTimeToday.length ? `<div class="untimed-note">+ ${data.noTimeToday.length} item(ns) de hoje sem horário definido.</div>` : ''}</div>`;
-      c.innerHTML = `<div class="myday-hero"><div class="myday-heading"><div><div class="myday-title">${greeting}, ${escapeHtml(name)}</div><div class="myday-subtitle">Meu Dia • ${dateExt}</div></div><select class="form-control phase2-mobile-view" onchange="setViewMode(this.value)"><option value="list" ${prefs.viewMode==='list'?'selected':''}>📋 Lista</option><option value="cards" ${prefs.viewMode==='cards'?'selected':''}>🔲 Cards</option><option value="kanban" ${prefs.viewMode==='kanban'?'selected':''}>📊 Kanban</option><option value="calendar" ${prefs.viewMode==='calendar'?'selected':''}>📅 Semana</option><option value="month" ${prefs.viewMode==='month'?'selected':''}>🗓️ Mês</option></select></div><div class="dashboard-cards"><div class="dash-card ${activeFilter==='overdue'?'active':''}" onclick="filterDashboard('overdue')"><div class="dash-card-num" style="color:var(--danger);">${overdueCount}</div><div class="dash-card-lbl">Atrasados</div></div><div class="dash-card ${activeFilter==='today'?'active':''}" onclick="filterDashboard('today')"><div class="dash-card-num" style="color:var(--warning);">${todayCount}</div><div class="dash-card-lbl">Hoje</div></div><div class="dash-card ${activeFilter==='next7'?'active':''}" onclick="filterDashboard('next7')"><div class="dash-card-num" style="color:var(--accent);">${next7Count}</div><div class="dash-card-lbl">Próx. 7 dias</div></div><div class="dash-card ${activeFilter==='done_today'?'active':''}" onclick="filterDashboard('done_today')"><div class="dash-card-num" style="color:#10b981;">${doneToday}</div><div class="dash-card-lbl">Concluídos hoje</div></div></div>${activeFilter?`<div style="margin-top:10px;"><button class="chip active" onclick="filterDashboard(null)">Filtro ativo ✕</button></div>`:''}${focusHtml}${nextHtml}${timelineHtml}<div class="flex-between" style="margin-top:15px;"><div class="view-selector"><button class="view-btn ${prefs.viewMode==='list'?'active':''}" onclick="setViewMode('list')">📋 Lista</button><button class="view-btn ${prefs.viewMode==='cards'?'active':''}" onclick="setViewMode('cards')">🔲 Cards</button><button class="view-btn ${prefs.viewMode==='kanban'?'active':''}" onclick="setViewMode('kanban')">📊 Kanban</button><button class="view-btn ${prefs.viewMode==='calendar'?'active':''}" onclick="setViewMode('calendar')">📅 Semana</button><button class="view-btn ${prefs.viewMode==='month'?'active':''}" onclick="setViewMode('month')">🗓️ Mês</button></div>${prefs.viewMode==='list'?`<div class="view-selector"><button class="view-btn ${prefs.generalGroupBy==='period'?'active':''}" onclick="setGeneralGroupBy('period')">Período</button><button class="view-btn ${prefs.generalGroupBy==='folder'?'active':''}" onclick="setGeneralGroupBy('folder')">Pasta</button></div>`:''}</div></div>`;
+      c.innerHTML = `<div class="myday-hero"><div class="myday-heading"><div><div class="myday-title">${greeting}, ${escapeHtml(name)}</div><div class="myday-subtitle">Meu Dia • ${dateExt}</div></div><div style="width:100%;margin-top:8px;">${renderGeneralFolderFilter()}</div><select class="form-control phase2-mobile-view" onchange="setViewMode(this.value)"><option value="list" ${prefs.viewMode==='list'?'selected':''}>📋 Lista</option><option value="cards" ${prefs.viewMode==='cards'?'selected':''}>🔲 Cards</option><option value="kanban" ${prefs.viewMode==='kanban'?'selected':''}>📊 Kanban</option><option value="calendar" ${prefs.viewMode==='calendar'?'selected':''}>📅 Semana</option><option value="month" ${prefs.viewMode==='month'?'selected':''}>🗓️ Mês</option></select></div><div class="dashboard-cards"><div class="dash-card ${activeFilter==='overdue'?'active':''}" onclick="filterDashboard('overdue')"><div class="dash-card-num" style="color:var(--danger);">${overdueCount}</div><div class="dash-card-lbl">Atrasados</div></div><div class="dash-card ${activeFilter==='today'?'active':''}" onclick="filterDashboard('today')"><div class="dash-card-num" style="color:var(--warning);">${todayCount}</div><div class="dash-card-lbl">Hoje</div></div><div class="dash-card ${activeFilter==='next7'?'active':''}" onclick="filterDashboard('next7')"><div class="dash-card-num" style="color:var(--accent);">${next7Count}</div><div class="dash-card-lbl">Próx. 7 dias</div></div><div class="dash-card ${activeFilter==='done_today'?'active':''}" onclick="filterDashboard('done_today')"><div class="dash-card-num" style="color:#10b981;">${doneToday}</div><div class="dash-card-lbl">Concluídos hoje</div></div></div>${activeFilter?`<div style="margin-top:10px;"><button class="chip active" onclick="filterDashboard(null)">Filtro ativo ✕</button></div>`:''}${focusHtml}${nextHtml}${timelineHtml}<div class="flex-between" style="margin-top:15px;"><div class="view-selector"><button class="view-btn ${prefs.viewMode==='list'?'active':''}" onclick="setViewMode('list')">📋 Lista</button><button class="view-btn ${prefs.viewMode==='cards'?'active':''}" onclick="setViewMode('cards')">🔲 Cards</button><button class="view-btn ${prefs.viewMode==='kanban'?'active':''}" onclick="setViewMode('kanban')">📊 Kanban</button><button class="view-btn ${prefs.viewMode==='calendar'?'active':''}" onclick="setViewMode('calendar')">📅 Semana</button><button class="view-btn ${prefs.viewMode==='month'?'active':''}" onclick="setViewMode('month')">🗓️ Mês</button></div>${prefs.viewMode==='list'?`<div class="view-selector"><button class="view-btn ${prefs.generalGroupBy==='period'?'active':''}" onclick="setGeneralGroupBy('period')">Período</button><button class="view-btn ${prefs.generalGroupBy==='folder'?'active':''}" onclick="setGeneralGroupBy('folder')">Pasta</button></div>`:''}</div></div>`;
       phase2RefreshHeaderControls();
+      wireGeneralFolderFilter();
     };
 
     function phase2RefreshHeaderControls() {
