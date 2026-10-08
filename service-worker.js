@@ -1,4 +1,4 @@
-const CACHE_NAME = 'minha-agenda-pro-v3';
+const CACHE_NAME = 'minha-agenda-pro-v4';
 const APP_SHELL = [
   './',
   './index.html',
