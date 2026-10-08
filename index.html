@@ -6559,7 +6559,7 @@
         return;
       }
       try{
-        phase3ServiceWorkerRegistration=await navigator.serviceWorker.register('./service-worker.js',{scope:'./'});
+        phase3ServiceWorkerRegistration=await navigator.serviceWorker.register('./service-worker.js?v=4',{scope:'./'});
         await navigator.serviceWorker.ready;
         phase3SetAlertStatus('PWA ativa. Notificações em segundo plano via push ficam preparadas; lembretes agendados ainda dependem do backend de envio.','');
         const installBtn=document.getElementById('phase3-install-btn');
