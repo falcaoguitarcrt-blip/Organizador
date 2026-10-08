@@ -3610,7 +3610,7 @@
     // M9-A — visualização focada no dia para pastas específicas.
     // Somente reorganiza a apresentação; não filtra/exclui/modifica itens.
     function m9FolderSectionKey(section) {
-      return \${currentArea}::\${section};
+      return ${currentArea}::${section};
     }
 
     function m9IsFolderSectionOpen(section) {
@@ -3631,7 +3631,7 @@
       const date = new Date(y, m - 1, d);
       const weekday = date.toLocaleDateString('pt-BR', { weekday:'long' });
       const capitalized = weekday.charAt(0).toUpperCase() + weekday.slice(1);
-      return \${capitalized}, \${String(d).padStart(2,'0')}/\${String(m).padStart(2,'0')}/\${y};
+      return ${capitalized}, ${String(d).padStart(2,'0')}/${String(m).padStart(2,'0')}/${y};
     }
 
     function m9BuildFolderSection(c, cfg) {
@@ -3649,20 +3649,20 @@
       header.className = 'm9-folder-day-header';
       header.setAttribute('aria-expanded', String(isOpen));
       header.onclick = () => toggleFolderDateSection(key);
-      header.innerHTML = \`
-        <span class="m9-folder-day-arrow">\${isOpen ? '▾' : '▸'}</span>
-        <span class="m9-folder-day-title">\${escapeHtml(title)}</span>
-        \${subtitle ? \`<span class="m9-folder-day-subtitle">\${escapeHtml(subtitle)}</span>\` : ''}
-        <span class="m9-folder-day-count">\${items.length}</span>
-      \`;
+      header.innerHTML = `
+        <span class="m9-folder-day-arrow">${isOpen ? '▾' : '▸'}</span>
+        <span class="m9-folder-day-title">${escapeHtml(title)}</span>
+        ${subtitle ? `<span class="m9-folder-day-subtitle">${escapeHtml(subtitle)}</span>` : ''}
+        <span class="m9-folder-day-count">${items.length}</span>
+      `;
       section.appendChild(header);
 
       const content = document.createElement('div');
-      content.className = \`m9-folder-day-content \${mode === 'cards' ? 'm9-cards-mode' : 'm9-list-mode'}\`;
+      content.className = `m9-folder-day-content ${mode === 'cards' ? 'm9-cards-mode' : 'm9-list-mode'}`;
       content.style.display = isOpen ? (mode === 'cards' ? 'grid' : 'block') : 'none';
 
       if (!items.length) {
-        content.innerHTML = \`<div class="m9-folder-day-empty">Nenhum item para este período.</div>\`;
+        content.innerHTML = `<div class="m9-folder-day-empty">Nenhum item para este período.</div>`;
       } else {
         items.sort(compareItemsByDateTime);
         items.forEach(item => { content.insertAdjacentHTML('beforeend', buildCardHtml(item)); });
@@ -3714,12 +3714,12 @@
         futureHeader.className = 'm9-folder-day-header';
         futureHeader.setAttribute('aria-expanded', String(futureOpen));
         futureHeader.onclick = () => toggleFolderDateSection('future');
-        futureHeader.innerHTML = \`
-          <span class="m9-folder-day-arrow">\${futureOpen ? '▾' : '▸'}</span>
+        futureHeader.innerHTML = `
+          <span class="m9-folder-day-arrow">${futureOpen ? '▾' : '▸'}</span>
           <span class="m9-folder-day-title">📆 Próximos dias</span>
           <span class="m9-folder-day-subtitle">outros dias</span>
-          <span class="m9-folder-day-count">\${future.length}</span>
-        \`;
+          <span class="m9-folder-day-count">${future.length}</span>
+        `;
         futureWrap.appendChild(futureHeader);
         const futureContent = document.createElement('div');
         futureContent.className = 'm9-folder-day-content';
@@ -3728,7 +3728,7 @@
           const dateItems = byDate[dateStr].sort(compareItemsByDateTime);
           const day = document.createElement('div');
           day.style.marginBottom = '14px';
-          day.innerHTML = \`<div class="period-header" style="margin:2px 0 8px;">📅 \${escapeHtml(m9FormatDayHeading(dateStr))} <span style="color:var(--muted); font-size:.72rem;">(\${dateItems.length})</span></div>\`;
+          day.innerHTML = `<div class="period-header" style="margin:2px 0 8px;">📅 ${escapeHtml(m9FormatDayHeading(dateStr))} <span style="color:var(--muted); font-size:.72rem;">(${dateItems.length})</span></div>`;
           const inner = document.createElement('div');
           inner.className = mode === 'cards' ? 'grid-cards' : '';
           dateItems.forEach(item => inner.insertAdjacentHTML('beforeend', buildCardHtml(item)));
