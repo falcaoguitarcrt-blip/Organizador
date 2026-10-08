@@ -1,7 +1,7 @@
-const CACHE_NAME = 'minha-agenda-pro-v1';
+const CACHE_NAME = 'minha-agenda-pro-v2';
 const APP_SHELL = [
   './',
-  './minha_agenda_pro_faseJ_correcao1.html',
+  './index.html',
   './manifest.webmanifest',
   './icons/icon-192.png',
   './icons/icon-512.png'
@@ -27,7 +27,7 @@ self.addEventListener('fetch', event => {
       const copy = response.clone();
       caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy)).catch(() => {});
       return response;
-    }).catch(() => caches.match('./minha_agenda_pro_faseJ_correcao1.html')))
+    }).catch(() => caches.match('./index.html')))
   );
 });
 
@@ -44,7 +44,7 @@ self.addEventListener('notificationclick', event => {
         }
       }
       if (self.clients.openWindow) {
-        return self.clients.openWindow('./minha_agenda_pro_faseJ_correcao1.html').then(client => {
+        return self.clients.openWindow('./index.html').then(client => {
           if (client) client.postMessage(message);
         });
       }
