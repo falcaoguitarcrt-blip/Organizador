@@ -10,8 +10,8 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
-  <link rel="apple-touch-icon" sizes="192x192" href="./icons/icon-192.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.svg">
+  <link rel="apple-touch-icon" sizes="192x192" href="./icon-192.svg">
   <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2360/2360875.png">
   <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/2360/2360875.png">
 
@@ -6572,7 +6572,7 @@
       if(isDndActiveNow()) return;
       if('Notification' in window && Notification.permission==='granted'){
         const show = reg => {
-          const options={body,icon:'./icons/icon-192.png',badge:'./icons/icon-192.png',tag:itemId?`agenda-${itemId}`:`agenda-${Date.now()}`,renotify:false,data:{itemId}};
+          const options={body,icon:'./icon-192.svg',badge:'./icon-192.svg',tag:itemId?`agenda-${itemId}`:`agenda-${Date.now()}`,renotify:false,data:{itemId}};
           if(reg?.showNotification) return reg.showNotification(title,options);
           return new Notification(title,options);
         };
