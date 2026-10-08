@@ -1629,6 +1629,7 @@
     let isMigrating = false;
     let saveQueue = Promise.resolve();
     let lastPersistedSnapshot = null;
+    let saveGeneration = 0;
     let pendingAttachments = []; 
     let currentDashboardFilter = null;
     // M9-A — controle visual temporário das seções por dia dentro de pastas específicas.
@@ -2382,35 +2383,54 @@
 
     function saveData() {
       if (!auth.currentUser || isMigrating) return Promise.resolve();
+
       normalizeState();
+      const saveUid = auth.currentUser.uid;
+      const saveToken = saveGeneration;
       const nextState = cloneData(S);
-      const previousState = lastPersistedSnapshot ? cloneData(lastPersistedSnapshot) : { items: [], areas: [], templates: [] };
-
-      const itemDiff = getChangedDocs(previousState.items, nextState.items);
-      const areaDiff = getChangedDocs(previousState.areas, nextState.areas);
-      const templateDiff = getChangedDocs(previousState.templates, nextState.templates);
-
-      if (!itemDiff.upserts.length && !itemDiff.deletes.length && !areaDiff.upserts.length && !areaDiff.deletes.length && !templateDiff.upserts.length && !templateDiff.deletes.length) {
-        return Promise.resolve();
-      }
 
       setSyncStatus('syncing', 'Salvando...');
       saveQueue = saveQueue.then(async () => {
+        // Cada gravação fica vinculada ao usuário/sessão que a originou.
+        // Isso impede que uma operação pendente seja redirecionada para outra conta após logout/login.
+        if (!auth.currentUser || auth.currentUser.uid !== saveUid || saveToken !== saveGeneration) return;
+
+        const previousState = lastPersistedSnapshot || { items: [], areas: [], templates: [] };
+        const itemDiff = getChangedDocs(previousState.items, nextState.items);
+        const areaDiff = getChangedDocs(previousState.areas, nextState.areas);
+        const templateDiff = getChangedDocs(previousState.templates, nextState.templates);
+
+        if (!itemDiff.upserts.length && !itemDiff.deletes.length &&
+            !areaDiff.upserts.length && !areaDiff.deletes.length &&
+            !templateDiff.upserts.length && !templateDiff.deletes.length) {
+          return;
+        }
+
+        // As referências são fixadas para este usuário antes do primeiro await.
+        const itemRef = userCollectionRef(USER_ITEMS_COLLECTION);
+        const areaRef = userCollectionRef(USER_AREAS_COLLECTION);
+        const templateRef = userCollectionRef(USER_TEMPLATES_COLLECTION);
+        const settingsRef = appSettingsRef();
+
         const ops = [];
-        itemDiff.upserts.forEach(x => ops.push({ type:'set', ref:userCollectionRef(USER_ITEMS_COLLECTION).doc(x.id), data:x }));
-        itemDiff.deletes.forEach(id => ops.push({ type:'delete', ref:userCollectionRef(USER_ITEMS_COLLECTION).doc(id) }));
-        areaDiff.upserts.forEach(x => ops.push({ type:'set', ref:userCollectionRef(USER_AREAS_COLLECTION).doc(x.id), data:x }));
-        areaDiff.deletes.forEach(id => ops.push({ type:'delete', ref:userCollectionRef(USER_AREAS_COLLECTION).doc(id) }));
-        templateDiff.upserts.forEach(x => ops.push({ type:'set', ref:userCollectionRef(USER_TEMPLATES_COLLECTION).doc(x.id), data:x }));
-        templateDiff.deletes.forEach(id => ops.push({ type:'delete', ref:userCollectionRef(USER_TEMPLATES_COLLECTION).doc(id) }));
+        itemDiff.upserts.forEach(x => ops.push({ type:'set', ref:itemRef.doc(x.id), data:x }));
+        itemDiff.deletes.forEach(id => ops.push({ type:'delete', ref:itemRef.doc(id) }));
+        areaDiff.upserts.forEach(x => ops.push({ type:'set', ref:areaRef.doc(x.id), data:x }));
+        areaDiff.deletes.forEach(id => ops.push({ type:'delete', ref:areaRef.doc(id) }));
+        templateDiff.upserts.forEach(x => ops.push({ type:'set', ref:templateRef.doc(x.id), data:x }));
+        templateDiff.deletes.forEach(id => ops.push({ type:'delete', ref:templateRef.doc(id) }));
 
         await commitBatchOperations(ops);
-        await appSettingsRef().set({ schemaVersion: DATA_SCHEMA_VERSION, updatedAt: Date.now(), uid: auth.currentUser.uid }, { merge: true });
+        await settingsRef.set({ schemaVersion: DATA_SCHEMA_VERSION, updatedAt: Date.now(), uid: saveUid }, { merge: true });
+
+        if (saveToken !== saveGeneration || auth.currentUser?.uid !== saveUid) return;
+
         lastPersistedSnapshot = nextState;
         setSyncStatus('ok', 'Sincronizado');
         updateTabTitleAndAlerts();
       }).catch(err => {
         console.error('saveData error:', err);
+        if (saveToken !== saveGeneration || auth.currentUser?.uid !== saveUid) return;
         setSyncStatus('error', 'Falha ao salvar');
         showToast('Falha ao salvar alterações: ' + (err.message || err));
       });
@@ -2419,6 +2439,10 @@
 
     // Autenticação
     auth.onAuthStateChanged(user => {
+      saveGeneration++;
+      saveQueue = Promise.resolve();
+      lastPersistedSnapshot = null;
+
       if (user) {
         document.getElementById('auth-overlay').style.display = 'none';
         document.getElementById('u-avatar').src = user.photoURL || '';
@@ -3011,11 +3035,59 @@
       showToast(`Adicionado: ${parsed.item.title}`);
     }
 
+    function buildAgendaDashboardMetrics() {
+      const today = getTodayBR();
+      const next7 = new Date();
+      next7.setDate(next7.getDate() + 7);
+      const next7Str = toLocalDateStr(next7);
+
+      const metrics = {
+        today,
+        next7Str,
+        overdueCount: 0,
+        todayCount: 0,
+        next7Count: 0,
+        doneTodayCount: 0,
+        overdueItems: [],
+        priorityItems: [],
+        nextItem: null
+      };
+
+      for (const item of S.items) {
+        const isDone = item.status === 'done';
+
+        if (isDone) {
+          if (item.date === today) metrics.doneTodayCount++;
+        } else {
+          if (item.starred) metrics.priorityItems.push(item);
+
+          if (item.date) {
+            if (item.date < today) {
+              metrics.overdueCount++;
+              metrics.overdueItems.push(item);
+            } else if (item.date === today) {
+              metrics.todayCount++;
+            } else if (item.date <= next7Str) {
+              metrics.next7Count++;
+            }
+
+            if (item.date >= today &&
+                (!metrics.nextItem || compareItemsByDateTime(item, metrics.nextItem) < 0)) {
+              metrics.nextItem = item;
+            }
+          }
+        }
+      }
+
+      return metrics;
+    }
+
     // Renderização Geral
     function render() {
+      const dashboardMetrics = buildAgendaDashboardMetrics();
       renderSidebar();
-      renderOverdueBanner();
-      renderHeader();
+      renderOverdueBanner(dashboardMetrics);
+      renderHeader(dashboardMetrics);
       
       const container = document.getElementById('items-container');
       container.innerHTML = '';
@@ -3079,10 +3151,9 @@
       else renderViewList(list, container);
     }
 
-    function renderOverdueBanner() {
+    function renderOverdueBanner(metrics = buildAgendaDashboardMetrics()) {
       const container = document.getElementById('overdue-banner-container');
-      const today = getTodayBR();
-      const overdueItems = S.items.filter(i => i.status !== 'done' && i.date && i.date < today);
+      const overdueItems = metrics.overdueItems;
 
       if (overdueItems.length === 0) {
         container.innerHTML = '';
@@ -3305,7 +3376,7 @@
       renderWithScrollPreserved();
     }
 
-    function renderHeader() {
+    function renderHeader(metrics = buildAgendaDashboardMetrics()) {
       const c = document.getElementById('header-container');
       const name = (auth.currentUser?.displayName || 'Usuário').split(' ')[0];
 
@@ -3318,17 +3389,10 @@
         const months = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
         const dateExtStr = `${days[now.getDay()]}, ${now.getDate()} de ${months[now.getMonth()]} de ${now.getFullYear()}`;
 
-        const today = getTodayBR();
-        const overdueCount = S.items.filter(i => i.status !== 'done' && i.date && i.date < today).length;
-        const todayCount = S.items.filter(i => i.status !== 'done' && i.date === today).length;
-        
-        let next7 = new Date(); next7.setDate(next7.getDate() + 7);
-        const next7Str = toLocalDateStr(next7);
-        const next7Count = S.items.filter(i => i.status !== 'done' && i.date && i.date > today && i.date <= next7Str).length;
-        const doneTodayCount = S.items.filter(i => i.status === 'done' && i.date === today).length;
+        const today = metrics.today;
+        const { overdueCount, todayCount, next7Count, doneTodayCount, priorityItems, nextItem } = metrics;
 
         // Prioridades (Estrela pendentes)
-        const priorityItems = S.items.filter(i => i.starred && i.status !== 'done');
         let prioritiesHtml = '';
         if (priorityItems.length > 0) {
           prioritiesHtml = `
@@ -3341,11 +3405,8 @@
 
         // Próximo Compromisso
         let nextItemHtml = '';
-        const pendingWithTime = S.items.filter(i => i.status !== 'done' && i.date && i.date >= today);
-        pendingWithTime.sort(compareItemsByDateTime);
 
-        if (pendingWithTime.length > 0) {
-          const nextItem = pendingWithTime[0];
+        if (nextItem) {
           let timeRemaining = '';
           if (nextItem.date === today && nextItem.time) {
             const [h, m] = nextItem.time.split(':').map(Number);
@@ -5589,10 +5650,8 @@
     }
 
     function updateTabTitleAndAlerts() {
-      const today = getTodayBR();
-      const overdueCount = S.items.filter(i => i.status !== 'done' && i.date && i.date < today).length;
-      const todayCount = S.items.filter(i => i.status !== 'done' && i.date === today).length;
-      const totalPending = overdueCount + todayCount;
+      const metrics = buildAgendaDashboardMetrics();
+      const totalPending = metrics.overdueCount + metrics.todayCount;
 
       document.title = totalPending > 0 ? `(${totalPending}) Minha Agenda Pro` : 'Minha Agenda Pro';
 
