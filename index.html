@@ -4047,35 +4047,9 @@
       renderWithScrollPreserved();
     }
 
-    function makeRepSnapshot(item) {
-      return {
-        title: item.title || '',
-        date: item.date || '',
-        desc: item.desc || '',
-        checklist: (item.checklist || []).map(c => ({ text: c.text, done: !!c.done }))
-      };
-    }
+    
 
-    function isCopyUntouched(copyItem) {
-      if (!copyItem || !copyItem.repSnapshot) return true;
-      const snap = copyItem.repSnapshot;
-
-      if ((copyItem.title || '') !== snap.title) return false;
-      if ((copyItem.date || '') !== snap.date) return false;
-      if ((copyItem.desc || '') !== snap.desc) return false;
-
-      const curChk = copyItem.checklist || [];
-      const snapChk = snap.checklist || [];
-
-      if (curChk.length !== snapChk.length) return false;
-
-      for (let i = 0; i < curChk.length; i++) {
-        if (curChk[i].text !== snapChk[i].text) return false;
-        if (!!curChk[i].done !== !!snapChk[i].done) return false;
-      }
-
-      return true;
-    }
+    
 
     function isCopyUntouched(copyItem) {
       if (!copyItem || !copyItem.repSnapshot) return true;
@@ -4162,33 +4136,9 @@
       postponeItemByDays(id, 1);
     }
 
-    function postponeItemByDays(id, days) {
-      const item = S.items.find(i => i.id === id);
-      if(item) {
-        const today = getTodayBR();
-        let baseDateStr = item.date;
-        if (!baseDateStr || baseDateStr < today) baseDateStr = today;
-        const parts = baseDateStr.split('-').map(Number);
-        let base = new Date(parts[0], parts[1] - 1, parts[2]);
-        base.setDate(base.getDate() + days);
-        const newDateStr = toLocalDateStr(base);
-        item.date = newDateStr;
-        item.repDay = parseInt(newDateStr.split('-')[2], 10);
-        saveData();
-        renderWithScrollPreserved();
-      }
-    }
+    
 
-    function postponeItemToDate(id, targetDate) {
-      if (!targetDate) return;
-      const item = S.items.find(i => i.id === id);
-      if (item) {
-        item.date = targetDate;
-        item.repDay = parseInt(targetDate.split('-')[2], 10);
-        saveData();
-        renderWithScrollPreserved();
-      }
-    }
+    
 
     function openMenuFromButton(e, id) {
       e.stopPropagation();
@@ -4414,7 +4364,7 @@
     function m9bRuleFromForm(){
       var type=document.getElementById('f-rep')?.value||'none',date=document.getElementById('f-date')?.value||getTodayBR();
       if(type==='none')return null;
-      var n=function(id){return Math.max(1,Number(document.getElementById(id)?.value||1));};
+      var n=function(id){var el=id==="m9b-interval"?document.querySelector('#m9b-recurrence-config [data-m9b-field="interval"]'):document.getElementById(id);return Math.max(1,Number(el?.value||1));};
       var endType=document.getElementById('m9b-end-type')?.value||'none';
       var r={version:2,type:type,interval:1,end:{type:endType}};
       if(endType==='date')r.end.date=document.getElementById('m9b-end-date')?.value||'';
@@ -4461,12 +4411,12 @@
       if(type==='none'){box.hidden=true;box.innerHTML='';return;}box.hidden=false;
       var date=document.getElementById('f-date')?.value||getTodayBR(),existing=m9bNormalizeRule(editingOriginalItem?.recurrenceRule||m9bLegacyRule(editingOriginalItem||{rep:type,date:date}),date)||{version:2,type:type,interval:1,end:{type:'none'}};
       var body='';
-      if(type==='daily')body='<div class="m9b-recurrence-grid"><div class="m9b-recurrence-field"><label>Repetir a cada</label><input id="m9b-interval" type="number" min="1" class="form-control" value="'+Number(existing.interval||1)+'"></div></div>';
+      if(type==='daily')body='<div class="m9b-recurrence-grid"><div class="m9b-recurrence-field"><label>Repetir a cada</label><input data-m9b-field="interval" type="number" min="1" class="form-control" value="'+Number(existing.interval||1)+'"></div></div>';
       if(type==='weekdays')body='<div class="m9b-recurrence-note">A tarefa será repetida de segunda a sexta-feira.</div>';
-      if(type==='weekly'||type==='biweekly'){var checked=existing.days||[m9bWeekday(date)??1];body='<div class="m9b-recurrence-grid"><div class="m9b-recurrence-field"><label>Repetir a cada</label><input id="m9b-interval" type="number" min="1" class="form-control" value="'+(type==='biweekly'?2:Number(existing.interval||1))+'"></div></div><div class="m9b-recurrence-field"><label>Dias da semana</label><div class="m9b-weekdays">'+[['0','Dom'],['1','Seg'],['2','Ter'],['3','Qua'],['4','Qui'],['5','Sex'],['6','Sáb']].map(function(a){return '<label class="m9b-weekday"><input type="checkbox" name="m9b-weekday" value="'+a[0]+'" '+(checked.includes(Number(a[0]))?'checked':'')+'> '+a[1]+'</label>';}).join('')+'</div></div>';}
-      if(type==='monthly'){body='<div class="m9b-recurrence-grid"><div class="m9b-recurrence-field"><label>A cada</label><input id="m9b-interval" type="number" min="1" class="form-control" value="'+Number(existing.interval||1)+'"></div><div class="m9b-recurrence-field"><label>Formato</label><select id="m9b-month-mode" class="form-control" onchange="m9bRenderRecurrenceConfig()"><option value="day" '+(existing.mode==='day'?'selected':'')+'>Dia do mês</option><option value="weekday" '+(existing.mode==='weekday'?'selected':'')+'>Posição da semana</option><option value="businessLast" '+(existing.mode==='businessLast'?'selected':'')+'>Último dia útil</option></select></div></div>';if(existing.mode==='day')body+='<div class="m9b-recurrence-field" style="margin-top:10px"><label>Dia do mês</label><input id="m9b-month-day" type="number" min="1" max="31" class="form-control" value="'+Number(existing.day||m9bDateParts(date)?.[2]||1)+'"></div>';if(existing.mode==='weekday')body+='<div class="m9b-recurrence-grid" style="margin-top:10px"><div class="m9b-recurrence-field"><label>Posição</label><select id="m9b-month-week" class="form-control"><option value="1">Primeiro</option><option value="2">Segundo</option><option value="3">Terceiro</option><option value="4">Quarto</option><option value="5">Quinto</option><option value="-1">Último</option></select></div><div class="m9b-recurrence-field"><label>Dia da semana</label><select id="m9b-month-weekday" class="form-control">'+[['0','Dom'],['1','Seg'],['2','Ter'],['3','Qua'],['4','Qui'],['5','Sex'],['6','Sáb']].map(function(a){return '<option value="'+a[0]+'">'+a[1]+'</option>';}).join('')+'</select></div></div>';}
+      if(type==='weekly'||type==='biweekly'){var checked=existing.days||[m9bWeekday(date)??1];body='<div class="m9b-recurrence-grid"><div class="m9b-recurrence-field"><label>Repetir a cada</label><input data-m9b-field="interval" type="number" min="1" class="form-control" value="'+(type==='biweekly'?2:Number(existing.interval||1))+'"></div></div><div class="m9b-recurrence-field"><label>Dias da semana</label><div class="m9b-weekdays">'+[['0','Dom'],['1','Seg'],['2','Ter'],['3','Qua'],['4','Qui'],['5','Sex'],['6','Sáb']].map(function(a){return '<label class="m9b-weekday"><input type="checkbox" name="m9b-weekday" value="'+a[0]+'" '+(checked.includes(Number(a[0]))?'checked':'')+'> '+a[1]+'</label>';}).join('')+'</div></div>';}
+      if(type==='monthly'){body='<div class="m9b-recurrence-grid"><div class="m9b-recurrence-field"><label>A cada</label><input data-m9b-field="interval" type="number" min="1" class="form-control" value="'+Number(existing.interval||1)+'"></div><div class="m9b-recurrence-field"><label>Formato</label><select id="m9b-month-mode" class="form-control" onchange="m9bRenderRecurrenceConfig()"><option value="day" '+(existing.mode==='day'?'selected':'')+'>Dia do mês</option><option value="weekday" '+(existing.mode==='weekday'?'selected':'')+'>Posição da semana</option><option value="businessLast" '+(existing.mode==='businessLast'?'selected':'')+'>Último dia útil</option></select></div></div>';if(existing.mode==='day')body+='<div class="m9b-recurrence-field" style="margin-top:10px"><label>Dia do mês</label><input id="m9b-month-day" type="number" min="1" max="31" class="form-control" value="'+Number(existing.day||m9bDateParts(date)?.[2]||1)+'"></div>';if(existing.mode==='weekday')body+='<div class="m9b-recurrence-grid" style="margin-top:10px"><div class="m9b-recurrence-field"><label>Posição</label><select id="m9b-month-week" class="form-control"><option value="1">Primeiro</option><option value="2">Segundo</option><option value="3">Terceiro</option><option value="4">Quarto</option><option value="5">Quinto</option><option value="-1">Último</option></select></div><div class="m9b-recurrence-field"><label>Dia da semana</label><select id="m9b-month-weekday" class="form-control">'+[['0','Dom'],['1','Seg'],['2','Ter'],['3','Qua'],['4','Qui'],['5','Sex'],['6','Sáb']].map(function(a){return '<option value="'+a[0]+'">'+a[1]+'</option>';}).join('')+'</select></div></div>';}
       if(type==='yearly')body='<div class="m9b-recurrence-grid"><div class="m9b-recurrence-field"><label>Mês</label><select id="m9b-year-month" class="form-control">'+['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'].map(function(x,i){return '<option value="'+(i+1)+'">'+x+'</option>';}).join('')+'</select></div><div class="m9b-recurrence-field"><label>Dia</label><input id="m9b-year-day" type="number" min="1" max="31" class="form-control" value="'+Number(existing.day||m9bDateParts(date)?.[2]||1)+'"></div></div>';
-      if(type==='custom')body='<div class="m9b-recurrence-grid"><div class="m9b-recurrence-field"><label>A cada</label><input id="m9b-interval" type="number" min="1" class="form-control" value="'+Number(existing.interval||1)+'"></div><div class="m9b-recurrence-field"><label>Unidade</label><select id="m9b-custom-unit" class="form-control"><option value="days">dia(s)</option><option value="weeks">semana(s)</option><option value="months">mês(es)</option><option value="years">ano(s)</option></select></div></div>';
+      if(type==='custom')body='<div class="m9b-recurrence-grid"><div class="m9b-recurrence-field"><label>A cada</label><input data-m9b-field="interval" type="number" min="1" class="form-control" value="'+Number(existing.interval||1)+'"></div><div class="m9b-recurrence-field"><label>Unidade</label><select id="m9b-custom-unit" class="form-control"><option value="days">dia(s)</option><option value="weeks">semana(s)</option><option value="months">mês(es)</option><option value="years">ano(s)</option></select></div></div>';
       body+='<div class="m9b-recurrence-grid" style="margin-top:10px"><div class="m9b-recurrence-field"><label>Termina</label><select id="m9b-end-type" class="form-control" onchange="m9bRenderRecurrenceConfig()"><option value="none">Sem data final</option><option value="date">Em uma data</option><option value="count">Após X ocorrências</option></select></div><div class="m9b-recurrence-field" id="m9b-end-value"></div></div>';
       box.innerHTML=body+'<div class="m9b-recurrence-summary">'+escapeHtml(m9bRuleSummary(m9bRuleFromFormSafe(type,existing,date)))+'</div>';
       var mode=document.getElementById('m9b-month-week'),wd=document.getElementById('m9b-month-weekday'),ym=document.getElementById('m9b-year-month'),cu=document.getElementById('m9b-custom-unit');
@@ -5627,28 +5577,7 @@
       return curMins >= startMins && curMins < endMins;
     }
 
-    function triggerNotification(title, body, itemId = null) {
-      if (isDndActiveNow()) return;
-
-      if ('Notification' in window && Notification.permission === 'granted') {
-        if (navigator.serviceWorker && navigator.serviceWorker.ready) {
-          navigator.serviceWorker.ready.then(reg => {
-            reg.showNotification(title, { body: body, icon: 'https://cdn-icons-png.flaticon.com/512/2360/2360875.png' });
-          });
-        } else {
-          new Notification(title, { body: body, icon: 'https://cdn-icons-png.flaticon.com/512/2360/2360875.png' });
-        }
-      }
-
-      const actions = itemId ? [
-        { label: 'Concluir', action: `setItemStatus('${itemId}', 'done')` },
-        { label: 'Adiar 10 min', action: `snoozeItem('${itemId}', 10)` },
-        { label: 'Adiar 1 h', action: `snoozeItem('${itemId}', 60)` },
-        { label: 'Abrir', action: `openItemModal(S.items.find(x=>x.id==='${itemId}'))` }
-      ] : null;
-
-      showToast(`${title}: ${body}`, actions);
-    }
+    
 
     function snoozeItem(itemId, mins) {
       try {
@@ -5670,64 +5599,7 @@
       checkPendingReminders();
     }
 
-    function checkPendingReminders() {
-      if (isDndActiveNow()) return;
-
-      const now = new Date();
-      const todayStr = toLocalDateStr(now);
-      const firedAlerts = JSON.parse(localStorage.getItem('agenda_fired_alerts') || '{}');
-      const snoozed = JSON.parse(localStorage.getItem('agenda_snoozed') || '{}');
-      const cfg = prefs.alertConfig || {};
-
-      // Verificação do Resumo Diário
-      if (cfg.dailySummaryActive && cfg.dailySummaryTime) {
-        const summaryKey = `summary_${todayStr}`;
-        if (!firedAlerts[summaryKey]) {
-          const [sH, sM] = cfg.dailySummaryTime.split(':').map(Number);
-          const summaryTime = new Date(); summaryTime.setHours(sH, sM, 0);
-          if (now >= summaryTime) {
-            const todayCount = S.items.filter(i => i.status !== 'done' && i.date === todayStr).length;
-            const overdueCount = S.items.filter(i => i.status !== 'done' && i.date && i.date < todayStr).length;
-            triggerNotification('Resumo Diário', `Hoje: ${todayCount} tarefa(s), ${overdueCount} atrasada(s).`);
-            firedAlerts[summaryKey] = true;
-          }
-        }
-      }
-
-      S.items.forEach(item => {
-        if (item.status === 'done' || !item.date || item.reminder === 'none') return;
-
-        // Snooze ativo
-        if (snoozed[item.id] && Date.now() < snoozed[item.id]) return;
-
-        const timeStr = item.time || cfg.defaultTime || '08:00';
-        const [y, m, d] = item.date.split('-').map(Number);
-        const [hr, min] = timeStr.split(':').map(Number);
-        
-        const itemDateTime = new Date(y, m - 1, d, hr, min, 0);
-
-        let offsetMs = 0;
-        if (item.reminder === '5m') offsetMs = 5 * 60000;
-        else if (item.reminder === '15m') offsetMs = 15 * 60000;
-        else if (item.reminder === '30m') offsetMs = 30 * 60000;
-        else if (item.reminder === '1h') offsetMs = 60 * 60000;
-        else if (item.reminder === '2h') offsetMs = 120 * 60000;
-        else if (item.reminder === '1d') offsetMs = 24 * 3600000;
-
-        const triggerTime = new Date(itemDateTime.getTime() - offsetMs);
-        const alertKey = `${item.id}|${item.date}|${item.reminder}`;
-
-        // Dispara se estiver na janela dos últimos 60 min e ainda não tiver disparado
-        if (now >= triggerTime && (now - triggerTime) <= 60 * 60000) {
-          if (!firedAlerts[alertKey]) {
-            triggerNotification('🔔 Lembrete de Tarefa', item.title, item.id);
-            firedAlerts[alertKey] = true;
-          }
-        }
-      });
-
-      try { localStorage.setItem('agenda_fired_alerts', JSON.stringify(firedAlerts)); } catch(e){}
-    }
+    
 
     setInterval(checkPendingReminders, 30000);
     document.addEventListener('visibilitychange', () => {
@@ -6372,30 +6244,7 @@
       return '';
     }
 
-    function addNextOccurrence(item) {
-      if (!item || !item.rep || item.rep === 'none' || !item.date) return;
-      const nextDateStr = phase3NextRecurringDate(item);
-      if (!nextDateStr) return;
-
-      const rule = phase3BuildRecurrenceRule(item);
-      const newItem = {
-        ...item,
-        id: generateId('item'),
-        status: 'todo',
-        date: nextDateStr,
-        time: item.time || '',
-        duration: phase3EnsureDurationValue(item.duration),
-        rep: item.rep,
-        repDay: rule?.dayOfMonth || Number(nextDateStr.split('-')[2]),
-        recurrenceRule: rule,
-        checklist: (item.checklist || []).map(c => ({...c, done:false})),
-        attachments: [],
-        repSourceId: item.id,
-        createdFromOccurrenceId: item.id
-      };
-      newItem.repSnapshot = makeRepSnapshot(newItem);
-      S.items.push(newItem);
-    }
+    
 
     // Adiar altera SOMENTE a ocorrência atual. A regra de recorrência permanece intacta.
     function postponeItemByDays(id, days) {
@@ -7005,7 +6854,7 @@
       const chat = document.getElementById('ai-chat');
       if (!chat) return;
       if (!aiConversation.length) {
-        chat.innerHTML = `<div class="ai-empty" id="ai-empty-state"><strong>O que você quer organizar?</strong>Pergunte sobre sua agenda, peça prioridades, crie tarefas, reagende, monte checklists ou peça um follow-up.</div>`;
+        chat.innerHTML = `<div class="ai-empty"><strong>O que você quer organizar?</strong>Pergunte sobre sua agenda, peça prioridades, crie tarefas, reagende, monte checklists ou peça um follow-up.</div>`;
         return;
       }
       chat.innerHTML = aiConversation.map(m => {
