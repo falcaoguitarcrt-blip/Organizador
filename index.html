@@ -8,16 +8,16 @@
   <meta name="theme-color" content="#2dd4bf">
   <meta name="application-name" content="Minha Agenda Pro">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
+  <link rel="apple-touch-icon" sizes="192x192" href="./icons/icon-192.png">
   <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2360/2360875.png">
   <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/2360/2360875.png">
 
   <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-storage-compat.js"></script>
 
   <style>
     :root { 
@@ -107,6 +107,19 @@
     .quick-preview-ambiguity { color:#fde68a; font-size:.8rem; margin:8px 0 12px; }
     .quick-preview-actions { display:flex; justify-content:flex-end; gap:8px; flex-wrap:wrap; }
     @media(max-width:768px){ .quick-preview-grid{grid-template-columns:1fr 1fr;} }
+
+
+    /* FASE C — Novo Meu Dia */
+    .myday-v2{display:flex;flex-direction:column;gap:14px;margin-bottom:22px}
+    .myday-hero-v2{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:22px 24px;border:1px solid var(--border);border-radius:18px;background:linear-gradient(135deg,rgba(45,212,191,.10),rgba(255,255,255,.025) 55%,rgba(139,92,246,.07));box-shadow:0 12px 32px rgba(0,0,0,.16)}
+    .myday-eyebrow,.myday-section-kicker{font-size:.67rem;font-weight:800;letter-spacing:1.15px;color:var(--accent);margin-bottom:5px}
+    .myday-title{font-size:1.55rem;font-weight:800;letter-spacing:-.025em}.myday-subtitle{font-size:.82rem;color:var(--muted);margin-top:5px}.myday-header-actions{display:flex;align-items:center;gap:8px;flex-shrink:0}.myday-primary-action{white-space:nowrap}
+    .myday-stats{display:grid;grid-template-columns:repeat(4,minmax(130px,1fr)) 1.65fr;gap:9px}
+    .myday-stat{display:flex;align-items:center;gap:10px;text-align:left;padding:13px 14px;min-height:70px;border:1px solid var(--border);border-radius:13px;background:rgba(255,255,255,.025);color:var(--text);cursor:pointer;transition:.18s}.myday-stat:hover,.myday-stat.active{border-color:var(--accent);background:rgba(45,212,191,.07)}.myday-stat strong{display:block;font-size:1.3rem;line-height:1.1}.myday-stat small{display:block;color:var(--muted);font-size:.7rem;margin-top:3px;font-weight:650}.myday-stat-icon{width:28px;height:28px;border-radius:9px;display:grid;place-items:center;font-weight:900;background:rgba(255,255,255,.06)}.myday-stat-icon.danger{color:var(--danger)}.myday-stat-icon.warning{color:var(--warning)}.myday-stat-icon.accent{color:var(--accent)}.myday-stat-icon.success{color:#10b981}
+    .myday-progress{border:1px solid var(--border);border-radius:13px;padding:12px 14px;background:rgba(255,255,255,.018);min-width:190px}.myday-progress-head{display:flex;justify-content:space-between;font-size:.74rem;color:var(--muted);margin-bottom:8px}.myday-progress-head strong{color:var(--text)}.myday-progress-track{height:7px;border-radius:99px;background:rgba(255,255,255,.07);overflow:hidden}.myday-progress-track span{display:block;height:100%;border-radius:inherit;background:var(--accent);transition:width .25s}.myday-progress small{display:block;color:var(--muted);font-size:.65rem;margin-top:7px}
+    .myday-filter-bar{display:flex;align-items:center;gap:8px;font-size:.72rem;color:var(--muted)}.myday-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}.myday-grid>div{display:flex;flex-direction:column;gap:14px}.myday-section,.myday-next-card{border:1px solid var(--border);border-radius:15px;background:var(--card);padding:15px}.myday-section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:11px}.myday-section-title{font-size:.93rem;font-weight:800}.myday-section-icon{font-size:1rem}.myday-focus-list{display:flex;flex-direction:column;gap:6px}.myday-focus-item{width:100%;display:flex;align-items:center;gap:10px;text-align:left;border:1px solid transparent;border-radius:10px;background:rgba(255,255,255,.025);padding:10px;color:var(--text);cursor:pointer}.myday-focus-item:hover{border-color:var(--border);background:rgba(255,255,255,.045)}.myday-focus-index{width:23px;height:23px;display:grid;place-items:center;border-radius:7px;background:rgba(45,212,191,.12);color:var(--accent);font-size:.72rem;font-weight:800;flex-shrink:0}.myday-focus-copy{min-width:0;flex:1}.myday-focus-copy strong{display:block;font-size:.79rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.myday-focus-copy small{display:block;color:var(--muted);font-size:.66rem;margin-top:3px}.myday-arrow{font-size:1.2rem;color:var(--muted)}.myday-next-card{display:flex;align-items:center;justify-content:space-between;gap:12px;background:linear-gradient(135deg,rgba(45,212,191,.06),rgba(255,255,255,.02))}.myday-next-title{font-size:.9rem;font-weight:800}.myday-next-meta{font-size:.7rem;color:var(--muted);margin-top:4px}.myday-empty-title{font-size:.83rem;font-weight:750;margin-bottom:4px}.myday-empty-state{padding:16px 4px;color:var(--muted);font-size:.76rem}.myday-count-pill{min-width:24px;height:24px;padding:0 7px;display:grid;place-items:center;border-radius:99px;background:rgba(45,212,191,.1);color:var(--accent);font-size:.68rem;font-weight:800}.timeline-list{display:flex;flex-direction:column}.timeline-row{display:grid;grid-template-columns:48px 10px minmax(0,1fr);gap:9px;align-items:center;width:100%;text-align:left;border:0;border-bottom:1px solid rgba(255,255,255,.05);background:none;padding:9px 2px;color:var(--text);cursor:pointer}.timeline-row:last-child{border-bottom:0}.timeline-time{font-size:.68rem;color:var(--muted);font-variant-numeric:tabular-nums}.timeline-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 4px rgba(45,212,191,.08)}.timeline-copy{min-width:0}.timeline-copy strong{display:block;font-size:.77rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.timeline-copy small{display:block;color:var(--muted);font-size:.64rem;margin-top:3px}.myday-bottom{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding-top:2px}
+    @media(max-width:1050px){.myday-stats{grid-template-columns:repeat(4,1fr)}.myday-progress{grid-column:1/-1}.myday-grid{grid-template-columns:1fr}}
+    @media(max-width:700px){.myday-hero-v2{align-items:flex-start;flex-direction:column;padding:18px}.myday-header-actions{width:100%}.myday-header-actions .btn{flex:1}.myday-stats{grid-template-columns:1fr 1fr}.myday-progress{grid-column:1/-1}.myday-title{font-size:1.3rem}}
 
     /* Banner Atrasados */
     .overdue-banner { background: rgba(239, 68, 68, 0.15); border: 1px solid var(--danger); border-radius: 10px; padding: 12px 16px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
@@ -974,42 +987,56 @@
       .item-card, .task-card, .kanban-item, .calendar-item, .week-item, .month-item { -webkit-touch-callout: none; }
     }
 
-/* M9-C — FILTRO GLOBAL DE PASTAS NA AGENDA GERAL */
-    .m9c-general-folder-filter { margin:10px 0 14px; position:relative; z-index:20; }
-    .m9c-general-folder-filter-row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
-    .m9c-general-folder-filter-btn { display:inline-flex; align-items:center; gap:7px; min-height:38px; padding:8px 12px; border:1px solid var(--border); border-radius:10px; background:rgba(255,255,255,.035); color:var(--text); cursor:pointer; font-weight:700; font-size:.78rem; }
-    .m9c-general-folder-filter-btn:hover { border-color:var(--accent); background:rgba(45,212,191,.06); }
-    .m9c-general-folder-filter-btn.active { border-color:var(--accent); background:rgba(45,212,191,.10); }
-    .m9c-general-folder-filter-panel { display:none; margin-top:7px; width:min(430px,100%); padding:10px 12px; border:1px solid var(--border); border-radius:12px; background:var(--card); box-shadow:0 12px 28px rgba(0,0,0,.24); }
-    .m9c-general-folder-filter-panel.open { display:block; }
-    .m9c-general-folder-filter-actions { display:flex; gap:6px; flex-wrap:wrap; padding-bottom:8px; margin-bottom:7px; border-bottom:1px solid var(--border); }
-    .m9c-general-folder-filter-list { display:flex; flex-direction:column; gap:2px; max-height:260px; overflow:auto; }
-    .m9c-general-folder-option { display:flex; align-items:center; gap:8px; padding:7px 4px; border-radius:7px; cursor:pointer; font-size:.76rem; }
-    .m9c-general-folder-option:hover { background:rgba(255,255,255,.035); }
-    .m9c-general-folder-option input { width:17px; height:17px; flex:0 0 17px; }
-    .m9c-general-folder-dot { width:8px; height:8px; border-radius:50%; flex:none; }
-    .m9c-general-folder-name { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-    .m9c-general-folder-count { color:var(--muted); font-size:.65rem; }
-    .m9c-general-folder-hint { color:var(--muted); font-size:.67rem; margin-top:6px; line-height:1.35; }
+
+/* =========================
+   FASE D — EXPERIÊNCIA DAS TAREFAS
+   ========================= */
+.phase-d-actions{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:10px;padding-top:9px;border-top:1px solid var(--ds-border, var(--border));}
+.phase-d-action{min-height:32px;padding:5px 9px;border:1px solid var(--ds-border, var(--border));background:var(--ds-bg-2, rgba(255,255,255,.025));color:var(--ds-text, var(--text));border-radius:8px;cursor:pointer;font-size:.76rem;transition:transform .15s ease,border-color .15s ease,background .15s ease;}
+.phase-d-action:hover{transform:translateY(-1px);border-color:var(--ds-accent, var(--accent));background:var(--ds-surface, var(--card));}
+.phase-d-action.primary{border-color:rgba(45,212,191,.45);color:var(--accent);}
+.phase-d-action.danger{color:var(--danger);}
+.phase-d-action:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+.phase-d-priority{display:inline-flex;align-items:center;gap:4px;font-size:.72rem;font-weight:700;padding:3px 7px;border-radius:999px;border:1px solid var(--border);}.phase-d-priority.high{color:#fca5a5;border-color:rgba(239,68,68,.35);background:rgba(239,68,68,.08);}
+.phase-d-priority.medium{color:#fde68a;border-color:rgba(245,158,11,.3);background:rgba(245,158,11,.07);}
+.phase-d-priority.low{color:#a7f3d0;border-color:rgba(16,185,129,.3);background:rgba(16,185,129,.07);}
+.phase-d-next{margin-top:8px;padding:8px 10px;border-left:3px solid var(--accent);background:rgba(45,212,191,.06);border-radius:0 8px 8px 0;font-size:.78rem;}
+.phase-d-next strong{display:block;color:var(--muted);font-size:.66rem;text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px;}
+.phase-d-modal-hint{font-size:.72rem;color:var(--muted);margin-top:8px;}
+@media(max-width:768px){.phase-d-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));}.phase-d-action{width:100%;}.phase-d-action:last-child{grid-column:1/-1;}}
+
+
+    /* FASE F — BUSCA, FILTROS E PRODUTIVIDADE */
+    .phase-f-quick-filters { display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin:-6px 0 14px; }
+    .phase-f-quick-label { font-size:.68rem; color:var(--muted); font-weight:700; margin-right:2px; }
+    .phase-f-chip { border:1px solid var(--border); background:rgba(255,255,255,.025); color:var(--muted); border-radius:999px; padding:6px 10px; font-size:.68rem; cursor:pointer; transition:.15s ease; }
+    .phase-f-chip:hover { border-color:var(--accent); color:var(--text); }
+    .phase-f-chip.active { border-color:var(--accent); color:var(--accent); background:rgba(45,212,191,.08); }
+    .phase-f-sort { min-width:190px; }
+    .phase-f-search-meta { display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap; margin:-6px 0 12px; font-size:.68rem; color:var(--muted); }
+    .phase-f-search-meta strong { color:var(--text); }
+    .phase-f-highlight { background:rgba(250,204,21,.18); color:inherit; border-radius:3px; padding:0 2px; }
     @media(max-width:768px){
-      .m9c-general-folder-filter-panel { width:100%; }
-      .m9c-general-folder-filter-btn { width:100%; justify-content:space-between; }
+      .phase-f-quick-filters { margin:-2px 0 12px; overflow-x:auto; flex-wrap:nowrap; padding-bottom:2px; scrollbar-width:none; }
+      .phase-f-quick-filters::-webkit-scrollbar { display:none; }
+      .phase-f-chip { white-space:nowrap; }
+      .phase-f-sort { min-width:0; width:100%; }
     }
 
 
-
-
-        /* M9-B — RECORRÊNCIA COMPLETA */
-    .m9b-recurrence-panel{margin-top:10px;padding:12px;border:1px solid var(--border);border-radius:10px;background:rgba(255,255,255,.025)}
-    .m9b-recurrence-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
-    .m9b-recurrence-field label{display:block;font-size:.72rem;color:var(--muted);margin-bottom:5px;font-weight:700}
-    .m9b-weekdays{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
-    .m9b-weekday{display:inline-flex;align-items:center;gap:5px;padding:6px 9px;border:1px solid var(--border);border-radius:18px;cursor:pointer;font-size:.75rem}
-    .m9b-weekday:has(input:checked){border-color:var(--accent);background:rgba(45,212,191,.12);color:var(--accent)}
-    .m9b-recurrence-summary{margin-top:10px;color:var(--accent);font-size:.78rem;font-weight:700}
-    .m9b-recurrence-note{margin-top:7px;color:var(--muted);font-size:.72rem;line-height:1.4}
-    @media(max-width:768px){.m9b-recurrence-panel{padding:10px}.m9b-recurrence-grid{grid-template-columns:1fr 1fr}.m9b-weekday{min-height:40px}}
-
+    /* FASE H — segurança, continuidade e observabilidade */
+    .phase-h-security-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin-top:10px; }
+    .phase-h-security-card { border:1px solid var(--border); border-radius:10px; padding:11px; background:rgba(255,255,255,.025); }
+    .phase-h-security-card strong { display:block; font-size:.82rem; margin-bottom:4px; }
+    .phase-h-security-value { font-size:.76rem; color:var(--muted); line-height:1.4; }
+    .phase-h-security-ok { color:#34d399; }
+    .phase-h-security-warn { color:#fbbf24; }
+    .phase-h-security-error { color:#fb7185; }
+    .phase-h-integrity { margin-top:10px; padding:10px 11px; border-radius:10px; background:rgba(45,212,191,.06); border:1px solid rgba(45,212,191,.18); font-size:.74rem; line-height:1.45; }
+    .phase-h-actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+    @media (max-width:640px){ .phase-h-security-grid{grid-template-columns:1fr;} .phase-h-actions .btn-sm{flex:1 1 100%;} }
+</style>
+  <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-storage-compat.js"></script>
 
     /* M9-A — VISUALIZAÇÃO POR DIA EM PASTAS ESPECÍFICAS */
     .m9-folder-day-section {
@@ -1073,27 +1100,16 @@
     }
 
 
-
-    /* Recuperação segura de dados */
-    .recovery-panel { margin-top:10px; padding:12px; border:1px solid var(--border); border-radius:10px; background:rgba(255,255,255,.02); }
-    .recovery-summary { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:8px; margin-top:10px; }
-    .recovery-stat { padding:9px 10px; border:1px solid var(--border); border-radius:8px; background:rgba(255,255,255,.025); }
-    .recovery-stat strong { display:block; font-size:1rem; color:var(--text); }
-    .recovery-stat span { display:block; margin-top:3px; color:var(--muted); font-size:.68rem; line-height:1.3; }
-    .recovery-actions { display:flex; gap:7px; flex-wrap:wrap; margin-top:10px; }
-    .recovery-candidates { margin-top:10px; max-height:340px; overflow:auto; border:1px solid var(--border); border-radius:9px; }
-    .recovery-source { padding:10px 12px; border-bottom:1px solid var(--border); }
-    .recovery-source:last-child { border-bottom:0; }
-    .recovery-source-title { font-size:.78rem; font-weight:800; margin-bottom:6px; }
-    .recovery-candidate { display:flex; align-items:flex-start; gap:8px; padding:7px 6px; border-radius:7px; cursor:pointer; }
-    .recovery-candidate:hover { background:rgba(255,255,255,.035); }
-    .recovery-candidate input { width:17px; height:17px; flex:0 0 17px; margin-top:2px; }
-    .recovery-candidate-main { min-width:0; flex:1; }
-    .recovery-candidate-title { display:block; font-size:.76rem; font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-    .recovery-candidate-meta { display:block; color:var(--muted); font-size:.65rem; line-height:1.35; margin-top:2px; }
-    .recovery-warning { margin-top:9px; padding:9px 10px; border-radius:8px; border:1px solid rgba(245,158,11,.35); background:rgba(245,158,11,.06); color:#fcd34d; font-size:.68rem; line-height:1.4; }
-    .recovery-ok { margin-top:9px; padding:9px 10px; border-radius:8px; border:1px solid rgba(16,185,129,.35); background:rgba(16,185,129,.05); color:#6ee7b7; font-size:.68rem; line-height:1.4; }
-    @media(max-width:768px){ .recovery-summary{grid-template-columns:1fr 1fr;} .recovery-candidates{max-height:300px;} }
+<style id="phase-g-styles">
+/* FASE G - planejamento e recorrência */
+.phase-g-week-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:0 0 10px}
+.phase-g-stat{border:1px solid var(--border);background:rgba(255,255,255,.018);border-radius:10px;padding:9px 10px;min-width:0}
+.phase-g-stat-label{font-size:.64rem;color:var(--muted);text-transform:uppercase;letter-spacing:.35px;font-weight:800}
+.phase-g-stat-value{font-size:.92rem;font-weight:850;margin-top:3px}
+.phase-g-stat-note{font-size:.62rem;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.phase-g-recurrence-note{margin-top:8px;padding:8px 10px;border:1px solid rgba(45,212,191,.25);background:rgba(45,212,191,.045);border-radius:9px;color:var(--muted);font-size:.7rem;line-height:1.4}
+.phase-g-recurrence-pill{display:inline-flex;align-items:center;gap:4px;padding:2px 7px;border-radius:999px;border:1px solid rgba(45,212,191,.28);background:rgba(45,212,191,.06);color:var(--accent);font-size:.63rem;font-weight:800}
+@media(max-width:768px){.phase-g-week-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.phase-g-stat{padding:8px}}
 </style>
 </head>
 <body>
@@ -1174,8 +1190,19 @@
         <div class="filter-field"><label>Tag</label><input id="filter-tag" class="form-control" placeholder="#trabalho ou trabalho" oninput="updatePhase2Filters()"></div>
         <div class="filter-field"><label>Data</label><select id="filter-date" class="form-control" onchange="updatePhase2Filters()"><option value="all">Qualquer data</option><option value="today">Hoje</option><option value="tomorrow">Amanhã</option><option value="week">Próximos 7 dias</option><option value="overdue">Atrasados</option><option value="nodate">Sem data</option></select></div>
         <div class="filter-field"><label>Recorrência</label><select id="filter-recurring" class="form-control" onchange="updatePhase2Filters()"><option value="all">Todos</option><option value="yes">Recorrentes</option><option value="no">Não recorrentes</option></select></div>
+        <div class="filter-field"><label>Ordenar por</label><select id="phase-f-sort" class="form-control phase-f-sort" onchange="phaseFSetSort(this.value)"><option value="smart">Mais relevantes</option><option value="date_asc">Data mais próxima</option><option value="date_desc">Data mais distante</option><option value="priority">Maior prioridade</option><option value="title">Título A-Z</option><option value="updated">Mais recentes</option></select></div>
       </div>
       <div class="filter-footer"><span class="filter-result-count" id="filter-result-count">Filtros inativos</span><button class="btn-sm" type="button" onclick="clearPhase2Filters()">Limpar filtros</button></div>
+    </div>
+
+
+    <div class="phase-f-quick-filters" id="phase-f-quick-filters">
+      <span class="phase-f-quick-label">Atalhos:</span>
+      <button type="button" class="phase-f-chip" data-phase-f-quick="today" onclick="phaseFQuickFilter('today')">📅 Hoje</button>
+      <button type="button" class="phase-f-chip" data-phase-f-quick="overdue" onclick="phaseFQuickFilter('overdue')">⚠ Atrasadas</button>
+      <button type="button" class="phase-f-chip" data-phase-f-quick="high" onclick="phaseFQuickFilter('high')">🔥 Alta prioridade</button>
+      <button type="button" class="phase-f-chip" data-phase-f-quick="nodate" onclick="phaseFQuickFilter('nodate')">🗓 Sem data</button>
+      <button type="button" class="phase-f-chip" data-phase-f-quick="clear" onclick="phaseFQuickFilter('clear')">✕ Limpar</button>
     </div>
 
     <div id="overdue-banner-container"></div>
@@ -1187,6 +1214,7 @@
     <div id="quick-preview" class="quick-preview" hidden></div>
 
     <div id="header-container"></div>
+    <div id="phase-f-search-meta" class="phase-f-search-meta" hidden></div>
     <div id="items-container"></div>
   </div>
 
@@ -1243,6 +1271,8 @@
               <button class="btn-sm" type="button" onclick="aiQuickPrompt('O que tenho hoje e o que é prioridade?')">Hoje</button>
               <button class="btn-sm" type="button" onclick="aiQuickPrompt('Quais tarefas estão atrasadas e o que devo priorizar primeiro?')">Atrasados</button>
               <button class="btn-sm" type="button" onclick="aiQuickPrompt('Organize minhas tarefas de amanhã e indique o que não tem horário.')">Organizar amanhã</button>
+              <button class="btn-sm" type="button" onclick="phaseIQuickPrompt('Monte um plano realista para minha semana, considerando prioridades, duração e horários já ocupados.')">📅 Planejar semana</button>
+              <button class="btn-sm" type="button" onclick="phaseIQuickPrompt('Analise minha agenda e encontre conflitos, excesso de tarefas e horários livres.')">🔎 Analisar agenda</button>
             </div>
             <button class="btn-sm" type="button" onclick="toggleAIConfig()">⚙ Conexão</button>
           </div>
@@ -1257,6 +1287,10 @@
               <label>Limite de itens</label>
               <input id="ai-context-limit" class="form-control" type="number" min="50" max="500" step="10" value="250">
             </div>
+          </div>
+          <div class="ai-config-grid phase-i-ai-options">
+            <label><span>Escopo do contexto</span><select id="ai-context-scope" class="form-control"><option value="smart">Inteligente</option><option value="current">Visão atual</option><option value="week">Próximos 7 dias</option><option value="all">Toda a agenda</option></select></label>
+            <label class="phase-i-check"><input id="ai-include-done" type="checkbox"> <span>Incluir concluídas</span></label>
           </div>
           <div class="ai-config-note">Use um backend seu que valide o token Firebase e mantenha a chave do provedor de IA no servidor. A chave da OpenAI nunca deve ficar neste HTML.</div>
           <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:8px;">
@@ -1362,18 +1396,13 @@
 
       <div class="form-group" style="display: flex; gap: 12px;">
         <div style="flex:1;">
-          <label>Repetir (Gera cópia ao concluir)</label>
-          <select id="f-rep" class="form-control" onchange="m9bRenderRecurrenceConfig()">
+          <label>Repetir</label>
+          <select id="f-rep" class="form-control">
             <option value="none">Não repete</option>
             <option value="daily">Diariamente</option>
-            <option value="weekdays">Dias úteis (seg-sex)</option>
             <option value="weekly">Semanalmente</option>
-            <option value="biweekly">Quinzenalmente</option>
             <option value="monthly">Mensalmente</option>
-            <option value="yearly">Anualmente</option>
-            <option value="custom">Personalizado</option>
           </select>
-          <div id="m9b-recurrence-config" class="m9b-recurrence-panel" hidden></div>
         </div>
         <div style="flex:1;">
           <label>🔔 Lembrete</label>
@@ -1419,9 +1448,13 @@
         <label for="f-save-template" style="margin:0; cursor:pointer;" title="Salva a estrutura deste item como um modelo acessível para futuras tarefas">Salvar como Modelo Reutilizável</label>
       </div>
 
-      <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
-        <button class="btn" style="background: transparent; color: var(--text);" onclick="attemptCloseItemModal()">Cancelar</button>
-        <button class="btn" onclick="saveItem()">Salvar Item</button>
+      <div class="phase-d-modal-hint">Atalhos: <strong>Ctrl + Enter</strong> salva · <strong>Esc</strong> fecha</div>
+      <div style="display: flex; justify-content: space-between; gap: 10px; margin-top: 10px; flex-wrap:wrap;">
+        <button class="btn-sm" type="button" onclick="phaseDSaveAndComplete()">✓ Salvar e concluir</button>
+        <div style="display:flex; justify-content:flex-end; gap:10px; flex-wrap:wrap;">
+          <button class="btn" style="background: transparent; color: var(--text);" onclick="attemptCloseItemModal()">Cancelar</button>
+          <button class="btn" onclick="saveItem()">Salvar Item</button>
+        </div>
       </div>
     </div>
   </div>
@@ -1487,6 +1520,22 @@
       </div>
 
       <div class="data-backup-box">
+        <h4>🛡️ Segurança e continuidade</h4>
+        <p>Os dados da conta são separados por usuário no Firebase. Esta área verifica a saúde local da sessão, sincronização, persistência offline e backup de emergência.</p>
+        <div class="phase-h-security-grid">
+          <div class="phase-h-security-card"><strong>🔐 Sessão</strong><div id="phase-h-session-status" class="phase-h-security-value">Verificando...</div></div>
+          <div class="phase-h-security-card"><strong>☁️ Sincronização</strong><div id="phase-h-sync-status" class="phase-h-security-value">Verificando...</div></div>
+          <div class="phase-h-security-card"><strong>📴 Continuidade offline</strong><div id="phase-h-offline-status" class="phase-h-security-value">Verificando...</div></div>
+          <div class="phase-h-security-card"><strong>💾 Backup de emergência</strong><div id="phase-h-backup-status" class="phase-h-security-value">Verificando...</div></div>
+        </div>
+        <div id="phase-h-integrity-status" class="phase-h-integrity">Integridade: verificando...</div>
+        <div class="phase-h-actions">
+          <button class="btn-sm" type="button" onclick="phaseHVerifyIntegrity()">🔎 Verificar integridade</button>
+          <button class="btn-sm" type="button" onclick="phaseHRetrySync()">☁️ Tentar sincronizar</button>
+        </div>
+      </div>
+
+      <div class="data-backup-box">
         <h4>Estrutura de dados</h4>
         <p id="data-structure-status">Carregando informações...</p>
       </div>
@@ -1497,16 +1546,7 @@
         <button class="btn-sm" style="margin-top:10px; width:100%; justify-content:center;" onclick="migrateLegacyFromButton()">↪ Migrar dados antigos para minha conta</button>
       </div>
 
-            <div class="data-backup-box">
-        <h4>🔎 Diagnóstico e recuperação segura</h4>
-        <p>Compara os dados atuais com o cache deste navegador, a estrutura antiga <code>shared/agenda-vida</code> e os backups locais. A análise inicial é somente leitura. A recuperação só adiciona registros que ainda não existem na sua conta.</p>
-        <div class="recovery-actions">
-          <button class="btn-sm" style="flex:1; justify-content:center;" onclick="scanRecoverySources()">🔎 Verificar fontes de recuperação</button>
-        </div>
-        <div id="recovery-diagnostic"></div>
-      </div>
-
-<div class="data-backup-box danger-note">
+      <div class="data-backup-box danger-note">
         <h4>Recuperação de emergência</h4>
         <p id="emergency-backup-status">Será criado automaticamente um backup local antes de migrações e restaurações importantes.</p>
         <button class="btn-sm" style="margin-top:10px; width:100%; justify-content:center;" onclick="downloadEmergencyBackup()">⬇ Baixar último backup de emergência</button>
@@ -1617,6 +1657,14 @@
     let searchTerm = '';
     let currentEditItemId = null;
     let editingOriginalItem = null;
+
+    // Ponte de compatibilidade para rotinas legadas que ainda consultam window.*.
+    // O estado real continua sendo mantido pelas variáveis lexicais acima.
+    Object.defineProperties(window, {
+      S: { configurable: true, get: () => S, set: value => { S = value; } },
+      currentEditItemId: { configurable: true, get: () => currentEditItemId, set: value => { currentEditItemId = value; } },
+      editingOriginalItem: { configurable: true, get: () => editingOriginalItem, set: value => { editingOriginalItem = value; } }
+    });
     let formStarred = false;
     let calendarWeekOffset = 0;
     let calendarMonthOffset = 0; 
@@ -1629,7 +1677,9 @@
     let isMigrating = false;
     let saveQueue = Promise.resolve();
     let lastPersistedSnapshot = null;
-    let saveGeneration = 0;
+    let phaseHLastIntegrityHash = '';
+    let phaseHLastSyncAttempt = 0;
+    let phaseHOnline = navigator.onLine !== false;
     let pendingAttachments = []; 
     let currentDashboardFilter = null;
     // M9-A — controle visual temporário das seções por dia dentro de pastas específicas.
@@ -1946,8 +1996,7 @@
       }, { merge: true });
     }
 
-    function parseLegacyState(rawSnapData) {
-      let legacy = rawSnapData;
+    function parseLegacyState(rawSnapData) {      let legacy = rawSnapData;
       if (rawSnapData?.json) {
         try { legacy = JSON.parse(rawSnapData.json); } catch (_) {}
       }
@@ -2243,9 +2292,7 @@
         duration: item.duration ?? null,
         rep: item.rep || 'none',
         repDay: item.repDay ?? null,
-        recurrenceRule: item.recurrenceRule || m9bLegacyRule(item) || null,
-        recurrenceSeriesId: item.recurrenceSeriesId || item.repSourceId || item.id || null,
-        recurrenceCount: item.recurrenceCount || 1,
+        recurrenceRule: item.recurrenceRule || null,
         reminder: item.reminder || 'none',
         priority: item.priority || 'medium',
         starred: !!item.starred,
@@ -2383,66 +2430,48 @@
 
     function saveData() {
       if (!auth.currentUser || isMigrating) return Promise.resolve();
-
       normalizeState();
-      const saveUid = auth.currentUser.uid;
-      const saveToken = saveGeneration;
       const nextState = cloneData(S);
+      const previousState = lastPersistedSnapshot ? cloneData(lastPersistedSnapshot) : { items: [], areas: [], templates: [] };
+
+      const itemDiff = getChangedDocs(previousState.items, nextState.items);
+      const areaDiff = getChangedDocs(previousState.areas, nextState.areas);
+      const templateDiff = getChangedDocs(previousState.templates, nextState.templates);
+
+      if (!itemDiff.upserts.length && !itemDiff.deletes.length && !areaDiff.upserts.length && !areaDiff.deletes.length && !templateDiff.upserts.length && !templateDiff.deletes.length) {
+        return Promise.resolve(true);
+      }
 
       setSyncStatus('syncing', 'Salvando...');
       saveQueue = saveQueue.then(async () => {
-        // Cada gravação fica vinculada ao usuário/sessão que a originou.
-        // Isso impede que uma operação pendente seja redirecionada para outra conta após logout/login.
-        if (!auth.currentUser || auth.currentUser.uid !== saveUid || saveToken !== saveGeneration) return;
-
-        const previousState = lastPersistedSnapshot || { items: [], areas: [], templates: [] };
-        const itemDiff = getChangedDocs(previousState.items, nextState.items);
-        const areaDiff = getChangedDocs(previousState.areas, nextState.areas);
-        const templateDiff = getChangedDocs(previousState.templates, nextState.templates);
-
-        if (!itemDiff.upserts.length && !itemDiff.deletes.length &&
-            !areaDiff.upserts.length && !areaDiff.deletes.length &&
-            !templateDiff.upserts.length && !templateDiff.deletes.length) {
-          return;
-        }
-
-        // As referências são fixadas para este usuário antes do primeiro await.
-        const itemRef = userCollectionRef(USER_ITEMS_COLLECTION);
-        const areaRef = userCollectionRef(USER_AREAS_COLLECTION);
-        const templateRef = userCollectionRef(USER_TEMPLATES_COLLECTION);
-        const settingsRef = appSettingsRef();
-
         const ops = [];
-        itemDiff.upserts.forEach(x => ops.push({ type:'set', ref:itemRef.doc(x.id), data:x }));
-        itemDiff.deletes.forEach(id => ops.push({ type:'delete', ref:itemRef.doc(id) }));
-        areaDiff.upserts.forEach(x => ops.push({ type:'set', ref:areaRef.doc(x.id), data:x }));
-        areaDiff.deletes.forEach(id => ops.push({ type:'delete', ref:areaRef.doc(id) }));
-        templateDiff.upserts.forEach(x => ops.push({ type:'set', ref:templateRef.doc(x.id), data:x }));
-        templateDiff.deletes.forEach(id => ops.push({ type:'delete', ref:templateRef.doc(id) }));
+        itemDiff.upserts.forEach(x => ops.push({ type:'set', ref:userCollectionRef(USER_ITEMS_COLLECTION).doc(x.id), data:x }));
+        itemDiff.deletes.forEach(id => ops.push({ type:'delete', ref:userCollectionRef(USER_ITEMS_COLLECTION).doc(id) }));
+        areaDiff.upserts.forEach(x => ops.push({ type:'set', ref:userCollectionRef(USER_AREAS_COLLECTION).doc(x.id), data:x }));
+        areaDiff.deletes.forEach(id => ops.push({ type:'delete', ref:userCollectionRef(USER_AREAS_COLLECTION).doc(id) }));
+        templateDiff.upserts.forEach(x => ops.push({ type:'set', ref:userCollectionRef(USER_TEMPLATES_COLLECTION).doc(x.id), data:x }));
+        templateDiff.deletes.forEach(id => ops.push({ type:'delete', ref:userCollectionRef(USER_TEMPLATES_COLLECTION).doc(id) }));
 
         await commitBatchOperations(ops);
-        await settingsRef.set({ schemaVersion: DATA_SCHEMA_VERSION, updatedAt: Date.now(), uid: saveUid }, { merge: true });
-
-        if (saveToken !== saveGeneration || auth.currentUser?.uid !== saveUid) return;
-
+        await appSettingsRef().set({ schemaVersion: DATA_SCHEMA_VERSION, updatedAt: Date.now(), uid: auth.currentUser.uid }, { merge: true });
         lastPersistedSnapshot = nextState;
+        try { localStorage.removeItem('agenda_sync_retry_pending'); } catch (_) {}
         setSyncStatus('ok', 'Sincronizado');
         updateTabTitleAndAlerts();
+        return true;
       }).catch(err => {
         console.error('saveData error:', err);
-        if (saveToken !== saveGeneration || auth.currentUser?.uid !== saveUid) return;
-        setSyncStatus('error', 'Falha ao salvar');
-        showToast('Falha ao salvar alterações: ' + (err.message || err));
+        phaseHLastSyncAttempt = Date.now();
+        try { localStorage.setItem('agenda_sync_retry_pending', '1'); } catch (_) {}
+        setSyncStatus('error', phaseHOnline ? 'Falha ao salvar' : 'Offline, aguardando conexão');
+        showToast(phaseHOnline ? 'Falha ao salvar alterações. A agenda mantém os dados localmente e tentará sincronizar novamente.' : 'Sem conexão. As alterações ficaram preservadas localmente e serão reenviadas quando a conexão voltar.');
+        return false;
       });
       return saveQueue;
     }
 
     // Autenticação
     auth.onAuthStateChanged(user => {
-      saveGeneration++;
-      saveQueue = Promise.resolve();
-      lastPersistedSnapshot = null;
-
       if (user) {
         document.getElementById('auth-overlay').style.display = 'none';
         document.getElementById('u-avatar').src = user.photoURL || '';
@@ -2509,91 +2538,6 @@
       const selected = Array.isArray(prefs.weeklyMainFolders) ? prefs.weeklyMainFolders : [];
       const mainId = getMainFolderId(item.area);
       return mainId ? selected.includes(mainId) : false;
-    }
-
-    // M9-C: o filtro global usa somente as pastas principais.
-    // Subpastas são herdadas automaticamente pelo getMainFolderId().
-    // A seleção é a mesma preferência local já existente da Semana.
-    function generalFolderIsVisible(item) {
-      if (currentArea !== 'all') return true;
-      return weeklyFolderIsVisible(item);
-    }
-
-    function getGeneralFolderFilteredItems(list) {
-      const source = Array.isArray(list) ? list : S.items;
-      return currentArea === 'all' ? source.filter(generalFolderIsVisible) : source;
-    }
-
-    function getGeneralFolderSelectionState() {
-      const mainFolders = getWeeklyMainFolders();
-      const allIds = mainFolders.map(f => f.id);
-      const showingAll = prefs.weeklyMainFolders === null || prefs.weeklyMainFolders === undefined;
-      const selected = showingAll ? allIds : (Array.isArray(prefs.weeklyMainFolders) ? prefs.weeklyMainFolders : []);
-      return { mainFolders, allIds, selected, showingAll };
-    }
-
-    function generalFolderFilterLabel() {
-      const state = getGeneralFolderSelectionState();
-      if (state.showingAll) return '📁 Pastas: Todas';
-      return '📁 Pastas: ' + state.selected.length + ' selecionada' + (state.selected.length === 1 ? '' : 's');
-    }
-
-    function renderGeneralFolderFilter() {
-      if (currentArea !== 'all') return '';
-      const state = getGeneralFolderSelectionState();
-      const selectedSet = new Set(state.selected);
-      const rows = state.mainFolders.map(folder => {
-        const checked = state.showingAll || selectedSet.has(folder.id);
-        const count = S.items.filter(item => item.status !== 'done' && getMainFolderId(item.area) === folder.id).length;
-        return '<label class="m9c-general-folder-option">' +
-          '<input type="checkbox" class="m9c-general-folder-check" data-folder-id="' + escapeHtml(folder.id) + '" ' + (checked ? 'checked' : '') + '>' +
-          '<span class="m9c-general-folder-dot" style="background:' + escapeHtml(folder.color || '#999') + ';"></span>' +
-          '<span class="m9c-general-folder-name">' + escapeHtml(folder.name) + '</span>' +
-          '<span class="m9c-general-folder-count">' + count + '</span>' +
-        '</label>';
-      }).join('');
-      return '<div class="m9c-general-folder-filter">' +
-        '<div class="m9c-general-folder-filter-row">' +
-          '<button type="button" class="m9c-general-folder-filter-btn ' + (!state.showingAll ? 'active' : '') + '" id="m9c-general-folder-filter-btn" aria-expanded="false">' +
-            '<span>' + escapeHtml(generalFolderFilterLabel()) + ' ▼</span>' +
-          '</button>' +
-        '</div>' +
-        '<div class="m9c-general-folder-filter-panel" id="m9c-general-folder-filter-panel">' +
-          '<div class="m9c-general-folder-filter-actions">' +
-            '<button type="button" class="btn-sm" id="m9c-general-folder-select-all">Selecionar todas</button>' +
-            '<button type="button" class="btn-sm" id="m9c-general-folder-clear">Limpar seleção</button>' +
-          '</div>' +
-          '<div class="m9c-general-folder-filter-list">' +
-            '<label class="m9c-general-folder-option">' +
-              '<input type="checkbox" id="m9c-general-folder-all" ' + (state.showingAll ? 'checked' : '') + '>' +
-              '<strong>Todas</strong>' +
-            '</label>' +
-            rows +
-          '</div>' +
-          '<div class="m9c-general-folder-hint">Selecionar uma pasta principal inclui automaticamente as respectivas subpastas.</div>' +
-        '</div>' +
-      '</div>';
-    }
-
-    function wireGeneralFolderFilter() {
-      if (currentArea !== 'all') return;
-      const btn = document.getElementById('m9c-general-folder-filter-btn');
-      const panel = document.getElementById('m9c-general-folder-filter-panel');
-      if (!btn || !panel) return;
-      btn.onclick = function(event) {
-        event.stopPropagation();
-        const open = panel.classList.toggle('open');
-        btn.setAttribute('aria-expanded', String(open));
-      };
-      const all = document.getElementById('m9c-general-folder-all');
-      if (all) all.onchange = function() { setWeeklyAllFolders(all.checked); };
-      const selectAll = document.getElementById('m9c-general-folder-select-all');
-      if (selectAll) selectAll.onclick = function() { setWeeklyAllFolders(true); };
-      const clear = document.getElementById('m9c-general-folder-clear');
-      if (clear) clear.onclick = function() { setWeeklyAllFolders(false); };
-      document.querySelectorAll('.m9c-general-folder-check').forEach(function(check) {
-        check.onchange = function() { toggleWeeklyMainFolder(check.dataset.folderId, check.checked); };
-      });
     }
 
     function toggleWeeklyMainFolder(folderId, checked) {
@@ -3035,59 +2979,11 @@
       showToast(`Adicionado: ${parsed.item.title}`);
     }
 
-    function buildAgendaDashboardMetrics() {
-      const today = getTodayBR();
-      const next7 = new Date();
-      next7.setDate(next7.getDate() + 7);
-      const next7Str = toLocalDateStr(next7);
-
-      const metrics = {
-        today,
-        next7Str,
-        overdueCount: 0,
-        todayCount: 0,
-        next7Count: 0,
-        doneTodayCount: 0,
-        overdueItems: [],
-        priorityItems: [],
-        nextItem: null
-      };
-
-      for (const item of S.items) {
-        const isDone = item.status === 'done';
-
-        if (isDone) {
-          if (item.date === today) metrics.doneTodayCount++;
-        } else {
-          if (item.starred) metrics.priorityItems.push(item);
-
-          if (item.date) {
-            if (item.date < today) {
-              metrics.overdueCount++;
-              metrics.overdueItems.push(item);
-            } else if (item.date === today) {
-              metrics.todayCount++;
-            } else if (item.date <= next7Str) {
-              metrics.next7Count++;
-            }
-
-            if (item.date >= today &&
-                (!metrics.nextItem || compareItemsByDateTime(item, metrics.nextItem) < 0)) {
-              metrics.nextItem = item;
-            }
-          }
-        }
-      }
-
-      return metrics;
-    }
-
     // Renderização Geral
     function render() {
-      const dashboardMetrics = buildAgendaDashboardMetrics();
       renderSidebar();
-      renderOverdueBanner(dashboardMetrics);
-      renderHeader(dashboardMetrics);
+      renderOverdueBanner();
+      renderHeader();
       
       const container = document.getElementById('items-container');
       container.innerHTML = '';
@@ -3097,14 +2993,9 @@
         return i.area === currentArea || getFolderConfig(i.area)?.parentId === currentArea;
       });
 
-      // M9-C: somente a Agenda Geral recebe o filtro global de pastas.
-      // Nenhum item é removido dos dados, apenas da lista de apresentação.
-      list = getGeneralFolderFilteredItems(list);
-
       if (currentArea === 'all' && currentDashboardFilter) {
         const today = getTodayBR();
-        if (currentDashboardFilter === 'overdue') list = list.filter(i => i.status !== 'done' && i.date && i.date < today);
-        else if (currentDashboardFilter === 'today') list = list.filter(i => i.status !== 'done' && i.date === today);
+        if (currentDashboardFilter === 'overdue') list = list.filter(i => i.status !== 'done' && i.date && i.date < today);        else if (currentDashboardFilter === 'today') list = list.filter(i => i.status !== 'done' && i.date === today);
         else if (currentDashboardFilter === 'next7') {
           let next7 = new Date(); next7.setDate(next7.getDate() + 7);
           const next7Str = toLocalDateStr(next7);
@@ -3114,11 +3005,14 @@
 
       if (searchTerm) {
         const term = searchTerm.toLowerCase();
-        list = list.filter(i => 
-          (i.title && i.title.toLowerCase().includes(term)) || 
-          (i.desc && i.desc.toLowerCase().includes(term)) ||
-          (i.checklist && i.checklist.some(c => c.text && c.text.toLowerCase().includes(term)))
-        );
+        list = list.filter(i => {
+          const folderName = getFolderConfig(i.area)?.name || '';
+          const tags = Array.isArray(i.tags) ? i.tags.join(' ') : '';
+          const checklist = Array.isArray(i.checklist) ? i.checklist.map(c => c?.text || '').join(' ') : '';
+          const haystack = [i.title, i.desc, i.nextAction, i.waitingFor, i.followUpDate, folderName, tags, checklist]
+            .filter(Boolean).join(' ').toLowerCase();
+          return haystack.includes(term);
+        });
       }
 
       if (list.length === 0) {
@@ -3151,9 +3045,10 @@
       else renderViewList(list, container);
     }
 
-    function renderOverdueBanner(metrics = buildAgendaDashboardMetrics()) {
+    function renderOverdueBanner() {
       const container = document.getElementById('overdue-banner-container');
-      const overdueItems = metrics.overdueItems;
+      const today = getTodayBR();
+      const overdueItems = S.items.filter(i => i.status !== 'done' && i.date && i.date < today);
 
       if (overdueItems.length === 0) {
         container.innerHTML = '';
@@ -3376,7 +3271,26 @@
       renderWithScrollPreserved();
     }
 
-    function renderHeader(metrics = buildAgendaDashboardMetrics()) {
+    function filterFolderWorkspace(type) {
+      // Mantém o filtro simples e reversível, sem criar estado persistente novo.
+      if (!currentArea || currentArea === 'all') return;
+      const today = getTodayBR();
+      const rootId = getFolderConfig(currentArea)?.parentId || currentArea;
+      let ids = new Set([rootId]);
+      S.areas.filter(a => a.parentId === rootId).forEach(a => ids.add(a.id));
+      let matches = S.items.filter(i => ids.has(i.area));
+      if (type === 'pending') matches = matches.filter(i => i.status !== 'done');
+      if (type === 'today') matches = matches.filter(i => i.status !== 'done' && i.date === today);
+      if (type === 'overdue') matches = matches.filter(i => i.status !== 'done' && i.date && i.date < today);
+      const container = document.getElementById('items-container');
+      if (!matches.length) { container.innerHTML = '<div class="empty-state"><p>Nenhuma tarefa encontrada para este indicador.</p></div>'; return; }
+      if (prefs.viewMode === 'cards') renderViewCards(matches, container);
+      else if (prefs.viewMode === 'kanban') renderViewKanban(matches, container);
+      else renderViewList(matches, container);
+      container.scrollIntoView({behavior:'smooth', block:'start'});
+    }
+
+    function renderHeader() {
       const c = document.getElementById('header-container');
       const name = (auth.currentUser?.displayName || 'Usuário').split(' ')[0];
 
@@ -3389,10 +3303,17 @@
         const months = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
         const dateExtStr = `${days[now.getDay()]}, ${now.getDate()} de ${months[now.getMonth()]} de ${now.getFullYear()}`;
 
-        const today = metrics.today;
-        const { overdueCount, todayCount, next7Count, doneTodayCount, priorityItems, nextItem } = metrics;
+        const today = getTodayBR();
+        const overdueCount = S.items.filter(i => i.status !== 'done' && i.date && i.date < today).length;
+        const todayCount = S.items.filter(i => i.status !== 'done' && i.date === today).length;
+        
+        let next7 = new Date(); next7.setDate(next7.getDate() + 7);
+        const next7Str = toLocalDateStr(next7);
+        const next7Count = S.items.filter(i => i.status !== 'done' && i.date && i.date > today && i.date <= next7Str).length;
+        const doneTodayCount = S.items.filter(i => i.status === 'done' && i.date === today).length;
 
         // Prioridades (Estrela pendentes)
+        const priorityItems = S.items.filter(i => i.starred && i.status !== 'done');
         let prioritiesHtml = '';
         if (priorityItems.length > 0) {
           prioritiesHtml = `
@@ -3405,8 +3326,11 @@
 
         // Próximo Compromisso
         let nextItemHtml = '';
+        const pendingWithTime = S.items.filter(i => i.status !== 'done' && i.date && i.date >= today);
+        pendingWithTime.sort(compareItemsByDateTime);
 
-        if (nextItem) {
+        if (pendingWithTime.length > 0) {
+          const nextItem = pendingWithTime[0];
           let timeRemaining = '';
           if (nextItem.date === today && nextItem.time) {
             const [h, m] = nextItem.time.split(':').map(Number);
@@ -3503,7 +3427,49 @@
 
       const isSubfolderActive = !!(folder && folder.parentId);
 
+      // Fase E: cada pasta principal passa a funcionar como um pequeno workspace.
+      const workspaceRootId = folder?.parentId || currentArea;
+      const workspaceRoot = getFolderConfig(workspaceRootId) || folder;
+      const workspaceItems = S.items.filter(i => i.area === workspaceRootId || i.area === currentArea || (workspaceRootId && getFolderConfig(i.area)?.parentId === workspaceRootId));
+      const workspacePending = workspaceItems.filter(i => i.status !== 'done').length;
+      const workspaceDone = workspaceItems.filter(i => i.status === 'done').length;
+      const workspaceOverdue = workspaceItems.filter(i => i.status !== 'done' && i.date && i.date < getTodayBR()).length;
+      const workspaceToday = workspaceItems.filter(i => i.status !== 'done' && i.date === getTodayBR()).length;
+      const workspaceSubfolders = workspaceRootId ? S.areas.filter(a => a.parentId === workspaceRootId).sort((a,b)=>(a.order||0)-(b.order||0)) : [];
+      const workspaceLabel = workspaceRoot ? escapeHtml(workspaceRoot.name) : 'Agenda';
+      const workspaceColor = workspaceRoot?.color || '#2dd4bf';
+      const workspaceDesc = isSubfolderActive && folder ? `Subpasta de ${workspaceLabel}` : 'Ambiente de trabalho';
+
+      const workspaceHtml = `
+        <div class="folder-workspace">
+          <div class="folder-workspace-top">
+            <div class="folder-workspace-title">
+              <span class="color-dot" style="background:${escapeHtml(workspaceColor)}"></span>
+              <div>
+                <h2>${workspaceLabel}</h2>
+                <p>${workspaceDesc} · ${workspacePending} pendente${workspacePending === 1 ? '' : 's'}</p>
+              </div>
+            </div>
+            <div class="folder-workspace-actions">
+              ${!isSubfolderActive ? `<button class="btn-sm" onclick="openItemModal(); event.stopPropagation();">＋ Nova tarefa</button>` : ''}
+              ${!isSubfolderActive ? `<button class="btn-sm" onclick="openFolderModal('${workspaceRootId}'); event.stopPropagation();">＋ Subpasta</button>` : ''}
+              <button class="btn-sm" onclick="setArea('all'); event.stopPropagation();">← Agenda geral</button>
+            </div>
+          </div>
+          <div class="folder-workspace-stats">
+            <div class="folder-workspace-stat" onclick="filterFolderWorkspace('pending')"><div class="folder-workspace-stat-num">${workspacePending}</div><div class="folder-workspace-stat-label">Pendentes</div></div>
+            <div class="folder-workspace-stat" onclick="filterFolderWorkspace('today')"><div class="folder-workspace-stat-num" style="color:var(--warning);">${workspaceToday}</div><div class="folder-workspace-stat-label">Hoje</div></div>
+            <div class="folder-workspace-stat" onclick="filterFolderWorkspace('overdue')"><div class="folder-workspace-stat-num" style="color:var(--danger);">${workspaceOverdue}</div><div class="folder-workspace-stat-label">Atrasadas</div></div>
+            <div class="folder-workspace-stat"><div class="folder-workspace-stat-num" style="color:#10b981;">${workspaceDone}</div><div class="folder-workspace-stat-label">Concluídas</div></div>
+            <div class="folder-workspace-stat"><div class="folder-workspace-stat-num">${workspaceSubfolders.length}</div><div class="folder-workspace-stat-label">Subpastas</div></div>
+          </div>
+          ${workspaceSubfolders.length ? `<div class="folder-workspace-subfolders">${workspaceSubfolders.map(sf => `<button class="chip ${sf.id===currentArea?'active':''}" onclick="setArea('${sf.id}'); event.stopPropagation();"><span class="color-dot" style="background:${escapeHtml(sf.color||'#ccc')}"></span>${escapeHtml(sf.name)}</button>`).join('')}</div>` : ''}
+          <div class="folder-workspace-footer"><span>Você está em <strong>${escapeHtml(folder?.name || workspaceRoot?.name || 'Agenda')}</strong></span><span>Use os atalhos acima para trabalhar sem sair deste ambiente.</span></div>
+        </div>
+      `;
+
       c.innerHTML = `
+        ${workspaceHtml}
         <div class="folder-header-area">
           <div class="folder-title">${titleText}</div>
           <div class="folder-actions">
@@ -3668,7 +3634,7 @@
         const before = phase6HistorySnapshot(item);
         item.checklist[chkIdx].done = !item.checklist[chkIdx].done;
         const after = phase6HistorySnapshot(item);
-        saveData().then(() => recordItemHistory(itemId, { action:'checklist', source:'user', before, after }));
+        saveData().then(ok => { if (ok) recordItemHistory(itemId, { action:'checklist', source:'user', before, after }); });
         renderWithScrollPreserved();
       }
     }
@@ -3684,7 +3650,7 @@
             if (!item.checklist) item.checklist = [];
             item.checklist.push({ text: txt, done: false });
             const after = phase6HistorySnapshot(item);
-            saveData().then(() => recordItemHistory(itemId, { action:'checklist', source:'user', before, after }));
+            saveData().then(ok => { if (ok) recordItemHistory(itemId, { action:'checklist', source:'user', before, after }); });
             renderWithScrollPreserved();
           }
         }
@@ -3697,7 +3663,6 @@
       savePrefs();
       renderWithScrollPreserved();
     }
-
 
     // M9-A — visualização focada no dia para pastas específicas.
     // Somente reorganiza a apresentação; não filtra/exclui/modifica itens.
@@ -4029,8 +3994,7 @@
       const todayStr = getTodayBR();
       const now = new Date();
       const baseDate = new Date(now.getFullYear(), now.getMonth() + calendarMonthOffset, 1);
-      
-      const monthYearStr = baseDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+            const monthYearStr = baseDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
       const capitalizedMonth = monthYearStr.charAt(0).toUpperCase() + monthYearStr.slice(1);
 
       c.innerHTML = `
@@ -4133,19 +4097,7 @@
       return true;
     }
 
-
-    function addNextOccurrence(item){
-      if(!item)return;
-      var rule=m9bGetRule(item);if(!rule||!item.date)return;
-      var nextDate=m9bNextDate(item,rule);if(!nextDate)return;
-      var series=m9bSeriesId(item)||item.id;
-      var duplicate=S.items.some(function(x){return x.id!==item.id&&(x.recurrenceSeriesId===series||x.repSourceId===item.id)&&x.date===nextDate&&x.status!=='done';});
-      if(duplicate)return;
-      var count=Number(item.recurrenceCount||1)+1;
-      if(rule.end?.type==='count'&&count>Number(rule.end.count||1))return;
-      var next={...item,id:generateId('item'),status:'todo',date:nextDate,recurrenceRule:m9bCloneRule(rule),recurrenceSeriesId:series,recurrenceCount:count,rep:rule.type==='weekly'&&Number(rule.interval)===2?'biweekly':rule.type,checklist:(item.checklist||[]).map(function(c){return {...c,done:false};}),attachments:[],repSourceId:item.id};
-      next.repSnapshot=makeRepSnapshot(next);S.items.push(next);
-    }
+    
 
     function removeUntouchedCopy(sourceId) {
       const copyIndex = S.items.findIndex(i => i.repSourceId === sourceId && i.status === 'todo');
@@ -4309,7 +4261,7 @@
       const before = phase6HistorySnapshot(item);
       item.starred = !item.starred;
       const after = phase6HistorySnapshot(item);
-      saveData().then(() => recordItemHistory(id, { action:'star', source:'user', before, after }));
+      saveData().then(ok => { if (ok) recordItemHistory(id, { action:'star', source:'user', before, after }); });
       renderWithScrollPreserved();
     }
 
@@ -4319,7 +4271,7 @@
       const before = phase6HistorySnapshot(item);
       item.area = areaId;
       const after = phase6HistorySnapshot(item);
-      saveData().then(() => recordItemHistory(id, { action:'move', source:'user', before, after }));
+      saveData().then(ok => { if (ok) recordItemHistory(id, { action:'move', source:'user', before, after }); });
       renderWithScrollPreserved();
     }
 
@@ -4336,7 +4288,7 @@
         delete clone.repSourceId;
         delete clone.repSnapshot;
         S.items.push(clone);
-        saveData().then(() => recordItemHistory(clone.id, { action:'create', source:'user', before:null, after:phase6HistorySnapshot(clone) }));
+        saveData().then(ok => { if (ok) recordItemHistory(clone.id, { action:'create', source:'user', before:null, after:phase6HistorySnapshot(clone) }); });
         renderWithScrollPreserved();
       }
     }
@@ -4371,7 +4323,7 @@
         const before = phase6HistorySnapshot(item);
         deleteItemAttachments(item);
         S.items = S.items.filter(i => i.id !== id);
-        saveData().then(() => recordItemHistory(id, { action:'delete', source:'user', before, after:null }));
+        saveData().then(ok => { if (ok) recordItemHistory(id, { action:'delete', source:'user', before, after:null }); });
         renderWithScrollPreserved();
       }
     }
@@ -4389,126 +4341,6 @@
       }
     }
 
-
-    // M9-B — motor de recorrência completo e compatível com regras antigas.
-    function m9bDateParts(s){var p=String(s||'').split('-').map(Number);return p.length===3&&p.every(Number.isFinite)?p:null;}
-    function m9bDate(s){var p=m9bDateParts(s);return p?new Date(p[0],p[1]-1,p[2]):null;}
-    function m9bWeekday(s){var d=m9bDate(s);return d?d.getDay():null;}
-    function m9bCloneRule(r){if(!r||typeof r!=='object')return null;try{return JSON.parse(JSON.stringify(r));}catch(_){return null;}}
-    function m9bLegacyRule(item){
-      if(!item||!item.rep||item.rep==='none')return null;
-      var date=item.date||getTodayBR(), wd=m9bWeekday(date);
-      if(item.rep==='daily')return {version:2,type:'daily',interval:1,end:{type:'none'}};
-      if(item.rep==='weekly')return {version:2,type:'weekly',interval:1,days:[wd===null?1:wd],end:{type:'none'}};
-      if(item.rep==='monthly')return {version:2,type:'monthly',interval:1,mode:'day',day:Number(item.repDay||m9bDateParts(date)?.[2]||1),end:{type:'none'}};
-      if(item.rep==='biweekly')return {version:2,type:'weekly',interval:2,days:[wd===null?1:wd],end:{type:'none'}};
-      if(item.rep==='weekdays')return {version:2,type:'weekdays',interval:1,end:{type:'none'}};
-      return null;
-    }
-    function m9bGetRule(item){return m9bCloneRule(item?.recurrenceRule)||m9bLegacyRule(item);}
-    function m9bNormalizeRule(r,date){
-      if(!r||r.type==='none')return null;
-      r=m9bCloneRule(r)||{};r.version=2;r.interval=Math.max(1,Number(r.interval||1));
-      r.end=r.end&&['none','date','count'].includes(r.end.type)?r.end:{type:'none'};
-      if(r.end.type==='count')r.end.count=Math.max(1,Number(r.end.count||1));
-      if(r.end.type==='date'&&!/^\\d{4}-\\d{2}-\\d{2}$/.test(r.end.date||''))r.end={type:'none'};
-      if(r.type==='weekly'){r.days=Array.isArray(r.days)&&r.days.length?[...new Set(r.days.map(Number).filter(function(x){return x>=0&&x<=6;}))].sort(function(a,b){return a-b;}):[m9bWeekday(date)??1];}
-      if(r.type==='monthly'){
-        r.mode=r.mode||'day';
-        if(r.mode==='day')r.day=Math.min(31,Math.max(1,Number(r.day||m9bDateParts(date)?.[2]||1)));
-        if(r.mode==='weekday'){r.week=[1,2,3,4,5,-1].includes(Number(r.week))?Number(r.week):1;r.weekday=Number.isFinite(Number(r.weekday))?Number(r.weekday):(m9bWeekday(date)??1);}
-      }
-      if(r.type==='yearly'){var p=m9bDateParts(date);r.month=Math.min(12,Math.max(1,Number(r.month||p?.[1]||1)));r.day=Math.min(31,Math.max(1,Number(r.day||p?.[2]||1)));}
-      if(r.type==='custom')r.unit=['days','weeks','months','years'].includes(r.unit)?r.unit:'days';
-      return r;
-    }
-    function m9bRuleFromForm(){
-      var type=document.getElementById('f-rep')?.value||'none',date=document.getElementById('f-date')?.value||getTodayBR();
-      if(type==='none')return null;
-      var n=function(id){var el=id==="m9b-interval"?document.querySelector('#m9b-recurrence-config [data-m9b-field="interval"]'):document.getElementById(id);return Math.max(1,Number(el?.value||1));};
-      var endType=document.getElementById('m9b-end-type')?.value||'none';
-      var r={version:2,type:type,interval:1,end:{type:endType}};
-      if(endType==='date')r.end.date=document.getElementById('m9b-end-date')?.value||'';
-      if(endType==='count')r.end.count=n('m9b-end-count');
-      if(type==='daily')r.interval=n('m9b-interval');
-      if(type==='weekdays'){}
-      if(type==='weekly'||type==='biweekly'){r.interval=type==='biweekly'?2:n('m9b-interval');r.type='weekly';r.days=[...document.querySelectorAll('input[name=m9b-weekday]:checked')].map(function(x){return Number(x.value);});if(!r.days.length)r.days=[m9bWeekday(date)??1];}
-      if(type==='monthly'){r.interval=n('m9b-interval');r.mode=document.getElementById('m9b-month-mode')?.value||'day';if(r.mode==='day')r.day=n('m9b-month-day');if(r.mode==='weekday'){r.week=Number(document.getElementById('m9b-month-week')?.value||1);r.weekday=Number(document.getElementById('m9b-month-weekday')?.value||1);}}
-      if(type==='yearly'){r.month=Number(document.getElementById('m9b-year-month')?.value||1);r.day=n('m9b-year-day');}
-      if(type==='custom'){r.interval=n('m9b-interval');r.unit=document.getElementById('m9b-custom-unit')?.value||'days';}
-      return m9bNormalizeRule(r,date);
-    }
-    function m9bRuleSummary(r){
-      if(!r)return 'Não repete';
-      var names=['domingo','segunda','terça','quarta','quinta','sexta','sábado'],s='';
-      if(r.type==='daily')s=r.interval===1?'Todos os dias':'A cada '+r.interval+' dias';
-      else if(r.type==='weekdays')s='Dias úteis (segunda a sexta)';
-      else if(r.type==='weekly')s=(r.interval===2?'A cada 2 semanas':'A cada '+r.interval+' semana(s)')+' · '+(r.days||[]).map(function(x){return names[x];}).join(', ');
-      else if(r.type==='monthly'){if(r.mode==='day')s=(r.interval===1?'Todo mês':'A cada '+r.interval+' meses')+' · dia '+r.day;else if(r.mode==='businessLast')s=(r.interval===1?'Todo mês':'A cada '+r.interval+' meses')+' · último dia útil';else s=(r.interval===1?'Todo mês':'A cada '+r.interval+' meses')+' · '+r.week+'ª ocorrência · '+names[r.weekday];}
-      else if(r.type==='yearly')s='Todo ano · '+String(r.day).padStart(2,'0')+'/'+String(r.month).padStart(2,'0');
-      else if(r.type==='custom')s='A cada '+r.interval+' '+({days:'dia(s)',weeks:'semana(s)',months:'mês(es)',years:'ano(s)'})[r.unit];
-      if(r.end?.type==='date')s+=' · até '+formatBR(r.end.date,'');
-      if(r.end?.type==='count')s+=' · '+r.end.count+' ocorrências';
-      return s;
-    }
-    function m9bNthWeekday(y,m,week,wd){if(week===-1){var d=new Date(y,m+1,0);while(d.getDay()!==wd)d.setDate(d.getDate()-1);return d;}var first=new Date(y,m,1),off=(wd-first.getDay()+7)%7,d2=new Date(y,m,1+off+(week-1)*7);return d2.getMonth()===m?d2:null;}
-    function m9bLastBusinessDay(y,m){var d=new Date(y,m+1,0);while(d.getDay()===0||d.getDay()===6)d.setDate(d.getDate()-1);return d;}
-    function m9bNextDate(item,r){
-      if(!item?.date||!r)return '';
-      var cur=item.date,base=m9bDate(cur);if(!base)return '';
-      var limit=r.end?.type==='date'?r.end.date:'';
-      if(r.end?.type==='count'&&Number(item.recurrenceCount||1)>=Number(r.end.count||1))return '';
-      var valid=function(d){var s=toLocalDateStr(d);return (!limit||s<=limit)?s:'';};
-      if(r.type==='daily'){var d=new Date(base);d.setDate(d.getDate()+Math.max(1,Number(r.interval||1)));return valid(d);}
-      if(r.type==='weekdays'){var wd=new Date(base);for(var i=0;i<14;i++){wd.setDate(wd.getDate()+1);if(wd.getDay()>=1&&wd.getDay()<=5)return valid(wd);}return '';}
-      if(r.type==='weekly'){var days=r.days?.length?r.days:[base.getDay()],interval=Math.max(1,Number(r.interval||1)),weekStart=new Date(base);weekStart.setDate(base.getDate()-base.getDay());for(var j=1;j<=interval*7+7;j++){var x=new Date(base);x.setDate(base.getDate()+j);if(!days.includes(x.getDay()))continue;var diff=Math.floor((x-weekStart)/604800000);if(diff%interval===0)return valid(x);}return '';}
-      if(r.type==='monthly'){var y=base.getFullYear(),m=base.getMonth(),step=Math.max(1,Number(r.interval||1));for(var k=1;k<=240;k++){var total=m+k*step,yy=y+Math.floor(total/12),mm=((total%12)+12)%12,d3;if(r.mode==='businessLast')d3=m9bLastBusinessDay(yy,mm);else if(r.mode==='weekday')d3=m9bNthWeekday(yy,mm,Number(r.week||1),Number(r.weekday||1));else d3=new Date(yy,mm,Math.min(Number(r.day||1),new Date(yy,mm+1,0).getDate()));if(d3){var ss=valid(d3);if(ss&&ss>cur)return ss;}}return '';}
-      if(r.type==='yearly'){var yr=base.getFullYear()+1;for(var q=0;q<100;q++){var yy2=yr+q,mm2=Number(r.month||1)-1,dd2=Math.min(Number(r.day||1),new Date(yy2,mm2+1,0).getDate()),d4=new Date(yy2,mm2,dd2),s4=valid(d4);if(s4)return s4;}return '';}
-      if(r.type==='custom'){var dc=new Date(base),nn=Math.max(1,Number(r.interval||1));if(r.unit==='days')dc.setDate(dc.getDate()+nn);else if(r.unit==='weeks')dc.setDate(dc.getDate()+nn*7);else if(r.unit==='months')dc.setMonth(dc.getMonth()+nn);else dc.setFullYear(dc.getFullYear()+nn);return valid(dc);}
-      return '';
-    }
-    function m9bRenderRecurrenceConfig(){
-      var box=document.getElementById('m9b-recurrence-config'),type=document.getElementById('f-rep')?.value||'none';if(!box)return;
-      if(type==='none'){box.hidden=true;box.innerHTML='';return;}box.hidden=false;
-      var date=document.getElementById('f-date')?.value||getTodayBR(),existing=m9bNormalizeRule(editingOriginalItem?.recurrenceRule||m9bLegacyRule(editingOriginalItem||{rep:type,date:date}),date)||{version:2,type:type,interval:1,end:{type:'none'}};
-      var body='';
-      if(type==='daily')body='<div class="m9b-recurrence-grid"><div class="m9b-recurrence-field"><label>Repetir a cada</label><input data-m9b-field="interval" type="number" min="1" class="form-control" value="'+Number(existing.interval||1)+'"></div></div>';
-      if(type==='weekdays')body='<div class="m9b-recurrence-note">A tarefa será repetida de segunda a sexta-feira.</div>';
-      if(type==='weekly'||type==='biweekly'){var checked=existing.days||[m9bWeekday(date)??1];body='<div class="m9b-recurrence-grid"><div class="m9b-recurrence-field"><label>Repetir a cada</label><input data-m9b-field="interval" type="number" min="1" class="form-control" value="'+(type==='biweekly'?2:Number(existing.interval||1))+'"></div></div><div class="m9b-recurrence-field"><label>Dias da semana</label><div class="m9b-weekdays">'+[['0','Dom'],['1','Seg'],['2','Ter'],['3','Qua'],['4','Qui'],['5','Sex'],['6','Sáb']].map(function(a){return '<label class="m9b-weekday"><input type="checkbox" name="m9b-weekday" value="'+a[0]+'" '+(checked.includes(Number(a[0]))?'checked':'')+'> '+a[1]+'</label>';}).join('')+'</div></div>';}
-      if(type==='monthly'){body='<div class="m9b-recurrence-grid"><div class="m9b-recurrence-field"><label>A cada</label><input data-m9b-field="interval" type="number" min="1" class="form-control" value="'+Number(existing.interval||1)+'"></div><div class="m9b-recurrence-field"><label>Formato</label><select id="m9b-month-mode" class="form-control" onchange="m9bRenderRecurrenceConfig()"><option value="day" '+(existing.mode==='day'?'selected':'')+'>Dia do mês</option><option value="weekday" '+(existing.mode==='weekday'?'selected':'')+'>Posição da semana</option><option value="businessLast" '+(existing.mode==='businessLast'?'selected':'')+'>Último dia útil</option></select></div></div>';if(existing.mode==='day')body+='<div class="m9b-recurrence-field" style="margin-top:10px"><label>Dia do mês</label><input id="m9b-month-day" type="number" min="1" max="31" class="form-control" value="'+Number(existing.day||m9bDateParts(date)?.[2]||1)+'"></div>';if(existing.mode==='weekday')body+='<div class="m9b-recurrence-grid" style="margin-top:10px"><div class="m9b-recurrence-field"><label>Posição</label><select id="m9b-month-week" class="form-control"><option value="1">Primeiro</option><option value="2">Segundo</option><option value="3">Terceiro</option><option value="4">Quarto</option><option value="5">Quinto</option><option value="-1">Último</option></select></div><div class="m9b-recurrence-field"><label>Dia da semana</label><select id="m9b-month-weekday" class="form-control">'+[['0','Dom'],['1','Seg'],['2','Ter'],['3','Qua'],['4','Qui'],['5','Sex'],['6','Sáb']].map(function(a){return '<option value="'+a[0]+'">'+a[1]+'</option>';}).join('')+'</select></div></div>';}
-      if(type==='yearly')body='<div class="m9b-recurrence-grid"><div class="m9b-recurrence-field"><label>Mês</label><select id="m9b-year-month" class="form-control">'+['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'].map(function(x,i){return '<option value="'+(i+1)+'">'+x+'</option>';}).join('')+'</select></div><div class="m9b-recurrence-field"><label>Dia</label><input id="m9b-year-day" type="number" min="1" max="31" class="form-control" value="'+Number(existing.day||m9bDateParts(date)?.[2]||1)+'"></div></div>';
-      if(type==='custom')body='<div class="m9b-recurrence-grid"><div class="m9b-recurrence-field"><label>A cada</label><input data-m9b-field="interval" type="number" min="1" class="form-control" value="'+Number(existing.interval||1)+'"></div><div class="m9b-recurrence-field"><label>Unidade</label><select id="m9b-custom-unit" class="form-control"><option value="days">dia(s)</option><option value="weeks">semana(s)</option><option value="months">mês(es)</option><option value="years">ano(s)</option></select></div></div>';
-      body+='<div class="m9b-recurrence-grid" style="margin-top:10px"><div class="m9b-recurrence-field"><label>Termina</label><select id="m9b-end-type" class="form-control" onchange="m9bRenderRecurrenceConfig()"><option value="none">Sem data final</option><option value="date">Em uma data</option><option value="count">Após X ocorrências</option></select></div><div class="m9b-recurrence-field" id="m9b-end-value"></div></div>';
-      box.innerHTML=body+'<div class="m9b-recurrence-summary">'+escapeHtml(m9bRuleSummary(m9bRuleFromFormSafe(type,existing,date)))+'</div>';
-      var mode=document.getElementById('m9b-month-week'),wd=document.getElementById('m9b-month-weekday'),ym=document.getElementById('m9b-year-month'),cu=document.getElementById('m9b-custom-unit');
-      if(mode)mode.value=String(existing.week||1);if(wd)wd.value=String(existing.weekday??(m9bWeekday(date)??1));if(ym)ym.value=String(existing.month||m9bDateParts(date)?.[1]||1);if(cu)cu.value=existing.unit||'days';
-      var et=document.getElementById('m9b-end-type');if(et)et.value=existing.end?.type||'none';
-      var ev=document.getElementById('m9b-end-value');if(ev){if(et.value==='date')ev.innerHTML='<label>Data final</label><input id="m9b-end-date" type="date" class="form-control" value="'+(existing.end?.date||'')+'">';else if(et.value==='count')ev.innerHTML='<label>Quantidade</label><input id="m9b-end-count" type="number" min="1" class="form-control" value="'+Number(existing.end?.count||1)+'">';else ev.innerHTML='';}
-    }
-    function m9bRuleFromFormSafe(type,existing,date){try{return m9bRuleFromForm();}catch(_){return m9bNormalizeRule(existing,date);}}
-    function m9bSeriesId(item){return item?.recurrenceSeriesId||item?.repSourceId||item?.id||'';}
-
-    function m9bRecurrenceEquivalent(a,b){return JSON.stringify(m9bNormalizeRule(a||null,'')||null)===JSON.stringify(m9bNormalizeRule(b||null,'')||null);}
-    function m9bApplyRuleToSeries(item,rule,mode){
-      var series=m9bSeriesId(item);if(!series)return;
-      S.items.forEach(function(x){
-        if(!x||m9bSeriesId(x)!==series)return;
-        if(mode==='future' && x.date<item.date)return;
-        if(mode==='future' && x.id===item.id)return;
-        if(mode==='all' || mode==='future'){
-          x.recurrenceRule=m9bCloneRule(rule);
-          x.rep=rule?.type==='weekly'&&Number(rule.interval)===2?'biweekly':(rule?.type||'none');
-        }
-      });
-    }
-    function m9bAskRecurrenceScope(){
-      var answer=window.prompt('Esta tarefa faz parte de uma série recorrente.\n\nDigite 1 para alterar somente esta ocorrência.\nDigite 2 para alterar esta e as próximas.\nDigite 3 para alterar todas da série.\n\nCancelar mantém a alteração sem salvar.','2');
-      if(answer===null)return 'cancel';
-      if(answer==='1')return 'one';
-      if(answer==='2')return 'future';
-      if(answer==='3')return 'all';
-      showToast('Opção inválida. A alteração não foi salva.');return 'cancel';
-    }
     function getFormState() {
       const chkRows = document.querySelectorAll('#checklist-container .checklist-row');
       const checklist = Array.from(chkRows).map(r => ({
@@ -4524,7 +4356,6 @@
         date: document.getElementById('f-date').value,
         time: document.getElementById('f-time').value,
         rep: document.getElementById('f-rep').value,
-        recurrenceRule: m9bRuleFromFormSafe(document.getElementById('f-rep').value, m9bGetRule(editingOriginalItem || {rep:'none'}), document.getElementById('f-date').value || getTodayBR()),
         reminder: document.getElementById('f-reminder').value,
         starred: formStarred,
         checklist: checklist
@@ -4830,8 +4661,7 @@
         document.getElementById('f-status').value = item.status || 'todo';
         document.getElementById('f-date').value = item.date || '';
         document.getElementById('f-time').value = item.time || '';
-        document.getElementById('f-rep').value = item.rep === 'biweekly' ? 'biweekly' : (item.rep || (item.recurrenceRule?.type || 'none'));
-        m9bRenderRecurrenceConfig();
+        document.getElementById('f-rep').value = item.rep || 'none';
         document.getElementById('f-reminder').value = item.reminder || 'none';
         formStarred = !!item.starred;
 
@@ -4849,7 +4679,6 @@
         document.getElementById('f-date').value = getTodayBR();
         document.getElementById('f-time').value = '';
         document.getElementById('f-rep').value = 'none';
-        m9bRenderRecurrenceConfig();
         document.getElementById('f-reminder').value = 'none';
         formStarred = false;
       }
@@ -5039,7 +4868,6 @@
         date: itemDate,
         time: document.getElementById('f-time').value,
         rep: document.getElementById('f-rep').value,
-        recurrenceRule: m9bRuleFromFormSafe(document.getElementById('f-rep').value, m9bGetRule(editingOriginalItem || {rep:'none'}), itemDate || getTodayBR()),
         reminder: document.getElementById('f-reminder').value,
         repDay: calculatedRepDay,
         starred: formStarred,
@@ -5065,19 +4893,6 @@
       }
 
       if (targetItem) {
-        var oldRule = editingOriginalItem ? m9bGetRule(editingOriginalItem) : null;
-        var newRule = editedFields.recurrenceRule || null;
-        if (editingOriginalItem && oldRule && !m9bRecurrenceEquivalent(oldRule, newRule)) {
-          var scope = m9bAskRecurrenceScope();
-          if (scope === 'cancel') { closeItemModal(); return; }
-          targetItem.recurrenceSeriesId = targetItem.recurrenceSeriesId || m9bSeriesId(editingOriginalItem);
-          if (scope === 'one') {
-            targetItem.recurrenceRule = null;
-            targetItem.rep = 'none';
-          } else {
-            m9bApplyRuleToSeries(targetItem, newRule, scope);
-          }
-        }
         if (oldStatus !== 'done' && newStatus === 'done') addNextOccurrence(targetItem);
         else if (oldStatus === 'done' && newStatus !== 'done') removeUntouchedCopy(targetItem.id);
       }
@@ -5094,7 +4909,12 @@
 
       // Exclui anexos removidos somente depois que a tarefa foi salva com sucesso.
       const attachmentsToDelete = pendingAttachmentDeletes.slice();
-      await saveData();
+      const saveOk = await saveData();
+      if (!saveOk) {
+        showToast('As alterações ficaram preservadas localmente, mas ainda não foram sincronizadas.');
+        renderWithScrollPreserved();
+        return false;
+      }
       for (const att of attachmentsToDelete) {
         try {
           if (att.storagePath) await storage.ref(att.storagePath).delete();
@@ -5123,6 +4943,98 @@
       renderWithScrollPreserved();
     }
 
+
+    // =========================
+    // FASE H — Segurança, continuidade e recuperação
+    // =========================
+    async function phaseHSha256(text) {
+      try {
+        if (!window.crypto?.subtle) return '';
+        const data = new TextEncoder().encode(text);
+        const hash = await crypto.subtle.digest('SHA-256', data);
+        return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2,'0')).join('');
+      } catch (_) { return ''; }
+    }
+
+    async function phaseHVerifyIntegrity(showToastResult = true) {
+      const el = document.getElementById('phase-h-integrity-status');
+      const snapshot = cloneData(normalizeState());
+      const canonical = JSON.stringify(snapshot);
+      const hash = await phaseHSha256(canonical);
+      const persisted = lastPersistedSnapshot ? JSON.stringify(lastPersistedSnapshot) : '';
+      const persistedHash = persisted ? await phaseHSha256(persisted) : '';
+      phaseHLastIntegrityHash = hash;
+      const changed = !!persistedHash && hash !== persistedHash;
+      if (el) {
+        el.innerHTML = changed
+          ? `Integridade: <strong class="phase-h-security-warn">alterações locais ainda não sincronizadas</strong><br>Fingerprint atual: <code>${hash ? hash.slice(0,16) + '…' : 'indisponível'}</code>`
+          : `Integridade: <strong class="phase-h-security-ok">estado local consistente</strong><br>Fingerprint: <code>${hash ? hash.slice(0,16) + '…' : 'indisponível'}</code>`;
+      }
+      if (showToastResult) showToast(changed ? 'Há alterações locais aguardando sincronização.' : 'Verificação de integridade concluída.');
+      return { hash, changed };
+    }
+
+    function phaseHUpdateSecurityPanel() {
+      const user = auth.currentUser;
+      const session = document.getElementById('phase-h-session-status');
+      const sync = document.getElementById('phase-h-sync-status');
+      const offline = document.getElementById('phase-h-offline-status');
+      const backup = document.getElementById('phase-h-backup-status');
+      if (session) {
+        if (user) session.innerHTML = `<span class="phase-h-security-ok">Autenticada</span><br>${escapeHtml(user.email || 'conta Google')}`;
+        else session.innerHTML = '<span class="phase-h-security-error">Não autenticada</span>';
+      }
+      if (sync) {
+        const pending = localStorage.getItem('agenda_sync_retry_pending') === '1';
+        sync.innerHTML = pending
+          ? '<span class="phase-h-security-warn">Sincronização pendente</span><br>Nova tentativa disponível.'
+          : '<span class="phase-h-security-ok">Sem pendências locais</span><br>Estado persistido normalmente.';
+      }
+      if (offline) {
+        offline.innerHTML = phaseHOnline
+          ? '<span class="phase-h-security-ok">Conexão disponível</span><br>Persistência offline do Firebase está habilitada.'
+          : '<span class="phase-h-security-warn">Modo offline</span><br>Alterações serão reenviadas quando voltar.';      }
+      if (backup) {
+        const created = localStorage.getItem('agenda_emergency_backup_created_at');
+        backup.innerHTML = created
+          ? `<span class="phase-h-security-ok">Disponível</span><br>${new Date(created).toLocaleString('pt-BR')}`
+          : '<span class="phase-h-security-warn">Ainda não criado</span><br>Será criado antes de operações críticas.';
+      }
+      phaseHVerifyIntegrity(false);
+    }
+
+    async function phaseHRetrySync() {
+      if (!auth.currentUser) { showToast('Entre na conta para sincronizar.'); return; }
+      if (!phaseHOnline) { showToast('Sem conexão no momento. A tentativa será feita automaticamente quando a conexão voltar.'); return; }
+      phaseHLastSyncAttempt = Date.now();
+      try {
+        setSyncStatus('syncing', 'Sincronizando...');
+        const saveOk = await saveData();
+        if (!saveOk) throw new Error('A sincronização não foi concluída.');
+        const stillPending = localStorage.getItem('agenda_sync_retry_pending') === '1';
+        if (stillPending) throw new Error('A sincronização não foi concluída.');
+        setSyncStatus('ok', 'Sincronizado');
+        phaseHUpdateSecurityPanel();
+        showToast('Sincronização concluída.');
+      } catch (e) {
+        setSyncStatus('error', 'Falha ao sincronizar');
+        phaseHUpdateSecurityPanel();
+        showToast('Não foi possível sincronizar agora: ' + (e.message || e));
+      }
+    }
+
+    window.addEventListener('online', () => {
+      phaseHOnline = true;
+      setSyncStatus('syncing', 'Conexão restaurada, sincronizando...');
+      if (auth.currentUser && dataReady) {
+        saveData().finally(() => phaseHUpdateSecurityPanel());
+      }
+    });
+    window.addEventListener('offline', () => {
+      phaseHOnline = false;
+      setSyncStatus('error', 'Offline, dados preservados localmente');
+      phaseHUpdateSecurityPanel();
+    });
 
     // Backup / restauração
     async function buildBackupPayload() {
@@ -5234,261 +5146,13 @@
       } catch (e) { showToast('Não foi possível baixar o backup de emergência: ' + e.message); }
     }
 
-    // Recuperação segura: leitura comparativa e inclusão somente de registros ausentes.
-    let recoveryCandidates = [];
-    let recoveryScanReport = null;
-
-    function recoveryCollectionLabel(type) {
-      return type === 'items' ? 'Tarefas' : type === 'areas' ? 'Pastas' : 'Modelos';
-    }
-
-    function recoveryItemLabel(type, value) {
-      if (type === 'items') return value?.title || ('Tarefa ' + String(value?.id || '').slice(0,12));
-      return value?.name || value?.title || (recoveryCollectionLabel(type) + ' ' + String(value?.id || '').slice(0,12));
-    }
-
-    function recoverySafeLocalJson(key) {
-      try {
-        const raw = localStorage.getItem(key);
-        return raw ? JSON.parse(raw) : null;
-      } catch (_) {
-        return null;
-      }
-    }
-
-    function recoveryNormalizeSource(payload) {
-      if (!payload || typeof payload !== 'object') return null;
-      const data = payload.data && typeof payload.data === 'object' ? payload.data : payload;
-      return {
-        items: Array.isArray(data.items) ? cloneData(data.items) : [],
-        areas: Array.isArray(data.areas) ? cloneData(data.areas) : [],
-        templates: Array.isArray(data.templates) ? cloneData(data.templates) : []
-      };
-    }
-
-    async function recoveryReadUserCache() {
-      try {
-        const [itemsSnap, areasSnap, templatesSnap] = await Promise.all([
-          userCollectionRef(USER_ITEMS_COLLECTION).get({ source: 'cache' }),
-          userCollectionRef(USER_AREAS_COLLECTION).get({ source: 'cache' }),
-          userCollectionRef(USER_TEMPLATES_COLLECTION).get({ source: 'cache' })
-        ]);
-        return {
-          items: itemsSnap.docs.map(d => ({ id:d.id, ...d.data() })),
-          areas: areasSnap.docs.map(d => ({ id:d.id, ...d.data() })),
-          templates: templatesSnap.docs.map(d => ({ id:d.id, ...d.data() }))
-        };
-      } catch (err) {
-        console.warn('Recovery user cache read failed:', err);
-        return null;
-      }
-    }
-
-    async function recoveryReadLegacy(source) {
-      try {
-        const snap = await db.collection('shared').doc('agenda-vida').get({ source });
-        return snap.exists ? parseLegacyState(snap.data()) : null;
-      } catch (err) {
-        console.warn('Recovery legacy read failed (' + source + '):', err);
-        return null;
-      }
-    }
-
-    function recoveryAddSource(sourceLabel, state, current, seen, candidates, conflicts, sourceCounts) {
-      if (!state) return;
-      ['items','areas','templates'].forEach(type => {
-        const rows = Array.isArray(state[type]) ? state[type] : [];
-        sourceCounts[sourceLabel][type] = rows.length;
-        const currentMap = new Map((current[type] || []).filter(x => x?.id).map(x => [String(x.id), x]));
-        rows.forEach(row => {
-          if (!row?.id) return;
-          const id = String(row.id);
-          const key = type + '::' + id;
-          const existingCurrent = currentMap.get(id);
-          if (existingCurrent) {
-            if (JSON.stringify(existingCurrent) !== JSON.stringify(row)) {
-              conflicts.push({ source:sourceLabel, type, id, title:recoveryItemLabel(type,row) });
-            }
-            return;
-          }
-          if (seen.has(key)) {
-            const existingCandidate = seen.get(key);
-            existingCandidate.sources = Array.from(new Set([...(existingCandidate.sources || []), sourceLabel]));
-            return;
-          }
-          const candidate = { key, source:sourceLabel, sources:[sourceLabel], type, id:row.id, value:cloneData(row) };
-          seen.set(key, candidate);
-          candidates.push(candidate);
-        });
-      });
-    }
-
-    function recoveryRenderReport(report) {
-      const box = document.getElementById('recovery-diagnostic');
-      if (!box) return;
-      recoveryCandidates = report.candidates || [];
-      const sourceNames = {
-        userCache:'Cache deste navegador',
-        legacyServer:'Legado no Firebase',
-        legacyCache:'Legado em cache',
-        emergencyBackup:'Backup de emergência local',
-        legacySnapshot:'Snapshot local do legado'
-      };
-      const sourceStats = Object.entries(report.sourceCounts).map(([source,counts]) =>
-        '<div class="recovery-stat"><strong>' +
-        (counts.items + counts.areas + counts.templates) +
-        '</strong><span>' + escapeHtml(sourceNames[source] || source) +
-        '<br>Tarefas: ' + counts.items + ' · Pastas: ' + counts.areas + ' · Modelos: ' + counts.templates +
-        '</span></div>'
-      ).join('');
-      let html = '<div class="recovery-panel">';
-      html += '<div style="font-size:.76rem;font-weight:800;">Resultado da análise</div>';
-      html += '<div class="recovery-summary">' +
-        '<div class="recovery-stat"><strong>' + report.current.items.length + '</strong><span>Tarefas atuais na conta</span></div>' +
-        '<div class="recovery-stat"><strong>' + report.current.areas.length + '</strong><span>Pastas atuais na conta</span></div>' +
-        '<div class="recovery-stat"><strong>' + report.candidates.length + '</strong><span>Registros ausentes candidatos</span></div>' +
-        '<div class="recovery-stat"><strong>' + report.conflicts.length + '</strong><span>Conflitos detectados, não sobrescritos</span></div>' +
-      '</div>';
-      html += '<div class="recovery-summary">' + sourceStats + '</div>';
-      if (!report.candidates.length) {
-        html += '<div class="recovery-ok">Nenhum registro ausente foi encontrado nas fontes acessíveis. Nada foi alterado.</div>';
-      } else {
-        html += '<div class="recovery-warning">Os candidatos abaixo estão ausentes da conta atual. Selecionar e recuperar somente adicionará esses registros. Conflitos por mesmo ID não são sobrescritos.</div>';
-        html += '<div class="recovery-actions">' +
-          '<button class="btn-sm" onclick="recoverySelectAll(true)">Selecionar todos</button>' +
-          '<button class="btn-sm" onclick="recoverySelectAll(false)">Limpar seleção</button>' +
-          '<button class="btn-sm" style="margin-left:auto;" onclick="recoverSelectedCandidates()">↪ Recuperar selecionados</button>' +
-        '</div>';
-        html += '<div class="recovery-candidates">';
-        const groups = {};
-        report.candidates.forEach((candidate, idx) => {
-          const group = candidate.type;
-          if (!groups[group]) groups[group] = [];
-          groups[group].push({candidate,idx});
-        });
-        ['items','areas','templates'].forEach(type => {
-          if (!groups[type]?.length) return;
-          html += '<div class="recovery-source">';
-          html += '<div class="recovery-source-title">' + recoveryCollectionLabel(type) + ' (' + groups[type].length + ')</div>';
-          html += groups[type].map(({candidate,idx}) => {
-            const value=candidate.value||{};
-            const dateMeta = type==='items' ? [value.date||'',value.time||'',value.status||''].filter(Boolean).join(' · ') : '';
-            return '<label class="recovery-candidate">' +
-              '<input type="checkbox" class="recovery-candidate-check" data-recovery-index="' + idx + '">' +
-              '<span class="recovery-candidate-main">' +
-              '<span class="recovery-candidate-title">' + escapeHtml(recoveryItemLabel(type,value)) + '</span>' +
-              '<span class="recovery-candidate-meta">Fonte: ' + escapeHtml(candidate.sources.join(' + ')) +
-              (dateMeta ? ' · ' + escapeHtml(dateMeta) : '') +
-              '</span></span></label>';
-          }).join('');
-          html += '</div>';
-        });
-        html += '</div>';
-      }
-      html += '</div>';
-      box.innerHTML = html;
-    }
-
-    function recoverySelectAll(checked) {
-      document.querySelectorAll('.recovery-candidate-check').forEach(el => { el.checked = !!checked; });
-    }
-
-    async function scanRecoverySources() {
-      if (!auth.currentUser) {
-        showToast('Entre na conta antes de verificar fontes de recuperação.');
-        return;
-      }
-      const box=document.getElementById('recovery-diagnostic');
-      if (box) box.innerHTML='<div class="recovery-panel">🔎 Analisando conta atual, cache do navegador, legado e backups locais. Nenhum dado será alterado.</div>';
-      try {
-        const current = await readCollectionState();
-        const userCache = await recoveryReadUserCache();
-        const legacyServer = await recoveryReadLegacy('server');
-        const legacyCache = await recoveryReadLegacy('cache');
-        const emergencyBackup = recoveryNormalizeSource(recoverySafeLocalJson('agenda_emergency_backup_v2'));
-        const legacySnapshot = recoveryNormalizeSource(recoverySafeLocalJson('agenda_legacy_recovery_snapshot_v3'));
-        const sourceCounts = {
-          userCache:{items:0,areas:0,templates:0},
-          legacyServer:{items:0,areas:0,templates:0},
-          legacyCache:{items:0,areas:0,templates:0},
-          emergencyBackup:{items:0,areas:0,templates:0},
-          legacySnapshot:{items:0,areas:0,templates:0}
-        };
-        const candidates=[], conflicts=[], seen=new Map();
-        recoveryAddSource('userCache',userCache,current,seen,candidates,conflicts,sourceCounts);
-        recoveryAddSource('legacyServer',legacyServer,current,seen,candidates,conflicts,sourceCounts);
-        recoveryAddSource('legacyCache',legacyCache,current,seen,candidates,conflicts,sourceCounts);
-        recoveryAddSource('emergencyBackup',emergencyBackup,current,seen,candidates,conflicts,sourceCounts);
-        recoveryAddSource('legacySnapshot',legacySnapshot,current,seen,candidates,conflicts,sourceCounts);
-        recoveryScanReport={ current, candidates, conflicts, sourceCounts };
-        recoveryRenderReport(recoveryScanReport);
-      } catch (err) {
-        console.error('Recovery scan error:',err);
-        if (box) box.innerHTML='<div class="recovery-panel recovery-warning">Não foi possível concluir a análise: '+escapeHtml(err.message||String(err))+'</div>';
-      }
-    }
-
-    async function recoverSelectedCandidates() {
-      const checks=Array.from(document.querySelectorAll('.recovery-candidate-check')).filter(el=>el.checked);
-      const selected=checks.map(el=>recoveryCandidates[Number(el.dataset.recoveryIndex)]).filter(Boolean);
-      if (!selected.length) {
-        showToast('Nenhum registro foi selecionado para recuperação.');
-        return;
-      }
-      const summary=selected.reduce((acc,c)=>{acc[c.type]=(acc[c.type]||0)+1;return acc;},{});
-      const label=Object.entries(summary).map(([type,n])=>n+' '+recoveryCollectionLabel(type).toLowerCase()).join(', ');
-      if (!confirm('Recuperar '+label+'? Esta operação NÃO exclui nada e NÃO sobrescreve registros que já existam na conta.')) return;
-      try {
-        if (!createEmergencyBackup('before-safe-selected-recovery')) {
-          throw new Error('Não foi possível criar o backup local de emergência. A recuperação foi interrompida.');
-        }
-        const current=await readCollectionState();
-        const ids={
-          items:new Set((current.items||[]).map(x=>String(x.id))),
-          areas:new Set((current.areas||[]).map(x=>String(x.id))),
-          templates:new Set((current.templates||[]).map(x=>String(x.id)))
-        };
-        const toRecover={items:[],areas:[],templates:[]};
-        selected.forEach(candidate=>{
-          const type=candidate.type, value=cloneData(candidate.value);
-          if (!value?.id || ids[type].has(String(value.id))) return;
-          toRecover[type].push(value);
-          ids[type].add(String(value.id));
-        });
-        const attachmentReport=await migrateLegacyAttachments(toRecover);
-        const ops=[];
-        toRecover.items.forEach(item=>ops.push({type:'set',ref:userCollectionRef(USER_ITEMS_COLLECTION).doc(item.id),data:item}));
-        toRecover.areas.forEach(area=>ops.push({type:'set',ref:userCollectionRef(USER_AREAS_COLLECTION).doc(area.id),data:area}));
-        toRecover.templates.forEach(template=>ops.push({type:'set',ref:userCollectionRef(USER_TEMPLATES_COLLECTION).doc(template.id),data:template}));
-        if (!ops.length) {
-          showToast('Nenhum registro continuava ausente. Nada foi alterado.');
-          return;
-        }
-        setSyncStatus('syncing','Recuperando registros selecionados com segurança...');
-        await commitBatchOperations(ops);
-        const fresh=await readCollectionState();
-        S={items:fresh.items,areas:fresh.areas,templates:fresh.templates};
-        normalizeState();
-        lastPersistedSnapshot=cloneData(S);
-        dataReady=true;
-        render();
-        updateTabTitleAndAlerts();
-        setSyncStatus('ok','Sincronizado');
-        showToast('Recuperação concluída. Adicionados: '+ops.length+' registro(s). Anexos migrados: '+attachmentReport.migrated+' · Falhas: '+attachmentReport.failed+'.');
-        await scanRecoverySources();
-      } catch (err) {
-        console.error('Selected recovery error:',err);
-        setSyncStatus('error','Falha na recuperação');
-        showToast('A recuperação não foi concluída: '+(err.message||String(err)));
-      }
-    }
-
     function openDataModal() {
       const status = document.getElementById('data-structure-status');
       const emergency = document.getElementById('emergency-backup-status');
       if (status) status.innerHTML = `Conta: <strong>${escapeHtml(auth.currentUser?.email || 'não autenticada')}</strong><br>Modelo: <strong>v${DATA_SCHEMA_VERSION}</strong><br>Tarefas: <strong>${S.items.length}</strong> · Pastas: <strong>${S.areas.length}</strong> · Modelos: <strong>${S.templates.length}</strong>`;
       const created = localStorage.getItem('agenda_emergency_backup_created_at');
       if (emergency) emergency.textContent = created ? `Último backup de emergência local: ${new Date(created).toLocaleString('pt-BR')}.` : 'Nenhum backup de emergência local foi criado ainda.';
+      phaseHUpdateSecurityPanel();
       document.getElementById('data-modal').classList.add('open');
     }
 
@@ -5650,8 +5314,10 @@
     }
 
     function updateTabTitleAndAlerts() {
-      const metrics = buildAgendaDashboardMetrics();
-      const totalPending = metrics.overdueCount + metrics.todayCount;
+      const today = getTodayBR();
+      const overdueCount = S.items.filter(i => i.status !== 'done' && i.date && i.date < today).length;
+      const todayCount = S.items.filter(i => i.status !== 'done' && i.date === today).length;
+      const totalPending = overdueCount + todayCount;
 
       document.title = totalPending > 0 ? `(${totalPending}) Minha Agenda Pro` : 'Minha Agenda Pro';
 
@@ -5728,7 +5394,7 @@
         });
 
         if(deletedIds.has(currentArea)) currentArea = 'all';
-        saveData().then(async () => { for (const op of historyOps) await recordItemHistory(op.itemId, op); });
+        saveData().then(async ok => { if (ok) for (const op of historyOps) await recordItemHistory(op.itemId, op); });
         renderWithScrollPreserved();
       }
     }
@@ -5861,12 +5527,92 @@
       });
     }
 
+    // =========================
+    // FASE F — BUSCA, FILTROS E PRODUTIVIDADE
+    // =========================
+    let phaseFSort = (prefs && prefs.phaseFSort) || 'smart';
+    document.addEventListener('DOMContentLoaded', () => {
+      const sort=document.getElementById('phase-f-sort');
+      if(sort) sort.value=phaseFSort;
+    });
+
+    function phaseFSetSort(value) {
+      phaseFSort = value || 'smart';
+      try { prefs.phaseFSort = phaseFSort; savePrefs(); } catch (_) {}
+      renderWithScrollPreserved();
+    }
+
+    function phaseFQuickFilter(type) {
+      const set = (id, value) => { const el=document.getElementById(id); if(el) el.value=value; };
+      phase2Filters = { status:'all', priority:'all', folder:'all', tag:'', date:'all', recurring:'all' };
+      if (type === 'today') set('filter-date','today');
+      else if (type === 'overdue') set('filter-date','overdue');
+      else if (type === 'high') set('filter-priority','high');
+      else if (type === 'nodate') set('filter-date','nodate');
+      else if (type === 'clear') { clearPhase2Filters(); phaseFUpdateQuickChips(); return; }
+      phase2GetFilterValues();
+      phaseFUpdateQuickChips();
+      renderWithScrollPreserved();
+      updateFilterResultCount();
+    }
+
+    function phaseFUpdateQuickChips() {
+      const active =
+        (phase2Filters.date === 'today' ? 'today' : '') ||
+        (phase2Filters.date === 'overdue' ? 'overdue' : '') ||
+        (phase2Filters.priority === 'high' ? 'high' : '') ||
+        (phase2Filters.date === 'nodate' ? 'nodate' : '');
+      document.querySelectorAll('[data-phase-f-quick]').forEach(btn => btn.classList.toggle('active', btn.dataset.phaseFQuick === active));
+    }
+
+    function phaseFSortList(list) {
+      const arr = [...(list || [])];
+      const priorityRank = { high:0, medium:1, low:2 };
+      if (phaseFSort === 'title') return arr.sort((a,b)=>(a.title||'').localeCompare(b.title||'', 'pt-BR', {sensitivity:'base'}));
+      if (phaseFSort === 'priority') return arr.sort((a,b)=>(priorityRank[a.priority||'medium']??1)-(priorityRank[b.priority||'medium']??1) || compareItemsByDateTime(a,b));
+      if (phaseFSort === 'date_desc') return arr.sort((a,b)=>compareItemsByDateTime(b,a));
+      if (phaseFSort === 'updated') return arr.sort((a,b)=>String(b.updatedAt||b.createdAt||'').localeCompare(String(a.updatedAt||a.createdAt||'')));
+      if (phaseFSort === 'date_asc') return arr.sort(compareItemsByDateTime);
+      return arr.sort((a,b) => {
+        const today=getTodayBR();
+        const score = item => {
+          let n=0;
+          if(item.status!=='done' && item.date && item.date<today) n-=500;
+          if(item.date===today) n-=300;
+          n += (priorityRank[item.priority||'medium']||1)*20;
+          if(!item.date) n+=100;
+          return n;
+        };
+        return score(a)-score(b) || compareItemsByDateTime(a,b);
+      });
+    }
+
+    function phaseFUpdateSearchMeta() {
+      const el=document.getElementById('phase-f-search-meta');
+      if(!el) return;
+      const q=(searchTerm||'').trim();
+      const filtered=getPhase2FilteredList(S.items);
+      const activeFilters=Object.entries(phase2Filters).filter(([k,v])=>k==='tag'?!!v:v!=='all').length;
+      const hasContext=!!q || !!currentDashboardFilter || currentArea!=='all' || activeFilters>0;
+      if(!hasContext){ el.hidden=true; el.innerHTML=''; return; }
+      el.hidden=false;
+      const context = q ? `Busca: <strong>“${escapeHtml(q)}”</strong>` : 'Busca: <strong>todos</strong>';
+      el.innerHTML=`<span>${context} · <strong>${filtered.length}</strong> resultado(s)</span><span>Ordenação: <strong>${phaseFSort==='smart'?'Relevância':phaseFSort==='date_asc'?'Data próxima':phaseFSort==='date_desc'?'Data distante':phaseFSort==='priority'?'Prioridade':phaseFSort==='title'?'Título':'Mais recentes'}</strong></span>`;
+    }
+
+    const _phaseFGetFiltered = getPhase2FilteredList;
+    getPhase2FilteredList = function(list) {
+      return phaseFSortList(_phaseFGetFiltered(list));
+    };
+
     function updateFilterResultCount() {
       const el = document.getElementById('filter-result-count');
       if (!el) return;
       const list = getPhase2FilteredList(S.items);
       const active = Object.entries(phase2Filters).some(([k,v]) => k === 'tag' ? !!v : v !== 'all');
       el.textContent = active ? `${list.length} item(ns) correspondem aos filtros` : 'Filtros inativos';
+      phaseFUpdateQuickChips();
+      phaseFUpdateSearchMeta();
     }
 
     // Wrap visualizações para aplicar os filtros sem alterar a lógica central de renderização.
@@ -5909,6 +5655,48 @@
       if (idx >= 0) return html.slice(0, idx) + extra + html.slice(idx);
       return html;
     };
+
+    // Fase D: enriquecimento dos cards sem reescrever o renderer original.
+    const _phaseDBaseCardHtml = buildCardHtml;
+    buildCardHtml = function(item) {
+      const html = _phaseDBaseCardHtml(item);
+      const isDone = item.status === 'done';
+      const priority = item.priority || 'medium';
+      const priorityLabel = priority === 'high' ? 'Alta' : (priority === 'low' ? 'Baixa' : 'Média');
+      const next = item.nextAction ? `<div class="phase-d-next"><strong>Próxima ação</strong>${escapeHtml(item.nextAction)}</div>` : '';
+      const actions = `
+        <div class="phase-d-actions" onclick="event.stopPropagation()">
+          <button class="phase-d-action primary" type="button" onclick="phaseDToggleComplete('${item.id}', event)">${isDone ? '↩ Reabrir' : '✓ Concluir'}</button>
+          ${!isDone ? `<button class="phase-d-action" type="button" onclick="phaseDPostpone('${item.id}',1,event)">+1 dia</button>` : ''}
+          <button class="phase-d-action" type="button" onclick="phaseDCyclePriority('${item.id}',event)">Prioridade: ${priorityLabel}</button>
+          <button class="phase-d-action" type="button" onclick="phaseDDuplicate('${item.id}',event)">Duplicar</button>
+          <button class="phase-d-action" type="button" onclick="openItemModal(S.items.find(x=>x.id==='${item.id}'));event.stopPropagation();">Editar</button>
+        </div>`;
+      const marker='\n          </div>\n        </div>\n      ';
+      const idx=html.lastIndexOf(marker);
+      if(idx<0) return html;
+      return html.slice(0,idx)+next+actions+html.slice(idx);
+    };
+
+    function phaseDSetStatus(id,status){
+      const item=S.items.find(i=>i.id===id); if(!item) return;
+      const before=phase6HistorySnapshot(item); item.status=status;
+      saveData().then(ok=>{if(ok) recordItemHistory(id,{action:'status',source:'user',before,after:phase6HistorySnapshot(item)});});
+      renderWithScrollPreserved();
+      showToast(status==='done'?'Tarefa concluída.':'Tarefa reaberta.');
+    }
+    function phaseDToggleComplete(id,e){ if(e)e.stopPropagation(); const item=S.items.find(i=>i.id===id); if(!item)return; phaseDSetStatus(id,item.status==='done'?'todo':'done'); }
+    function phaseDPostpone(id,days,e){ if(e)e.stopPropagation(); const item=S.items.find(i=>i.id===id); if(!item)return; const before=phase6HistorySnapshot(item); const base=item.date?new Date(item.date+'T12:00:00'):new Date(); base.setDate(base.getDate()+days); item.date=base.toISOString().slice(0,10); saveData().then(ok=>{if(ok) recordItemHistory(id,{action:'postpone',source:'user',before,after:phase6HistorySnapshot(item)});}); renderWithScrollPreserved(); showToast(`Tarefa adiada em ${days} dia${days===1?'':'s'}.`); }
+    function phaseDCyclePriority(id,e){ if(e)e.stopPropagation(); const item=S.items.find(i=>i.id===id); if(!item)return; const order=['low','medium','high']; const next=order[(order.indexOf(item.priority||'medium')+1)%order.length]; const before=phase6HistorySnapshot(item); item.priority=next; saveData().then(ok=>{if(ok) recordItemHistory(id,{action:'priority',source:'user',before,after:phase6HistorySnapshot(item)});}); renderWithScrollPreserved(); }
+    function phaseDDuplicate(id,e){
+      if(e)e.stopPropagation(); const source=S.items.find(i=>i.id===id); if(!source)return;
+      const copy=cloneData(source); copy.id=generateId('item'); copy.title=`${source.title} (cópia)`; copy.status='todo'; copy.starred=false; copy.checklist=(source.checklist||[]).map(c=>({...c,done:false})); copy.attachments=[];
+      S.items.push(copy); saveData().then(ok=>{if(ok) recordItemHistory(copy.id,{action:'create',source:'duplicate',before:null,after:phase6HistorySnapshot(copy)});}); renderWithScrollPreserved(); showToast('Tarefa duplicada.');
+    }
+    async function phaseDSaveAndComplete(){
+      const btns=[...document.querySelectorAll('#item-modal button')]; btns.forEach(b=>{if(b.textContent.includes('Salvar e concluir')){b.disabled=true;}});
+      try{ await saveItem(); const id=currentEditItemId; if(id){ const item=S.items.find(i=>i.id===id); if(item && item.status!=='done'){ phaseDSetStatus(id,'done'); } } } finally { btns.forEach(b=>{if(b.textContent.includes('Salvar e concluir'))b.disabled=false;}); }
+    }
 
     function handleSimpleCardClick(e, id) {
       if (blockNextClick) { blockNextClick = false; return; }
@@ -5978,18 +5766,6 @@
     };
 
     // Templates enriquecidos.
-    const _p2AddNextOccurrence = addNextOccurrence;
-    addNextOccurrence = function(item) {
-      const before = new Set(S.items.map(i => i.id));
-      _p2AddNextOccurrence(item);
-      const created = S.items.find(i => !before.has(i.id));
-      if (created) {
-        created.priority = item.priority || 'medium';
-        created.tags = normalizeTags(item.tags || []);
-        created.nextAction = item.nextAction || '';
-      }
-    };
-
     const _p2SaveTemplate = saveItemAsTemplatePrompt;
     saveItemAsTemplatePrompt = function(id) {
       const item = S.items.find(i => i.id === id);
@@ -6111,7 +5887,9 @@
       // Na Agenda geral, quando a Semana está ativa, o filtro de pastas
       // também controla os indicadores do Meu Dia. Em pastas específicas,
       // ou nas outras visualizações, nenhum filtro semanal é aplicado.
-      const dashboardItems = getGeneralFolderFilteredItems(S.items);
+      const dashboardItems = (currentArea === 'all' && prefs.viewMode === 'calendar')
+        ? S.items.filter(i => weeklyFolderIsVisible(i))
+        : S.items;
       const pending = dashboardItems.filter(i => i.status !== 'done');
       const overdue = pending.filter(i => i.date && i.date < today);
       const todayItems = pending.filter(i => i.date === today).sort(compareItemsByDateTime);
@@ -6149,15 +5927,28 @@
       const todayCount = data.todayItems.length;
       const next7End = new Date(now); next7End.setDate(next7End.getDate()+7);
       const next7Count = data.pending.filter(i => i.date && i.date > data.today && i.date <= toLocalDateStr(next7End)).length;
-      const doneToday = getGeneralFolderFilteredItems(S.items)
-        .filter(i=>i.status==='done' && i.date===data.today).length;
+      const doneToday = S.items.filter(i=>i.status==='done' && i.date===data.today).length;
+      const scheduledToday = data.timedToday.length;
+      const completionBase = todayCount + doneToday;
+      const completionPct = completionBase ? Math.round((doneToday / completionBase) * 100) : 0;
       const activeFilter = currentDashboardFilter;
-      const focusHtml = data.focus.length ? `<div class="myday-focus"><div class="myday-focus-title">🎯 Foco sugerido</div>${data.focus.map((i,idx)=>`<div class="myday-focus-item" onclick="openItemModal(S.items.find(x=>x.id==='${i.id}'))"><span class="myday-focus-index">${idx+1}</span><div><div style="font-size:.84rem;font-weight:700;">${escapeHtml(i.title)}</div><div class="card-meta">${i.date && i.date < data.today ? '⚠ Atrasada' : (i.time ? 'Hoje às '+escapeHtml(i.time) : 'Hoje')} ${buildPhase2PriorityHtml(i)}</div></div></div>`).join('')}</div>` : '';
-      const nextHtml = data.next ? `<div class="myday-next"><div class="myday-next-label">▶ Próximo compromisso</div><div style="font-size:.9rem;font-weight:750;cursor:pointer;" onclick="openItemModal(S.items.find(x=>x.id==='${data.next.id}'))">${escapeHtml(data.next.title)} ${data.next.time ? 'às '+escapeHtml(data.next.time):''}</div></div>` : '';
-      const timelineHtml = `<div class="timeline-panel"><div class="timeline-title">Linha do tempo de hoje</div>${data.timedToday.length ? data.timedToday.map(i=>`<div class="timeline-row"><div class="timeline-time">${escapeHtml(i.time)}</div><div class="timeline-dot"></div><div><div class="timeline-title-text" onclick="openItemModal(S.items.find(x=>x.id==='${i.id}'))">${escapeHtml(i.title)}</div><div class="timeline-meta">${i.priority ? priorityLabel(i.priority) : ''} ${i.area ? '• '+escapeHtml(getHierarchy(i.area).text) : ''}</div></div></div>`).join('') : '<div class="muted text-sm">Nenhum compromisso com horário definido hoje.</div>'}${data.noTimeToday.length ? `<div class="untimed-note">+ ${data.noTimeToday.length} item(ns) de hoje sem horário definido.</div>` : ''}</div>`;
-      c.innerHTML = `<div class="myday-hero"><div class="myday-heading"><div><div class="myday-title">${greeting}, ${escapeHtml(name)}</div><div class="myday-subtitle">Meu Dia • ${dateExt}</div></div><div style="width:100%;margin-top:8px;">${renderGeneralFolderFilter()}</div><select class="form-control phase2-mobile-view" onchange="setViewMode(this.value)"><option value="list" ${prefs.viewMode==='list'?'selected':''}>📋 Lista</option><option value="cards" ${prefs.viewMode==='cards'?'selected':''}>🔲 Cards</option><option value="kanban" ${prefs.viewMode==='kanban'?'selected':''}>📊 Kanban</option><option value="calendar" ${prefs.viewMode==='calendar'?'selected':''}>📅 Semana</option><option value="month" ${prefs.viewMode==='month'?'selected':''}>🗓️ Mês</option></select></div><div class="dashboard-cards"><div class="dash-card ${activeFilter==='overdue'?'active':''}" onclick="filterDashboard('overdue')"><div class="dash-card-num" style="color:var(--danger);">${overdueCount}</div><div class="dash-card-lbl">Atrasados</div></div><div class="dash-card ${activeFilter==='today'?'active':''}" onclick="filterDashboard('today')"><div class="dash-card-num" style="color:var(--warning);">${todayCount}</div><div class="dash-card-lbl">Hoje</div></div><div class="dash-card ${activeFilter==='next7'?'active':''}" onclick="filterDashboard('next7')"><div class="dash-card-num" style="color:var(--accent);">${next7Count}</div><div class="dash-card-lbl">Próx. 7 dias</div></div><div class="dash-card ${activeFilter==='done_today'?'active':''}" onclick="filterDashboard('done_today')"><div class="dash-card-num" style="color:#10b981;">${doneToday}</div><div class="dash-card-lbl">Concluídos hoje</div></div></div>${activeFilter?`<div style="margin-top:10px;"><button class="chip active" onclick="filterDashboard(null)">Filtro ativo ✕</button></div>`:''}${focusHtml}${nextHtml}${timelineHtml}<div class="flex-between" style="margin-top:15px;"><div class="view-selector"><button class="view-btn ${prefs.viewMode==='list'?'active':''}" onclick="setViewMode('list')">📋 Lista</button><button class="view-btn ${prefs.viewMode==='cards'?'active':''}" onclick="setViewMode('cards')">🔲 Cards</button><button class="view-btn ${prefs.viewMode==='kanban'?'active':''}" onclick="setViewMode('kanban')">📊 Kanban</button><button class="view-btn ${prefs.viewMode==='calendar'?'active':''}" onclick="setViewMode('calendar')">📅 Semana</button><button class="view-btn ${prefs.viewMode==='month'?'active':''}" onclick="setViewMode('month')">🗓️ Mês</button></div>${prefs.viewMode==='list'?`<div class="view-selector"><button class="view-btn ${prefs.generalGroupBy==='period'?'active':''}" onclick="setGeneralGroupBy('period')">Período</button><button class="view-btn ${prefs.generalGroupBy==='folder'?'active':''}" onclick="setGeneralGroupBy('folder')">Pasta</button></div>`:''}</div></div>`;
+      const focusHtml = data.focus.length ? `<section class="myday-section myday-focus-card"><div class="myday-section-head"><div><div class="myday-section-kicker">PRIORIDADE</div><div class="myday-section-title">Foco sugerido</div></div><span class="myday-section-icon">🎯</span></div><div class="myday-focus-list">${data.focus.map((i,idx)=>`<button class="myday-focus-item" onclick="openItemModal(S.items.find(x=>x.id==='${i.id}'))"><span class="myday-focus-index">${idx+1}</span><span class="myday-focus-copy"><strong>${escapeHtml(i.title)}</strong><small>${i.date && i.date < data.today ? '⚠ Atrasada' : (i.time ? 'Hoje às '+escapeHtml(i.time) : 'Hoje')} ${buildPhase2PriorityHtml(i)}</small></span><span class="myday-arrow">›</span></button>`).join('')}</div></section>` : `<section class="myday-section"><div class="myday-empty-title">🎯 Nenhum foco crítico identificado</div><div class="muted text-sm">Sua agenda está livre de itens de alta prioridade, atrasados ou marcados com estrela.</div></section>`;
+      const nextHtml = data.next ? `<section class="myday-next-card"><div><div class="myday-section-kicker">A SEGUIR</div><div class="myday-next-title">${escapeHtml(data.next.title)}</div><div class="myday-next-meta">${data.next.date === data.today ? 'Hoje' : escapeHtml(formatBR(data.next.date,''))}${data.next.time ? ' · '+escapeHtml(data.next.time) : ''}${data.next.area ? ' · '+escapeHtml(getHierarchy(data.next.area).text) : ''}</div></div><button class="btn-sm" onclick="openItemModal(S.items.find(x=>x.id==='${data.next.id}'))">Abrir</button></section>` : '';
+      const timelineHtml = `<section class="myday-section timeline-panel"><div class="myday-section-head"><div><div class="myday-section-kicker">AGENDA</div><div class="myday-section-title">Linha do tempo de hoje</div></div><span class="myday-count-pill">${scheduledToday}</span></div>${data.timedToday.length ? `<div class="timeline-list">${data.timedToday.map(i=>`<button class="timeline-row" onclick="openItemModal(S.items.find(x=>x.id==='${i.id}'))"><span class="timeline-time">${escapeHtml(i.time)}</span><span class="timeline-dot"></span><span class="timeline-copy"><strong>${escapeHtml(i.title)}</strong><small>${i.priority ? priorityLabel(i.priority) : 'Sem prioridade'} ${i.area ? '• '+escapeHtml(getHierarchy(i.area).text) : ''}</small></span></button>`).join('')}</div>` : '<div class="myday-empty-state">Nenhum compromisso com horário definido hoje.</div>'}${data.noTimeToday.length ? `<div class="untimed-note">+ ${data.noTimeToday.length} item(ns) de hoje sem horário definido.</div>` : ''}</section>`;
+      c.innerHTML = `<div class="myday-v2">
+        <div class="myday-hero-v2"><div><div class="myday-eyebrow">CENTRO DE COMANDO</div><div class="myday-title">${greeting}, ${escapeHtml(name)}</div><div class="myday-subtitle">${dateExt.charAt(0).toUpperCase()+dateExt.slice(1)} · organize o que realmente importa hoje.</div></div><div class="myday-header-actions"><button class="btn myday-primary-action" onclick="openItemModal()">＋ Nova tarefa</button><select class="form-control phase2-mobile-view" onchange="setViewMode(this.value)"><option value="list" ${prefs.viewMode==='list'?'selected':''}>📋 Lista</option><option value="cards" ${prefs.viewMode==='cards'?'selected':''}>🔲 Cards</option><option value="kanban" ${prefs.viewMode==='kanban'?'selected':''}>📊 Kanban</option><option value="calendar" ${prefs.viewMode==='calendar'?'selected':''}>📅 Semana</option><option value="month" ${prefs.viewMode==='month'?'selected':''}>🗓️ Mês</option></select></div></div>
+        <div class="myday-stats">
+          <button class="myday-stat ${activeFilter==='overdue'?'active':''}" onclick="filterDashboard('overdue')"><span class="myday-stat-icon danger">!</span><span><strong>${overdueCount}</strong><small>Atrasados</small></span></button>
+          <button class="myday-stat ${activeFilter==='today'?'active':''}" onclick="filterDashboard('today')"><span class="myday-stat-icon warning">●</span><span><strong>${todayCount}</strong><small>Hoje</small></span></button>
+          <button class="myday-stat ${activeFilter==='next7'?'active':''}" onclick="filterDashboard('next7')"><span class="myday-stat-icon accent">→</span><span><strong>${next7Count}</strong><small>Próx. 7 dias</small></span></button>
+          <button class="myday-stat ${activeFilter==='done_today'?'active':''}" onclick="filterDashboard('done_today')"><span class="myday-stat-icon success">✓</span><span><strong>${doneToday}</strong><small>Concluídos hoje</small></span></button>
+          <div class="myday-progress"><div class="myday-progress-head"><span>Progresso de hoje</span><strong>${completionPct}%</strong></div><div class="myday-progress-track"><span style="width:${completionPct}%"></span></div><small>${doneToday} concluído(s) de ${completionBase || 0} tarefa(s) consideradas</small></div>
+        </div>
+        ${activeFilter ? `<div class="myday-filter-bar"><span>Filtro ativo</span><button class="chip active" onclick="filterDashboard(null)">${activeFilter==='overdue'?'Atrasados':activeFilter==='today'?'Hoje':activeFilter==='next7'?'Próximos 7 dias':'Concluídos hoje'} ×</button></div>` : ''}
+        <div class="myday-grid"><div>${focusHtml}${nextHtml}</div><div>${timelineHtml}</div></div>
+        <div class="myday-bottom"><div class="view-selector"><button class="view-btn ${prefs.viewMode==='list'?'active':''}" onclick="setViewMode('list')">📋 Lista</button><button class="view-btn ${prefs.viewMode==='cards'?'active':''}" onclick="setViewMode('cards')">🔲 Cards</button><button class="view-btn ${prefs.viewMode==='kanban'?'active':''}" onclick="setViewMode('kanban')">📊 Kanban</button><button class="view-btn ${prefs.viewMode==='calendar'?'active':''}" onclick="setViewMode('calendar')">📅 Semana</button><button class="view-btn ${prefs.viewMode==='month'?'active':''}" onclick="setViewMode('month')">🗓️ Mês</button></div>${prefs.viewMode==='list'?`<div class="view-selector"><button class="view-btn ${prefs.generalGroupBy==='period'?'active':''}" onclick="setGeneralGroupBy('period')">Período</button><button class="view-btn ${prefs.generalGroupBy==='folder'?'active':''}" onclick="setGeneralGroupBy('folder')">Pasta</button></div>`:''}</div>
+      </div>`;
       phase2RefreshHeaderControls();
-      wireGeneralFolderFilter();
     };
 
     function phase2RefreshHeaderControls() {
@@ -6201,8 +5992,7 @@
     // =========================
     const PHASE3_CAL_START_HOUR = 6;
     const PHASE3_CAL_END_HOUR = 23;
-    const PHASE3_CAL_SLOT_MIN = 60;
-    let phase3DraggingCalendarItem = null;
+    const PHASE3_CAL_SLOT_MIN = 60;    let phase3DraggingCalendarItem = null;
 
     // Snapshot de recorrência enriquecido. Permite detectar alterações relevantes
     // feitas pelo usuário em uma ocorrência antes de decidir removê-la ao reabrir a série.
@@ -6303,7 +6093,63 @@
       return '';
     }
 
-    
+    function addNextOccurrence(item) {
+      if (!item || !item.rep || item.rep === 'none' || !item.date) return;
+
+      // Motor único de recorrência: regras avançadas usam o mesmo ponto de entrada.
+      if (typeof normalizeRule === 'function' && typeof nextDateForRule === 'function') {
+        const r = normalizeRule(item);
+        const advancedModes = ['weekdays','biweekly','monthly_position','yearly','custom'];
+        if (advancedModes.includes(r.mode)) {
+          const next = nextDateForRule(item);
+          if (!next) return;
+          const seriesId = item.recurrenceSeriesId || item.seriesId || generateId('series');
+          const duplicate = S.items.some(x => (x.recurrenceSeriesId || x.seriesId) === seriesId && x.date === next && x.id !== item.id);
+          if (duplicate) return;
+          const newItem = {
+            ...item,
+            id: generateId('item'),
+            status: 'todo',
+            date: next,
+            rep: item.rep,
+            recurrenceRule: {...r},
+            recurrenceSeriesId: seriesId,
+            seriesId,
+            repSourceId: item.id,
+            createdFromOccurrenceId: item.id,
+            checklist: (item.checklist || []).map(c => ({...c, done:false})),
+            attachments: []
+          };
+          newItem.repSnapshot = makeRepSnapshot(newItem);
+          S.items.push(newItem);
+          return;
+        }
+      }
+
+      const nextDateStr = phase3NextRecurringDate(item);
+      if (!nextDateStr) return;
+      const rule = phase3BuildRecurrenceRule(item);
+      const seriesId = item.recurrenceSeriesId || item.seriesId || null;
+      const newItem = {
+        ...item,
+        id: generateId('item'),
+        status: 'todo',
+        date: nextDateStr,
+        time: item.time || '',
+        duration: phase3EnsureDurationValue(item.duration),
+        rep: item.rep,
+        repDay: rule?.dayOfMonth || Number(nextDateStr.split('-')[2]),
+        recurrenceRule: rule,
+        recurrenceSeriesId: seriesId,
+        seriesId: seriesId,
+        checklist: (item.checklist || []).map(c => ({...c, done:false})),
+        attachments: [],
+        repSourceId: item.id,
+        createdFromOccurrenceId: item.id
+      };
+      newItem.repSnapshot = makeRepSnapshot(newItem);
+      S.items.push(newItem);
+    }
 
     // Adiar altera SOMENTE a ocorrência atual. A regra de recorrência permanece intacta.
     function postponeItemByDays(id, days) {
@@ -6316,7 +6162,7 @@
       const newDate = phase3DateAddDays(baseDate, Number(days) || 0);
       item.date = newDate;
       const after = phase6HistorySnapshot(item);
-      saveData().then(() => recordItemHistory(id, { action:'reschedule', source:'user', before, after }));
+      saveData().then(ok => { if (ok) recordItemHistory(id, { action:'reschedule', source:'user', before, after }); });
       renderWithScrollPreserved();
     }
 
@@ -6327,7 +6173,7 @@
       const before = phase6HistorySnapshot(item);
       item.date = targetDate;
       const after = phase6HistorySnapshot(item);
-      saveData().then(() => recordItemHistory(id, { action:'reschedule', source:'user', before, after }));
+      saveData().then(ok => { if (ok) recordItemHistory(id, { action:'reschedule', source:'user', before, after }); });
       renderWithScrollPreserved();
     }
 
@@ -6443,6 +6289,7 @@
       const widthPct = (100/laneCount);
       const hierarchy = getHierarchy(item.area);
       const borderColor = escapeHtml(hierarchy.color || 'var(--accent)');
+      const recurrencePill = item.rep && item.rep !== 'none' ? `<span class="phase-g-recurrence-pill">↻ ${escapeHtml(recurrenceSummary ? recurrenceSummary(normalizeRule(item)) : 'Recorrente')}</span>` : '';
       const meta = `${item.priority ? priorityLabel(item.priority) : ''}${hierarchy.text ? (item.priority ? ' • ' : '') + escapeHtml(hierarchy.text) : ''}`;
       return `<div class="phase3-event" draggable="true" data-id="${item.id}" data-day="${dayStr}"
             style="position:absolute;box-sizing:border-box;overflow:hidden;cursor:grab;z-index:4;top:${top}px;left:calc(${leftPct}% + 3px);width:calc(${widthPct}% - 6px);height:${height}px;background:#1a232e;border:1px solid rgba(45,212,191,.45);border-left:4px solid ${borderColor};border-radius:8px;padding:6px 7px;box-shadow:0 4px 12px rgba(0,0,0,.28);color:#f1f5f9;line-height:1.15;"
@@ -6452,6 +6299,7 @@
             oncontextmenu="handleContextMenuEvent(event,'${item.id}')">
         <div style="font-size:.65rem;color:#94a3b8;font-variant-numeric:tabular-nums;">${escapeHtml(item.time || '')} • ${phase3FormatMinutes(duration)}</div>
         <div style="font-size:.75rem;font-weight:700;line-height:1.2;margin-top:3px;white-space:normal;word-break:break-word;">${escapeHtml(item.title)}</div>
+        ${recurrencePill ? `<div style="margin-top:4px;">${recurrencePill}</div>` : ''}
         ${meta ? `<div style="font-size:.61rem;color:#94a3b8;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${meta}</div>` : ''}
       </div>`;
     }
@@ -6494,6 +6342,10 @@
       const showingAll = prefs.weeklyMainFolders === null || prefs.weeklyMainFolders === undefined;
       const rawWeekList = list || [];
       const weekList = weeklyFilterEnabled ? rawWeekList.filter(item => weeklyFolderIsVisible(item)) : rawWeekList;
+      const phaseGWeekPending = weekList.filter(item => item.status !== 'done' && week.includes(item.date));
+      const phaseGWeekMinutes = phaseGWeekPending.reduce((sum,item) => sum + (item.time ? phase3EnsureDurationValue(item.duration) : 0), 0);
+      const phaseGWeekRecurring = phaseGWeekPending.filter(item => item.rep && item.rep !== 'none').length;
+      const phaseGWeekOverdue = phaseGWeekPending.filter(item => item.date && item.date < today).length;
 
       c.innerHTML = `
         <div class="calendar-controls" style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
@@ -6535,6 +6387,12 @@
           ${!mainFolders.length ? `<div style="font-size:.72rem;color:var(--muted);padding:7px 3px;">Nenhuma pasta principal cadastrada.</div>` : ''}
         </div>` : ''}
 
+        <div id="phase-g-week-summary" class="phase-g-week-summary">
+          <div class="phase-g-stat"><div class="phase-g-stat-label">Tarefas</div><div class="phase-g-stat-value">${phaseGWeekPending.length}</div><div class="phase-g-stat-note">pendentes na semana</div></div>
+          <div class="phase-g-stat"><div class="phase-g-stat-label">Tempo</div><div class="phase-g-stat-value">${phase3FormatMinutes(phaseGWeekMinutes)}</div><div class="phase-g-stat-note">duração agendada</div></div>
+          <div class="phase-g-stat"><div class="phase-g-stat-label">Recorrentes</div><div class="phase-g-stat-value">${phaseGWeekRecurring}</div><div class="phase-g-stat-note">ocorrências na semana</div></div>
+          <div class="phase-g-stat"><div class="phase-g-stat-label">Atenção</div><div class="phase-g-stat-value">${phaseGWeekOverdue}</div><div class="phase-g-stat-note">atrasadas</div></div>
+        </div>
         <div class="weekly-compact-wrap" style="overflow-x:auto;padding-bottom:4px;">
           <div class="weekly-compact-grid" style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;width:100%;"></div>
         </div>
@@ -6663,10 +6521,14 @@
       const relMin=((e.clientY-rect.top)/40)*60;
       const snapped=Math.round(relMin/15)*15;
       const targetMin=Math.max(0,Math.min(23*60+45,baseMin+snapped));
+      const before = typeof phase6HistorySnapshot === 'function' ? phase6HistorySnapshot(item) : null;
       item.date=dateStr;
       item.time=phase3TimeStringFromMinutes(targetMin);
-      // Dragging é alteração da ocorrência atual, sem alterar regra de recorrência.
-      saveData();
+      // Dragging altera somente a ocorrência atual, sem alterar a regra da série.
+      const after = typeof phase6HistorySnapshot === 'function' ? phase6HistorySnapshot(item) : null;
+      saveData().then(ok=>{
+        if(ok && typeof recordItemHistory === 'function') recordItemHistory(id,{action:'reschedule',source:'user',before,after});
+      });
       renderWithScrollPreserved();
     }
 
@@ -6814,13 +6676,51 @@
     let aiPendingActions = [];
     let aiSending = false;
 
-    const DEFAULT_AI_CONFIG = { endpoint: '/api/agenda-ai', contextLimit: 250 };
+    const DEFAULT_AI_CONFIG = { endpoint: '/api/agenda-ai', contextLimit: 250, contextScope: 'smart', includeDone: false };
+    const PHASE_I_AI_CONFIG_KEY = 'agenda_ai_phase_i_v1';
+
+    function phaseIGetAIOptions() {
+      try {
+        const raw = localStorage.getItem(PHASE_I_AI_CONFIG_KEY);
+        const parsed = raw ? JSON.parse(raw) : {};
+        return { contextScope: ['smart','current','week','all'].includes(parsed.contextScope) ? parsed.contextScope : 'smart', includeDone: !!parsed.includeDone };
+      } catch (_) { return { contextScope:'smart', includeDone:false }; }
+    }
+
+    function phaseIApplyAIOptions() {
+      const opt = phaseIGetAIOptions();
+      const scope = document.getElementById('ai-context-scope');
+      const done = document.getElementById('ai-include-done');
+      if (scope) scope.value = opt.contextScope;
+      if (done) done.checked = opt.includeDone;
+    }
+
+    function phaseISaveAIOptions() {
+      const scope = document.getElementById('ai-context-scope')?.value || 'smart';
+      const includeDone = !!document.getElementById('ai-include-done')?.checked;
+      try { localStorage.setItem(PHASE_I_AI_CONFIG_KEY, JSON.stringify({ contextScope:scope, includeDone })); } catch (_) {}
+      updateAIContextPill();
+    }
+
+    function phaseIQuickPrompt(text) {
+      aiQuickPrompt(text);
+      phaseIAddContextHint();
+    }
+
+    function phaseIAddContextHint() {
+      const pill=document.getElementById('ai-context-pill');
+      if(!pill) return;
+      const opt=phaseIGetAIOptions();
+      const labels={smart:'contexto inteligente',current:'visão atual',week:'próximos 7 dias',all:'toda a agenda'};
+      pill.title=`IA usando ${labels[opt.contextScope] || labels.smart}${opt.includeDone ? ' + concluídas' : ''}`;
+    }
+
 
     function getAIConfig() {
       try {
         const raw = localStorage.getItem(AI_CONFIG_STORAGE_KEY);
         const parsed = raw ? JSON.parse(raw) : {};
-        return { ...DEFAULT_AI_CONFIG, ...parsed };
+        return { ...DEFAULT_AI_CONFIG, ...parsed, ...phaseIGetAIOptions() };
       } catch (_) { return { ...DEFAULT_AI_CONFIG }; }
     }
 
@@ -6828,6 +6728,7 @@
       const endpoint = (document.getElementById('ai-endpoint')?.value || '').trim() || DEFAULT_AI_CONFIG.endpoint;
       const contextLimit = Math.min(500, Math.max(50, parseInt(document.getElementById('ai-context-limit')?.value || DEFAULT_AI_CONFIG.contextLimit, 10) || DEFAULT_AI_CONFIG.contextLimit));
       try { localStorage.setItem(AI_CONFIG_STORAGE_KEY, JSON.stringify({ endpoint, contextLimit })); } catch (_) {}
+      phaseISaveAIOptions();
       phase5SetAIStatus('Configuração salva.');
       updateAIContextPill();
     }
@@ -6838,6 +6739,8 @@
       const limit = document.getElementById('ai-context-limit');
       if (endpoint) endpoint.value = cfg.endpoint;
       if (limit) limit.value = cfg.contextLimit;
+      phaseIApplyAIOptions();
+      phaseIAddContextHint();
     }
 
     function toggleAIConfig() {
@@ -6913,7 +6816,7 @@
       const chat = document.getElementById('ai-chat');
       if (!chat) return;
       if (!aiConversation.length) {
-        chat.innerHTML = `<div class="ai-empty"><strong>O que você quer organizar?</strong>Pergunte sobre sua agenda, peça prioridades, crie tarefas, reagende, monte checklists ou peça um follow-up.</div>`;
+        chat.innerHTML = `<div class="ai-empty" id="ai-empty-state"><strong>O que você quer organizar?</strong>Pergunte sobre sua agenda, peça prioridades, crie tarefas, reagende, monte checklists ou peça um follow-up.</div>`;
         return;
       }
       chat.innerHTML = aiConversation.map(m => {
@@ -6923,84 +6826,42 @@
       chat.scrollTop = chat.scrollHeight;
     }
 
-    /* M9-D — IA INTELIGENTE
-       O contexto continua sendo somente leitura: a IA recebe dados já existentes
-       e propõe ações. Nenhum campo novo é persistido no modelo da agenda. */
-    function m9dFolderPath(areaId) {
-      if (!areaId) return '';
-      const chain = [];
-      const seen = new Set();
-      let current = S.areas.find(a => a.id === areaId) || null;
-      while (current && !seen.has(current.id)) {
-        seen.add(current.id);
-        chain.unshift(current.name || '');
-        current = current.parentId ? S.areas.find(a => a.id === current.parentId) : null;
-      }
-      return chain.filter(Boolean).join(' / ');
-    }
-
-    function m9dCloneRecurrenceRule(rule) {
-      if (!rule || typeof rule !== 'object') return null;
-      try { return JSON.parse(JSON.stringify(rule)); } catch (_) { return null; }
-    }
-
     function buildAIContext() {
       const cfg = getAIConfig();
+      const opt = phaseIGetAIOptions();
       const limit = Math.min(500, Math.max(50, Number(cfg.contextLimit) || 250));
-      const sortedItems = [...S.items].sort(compareItemsByDateTime).slice(0, limit);
-      const folderFilter = currentArea === 'all' ? getGeneralFolderSelectionState() : null;
+      const today = getTodayBR();
+      const now = new Date();
+      const weekEnd = new Date(now); weekEnd.setDate(weekEnd.getDate()+7);
+      const weekEndStr = toLocalDateStr(weekEnd);
+      let candidates = [...S.items];
+      if (!opt.includeDone) candidates = candidates.filter(i=>i.status !== 'done');
+      if (opt.contextScope === 'current' && currentArea !== 'all') candidates = candidates.filter(i=>i.area === currentArea);
+      if (opt.contextScope === 'week') candidates = candidates.filter(i=>!i.date || (i.date >= today && i.date <= weekEndStr));
+      if (opt.contextScope === 'smart') {
+        candidates.sort((a,b)=>{
+          const score=i=>{let n=0;if(i.status!=='done')n+=4;if(i.priority==='high')n+=4;if(i.date===today)n+=5;if(i.date&&i.date<today)n+=6;if(i.time)n+=1;return n;};
+          return score(b)-score(a);
+        });
+      }
+      candidates.sort((a,b)=>{
+        if (a.date !== b.date) return (a.date || '9999-12-31').localeCompare(b.date || '9999-12-31');
+        return (a.time || '99:99').localeCompare(b.time || '99:99');
+      });
+      const sortedItems = candidates.slice(0, limit);
       return {
-        aiContextVersion: 'm9d-1',
-        today: getTodayBR(),
-        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Sao_Paulo',
-        currentArea,
-        currentAreaName: currentArea === 'all' ? 'Agenda Geral' : (getFolderConfig(currentArea)?.name || 'Agenda'),
-        scope: currentArea === 'all' ? 'agenda_geral' : 'pasta_especifica',
-        generalFolderFilter: folderFilter ? {
-          showingAll: folderFilter.showingAll,
-          selectedFolderIds: [...folderFilter.selected],
-          selectedFolderNames: folderFilter.mainFolders.filter(f => folderFilter.selected.includes(f.id)).map(f => f.name)
-        } : null,
-        folders: S.areas.map(a => ({
-          id:a.id, name:a.name, parentId:a.parentId || null, color:a.color || '',
-          path:m9dFolderPath(a.id)
+        today, timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Sao_Paulo',
+        currentArea, currentAreaName: currentArea === 'all' ? 'Agenda Geral' : (getFolderConfig(currentArea)?.name || 'Agenda'),
+        contextScope: opt.contextScope, includeDone: opt.includeDone,
+        folders: S.areas.map(a=>({id:a.id,name:a.name,parentId:a.parentId||null,color:a.color||''})),
+        items: sortedItems.map(i=>({
+          id:i.id,title:i.title||'',desc:i.desc||'',date:i.date||'',time:i.time||'',duration:phase3EnsureDurationValue(i.duration),
+          status:i.status||'todo',priority:i.priority||'medium',starred:!!i.starred,tags:Array.isArray(i.tags)?i.tags:[],
+          nextAction:i.nextAction||'',reminder:i.reminder||'none',rep:i.rep||'none',waitingFor:i.waitingFor||'',
+          waitingSince:i.waitingSince||'',followUpDate:i.followUpDate||'',checklist:(i.checklist||[]).map(c=>({text:c.text||'',done:!!c.done})),
+          hasAttachments:Array.isArray(i.attachments)&&i.attachments.length>0
         })),
-        items: sortedItems.map(i => ({
-          id:i.id,
-          title:i.title || '',
-          desc:i.desc || '',
-          observations:i.desc || '',
-          area:i.area || '',
-          folderId:i.area || '',
-          folderPath:m9dFolderPath(i.area),
-          date:i.date || '',
-          time:i.time || '',
-          duration:phase3EnsureDurationValue(i.duration),
-          status:i.status || 'todo',
-          priority:i.priority || 'medium',
-          starred:!!i.starred,
-          tags:Array.isArray(i.tags)?i.tags:[],
-          nextAction:i.nextAction || '',
-          reminder:i.reminder || 'none',
-          rep:i.rep || 'none',
-          recurrenceRule:m9dCloneRecurrenceRule(i.recurrenceRule),
-          waitingFor:i.waitingFor || '',
-          waitingSince:i.waitingSince || '',
-          followUpDate:i.followUpDate || '',
-          checklist:(i.checklist||[]).map(c=>({text:c.text||'',done:!!c.done})),
-          hasAttachments:Array.isArray(i.attachments) && i.attachments.length>0
-        })),
-        instructions: {
-          useOnlyProvidedData: true,
-          doNotInventDatesTimesFoldersTasks: true,
-          descriptionAndObservationsAreTheExistingDescField: true,
-          respectCurrentArea: true,
-          respectGeneralFolderFilterWhenRelevant: true,
-          recurrenceIsAvailableInRepAndRecurrenceRule: true,
-          proposeBeforeChangingData: true
-        },
-        truncated: S.items.length > sortedItems.length,
-        totalItems: S.items.length
+        truncated:candidates.length>sortedItems.length,totalItems:candidates.length,totalAgendaItems:S.items.length
       };
     }
 
@@ -7042,12 +6903,13 @@
       panel.hidden = false;
       list.innerHTML = aiPendingActions.map((a, idx) => {
         const danger = a.danger ? ' danger' : '';
+        const riskClass = a.danger ? ' phase-i-high-risk' : '';
         const meta = [];
         if (a.date) meta.push(formatBR(a.date, a.time));
         if (a.priority) meta.push(priorityLabel(a.priority));
         if (a.reminder && a.reminder !== 'none') meta.push(`🔔 ${a.reminder}`);
         if (Array.isArray(a.tags) && a.tags.length) meta.push(a.tags.map(t=>'#'+t).join(' '));
-        return `<div class="ai-action-card${danger}"><div class="ai-action-row"><input type="checkbox" class="ai-action-check" data-index="${idx}" checked><div class="ai-action-main"><div class="ai-action-type">${escapeHtml(aiActionLabel(a.type))}${a.danger ? ' · CONFIRMAÇÃO EXTRA' : ''}</div><div class="ai-action-desc">${escapeHtml(getAIActionDescription(a))}</div><div class="ai-action-meta">${meta.map(x=>`<span class="ai-chip">${escapeHtml(String(x))}</span>`).join('')}</div></div></div></div>`;
+        return `<div class="ai-action-card${danger}${riskClass}"><div class="ai-action-row"><input type="checkbox" class="ai-action-check" data-index="${idx}" checked><div class="ai-action-main"><div class="ai-action-type">${escapeHtml(aiActionLabel(a.type))}${a.danger ? ' · CONFIRMAÇÃO EXTRA' : ''}</div><div class="ai-action-desc">${escapeHtml(getAIActionDescription(a))}</div><div class="ai-action-meta">${meta.map(x=>`<span class="ai-chip">${escapeHtml(String(x))}</span>`).join('')}</div></div></div></div>`;
       }).join('');
       list.scrollTop = list.scrollHeight;
     }
@@ -7071,8 +6933,6 @@
         if (!String(action.title || '').trim()) return {ok:false,error:'Título ausente.'};
         if (action.folderId && !S.areas.some(a=>a.id===action.folderId)) return {ok:false,error:'Pasta não encontrada.'};
       }
-      if (action.folderId && !S.areas.some(a=>a.id===action.folderId)) return {ok:false,error:'Pasta não encontrada.'};
-      if (action.recurrenceRule !== undefined && action.recurrenceRule !== null && typeof action.recurrenceRule !== 'object') return {ok:false,error:'Regra de recorrência inválida.'};
       if (action.itemId && !S.items.some(i=>i.id===action.itemId)) return {ok:false,error:'Tarefa não encontrada.'};
       return {ok:true};
     }
@@ -7086,14 +6946,13 @@
         const item = {
           id: generateId('item'),
           title: String(action.title || '').trim(),
-          desc: String(action.desc ?? action.observations ?? action.description ?? ''),
+          desc: String(action.desc || ''),
           area: action.folderId || '',
           status: action.status || 'todo',
           date: action.date || '',
           time: action.time || '',
           duration: phase3EnsureDurationValue(action.duration),
           rep: action.rep || 'none',
-          recurrenceRule: action.recurrenceRule ? m9dCloneRecurrenceRule(action.recurrenceRule) : null,
           reminder: action.reminder || 'none',
           priority: action.priority || 'medium',
           starred: !!action.starred,
@@ -7132,8 +6991,7 @@
         (action.items||[]).forEach(x=>{const text=String(x?.text||x||'').trim(); if(text) item.checklist.push({text,done:false});});
         return item;
       }
-      if (action.type === 'set_waiting') {
-        item.status = 'waiting';
+      if (action.type === 'set_waiting') {        item.status = 'waiting';
         item.waitingFor = String(action.waitingFor || item.waitingFor || '');
         item.waitingSince = item.waitingSince || getTodayBR();
         item.followUpDate = action.followUpDate || item.followUpDate || '';
@@ -7141,14 +6999,8 @@
       }
       if (action.type === 'update_task') {
         const oldStatus = item.status || 'todo';
-        const fields = ['title','area','status','date','time','duration','rep','reminder','priority','starred','nextAction','waitingFor','waitingSince','followUpDate'];
+        const fields = ['title','desc','area','status','date','time','duration','rep','reminder','priority','starred','nextAction','waitingFor','waitingSince','followUpDate'];
         fields.forEach(k=>{if(action[k] !== undefined){ if(k==='area' && action[k] && !S.areas.some(a=>a.id===action[k])) throw new Error('Pasta não encontrada.'); item[k]=action[k]; }});
-        if (action.desc !== undefined || action.description !== undefined || action.observations !== undefined) {
-          item.desc = String(action.desc ?? action.description ?? action.observations ?? '');
-        }
-        if (action.recurrenceRule !== undefined) {
-          item.recurrenceRule = action.recurrenceRule ? m9dCloneRecurrenceRule(action.recurrenceRule) : null;
-        }
         if (Array.isArray(action.tags)) item.tags=[...new Set(action.tags.map(x=>String(x).toLowerCase().replace(/^#/,'')).filter(Boolean))];
         if (Array.isArray(action.checklist)) item.checklist=action.checklist.map(x=>({text:String(x?.text||x||''),done:!!x?.done})).filter(x=>x.text);
         if (oldStatus !== 'done' && item.status === 'done') addNextOccurrence(item);
@@ -7192,7 +7044,8 @@
           }
           applied.push(action);
         }
-        await saveData();
+        const saveOk = await saveData();
+        if (!saveOk) throw new Error('As propostas foram aplicadas localmente, mas não puderam ser sincronizadas agora.');
         for (const op of historyOps) await recordItemHistory(op.itemId, op);
         renderWithScrollPreserved();
         clearAIProposals();
@@ -7277,6 +7130,8 @@
     // Inicialização PWA
     document.addEventListener('DOMContentLoaded',()=>{
       loadAIConfig();
+      phaseIApplyAIOptions();
+      phaseIAddContextHint();
       phase3RegisterServiceWorker();
       setTimeout(()=>phase3SetAlertStatus('A página pode verificar lembretes enquanto estiver aberta. Push agendado em segundo plano requer backend/FCM.'),500);
     });
@@ -7329,5 +7184,518 @@
 })();
 </script>
 
+
+<style id="m9b-recurrence-style">
+/* M9-B — Recorrência completa */
+.m9b-recurrence-panel{margin-top:10px;padding:12px;border:1px solid var(--border);border-radius:10px;background:rgba(255,255,255,.025)}
+.m9b-recurrence-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.m9b-recurrence-field label{display:block;font-size:.78rem;color:var(--muted);margin-bottom:5px}
+.m9b-recurrence-field input,.m9b-recurrence-field select{width:100%;min-height:40px}
+.m9b-days{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.m9b-day{display:inline-flex;align-items:center;gap:5px;padding:7px 9px;border:1px solid var(--border);border-radius:8px;background:rgba(255,255,255,.025);cursor:pointer;font-size:.78rem}
+.m9b-day input{accent-color:var(--accent)}
+.m9b-summary{margin-top:9px;color:var(--accent);font-size:.82rem;font-weight:600}
+.m9b-series-note{margin-top:7px;color:var(--muted);font-size:.74rem;line-height:1.35}
+@media(max-width:768px){.m9b-recurrence-grid{grid-template-columns:1fr}.m9b-day{min-height:42px}.m9b-recurrence-panel{padding:10px}}
+
+/* ============================================================
+   FASE B — DESIGN SYSTEM E IDENTIDADE VISUAL
+   Itens 30–33 | Somente camada visual. Sem alteração de dados.
+   ============================================================ */
+:root {
+  --ds-bg-0:#0d131a; --ds-bg-1:#121820; --ds-bg-2:#17212c;
+  --ds-surface:#1a232e; --ds-surface-2:#202b38; --ds-surface-3:#263343;
+  --ds-border:#2a3646; --ds-border-soft:rgba(148,163,184,.14); --ds-border-strong:rgba(45,212,191,.34);
+  --ds-text:#f1f5f9; --ds-text-2:#cbd5e1; --ds-muted:#94a3b8;
+  --ds-accent:#2dd4bf; --ds-accent-strong:#14b8a6; --ds-accent-soft:rgba(45,212,191,.12);
+  --ds-success:#22c55e; --ds-success-soft:rgba(34,197,94,.12);
+  --ds-warning:#f59e0b; --ds-warning-soft:rgba(245,158,11,.12);
+  --ds-danger:#ef4444; --ds-danger-soft:rgba(239,68,68,.12);
+  --ds-info:#60a5fa; --ds-info-soft:rgba(96,165,250,.12);
+  --ds-purple:#8b5cf6; --ds-purple-soft:rgba(139,92,246,.12);
+  --ds-radius-xs:6px; --ds-radius-sm:8px; --ds-radius-md:12px; --ds-radius-lg:16px; --ds-radius-xl:20px; --ds-radius-pill:999px;
+  --ds-space-1:4px; --ds-space-2:8px; --ds-space-3:12px; --ds-space-4:16px; --ds-space-5:20px; --ds-space-6:24px; --ds-space-8:32px; --ds-space-10:40px;
+  --ds-font-ui:Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  --ds-fs-xs:.72rem; --ds-fs-sm:.82rem; --ds-fs-md:.92rem; --ds-fs-lg:1.05rem; --ds-fs-xl:1.35rem; --ds-fs-2xl:1.75rem;
+  --ds-fw-normal:400; --ds-fw-medium:500; --ds-fw-semibold:600; --ds-fw-bold:700;
+  --ds-shadow-sm:0 2px 8px rgba(0,0,0,.18); --ds-shadow-md:0 8px 24px rgba(0,0,0,.24); --ds-shadow-lg:0 18px 50px rgba(0,0,0,.32);
+  --ds-focus:0 0 0 3px rgba(45,212,191,.18); --ds-transition:160ms ease;
+}
+html{background:var(--ds-bg-1)}
+body{font-family:var(--ds-font-ui);background:var(--ds-bg-1);color:var(--ds-text);line-height:1.45}
+button,input,select,textarea{font:inherit} button{-webkit-tap-highlight-color:transparent}
+:focus-visible{outline:none;box-shadow:var(--ds-focus)}
+.auth-card,.dashboard-hero,.task-card,.folder-card,.card,.modal-content,.settings-card,.ai-panel,.ai-modal-content{border-color:var(--ds-border);border-radius:var(--ds-radius-lg);box-shadow:var(--ds-shadow-sm)}
+.task-card:hover,.folder-card:hover,.card:hover{border-color:rgba(45,212,191,.28);box-shadow:var(--ds-shadow-md)}
+#sidebar{background:linear-gradient(180deg,var(--ds-surface) 0%,#16202a 100%);border-right-color:var(--ds-border)}
+.user-profile{border-bottom-color:var(--ds-border)} .user-avatar{border:1px solid var(--ds-border)}
+.nav-item{border-radius:var(--ds-radius-sm);transition:background var(--ds-transition),color var(--ds-transition),transform var(--ds-transition)}
+.nav-item:hover{background:rgba(255,255,255,.055)}
+.nav-item.active{background:var(--ds-accent-soft);color:var(--ds-accent);box-shadow:inset 3px 0 0 var(--ds-accent)}
+.btn,.btn-sm,.btn-primary,.mobile-nav-toggle,.view-btn,.filter-btn{border-radius:var(--ds-radius-sm);transition:transform var(--ds-transition),background var(--ds-transition),border-color var(--ds-transition),box-shadow var(--ds-transition),color var(--ds-transition)}
+.btn:hover,.btn-sm:hover,.btn-primary:hover,.mobile-nav-toggle:hover,.view-btn:hover,.filter-btn:hover{transform:translateY(-1px)}
+.btn-primary,.mobile-nav-toggle{background:var(--ds-accent);color:#071312;border-color:var(--ds-accent);font-weight:var(--ds-fw-semibold)}
+.btn-primary:hover,.mobile-nav-toggle:hover{background:var(--ds-accent-strong);border-color:var(--ds-accent-strong)}
+.form-control,.search-input,.quick-capture input,input[type="text"],input[type="date"],input[type="time"],input[type="number"],input[type="url"],input[type="email"],select,textarea{background:var(--ds-bg-2);color:var(--ds-text);border:1px solid var(--ds-border);border-radius:var(--ds-radius-sm);transition:border-color var(--ds-transition),box-shadow var(--ds-transition),background var(--ds-transition)}
+.form-control:focus,.search-input:focus,.quick-capture input:focus,input:focus,select:focus,textarea:focus{border-color:var(--ds-accent);box-shadow:var(--ds-focus);outline:none}
+::placeholder{color:#718096}
+.page-title,.section-title,.dashboard-title{letter-spacing:-.018em;font-weight:var(--ds-fw-bold)} .page-subtitle,.section-subtitle{color:var(--ds-muted)} .top-bar{gap:var(--ds-space-3)}
+.badge,.tag,.status-badge,.priority-badge,.folder-badge{border-radius:var(--ds-radius-pill);font-size:var(--ds-fs-xs);font-weight:var(--ds-fw-semibold);line-height:1.2}
+.status-badge,.priority-badge{padding:5px 9px}.tag{padding:4px 8px;background:var(--ds-accent-soft);color:var(--ds-accent);border:1px solid rgba(45,212,191,.16)}
+.folder-badge{background:rgba(255,255,255,.055);border:1px solid var(--ds-border-soft)}
+.status-done,.done,.success{color:var(--ds-success)} .status-waiting,.waiting,.warning{color:var(--ds-warning)} .status-error,.error,.danger{color:var(--ds-danger)} .info{color:var(--ds-info)} .purple{color:var(--ds-purple)}
+.overdue-banner{background:var(--ds-danger-soft);border-color:rgba(239,68,68,.38);border-radius:var(--ds-radius-md)}
+.dropdown,#context-menu{background:var(--ds-surface-2);border-color:var(--ds-border);border-radius:var(--ds-radius-md);box-shadow:var(--ds-shadow-lg);overflow:hidden}
+.dropdown-item,.ctx-item{transition:background var(--ds-transition),color var(--ds-transition)} .dropdown-item:hover,.ctx-item:hover{background:rgba(255,255,255,.055)} .ctx-divider{background:var(--ds-border)}
+.modal-overlay{backdrop-filter:blur(4px);background:rgba(5,9,13,.68)}
+.modal-content{background:linear-gradient(180deg,#1c2732 0%,var(--ds-surface) 100%);border-color:var(--ds-border);box-shadow:var(--ds-shadow-lg)}
+.modal-header{border-bottom-color:var(--ds-border-soft)} .modal-footer{border-top-color:var(--ds-border-soft)}
+.quick-capture{gap:var(--ds-space-2)} .quick-capture input{background:rgba(255,255,255,.025);min-height:44px} .quick-capture input:focus{background:var(--ds-surface)}
+.calendar-grid,.calendar-day,.calendar-slot{border-color:var(--ds-border-soft)!important}.calendar-day:hover,.calendar-slot:hover{background:rgba(255,255,255,.025)} .calendar-item{border-radius:var(--ds-radius-sm);box-shadow:0 2px 8px rgba(0,0,0,.16)}
+.ai-message .ai-bubble{border-radius:var(--ds-radius-md)} .ai-message.user .ai-bubble{background:var(--ds-accent-soft);border-color:rgba(45,212,191,.18)} .ai-message.assistant .ai-bubble{background:var(--ds-surface-2);border-color:var(--ds-border)} .ai-pulse{border-color:var(--ds-border-strong)}
+.toast{border:1px solid var(--ds-border);border-radius:var(--ds-radius-md);background:rgba(26,35,46,.96);box-shadow:var(--ds-shadow-lg);backdrop-filter:blur(10px)}
+#main,.main-content,.content,.task-card,.dashboard-hero,.card{min-width:0}.task-card,.folder-card,.card{overflow-wrap:anywhere}table{max-width:100%}img,svg{max-width:100%}
+.btn:active,.btn-sm:active,.btn-primary:active,.view-btn:active{transform:translateY(0)}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition-duration:.01ms!important;animation-duration:.01ms!important;animation-iteration-count:1!important}}
+
+/* ===== FASE E - WORKSPACES DE PASTA ===== */
+.folder-workspace { margin-bottom: 14px; border:1px solid var(--border); border-radius:16px; background:linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,.018)); overflow:hidden; box-shadow:0 10px 28px rgba(0,0,0,.12); }
+.folder-workspace-top { display:flex; justify-content:space-between; gap:16px; padding:18px 20px 14px; align-items:flex-start; }
+.folder-workspace-title { display:flex; align-items:center; gap:10px; min-width:0; }
+.folder-workspace-title .color-dot { width:12px; height:12px; flex:0 0 auto; }
+.folder-workspace-title h2 { margin:0; font-size:1.18rem; line-height:1.25; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.folder-workspace-title p { margin:4px 0 0; color:var(--muted); font-size:.78rem; }
+.folder-workspace-actions { display:flex; gap:7px; flex-wrap:wrap; justify-content:flex-end; }
+.folder-workspace-actions .btn-sm { white-space:nowrap; }
+.folder-workspace-stats { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:8px; padding:0 14px 14px; }
+.folder-workspace-stat { border:1px solid var(--border); border-radius:11px; padding:10px 11px; background:rgba(255,255,255,.018); cursor:pointer; transition:transform .16s ease,border-color .16s ease; }
+.folder-workspace-stat:hover { transform:translateY(-1px); border-color:var(--accent); }
+.folder-workspace-stat-num { font-size:1.12rem; font-weight:800; line-height:1; }
+.folder-workspace-stat-label { margin-top:5px; color:var(--muted); font-size:.68rem; }
+.folder-workspace-subfolders { display:flex; gap:7px; flex-wrap:wrap; padding:0 14px 14px; }
+.folder-workspace-subfolders .chip { cursor:pointer; }
+.folder-workspace-footer { display:flex; justify-content:space-between; align-items:center; gap:10px; padding:10px 14px; border-top:1px solid var(--border); color:var(--muted); font-size:.72rem; }
+.folder-workspace-footer strong { color:var(--text); }
+@media(max-width:768px){
+  .folder-workspace-top { padding:14px; flex-direction:column; }
+  .folder-workspace-actions { width:100%; justify-content:flex-start; }
+  .folder-workspace-actions .btn-sm { flex:1 1 auto; }
+  .folder-workspace-stats { grid-template-columns:repeat(2,minmax(0,1fr)); padding:0 10px 10px; }
+  .folder-workspace-stat:last-child { grid-column:1/-1; }
+  .folder-workspace-footer { align-items:flex-start; flex-direction:column; }
+}
+
+/* FASE I — IA INTEGRADA */
+.phase-i-ai-options{margin-top:8px;grid-template-columns:1fr 1fr;align-items:end}
+.phase-i-ai-options label{display:flex;flex-direction:column;gap:5px;font-size:.75rem;color:var(--muted);font-weight:600}
+.phase-i-check{flex-direction:row!important;align-items:center;min-height:40px;padding:0 4px}
+.phase-i-check input{accent-color:var(--accent);width:16px;height:16px}
+.phase-i-ai-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 8px;border-radius:999px;background:var(--accent-soft);border:1px solid var(--ds-border);font-size:.68rem;font-weight:700}
+.ai-action-card.phase-i-high-risk{border-color:rgba(239,68,68,.45);background:rgba(239,68,68,.05)}
+@media(max-width:700px){.phase-i-ai-options{grid-template-columns:1fr}.phase-i-check{min-height:34px}}
+
+
+/* ============================================================
+   FASE J — MOBILE + EVOLUÇÃO FUTURA
+   Camada de ergonomia mobile, PWA e capacidades nativas opcionais.
+   Não altera o modelo de dados nem a sincronização Firebase.
+   ============================================================ */
+.phase-j-install-card{
+  position:fixed; left:12px; right:12px; bottom:calc(82px + env(safe-area-inset-bottom));
+  z-index:850; display:none; align-items:center; gap:12px; padding:12px 14px;
+  background:linear-gradient(135deg,var(--ds-surface-2),var(--ds-surface));
+  border:1px solid var(--ds-border-strong); border-radius:16px; box-shadow:var(--ds-shadow-lg);
+}
+.phase-j-install-card.show{display:flex;}
+.phase-j-install-icon{width:38px;height:38px;flex:0 0 38px;display:grid;place-items:center;border-radius:11px;background:var(--ds-accent-soft);font-size:1.2rem}
+.phase-j-install-copy{min-width:0;flex:1}.phase-j-install-copy strong{display:block;font-size:.82rem}.phase-j-install-copy span{display:block;color:var(--ds-muted);font-size:.7rem;margin-top:2px}
+.phase-j-install-actions{display:flex;gap:6px;flex:0 0 auto}.phase-j-install-actions .btn-sm{min-height:38px;padding:7px 10px}
+.phase-j-share{margin:4px 8px;width:calc(100% - 16px);justify-content:center;display:none!important}
+.phase-j-share.available{display:flex!important}
+.phase-j-mobile-hint{display:none}
+@media(max-width:768px){
+  body{padding-bottom:calc(76px + env(safe-area-inset-bottom));}
+  .mobile-bottom-nav{padding-bottom:max(4px,env(safe-area-inset-bottom));}
+  .mobile-bottom-nav button{min-height:52px;touch-action:manipulation;}
+  .mobile-bottom-nav button.primary{box-shadow:0 5px 18px rgba(45,212,191,.22);}
+  .phase-j-mobile-hint{display:block;margin:0 10px 10px;padding:8px 10px;border:1px solid var(--ds-border-soft);border-radius:10px;color:var(--ds-muted);font-size:.68rem;background:rgba(255,255,255,.018)}
+  .phase-j-install-card{left:8px;right:8px;bottom:calc(82px + env(safe-area-inset-bottom));}
+}
+@media(min-width:769px){.phase-j-install-card{max-width:430px;left:auto;right:20px;bottom:20px}.phase-j-share{display:none!important}}
+@media(max-width:380px){
+  .phase-j-install-card{gap:8px;padding:10px}.phase-j-install-copy span{display:none}.phase-j-install-actions .btn-sm{padding:6px 8px;font-size:.68rem}
+}
+
+</style>
+<script id="m9b-recurrence-script">
+/* M9-B — Recorrência completa. Isolada da estrutura de dados existente. */
+(function(){
+  if(window.__M9B_RECURRENCE__) return;
+  window.__M9B_RECURRENCE__=true;
+
+  const dayNames=['domingo','segunda-feira','terça-feira','quarta-feira','quinta-feira','sexta-feira','sábado'];
+  const shortDays=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+
+  function addDays(dateStr,n){
+    const [y,m,d]=String(dateStr).split('-').map(Number); const dt=new Date(y,m-1,d); dt.setDate(dt.getDate()+n); return toLocalDateStr(dt);
+  }
+  function weekday(dateStr){ const [y,m,d]=String(dateStr).split('-').map(Number); return new Date(y,m-1,d).getDay(); }
+  function daysInMonth(y,m){ return new Date(y,m,0).getDate(); }
+  function addMonthsClamped(dateStr,n,dayOverride){
+    const [y,m,d]=String(dateStr).split('-').map(Number); const idx=(m-1)+n; const yy=y+Math.floor(idx/12); const mm=((idx%12)+12)%12+1; const day=Math.min(dayOverride||d,daysInMonth(yy,mm)); return toLocalDateStr(new Date(yy,mm-1,day));
+  }
+  function normalizeRule(item){
+    const raw=item?.recurrenceRule||{}; const rep=item?.rep||'none';
+    let mode=raw.mode||'';
+    if(!mode){
+      if(rep==='daily') mode='daily';
+      else if(rep==='weekly') mode='weekly';
+      else if(rep==='monthly') mode='monthly';
+    }
+    const start=raw.startDate||raw.anchorDate||item?.date||getTodayBR();
+    const rule={...raw,mode,frequency:raw.frequency||rep,interval:Number(raw.interval)>0?Number(raw.interval):1,startDate:start,anchorDate:raw.anchorDate||start};
+    if(!Array.isArray(rule.weekdays)) rule.weekdays=Number.isInteger(rule.dayOfWeek)?[rule.dayOfWeek]:[weekday(start)];
+    rule.weekdays=[...new Set(rule.weekdays.map(Number).filter(n=>n>=0&&n<=6))];
+    if(!rule.weekdays.length) rule.weekdays=[weekday(start)];
+    rule.dayOfMonth=Number(rule.dayOfMonth)>0?Number(rule.dayOfMonth):Number(start.split('-')[2]);
+    rule.month=Number(rule.month)>0?Number(rule.month):Number(start.split('-')[1]);
+    rule.weekOfMonth=Number(rule.weekOfMonth)>0?Number(rule.weekOfMonth):1;
+    rule.weekday=Number.isInteger(rule.weekday)?rule.weekday:rule.weekdays[0];
+    rule.endDate=rule.endDate||'';
+    rule.maxOccurrences=Number(rule.maxOccurrences)>0?Number(rule.maxOccurrences):0;
+    return rule;
+  }
+
+  function seriesCount(item){
+    const sid=item?.recurrenceSeriesId||item?.seriesId;
+    if(!sid) return 0;
+    return S.items.filter(x=>(x.recurrenceSeriesId||x.seriesId)===sid).length;
+  }
+
+  function firstDateOnOrAfter(dateStr, allowed){
+    let cur=dateStr; for(let i=0;i<7;i++){ if(allowed.includes(weekday(cur))) return cur; cur=addDays(cur,1); } return dateStr;
+  }
+
+  function nextWeekly(dateStr, interval, days){
+    const allowed=[...days].sort((a,b)=>a-b); const currentWeek=weekday(dateStr);
+    for(let step=1;step<=14*interval+14;step++){
+      const cand=addDays(dateStr,step);
+      const deltaDays=Math.floor(step/7);
+      if(allowed.includes(weekday(cand)) && (step>=1) && (deltaDays%interval===0 || interval===1)){
+        if(interval===1 || Math.floor(step/7)>=interval) return cand;
+      }
+    }
+    const base=addDays(dateStr,7*interval); return firstDateOnOrAfter(base,allowed);
+  }
+
+  function nthWeekdayOfMonth(year,monthIndex,weekNum,day){
+    const first=new Date(year,monthIndex,1); const delta=(day-first.getDay()+7)%7; const d=1+delta+(weekNum-1)*7;
+    if(d>daysInMonth(year,monthIndex+1)) return '';
+    return toLocalDateStr(new Date(year,monthIndex,d));
+  }
+  function lastWeekdayOfMonth(year,monthIndex,day){
+    const last=new Date(year,monthIndex+1,0); const delta=(last.getDay()-day+7)%7; last.setDate(last.getDate()-delta); return toLocalDateStr(last);
+  }
+
+  function nextDateForRule(item){
+    if(!item?.date) return '';
+    const r=normalizeRule(item); const cur=item.date;
+    let candidate='';
+    if(r.mode==='daily') candidate=addDays(cur,r.interval);
+    else if(r.mode==='weekdays'){
+      let d=addDays(cur,1); while(weekday(d)===0||weekday(d)===6) d=addDays(d,1); candidate=d;
+    } else if(r.mode==='weekly' || r.mode==='biweekly'){
+      const interval=r.mode==='biweekly'?2:r.interval; candidate=nextWeekly(cur,interval,r.weekdays);
+    } else if(r.mode==='monthly') candidate=addMonthsClamped(cur,r.interval,r.dayOfMonth);
+    else if(r.mode==='monthly_position'){
+      let [y,m]=cur.split('-').map(Number); let idx=(m-1)+r.interval; y+=Math.floor(idx/12); m=((idx%12)+12)%12; candidate=r.weekOfMonth===-1?lastWeekdayOfMonth(y,m,r.weekday):nthWeekdayOfMonth(y,m,r.weekOfMonth,r.weekday);
+      if(!candidate){ idx++; y+=Math.floor(idx/12); m=((idx%12)+12)%12; candidate=r.weekOfMonth===-1?lastWeekdayOfMonth(y,m,r.weekday):nthWeekdayOfMonth(y,m,r.weekOfMonth,r.weekday); }
+    } else if(r.mode==='yearly'){
+      const [y]=cur.split('-').map(Number); let yy=y+1; let mm=Math.max(1,Math.min(12,r.month)); let dd=Math.min(r.dayOfMonth,daysInMonth(yy,mm)); candidate=toLocalDateStr(new Date(yy,mm-1,dd));
+    } else if(r.mode==='custom'){
+      if(r.unit==='days') candidate=addDays(cur,r.interval);
+      else if(r.unit==='weeks') candidate=addDays(cur,7*r.interval);
+      else if(r.unit==='months') candidate=addMonthsClamped(cur,r.interval,r.dayOfMonth);
+      else if(r.unit==='years'){ const [y,m,d]=cur.split('-').map(Number); const yy=y+r.interval; candidate=toLocalDateStr(new Date(yy,m-1,Math.min(d,daysInMonth(yy,m)))); }
+    }
+    if(!candidate) return '';
+    if(candidate<=cur){ candidate=addDays(cur,1); }
+    if(r.endDate && candidate>r.endDate) return '';
+    if(r.maxOccurrences && seriesCount(item)>=r.maxOccurrences) return '';
+    return candidate;
+  }
+
+  function recurrenceSummary(r){
+    if(!r || !r.mode) return 'Não repete';
+    if(r.mode==='daily') return r.interval===1?'Todos os dias':`A cada ${r.interval} dias`;
+    if(r.mode==='weekdays') return 'Dias úteis (segunda a sexta)';
+    if(r.mode==='weekly') return `Toda semana${r.interval>1?' a cada '+r.interval+' semanas':''}, ${r.weekdays.map(d=>shortDays[d]).join(' e ')}`;
+    if(r.mode==='biweekly') return `A cada 2 semanas, ${r.weekdays.map(d=>shortDays[d]).join(' e ')}`;
+    if(r.mode==='monthly') return r.interval===1?`Todo dia ${r.dayOfMonth} de cada mês`:`A cada ${r.interval} meses, dia ${r.dayOfMonth}`;
+    if(r.mode==='monthly_position'){ const pos=r.weekOfMonth===-1?'última':(['','primeira','segunda','terceira','quarta','quinta'][r.weekOfMonth]||''); return `${pos} ${dayNames[r.weekday]} do mês`; }
+    if(r.mode==='yearly') return `Todo ano em ${String(r.dayOfMonth).padStart(2,'0')}/${String(r.month).padStart(2,'0')}`;
+    if(r.mode==='custom') return `A cada ${r.interval} ${r.unit==='days'?'dia(s)':r.unit==='weeks'?'semana(s)':r.unit==='months'?'mês(es)':'ano(s)'}`;
+    return 'Recorrente';
+  }
+
+  function panelHTML(){
+    return `<div id="m9b-recurrence-panel" class="m9b-recurrence-panel" hidden>
+      <div class="m9b-recurrence-grid">
+        <div class="m9b-recurrence-field" id="m9b-interval-field"><label>Repetir a cada</label><input id="m9b-interval" type="number" min="1" max="365" value="1"></div>
+        <div class="m9b-recurrence-field" id="m9b-unit-field"><label>Unidade</label><select id="m9b-unit"><option value="days">dias</option><option value="weeks">semanas</option><option value="months">meses</option><option value="years">anos</option></select></div>
+        <div class="m9b-recurrence-field" id="m9b-month-day-field"><label>Dia do mês</label><input id="m9b-month-day" type="number" min="1" max="31" value="1"></div>
+        <div class="m9b-recurrence-field" id="m9b-position-field"><label>Posição</label><select id="m9b-position"><option value="1">Primeira</option><option value="2">Segunda</option><option value="3">Terceira</option><option value="4">Quarta</option><option value="5">Quinta</option><option value="-1">Última</option></select></div>
+        <div class="m9b-recurrence-field" id="m9b-weekday-field"><label>Dia da semana</label><select id="m9b-weekday"><option value="0">Domingo</option><option value="1">Segunda-feira</option><option value="2">Terça-feira</option><option value="3">Quarta-feira</option><option value="4">Quinta-feira</option><option value="5">Sexta-feira</option><option value="6">Sábado</option></select></div>
+        <div class="m9b-recurrence-field" id="m9b-month-field"><label>Mês</label><select id="m9b-month"><option value="1">Janeiro</option><option value="2">Fevereiro</option><option value="3">Março</option><option value="4">Abril</option><option value="5">Maio</option><option value="6">Junho</option><option value="7">Julho</option><option value="8">Agosto</option><option value="9">Setembro</option><option value="10">Outubro</option><option value="11">Novembro</option><option value="12">Dezembro</option></select></div>
+      </div>
+      <div id="m9b-days-field" class="m9b-recurrence-field"><label>Dias da semana</label><div class="m9b-days">${shortDays.map((d,i)=>`<label class="m9b-day"><input type="checkbox" data-m9b-day="${i}"> ${d}</label>`).join('')}</div></div>
+      <div class="m9b-recurrence-grid" style="margin-top:10px">
+        <div class="m9b-recurrence-field"><label>Termina</label><select id="m9b-end-type"><option value="never">Sem data final</option><option value="date">Em uma data</option><option value="count">Após X ocorrências</option></select></div>
+        <div class="m9b-recurrence-field" id="m9b-end-date-field"><label>Data final</label><input id="m9b-end-date" type="date"></div>
+        <div class="m9b-recurrence-field" id="m9b-end-count-field"><label>Número de ocorrências</label><input id="m9b-end-count" type="number" min="1" max="999" value="10"></div>
+      </div>
+      <div id="m9b-recurrence-summary" class="m9b-summary"></div>
+      <div class="m9b-series-note">A data do campo "Data" é a data inicial da série. Ao concluir uma ocorrência, a próxima é calculada pela regra sem apagar a ocorrência concluída.</div>
+      <div class="phase-g-recurrence-note">↻ A regra pertence à série. Reagendar uma ocorrência pelo calendário altera somente aquela ocorrência, mantendo a próxima ocorrência baseada na regra configurada.</div>
+    </div>`;
+  }
+
+  function ensurePanel(){
+    const sel=document.getElementById('f-rep'); if(!sel || document.getElementById('m9b-recurrence-panel')) return;
+    sel.innerHTML='<option value="none">Não repete</option><option value="daily">Diariamente</option><option value="weekdays">Dias úteis</option><option value="weekly">Semanalmente</option><option value="biweekly">Quinzenalmente</option><option value="monthly">Mensalmente</option><option value="monthly_position">Mensal por posição</option><option value="yearly">Anualmente</option><option value="custom">Personalizado</option>';
+    sel.insertAdjacentHTML('afterend',panelHTML());
+    sel.addEventListener('change',updatePanel);
+    ['m9b-interval','m9b-unit','m9b-month-day','m9b-position','m9b-weekday','m9b-month','m9b-end-type','m9b-end-date','m9b-end-count'].forEach(id=>document.getElementById(id)?.addEventListener('input',updatePanel));
+    document.getElementById('m9b-end-type')?.addEventListener('change',updatePanel);
+    document.querySelectorAll('[data-m9b-day]').forEach(x=>x.addEventListener('change',updatePanel));
+    updatePanel();
+  }
+
+  function selectedDays(){ return [...document.querySelectorAll('[data-m9b-day]:checked')].map(x=>Number(x.dataset.m9bDay)); }
+  function fillFromItem(item){
+    const r=normalizeRule(item||{date:getTodayBR(),rep:'none'}); const sel=document.getElementById('f-rep'); if(!sel) return;
+    sel.value=r.mode||'none';
+    const start=item?.date||getTodayBR();
+    const int=document.getElementById('m9b-interval'); if(int) int.value=r.interval||1;
+    const unit=document.getElementById('m9b-unit'); if(unit) unit.value=r.unit||'days';
+    const md=document.getElementById('m9b-month-day'); if(md) md.value=r.dayOfMonth||Number(start.split('-')[2]);
+    const pos=document.getElementById('m9b-position'); if(pos) pos.value=String(r.weekOfMonth||1);
+    const wd=document.getElementById('m9b-weekday'); if(wd) wd.value=String(r.weekday ?? weekday(start));
+    const mo=document.getElementById('m9b-month'); if(mo) mo.value=String(r.month||Number(start.split('-')[1]));
+    document.querySelectorAll('[data-m9b-day]').forEach(x=>x.checked=r.weekdays.includes(Number(x.dataset.m9bDay)));
+    const et=document.getElementById('m9b-end-type'); if(et) et.value=r.endDate?'date':(r.maxOccurrences?'count':'never');
+    const ed=document.getElementById('m9b-end-date'); if(ed) ed.value=r.endDate||'';
+    const ec=document.getElementById('m9b-end-count'); if(ec) ec.value=r.maxOccurrences||10;
+    updatePanel();
+  }
+
+  function updatePanel(){
+    const mode=document.getElementById('f-rep')?.value||'none'; const p=document.getElementById('m9b-recurrence-panel'); if(!p) return;
+    p.hidden=mode==='none';
+    const show=(id,yes)=>{const el=document.getElementById(id);if(el)el.style.display=yes?'':'none'};
+    show('m9b-interval-field',['daily','weekly','biweekly','monthly','custom'].includes(mode));
+    show('m9b-unit-field',mode==='custom'); show('m9b-month-day-field',['monthly','custom'].includes(mode));
+    show('m9b-position-field',mode==='monthly_position'); show('m9b-weekday-field',mode==='monthly_position'); show('m9b-month-field',mode==='yearly');
+    show('m9b-days-field',['weekly','biweekly'].includes(mode));
+    show('m9b-end-date-field',(document.getElementById('m9b-end-type')?.value||'never')==='date');
+    show('m9b-end-count-field',(document.getElementById('m9b-end-type')?.value||'never')==='count');
+    const start=document.getElementById('f-date')?.value||getTodayBR(); const r=readRuleFromForm(start); const sum=document.getElementById('m9b-recurrence-summary'); if(sum) sum.textContent=recurrenceSummary(r);
+  }
+
+  function readRuleFromForm(start){
+    const mode=document.getElementById('f-rep')?.value||'none'; const interval=Math.max(1,Number(document.getElementById('m9b-interval')?.value||1));
+    const endType=document.getElementById('m9b-end-type')?.value||'never';
+    const r={mode,frequency:mode,interval,startDate:start,anchorDate:start,endDate:'',maxOccurrences:0};
+    if(mode==='weekly'||mode==='biweekly') r.weekdays=selectedDays().length?selectedDays():[weekday(start)];
+    if(mode==='monthly') r.dayOfMonth=Math.max(1,Math.min(31,Number(document.getElementById('m9b-month-day')?.value||Number(start.split('-')[2]))));
+    if(mode==='monthly_position'){r.weekOfMonth=Number(document.getElementById('m9b-position')?.value||1);r.weekday=Number(document.getElementById('m9b-weekday')?.value||weekday(start));r.weekdays=[r.weekday];}
+    if(mode==='yearly'){r.month=Number(document.getElementById('m9b-month')?.value||Number(start.split('-')[1]));r.dayOfMonth=Number(document.getElementById('m9b-month-day')?.value||Number(start.split('-')[2]));}
+    if(mode==='custom'){r.unit=document.getElementById('m9b-unit')?.value||'days'; if(r.unit==='months')r.dayOfMonth=Number(document.getElementById('m9b-month-day')?.value||Number(start.split('-')[2]));}
+    if(endType==='date') r.endDate=document.getElementById('m9b-end-date')?.value||'';
+    if(endType==='count') r.maxOccurrences=Math.max(1,Number(document.getElementById('m9b-end-count')?.value||1));
+    return r;
+  }
+
+  function applyRuleToItem(item){
+    const mode=document.getElementById('f-rep')?.value||'none';
+    if(mode==='none'){ item.rep='none'; delete item.recurrenceRule; delete item.recurrenceSeriesId; delete item.seriesId; return; }
+    const start=document.getElementById('f-date')?.value||item.date||getTodayBR(); const r=readRuleFromForm(start);
+    item.rep=mode; item.recurrenceRule=r;
+    if(!item.recurrenceSeriesId && !item.seriesId) item.recurrenceSeriesId=generateId('series');
+    item.seriesId=item.recurrenceSeriesId;
+    item.repDay=r.dayOfMonth||Number(start.split('-')[2]);
+  }
+
+  const originalOpen=window.openItemModal;
+  window.openItemModal=function(item){
+    originalOpen(item);
+    requestAnimationFrame(()=>{ensurePanel(); fillFromItem(item||{date:document.getElementById('f-date')?.value||getTodayBR(),rep:'none'});});
+  };
+
+  function ruleSignature(item){
+    if(!item) return '';
+    const r=normalizeRule(item);
+    return JSON.stringify({mode:r.mode,interval:r.interval,unit:r.unit||'',weekdays:r.weekdays||[],dayOfMonth:r.dayOfMonth||0,weekOfMonth:r.weekOfMonth||0,weekday:r.weekday??null,month:r.month||0,startDate:r.startDate||'',endDate:r.endDate||'',maxOccurrences:r.maxOccurrences||0});
+  }
+
+  function askRecurrenceEditScope(existing, newMode){
+    const oldActive=!!existing?.rep && existing.rep!=='none';
+    if(!existing || !oldActive) return 'all';
+    const probe={...existing};
+    if(newMode==='none'){ probe.rep='none'; delete probe.recurrenceRule; }
+    else { probe.rep=newMode; }
+    if(ruleSignature(existing)===ruleSignature(probe) && newMode!=='none') return 'all';
+    const answer=prompt('Esta tarefa faz parte de uma recorrência. O que deseja alterar?\n\n1 = Somente esta ocorrência\n2 = Esta e as próximas\n3 = Todas da série', '2');
+    if(answer==='1') return 'single';
+    if(answer==='3') return 'all';
+    return 'future';
+  }
+
+  function updateSeriesOccurrences(item, scope){
+    const sid=item?.recurrenceSeriesId||item?.seriesId; if(!sid || scope==='single') return;
+    const currentDate=item.date||'';
+    S.items.forEach(x=>{
+      if(x.id===item.id) return;
+      const same=(x.recurrenceSeriesId||x.seriesId)===sid;
+      if(!same) return;
+      if(scope==='future' && x.date && currentDate && x.date<currentDate) return;
+      x.rep=item.rep;
+      x.recurrenceRule=item.recurrenceRule?{...item.recurrenceRule}:undefined;
+      x.repDay=item.repDay||null;
+      x.recurrenceSeriesId=sid; x.seriesId=sid;
+      if(scope==='future' && x.status==='done') return;
+    });
+  }
+
+  const originalSave=window.saveItem;
+  window.saveItem=async function(){
+    const editingId=currentEditItemId;
+    const existing=editingId?S.items.find(x=>x.id===editingId):null;
+    const requestedMode=document.getElementById('f-rep')?.value||'none';
+    let scope=askRecurrenceEditScope(existing, requestedMode);
+    if(existing && scope==='single'){
+      // Salva esta ocorrência sem regra. As outras ocorrências da série permanecem intactas.
+      const originalValue=document.getElementById('f-rep')?.value||'none';
+      if(document.getElementById('f-rep')) document.getElementById('f-rep').value='none';
+      await originalSave();
+      const saved=S.items.find(x=>x.id===editingId);
+      if(saved){ saved.rep='none'; delete saved.recurrenceRule; delete saved.recurrenceSeriesId; delete saved.seriesId; const saveOk=await saveData(); if(!saveOk) showToast('A alteração da recorrência ficou local e aguarda sincronização.'); }
+      if(document.getElementById('f-rep')) document.getElementById('f-rep').value=originalValue;
+      return;
+    }
+    const mode=requestedMode;
+    if(mode!=='none'){
+      const target=existing?{...existing}:{};
+      applyRuleToItem(target);
+      if(existing && editingOriginalItem) editingOriginalItem={...editingOriginalItem,rep:target.rep,recurrenceRule:target.recurrenceRule,repDay:target.repDay,recurrenceSeriesId:target.recurrenceSeriesId,seriesId:target.seriesId};
+    }
+    await originalSave();
+    const saved=editingId?S.items.find(x=>x.id===editingId):S.items.find(x=>x.title===document.getElementById('f-title')?.value.trim() && x.date===document.getElementById('f-date')?.value);
+    if(saved){
+      if(mode==='none'){saved.rep='none';delete saved.recurrenceRule;}
+      else {applyRuleToItem(saved);}
+      if(!saved.recurrenceSeriesId && saved.rep && saved.rep!=='none') { saved.recurrenceSeriesId=generateId('series'); saved.seriesId=saved.recurrenceSeriesId; }
+      if(scope!=='single') updateSeriesOccurrences(saved, scope);
+      const saveOk=await saveData();
+      if(!saveOk) showToast('A alteração da recorrência ficou local e aguarda sincronização.');
+    }
+  };
+
+  document.addEventListener('DOMContentLoaded',()=>{setTimeout(()=>{ensurePanel();updatePanel();},0);});
+  document.addEventListener('change',e=>{if(e.target?.id==='f-date')updatePanel();});
+})();
+</script>
+
+    document.addEventListener('keydown', function phaseDKeyboardShortcuts(e){
+      const modal=document.getElementById('item-modal');
+      if(!modal || !modal.classList.contains('open')) return;
+      if((e.ctrlKey || e.metaKey) && e.key==='Enter'){ e.preventDefault(); saveItem(); }
+    });
+
+
+  <div id="phase-j-install-card" class="phase-j-install-card" role="dialog" aria-label="Instalar aplicativo">
+    <div class="phase-j-install-icon">📲</div>
+    <div class="phase-j-install-copy"><strong>Instalar Minha Agenda Pro</strong><span>Acesse mais rápido e use a agenda como aplicativo.</span></div>
+    <div class="phase-j-install-actions">
+      <button type="button" class="btn-sm" onclick="phaseJInstallPWA()">Instalar</button>
+      <button type="button" class="btn-sm" onclick="phaseJDismissInstall()" aria-label="Fechar">✕</button>
+    </div>
+  </div>
+
+<script>
+/* FASE J — capacidades mobile opcionais e experiência PWA */
+(function(){
+  if(window.__PHASE_J__) return; window.__PHASE_J__=true;
+
+  function isMobile(){ return window.matchMedia && window.matchMedia('(max-width: 768px)').matches; }
+  function installCard(){ return document.getElementById('phase-j-install-card'); }
+  function showInstallCard(){
+    const card=installCard();
+    if(!card || !phase3DeferredInstallPrompt) return;
+    if(localStorage.getItem('agenda_phase_j_install_dismissed')==='1') return;
+    if(isMobile()) card.classList.add('show');
+  }
+  window.phaseJInstallPWA=async function(){
+    try{
+      if(typeof phase3InstallPWA==='function' && phase3DeferredInstallPrompt){
+        await phase3InstallPWA();
+        installCard()?.classList.remove('show');
+      }
+    }catch(e){ console.warn('Phase J install:',e); }
+  };
+  window.phaseJDismissInstall=function(){
+    installCard()?.classList.remove('show');
+    try{localStorage.setItem('agenda_phase_j_install_dismissed','1');}catch(_){ }
+  };
+
+  window.addEventListener('beforeinstallprompt',()=>setTimeout(showInstallCard,350));
+  window.addEventListener('resize',()=>{
+    const card=installCard(); if(!card) return;
+    if(isMobile()) showInstallCard(); else card.classList.remove('show');
+  });
+  window.addEventListener('appinstalled',()=>installCard()?.classList.remove('show'));
+
+  function haptic(){
+    try{ if(isMobile() && navigator.vibrate) navigator.vibrate(8); }catch(_){ }
+  }
+  document.addEventListener('click',function(e){
+    const btn=e.target.closest?.('.mobile-bottom-nav button, .mobile-nav-toggle, .phase-j-install-actions button');
+    if(btn) haptic();
+  },{passive:true});
+
+  window.phaseJShareAgenda=function(){
+    const today=typeof getTodayBR==='function'?getTodayBR():new Date().toISOString().slice(0,10);
+    const pending=Array.isArray(S?.items)?S.items.filter(i=>i.status!=='done'):[];
+    const todayItems=pending.filter(i=>i.date===today).sort((a,b)=>String(a.time||'').localeCompare(String(b.time||'')));
+    const overdue=pending.filter(i=>i.date && i.date<today).length;
+    const lines=todayItems.slice(0,12).map(i=>`• ${i.time?i.time+' ':''}${i.title||'Sem título'}`);
+    const text=['Minha Agenda Pro',`Resumo de hoje (${today})`,`Abertas hoje: ${todayItems.length}`,`Atrasadas: ${overdue}`,...(lines.length?['',...lines]:['','Nenhuma tarefa para hoje.'])].join('\n');
+    if(navigator.share){
+      navigator.share({title:'Minha Agenda Pro',text}).catch(()=>{});
+    }else if(navigator.clipboard){
+      navigator.clipboard.writeText(text).then(()=>typeof showToast==='function'&&showToast('Resumo copiado para a área de transferência.')).catch(()=>{});
+    }else if(typeof showToast==='function') showToast('Compartilhamento não disponível neste navegador.');
+  };
+
+  function injectShareButton(){
+    const nav=document.querySelector('#sidebar .nav-group');
+    if(!nav || document.getElementById('phase-j-share-btn')) return;
+    const b=document.createElement('button');
+    b.id='phase-j-share-btn'; b.type='button'; b.className='btn-sm phase-j-share';
+    b.innerHTML='📤 Compartilhar resumo de hoje'; b.onclick=window.phaseJShareAgenda;
+    nav.appendChild(b);
+    if(navigator.share || navigator.clipboard) b.classList.add('available');
+    const hint=document.createElement('div'); hint.className='phase-j-mobile-hint';
+    hint.textContent='Dica: instale o app para abrir a agenda direto da tela inicial.';
+    const drawer=document.querySelector('#sidebar .nav-group');
+    if(drawer && isMobile() && !document.getElementById('phase-j-mobile-hint')){hint.id='phase-j-mobile-hint';drawer.prepend(hint);}
+  }
+
+  document.addEventListener('DOMContentLoaded',()=>{
+    injectShareButton();
+    setTimeout(showInstallCard,700);
+  });
+})();
+</script>
 </body>
 </html>
