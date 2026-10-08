@@ -1,10 +1,10 @@
-const CACHE_NAME = 'minha-agenda-pro-v2';
+const CACHE_NAME = 'minha-agenda-pro-v3';
 const APP_SHELL = [
   './',
   './index.html',
   './manifest.webmanifest',
-  './icons/icon-192.png',
-  './icons/icon-512.png'
+  './icon-192.svg',
+  './icon-512.svg'
 ];
 
 self.addEventListener('install', event => {
