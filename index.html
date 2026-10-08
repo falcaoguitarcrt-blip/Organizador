@@ -7608,11 +7608,14 @@ button,input,select,textarea{font:inherit} button{-webkit-tap-highlight-color:tr
 })();
 </script>
 
+<script>
+/* FASE D — atalhos do modal */
     document.addEventListener('keydown', function phaseDKeyboardShortcuts(e){
       const modal=document.getElementById('item-modal');
       if(!modal || !modal.classList.contains('open')) return;
       if((e.ctrlKey || e.metaKey) && e.key==='Enter'){ e.preventDefault(); saveItem(); }
     });
+</script>
 
 
   <div id="phase-j-install-card" class="phase-j-install-card" role="dialog" aria-label="Instalar aplicativo">
