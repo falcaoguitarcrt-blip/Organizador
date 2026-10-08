@@ -6735,23 +6735,82 @@
       chat.scrollTop = chat.scrollHeight;
     }
 
+    /* M9-D — IA INTELIGENTE
+       O contexto continua sendo somente leitura: a IA recebe dados já existentes
+       e propõe ações. Nenhum campo novo é persistido no modelo da agenda. */
+    function m9dFolderPath(areaId) {
+      if (!areaId) return '';
+      const chain = [];
+      const seen = new Set();
+      let current = S.areas.find(a => a.id === areaId) || null;
+      while (current && !seen.has(current.id)) {
+        seen.add(current.id);
+        chain.unshift(current.name || '');
+        current = current.parentId ? S.areas.find(a => a.id === current.parentId) : null;
+      }
+      return chain.filter(Boolean).join(' / ');
+    }
+
+    function m9dCloneRecurrenceRule(rule) {
+      if (!rule || typeof rule !== 'object') return null;
+      try { return JSON.parse(JSON.stringify(rule)); } catch (_) { return null; }
+    }
+
     function buildAIContext() {
       const cfg = getAIConfig();
       const limit = Math.min(500, Math.max(50, Number(cfg.contextLimit) || 250));
       const sortedItems = [...S.items].sort(compareItemsByDateTime).slice(0, limit);
+      const folderFilter = currentArea === 'all' ? getGeneralFolderSelectionState() : null;
       return {
+        aiContextVersion: 'm9d-1',
         today: getTodayBR(),
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Sao_Paulo',
         currentArea,
         currentAreaName: currentArea === 'all' ? 'Agenda Geral' : (getFolderConfig(currentArea)?.name || 'Agenda'),
-        folders: S.areas.map(a => ({ id:a.id, name:a.name, parentId:a.parentId || null, color:a.color || '' })),
+        scope: currentArea === 'all' ? 'agenda_geral' : 'pasta_especifica',
+        generalFolderFilter: folderFilter ? {
+          showingAll: folderFilter.showingAll,
+          selectedFolderIds: [...folderFilter.selected],
+          selectedFolderNames: folderFilter.mainFolders.filter(f => folderFilter.selected.includes(f.id)).map(f => f.name)
+        } : null,
+        folders: S.areas.map(a => ({
+          id:a.id, name:a.name, parentId:a.parentId || null, color:a.color || '',
+          path:m9dFolderPath(a.id)
+        })),
         items: sortedItems.map(i => ({
-          id:i.id, title:i.title || '', desc:i.desc || '', date:i.date || '', time:i.time || '', duration:phase3EnsureDurationValue(i.duration),
-          status:i.status || 'todo', priority:i.priority || 'medium', starred:!!i.starred, tags:Array.isArray(i.tags)?i.tags:[],
-          nextAction:i.nextAction || '', reminder:i.reminder || 'none', rep:i.rep || 'none', waitingFor:i.waitingFor || '',
-          waitingSince:i.waitingSince || '', followUpDate:i.followUpDate || '', checklist:(i.checklist||[]).map(c=>({text:c.text||'',done:!!c.done})),
+          id:i.id,
+          title:i.title || '',
+          desc:i.desc || '',
+          observations:i.desc || '',
+          area:i.area || '',
+          folderId:i.area || '',
+          folderPath:m9dFolderPath(i.area),
+          date:i.date || '',
+          time:i.time || '',
+          duration:phase3EnsureDurationValue(i.duration),
+          status:i.status || 'todo',
+          priority:i.priority || 'medium',
+          starred:!!i.starred,
+          tags:Array.isArray(i.tags)?i.tags:[],
+          nextAction:i.nextAction || '',
+          reminder:i.reminder || 'none',
+          rep:i.rep || 'none',
+          recurrenceRule:m9dCloneRecurrenceRule(i.recurrenceRule),
+          waitingFor:i.waitingFor || '',
+          waitingSince:i.waitingSince || '',
+          followUpDate:i.followUpDate || '',
+          checklist:(i.checklist||[]).map(c=>({text:c.text||'',done:!!c.done})),
           hasAttachments:Array.isArray(i.attachments) && i.attachments.length>0
         })),
+        instructions: {
+          useOnlyProvidedData: true,
+          doNotInventDatesTimesFoldersTasks: true,
+          descriptionAndObservationsAreTheExistingDescField: true,
+          respectCurrentArea: true,
+          respectGeneralFolderFilterWhenRelevant: true,
+          recurrenceIsAvailableInRepAndRecurrenceRule: true,
+          proposeBeforeChangingData: true
+        },
         truncated: S.items.length > sortedItems.length,
         totalItems: S.items.length
       };
@@ -6824,6 +6883,8 @@
         if (!String(action.title || '').trim()) return {ok:false,error:'Título ausente.'};
         if (action.folderId && !S.areas.some(a=>a.id===action.folderId)) return {ok:false,error:'Pasta não encontrada.'};
       }
+      if (action.folderId && !S.areas.some(a=>a.id===action.folderId)) return {ok:false,error:'Pasta não encontrada.'};
+      if (action.recurrenceRule !== undefined && action.recurrenceRule !== null && typeof action.recurrenceRule !== 'object') return {ok:false,error:'Regra de recorrência inválida.'};
       if (action.itemId && !S.items.some(i=>i.id===action.itemId)) return {ok:false,error:'Tarefa não encontrada.'};
       return {ok:true};
     }
@@ -6837,13 +6898,14 @@
         const item = {
           id: generateId('item'),
           title: String(action.title || '').trim(),
-          desc: String(action.desc || ''),
+          desc: String(action.desc ?? action.observations ?? action.description ?? ''),
           area: action.folderId || '',
           status: action.status || 'todo',
           date: action.date || '',
           time: action.time || '',
           duration: phase3EnsureDurationValue(action.duration),
           rep: action.rep || 'none',
+          recurrenceRule: action.recurrenceRule ? m9dCloneRecurrenceRule(action.recurrenceRule) : null,
           reminder: action.reminder || 'none',
           priority: action.priority || 'medium',
           starred: !!action.starred,
@@ -6891,8 +6953,14 @@
       }
       if (action.type === 'update_task') {
         const oldStatus = item.status || 'todo';
-        const fields = ['title','desc','area','status','date','time','duration','rep','reminder','priority','starred','nextAction','waitingFor','waitingSince','followUpDate'];
+        const fields = ['title','area','status','date','time','duration','rep','reminder','priority','starred','nextAction','waitingFor','waitingSince','followUpDate'];
         fields.forEach(k=>{if(action[k] !== undefined){ if(k==='area' && action[k] && !S.areas.some(a=>a.id===action[k])) throw new Error('Pasta não encontrada.'); item[k]=action[k]; }});
+        if (action.desc !== undefined || action.description !== undefined || action.observations !== undefined) {
+          item.desc = String(action.desc ?? action.description ?? action.observations ?? '');
+        }
+        if (action.recurrenceRule !== undefined) {
+          item.recurrenceRule = action.recurrenceRule ? m9dCloneRecurrenceRule(action.recurrenceRule) : null;
+        }
         if (Array.isArray(action.tags)) item.tags=[...new Set(action.tags.map(x=>String(x).toLowerCase().replace(/^#/,'')).filter(Boolean))];
         if (Array.isArray(action.checklist)) item.checklist=action.checklist.map(x=>({text:String(x?.text||x||''),done:!!x?.done})).filter(x=>x.text);
         if (oldStatus !== 'done' && item.status === 'done') addNextOccurrence(item);
