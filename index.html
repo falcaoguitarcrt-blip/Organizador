@@ -976,6 +976,17 @@
 
 </style>
   <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-storage-compat.js"></script>
+    /* M9-B — RECORRÊNCIA COMPLETA */
+    .m9b-recurrence-panel{margin-top:10px;padding:12px;border:1px solid var(--border);border-radius:10px;background:rgba(255,255,255,.025)}
+    .m9b-recurrence-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+    .m9b-recurrence-field label{display:block;font-size:.72rem;color:var(--muted);margin-bottom:5px;font-weight:700}
+    .m9b-weekdays{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+    .m9b-weekday{display:inline-flex;align-items:center;gap:5px;padding:6px 9px;border:1px solid var(--border);border-radius:18px;cursor:pointer;font-size:.75rem}
+    .m9b-weekday:has(input:checked){border-color:var(--accent);background:rgba(45,212,191,.12);color:var(--accent)}
+    .m9b-recurrence-summary{margin-top:10px;color:var(--accent);font-size:.78rem;font-weight:700}
+    .m9b-recurrence-note{margin-top:7px;color:var(--muted);font-size:.72rem;line-height:1.4}
+    @media(max-width:768px){.m9b-recurrence-panel{padding:10px}.m9b-recurrence-grid{grid-template-columns:1fr 1fr}.m9b-weekday{min-height:40px}}
+
 
     /* M9-A — VISUALIZAÇÃO POR DIA EM PASTAS ESPECÍFICAS */
     .m9-folder-day-section {
@@ -1307,12 +1318,17 @@
       <div class="form-group" style="display: flex; gap: 12px;">
         <div style="flex:1;">
           <label>Repetir (Gera cópia ao concluir)</label>
-          <select id="f-rep" class="form-control">
+          <select id="f-rep" class="form-control" onchange="m9bRenderRecurrenceConfig()">
             <option value="none">Não repete</option>
             <option value="daily">Diariamente</option>
+            <option value="weekdays">Dias úteis (seg-sex)</option>
             <option value="weekly">Semanalmente</option>
+            <option value="biweekly">Quinzenalmente</option>
             <option value="monthly">Mensalmente</option>
+            <option value="yearly">Anualmente</option>
+            <option value="custom">Personalizado</option>
           </select>
+          <div id="m9b-recurrence-config" class="m9b-recurrence-panel" hidden></div>
         </div>
         <div style="flex:1;">
           <label>🔔 Lembrete</label>
@@ -2172,7 +2188,9 @@
         duration: item.duration ?? null,
         rep: item.rep || 'none',
         repDay: item.repDay ?? null,
-        recurrenceRule: item.recurrenceRule || null,
+        recurrenceRule: item.recurrenceRule || m9bLegacyRule(item) || null,
+        recurrenceSeriesId: item.recurrenceSeriesId || item.repSourceId || item.id || null,
+        recurrenceCount: item.recurrenceCount || 1,
         reminder: item.reminder || 'none',
         priority: item.priority || 'medium',
         starred: !!item.starred,
@@ -3937,55 +3955,18 @@
       return true;
     }
 
-    function addNextOccurrence(item) {
-      if (!item || !item.rep || item.rep === 'none' || !item.date) return;
-      const today = getTodayBR();
 
-      let nextDateStr = '';
-      const parts = item.date.split('-').map(Number);
-      let curYear = parts[0];
-      let curMonth = parts[1] - 1;
-      let curDay = parts[2];
-      const originalRepDay = item.repDay || curDay;
-
-      if (item.rep === 'daily') {
-        const baseDateStr = (item.date < today) ? today : item.date;
-        const bParts = baseDateStr.split('-').map(Number);
-        let d = new Date(bParts[0], bParts[1] - 1, bParts[2]);
-        d.setDate(d.getDate() + 1);
-        nextDateStr = toLocalDateStr(d);
-      } else if (item.rep === 'weekly') {
-        let d = new Date(curYear, curMonth, curDay);
-        do {
-          d.setDate(d.getDate() + 7);
-          nextDateStr = toLocalDateStr(d);
-        } while (nextDateStr <= today);
-      } else if (item.rep === 'monthly') {
-        do {
-          curMonth++;
-          if (curMonth > 11) { curMonth = 0; curYear++; }
-          let lastDayOfTarget = new Date(curYear, curMonth + 1, 0).getDate();
-          let targetDay = Math.min(originalRepDay, lastDayOfTarget);
-          let d = new Date(curYear, curMonth, targetDay);
-          nextDateStr = toLocalDateStr(d);
-        } while (nextDateStr <= today);
-      }
-
-      if (!nextDateStr) return;
-
-      const newItem = {
-        ...item,
-        id: generateId('item'),
-        status: 'todo',
-        date: nextDateStr,
-        repDay: originalRepDay,
-        checklist: (item.checklist || []).map(c => ({ ...c, done: false })),
-        attachments: [], // Cópias NÃO herdam anexos
-        repSourceId: item.id
-      };
-
-      newItem.repSnapshot = makeRepSnapshot(newItem);
-      S.items.push(newItem);
+    function addNextOccurrence(item){
+      if(!item)return;
+      var rule=m9bGetRule(item);if(!rule||!item.date)return;
+      var nextDate=m9bNextDate(item,rule);if(!nextDate)return;
+      var series=m9bSeriesId(item)||item.id;
+      var duplicate=S.items.some(function(x){return x.id!==item.id&&(x.recurrenceSeriesId===series||x.repSourceId===item.id)&&x.date===nextDate&&x.status!=='done';});
+      if(duplicate)return;
+      var count=Number(item.recurrenceCount||1)+1;
+      if(rule.end?.type==='count'&&count>Number(rule.end.count||1))return;
+      var next={...item,id:generateId('item'),status:'todo',date:nextDate,recurrenceRule:m9bCloneRule(rule),recurrenceSeriesId:series,recurrenceCount:count,rep:rule.type==='weekly'&&Number(rule.interval)===2?'biweekly':rule.type,checklist:(item.checklist||[]).map(function(c){return {...c,done:false};}),attachments:[],repSourceId:item.id};
+      next.repSnapshot=makeRepSnapshot(next);S.items.push(next);
     }
 
     function removeUntouchedCopy(sourceId) {
@@ -4254,6 +4235,104 @@
       }
     }
 
+
+    // M9-B — motor de recorrência completo e compatível com regras antigas.
+    function m9bDateParts(s){var p=String(s||'').split('-').map(Number);return p.length===3&&p.every(Number.isFinite)?p:null;}
+    function m9bDate(s){var p=m9bDateParts(s);return p?new Date(p[0],p[1]-1,p[2]):null;}
+    function m9bWeekday(s){var d=m9bDate(s);return d?d.getDay():null;}
+    function m9bCloneRule(r){if(!r||typeof r!=='object')return null;try{return JSON.parse(JSON.stringify(r));}catch(_){return null;}}
+    function m9bLegacyRule(item){
+      if(!item||!item.rep||item.rep==='none')return null;
+      var date=item.date||getTodayBR(), wd=m9bWeekday(date);
+      if(item.rep==='daily')return {version:2,type:'daily',interval:1,end:{type:'none'}};
+      if(item.rep==='weekly')return {version:2,type:'weekly',interval:1,days:[wd===null?1:wd],end:{type:'none'}};
+      if(item.rep==='monthly')return {version:2,type:'monthly',interval:1,mode:'day',day:Number(item.repDay||m9bDateParts(date)?.[2]||1),end:{type:'none'}};
+      if(item.rep==='biweekly')return {version:2,type:'weekly',interval:2,days:[wd===null?1:wd],end:{type:'none'}};
+      if(item.rep==='weekdays')return {version:2,type:'weekdays',interval:1,end:{type:'none'}};
+      return null;
+    }
+    function m9bGetRule(item){return m9bCloneRule(item?.recurrenceRule)||m9bLegacyRule(item);}
+    function m9bNormalizeRule(r,date){
+      if(!r||r.type==='none')return null;
+      r=m9bCloneRule(r)||{};r.version=2;r.interval=Math.max(1,Number(r.interval||1));
+      r.end=r.end&&['none','date','count'].includes(r.end.type)?r.end:{type:'none'};
+      if(r.end.type==='count')r.end.count=Math.max(1,Number(r.end.count||1));
+      if(r.end.type==='date'&&!/^\\d{4}-\\d{2}-\\d{2}$/.test(r.end.date||''))r.end={type:'none'};
+      if(r.type==='weekly'){r.days=Array.isArray(r.days)&&r.days.length?[...new Set(r.days.map(Number).filter(function(x){return x>=0&&x<=6;}))].sort(function(a,b){return a-b;}):[m9bWeekday(date)??1];}
+      if(r.type==='monthly'){
+        r.mode=r.mode||'day';
+        if(r.mode==='day')r.day=Math.min(31,Math.max(1,Number(r.day||m9bDateParts(date)?.[2]||1)));
+        if(r.mode==='weekday'){r.week=[1,2,3,4,5,-1].includes(Number(r.week))?Number(r.week):1;r.weekday=Number.isFinite(Number(r.weekday))?Number(r.weekday):(m9bWeekday(date)??1);}
+      }
+      if(r.type==='yearly'){var p=m9bDateParts(date);r.month=Math.min(12,Math.max(1,Number(r.month||p?.[1]||1)));r.day=Math.min(31,Math.max(1,Number(r.day||p?.[2]||1)));}
+      if(r.type==='custom')r.unit=['days','weeks','months','years'].includes(r.unit)?r.unit:'days';
+      return r;
+    }
+    function m9bRuleFromForm(){
+      var type=document.getElementById('f-rep')?.value||'none',date=document.getElementById('f-date')?.value||getTodayBR();
+      if(type==='none')return null;
+      var n=function(id){return Math.max(1,Number(document.getElementById(id)?.value||1));};
+      var endType=document.getElementById('m9b-end-type')?.value||'none';
+      var r={version:2,type:type,interval:1,end:{type:endType}};
+      if(endType==='date')r.end.date=document.getElementById('m9b-end-date')?.value||'';
+      if(endType==='count')r.end.count=n('m9b-end-count');
+      if(type==='daily')r.interval=n('m9b-interval');
+      if(type==='weekdays'){}
+      if(type==='weekly'||type==='biweekly'){r.interval=type==='biweekly'?2:n('m9b-interval');r.type='weekly';r.days=[...document.querySelectorAll('input[name=m9b-weekday]:checked')].map(function(x){return Number(x.value);});if(!r.days.length)r.days=[m9bWeekday(date)??1];}
+      if(type==='monthly'){r.interval=n('m9b-interval');r.mode=document.getElementById('m9b-month-mode')?.value||'day';if(r.mode==='day')r.day=n('m9b-month-day');if(r.mode==='weekday'){r.week=Number(document.getElementById('m9b-month-week')?.value||1);r.weekday=Number(document.getElementById('m9b-month-weekday')?.value||1);}}
+      if(type==='yearly'){r.month=Number(document.getElementById('m9b-year-month')?.value||1);r.day=n('m9b-year-day');}
+      if(type==='custom'){r.interval=n('m9b-interval');r.unit=document.getElementById('m9b-custom-unit')?.value||'days';}
+      return m9bNormalizeRule(r,date);
+    }
+    function m9bRuleSummary(r){
+      if(!r)return 'Não repete';
+      var names=['domingo','segunda','terça','quarta','quinta','sexta','sábado'],s='';
+      if(r.type==='daily')s=r.interval===1?'Todos os dias':'A cada '+r.interval+' dias';
+      else if(r.type==='weekdays')s='Dias úteis (segunda a sexta)';
+      else if(r.type==='weekly')s=(r.interval===2?'A cada 2 semanas':'A cada '+r.interval+' semana(s)')+' · '+(r.days||[]).map(function(x){return names[x];}).join(', ');
+      else if(r.type==='monthly'){if(r.mode==='day')s=(r.interval===1?'Todo mês':'A cada '+r.interval+' meses')+' · dia '+r.day;else if(r.mode==='businessLast')s=(r.interval===1?'Todo mês':'A cada '+r.interval+' meses')+' · último dia útil';else s=(r.interval===1?'Todo mês':'A cada '+r.interval+' meses')+' · '+r.week+'ª ocorrência · '+names[r.weekday];}
+      else if(r.type==='yearly')s='Todo ano · '+String(r.day).padStart(2,'0')+'/'+String(r.month).padStart(2,'0');
+      else if(r.type==='custom')s='A cada '+r.interval+' '+({days:'dia(s)',weeks:'semana(s)',months:'mês(es)',years:'ano(s)'})[r.unit];
+      if(r.end?.type==='date')s+=' · até '+formatBR(r.end.date,'');
+      if(r.end?.type==='count')s+=' · '+r.end.count+' ocorrências';
+      return s;
+    }
+    function m9bNthWeekday(y,m,week,wd){if(week===-1){var d=new Date(y,m+1,0);while(d.getDay()!==wd)d.setDate(d.getDate()-1);return d;}var first=new Date(y,m,1),off=(wd-first.getDay()+7)%7,d2=new Date(y,m,1+off+(week-1)*7);return d2.getMonth()===m?d2:null;}
+    function m9bLastBusinessDay(y,m){var d=new Date(y,m+1,0);while(d.getDay()===0||d.getDay()===6)d.setDate(d.getDate()-1);return d;}
+    function m9bNextDate(item,r){
+      if(!item?.date||!r)return '';
+      var cur=item.date,base=m9bDate(cur);if(!base)return '';
+      var limit=r.end?.type==='date'?r.end.date:'';
+      if(r.end?.type==='count'&&Number(item.recurrenceCount||1)>=Number(r.end.count||1))return '';
+      var valid=function(d){var s=toLocalDateStr(d);return (!limit||s<=limit)?s:'';};
+      if(r.type==='daily'){var d=new Date(base);d.setDate(d.getDate()+Math.max(1,Number(r.interval||1)));return valid(d);}
+      if(r.type==='weekdays'){var wd=new Date(base);for(var i=0;i<14;i++){wd.setDate(wd.getDate()+1);if(wd.getDay()>=1&&wd.getDay()<=5)return valid(wd);}return '';}
+      if(r.type==='weekly'){var days=r.days?.length?r.days:[base.getDay()],interval=Math.max(1,Number(r.interval||1)),weekStart=new Date(base);weekStart.setDate(base.getDate()-base.getDay());for(var j=1;j<=interval*7+7;j++){var x=new Date(base);x.setDate(base.getDate()+j);if(!days.includes(x.getDay()))continue;var diff=Math.floor((x-weekStart)/604800000);if(diff%interval===0)return valid(x);}return '';}
+      if(r.type==='monthly'){var y=base.getFullYear(),m=base.getMonth(),step=Math.max(1,Number(r.interval||1));for(var k=1;k<=240;k++){var total=m+k*step,yy=y+Math.floor(total/12),mm=((total%12)+12)%12,d3;if(r.mode==='businessLast')d3=m9bLastBusinessDay(yy,mm);else if(r.mode==='weekday')d3=m9bNthWeekday(yy,mm,Number(r.week||1),Number(r.weekday||1));else d3=new Date(yy,mm,Math.min(Number(r.day||1),new Date(yy,mm+1,0).getDate()));if(d3){var ss=valid(d3);if(ss&&ss>cur)return ss;}}return '';}
+      if(r.type==='yearly'){var yr=base.getFullYear()+1;for(var q=0;q<100;q++){var yy2=yr+q,mm2=Number(r.month||1)-1,dd2=Math.min(Number(r.day||1),new Date(yy2,mm2+1,0).getDate()),d4=new Date(yy2,mm2,dd2),s4=valid(d4);if(s4)return s4;}return '';}
+      if(r.type==='custom'){var dc=new Date(base),nn=Math.max(1,Number(r.interval||1));if(r.unit==='days')dc.setDate(dc.getDate()+nn);else if(r.unit==='weeks')dc.setDate(dc.getDate()+nn*7);else if(r.unit==='months')dc.setMonth(dc.getMonth()+nn);else dc.setFullYear(dc.getFullYear()+nn);return valid(dc);}
+      return '';
+    }
+    function m9bRenderRecurrenceConfig(){
+      var box=document.getElementById('m9b-recurrence-config'),type=document.getElementById('f-rep')?.value||'none';if(!box)return;
+      if(type==='none'){box.hidden=true;box.innerHTML='';return;}box.hidden=false;
+      var date=document.getElementById('f-date')?.value||getTodayBR(),existing=m9bNormalizeRule(editingOriginalItem?.recurrenceRule||m9bLegacyRule(editingOriginalItem||{rep:type,date:date}),date)||{version:2,type:type,interval:1,end:{type:'none'}};
+      var body='';
+      if(type==='daily')body='<div class="m9b-recurrence-grid"><div class="m9b-recurrence-field"><label>Repetir a cada</label><input id="m9b-interval" type="number" min="1" class="form-control" value="'+Number(existing.interval||1)+'"></div></div>';
+      if(type==='weekdays')body='<div class="m9b-recurrence-note">A tarefa será repetida de segunda a sexta-feira.</div>';
+      if(type==='weekly'||type==='biweekly'){var checked=existing.days||[m9bWeekday(date)??1];body='<div class="m9b-recurrence-grid"><div class="m9b-recurrence-field"><label>Repetir a cada</label><input id="m9b-interval" type="number" min="1" class="form-control" value="'+(type==='biweekly'?2:Number(existing.interval||1))+'"></div></div><div class="m9b-recurrence-field"><label>Dias da semana</label><div class="m9b-weekdays">'+[['0','Dom'],['1','Seg'],['2','Ter'],['3','Qua'],['4','Qui'],['5','Sex'],['6','Sáb']].map(function(a){return '<label class="m9b-weekday"><input type="checkbox" name="m9b-weekday" value="'+a[0]+'" '+(checked.includes(Number(a[0]))?'checked':'')+'> '+a[1]+'</label>';}).join('')+'</div></div>';}
+      if(type==='monthly'){body='<div class="m9b-recurrence-grid"><div class="m9b-recurrence-field"><label>A cada</label><input id="m9b-interval" type="number" min="1" class="form-control" value="'+Number(existing.interval||1)+'"></div><div class="m9b-recurrence-field"><label>Formato</label><select id="m9b-month-mode" class="form-control" onchange="m9bRenderRecurrenceConfig()"><option value="day" '+(existing.mode==='day'?'selected':'')+'>Dia do mês</option><option value="weekday" '+(existing.mode==='weekday'?'selected':'')+'>Posição da semana</option><option value="businessLast" '+(existing.mode==='businessLast'?'selected':'')+'>Último dia útil</option></select></div></div>';if(existing.mode==='day')body+='<div class="m9b-recurrence-field" style="margin-top:10px"><label>Dia do mês</label><input id="m9b-month-day" type="number" min="1" max="31" class="form-control" value="'+Number(existing.day||m9bDateParts(date)?.[2]||1)+'"></div>';if(existing.mode==='weekday')body+='<div class="m9b-recurrence-grid" style="margin-top:10px"><div class="m9b-recurrence-field"><label>Posição</label><select id="m9b-month-week" class="form-control"><option value="1">Primeiro</option><option value="2">Segundo</option><option value="3">Terceiro</option><option value="4">Quarto</option><option value="5">Quinto</option><option value="-1">Último</option></select></div><div class="m9b-recurrence-field"><label>Dia da semana</label><select id="m9b-month-weekday" class="form-control">'+[['0','Dom'],['1','Seg'],['2','Ter'],['3','Qua'],['4','Qui'],['5','Sex'],['6','Sáb']].map(function(a){return '<option value="'+a[0]+'">'+a[1]+'</option>';}).join('')+'</select></div></div>';}
+      if(type==='yearly')body='<div class="m9b-recurrence-grid"><div class="m9b-recurrence-field"><label>Mês</label><select id="m9b-year-month" class="form-control">'+['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'].map(function(x,i){return '<option value="'+(i+1)+'">'+x+'</option>';}).join('')+'</select></div><div class="m9b-recurrence-field"><label>Dia</label><input id="m9b-year-day" type="number" min="1" max="31" class="form-control" value="'+Number(existing.day||m9bDateParts(date)?.[2]||1)+'"></div></div>';
+      if(type==='custom')body='<div class="m9b-recurrence-grid"><div class="m9b-recurrence-field"><label>A cada</label><input id="m9b-interval" type="number" min="1" class="form-control" value="'+Number(existing.interval||1)+'"></div><div class="m9b-recurrence-field"><label>Unidade</label><select id="m9b-custom-unit" class="form-control"><option value="days">dia(s)</option><option value="weeks">semana(s)</option><option value="months">mês(es)</option><option value="years">ano(s)</option></select></div></div>';
+      body+='<div class="m9b-recurrence-grid" style="margin-top:10px"><div class="m9b-recurrence-field"><label>Termina</label><select id="m9b-end-type" class="form-control" onchange="m9bRenderRecurrenceConfig()"><option value="none">Sem data final</option><option value="date">Em uma data</option><option value="count">Após X ocorrências</option></select></div><div class="m9b-recurrence-field" id="m9b-end-value"></div></div>';
+      box.innerHTML=body+'<div class="m9b-recurrence-summary">'+escapeHtml(m9bRuleSummary(m9bRuleFromFormSafe(type,existing,date)))+'</div>';
+      var mode=document.getElementById('m9b-month-week'),wd=document.getElementById('m9b-month-weekday'),ym=document.getElementById('m9b-year-month'),cu=document.getElementById('m9b-custom-unit');
+      if(mode)mode.value=String(existing.week||1);if(wd)wd.value=String(existing.weekday??(m9bWeekday(date)??1));if(ym)ym.value=String(existing.month||m9bDateParts(date)?.[1]||1);if(cu)cu.value=existing.unit||'days';
+      var et=document.getElementById('m9b-end-type');if(et)et.value=existing.end?.type||'none';
+      var ev=document.getElementById('m9b-end-value');if(ev){if(et.value==='date')ev.innerHTML='<label>Data final</label><input id="m9b-end-date" type="date" class="form-control" value="'+(existing.end?.date||'')+'">';else if(et.value==='count')ev.innerHTML='<label>Quantidade</label><input id="m9b-end-count" type="number" min="1" class="form-control" value="'+Number(existing.end?.count||1)+'">';else ev.innerHTML='';}
+    }
+    function m9bRuleFromFormSafe(type,existing,date){try{return m9bRuleFromForm();}catch(_){return m9bNormalizeRule(existing,date);}}
+    function m9bSeriesId(item){return item?.recurrenceSeriesId||item?.repSourceId||item?.id||'';}
     function getFormState() {
       const chkRows = document.querySelectorAll('#checklist-container .checklist-row');
       const checklist = Array.from(chkRows).map(r => ({
@@ -4269,6 +4348,7 @@
         date: document.getElementById('f-date').value,
         time: document.getElementById('f-time').value,
         rep: document.getElementById('f-rep').value,
+        recurrenceRule: m9bRuleFromFormSafe(document.getElementById('f-rep').value, m9bGetRule(editingOriginalItem || {rep:'none'}), document.getElementById('f-date').value || getTodayBR()),
         reminder: document.getElementById('f-reminder').value,
         starred: formStarred,
         checklist: checklist
@@ -4574,7 +4654,8 @@
         document.getElementById('f-status').value = item.status || 'todo';
         document.getElementById('f-date').value = item.date || '';
         document.getElementById('f-time').value = item.time || '';
-        document.getElementById('f-rep').value = item.rep || 'none';
+        document.getElementById('f-rep').value = item.rep === 'biweekly' ? 'biweekly' : (item.rep || (item.recurrenceRule?.type || 'none'));
+        m9bRenderRecurrenceConfig();
         document.getElementById('f-reminder').value = item.reminder || 'none';
         formStarred = !!item.starred;
 
@@ -4592,6 +4673,7 @@
         document.getElementById('f-date').value = getTodayBR();
         document.getElementById('f-time').value = '';
         document.getElementById('f-rep').value = 'none';
+        m9bRenderRecurrenceConfig();
         document.getElementById('f-reminder').value = 'none';
         formStarred = false;
       }
@@ -4781,6 +4863,7 @@
         date: itemDate,
         time: document.getElementById('f-time').value,
         rep: document.getElementById('f-rep').value,
+        recurrenceRule: m9bRuleFromFormSafe(document.getElementById('f-rep').value, m9bGetRule(editingOriginalItem || {rep:'none'}), itemDate || getTodayBR()),
         reminder: document.getElementById('f-reminder').value,
         repDay: calculatedRepDay,
         starred: formStarred,
