@@ -1074,6 +1074,26 @@
 
 
 
+    /* Recuperação segura de dados */
+    .recovery-panel { margin-top:10px; padding:12px; border:1px solid var(--border); border-radius:10px; background:rgba(255,255,255,.02); }
+    .recovery-summary { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:8px; margin-top:10px; }
+    .recovery-stat { padding:9px 10px; border:1px solid var(--border); border-radius:8px; background:rgba(255,255,255,.025); }
+    .recovery-stat strong { display:block; font-size:1rem; color:var(--text); }
+    .recovery-stat span { display:block; margin-top:3px; color:var(--muted); font-size:.68rem; line-height:1.3; }
+    .recovery-actions { display:flex; gap:7px; flex-wrap:wrap; margin-top:10px; }
+    .recovery-candidates { margin-top:10px; max-height:340px; overflow:auto; border:1px solid var(--border); border-radius:9px; }
+    .recovery-source { padding:10px 12px; border-bottom:1px solid var(--border); }
+    .recovery-source:last-child { border-bottom:0; }
+    .recovery-source-title { font-size:.78rem; font-weight:800; margin-bottom:6px; }
+    .recovery-candidate { display:flex; align-items:flex-start; gap:8px; padding:7px 6px; border-radius:7px; cursor:pointer; }
+    .recovery-candidate:hover { background:rgba(255,255,255,.035); }
+    .recovery-candidate input { width:17px; height:17px; flex:0 0 17px; margin-top:2px; }
+    .recovery-candidate-main { min-width:0; flex:1; }
+    .recovery-candidate-title { display:block; font-size:.76rem; font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .recovery-candidate-meta { display:block; color:var(--muted); font-size:.65rem; line-height:1.35; margin-top:2px; }
+    .recovery-warning { margin-top:9px; padding:9px 10px; border-radius:8px; border:1px solid rgba(245,158,11,.35); background:rgba(245,158,11,.06); color:#fcd34d; font-size:.68rem; line-height:1.4; }
+    .recovery-ok { margin-top:9px; padding:9px 10px; border-radius:8px; border:1px solid rgba(16,185,129,.35); background:rgba(16,185,129,.05); color:#6ee7b7; font-size:.68rem; line-height:1.4; }
+    @media(max-width:768px){ .recovery-summary{grid-template-columns:1fr 1fr;} .recovery-candidates{max-height:300px;} }
 </style>
 </head>
 <body>
@@ -1477,7 +1497,16 @@
         <button class="btn-sm" style="margin-top:10px; width:100%; justify-content:center;" onclick="migrateLegacyFromButton()">↪ Migrar dados antigos para minha conta</button>
       </div>
 
-      <div class="data-backup-box danger-note">
+            <div class="data-backup-box">
+        <h4>🔎 Diagnóstico e recuperação segura</h4>
+        <p>Compara os dados atuais com o cache deste navegador, a estrutura antiga <code>shared/agenda-vida</code> e os backups locais. A análise inicial é somente leitura. A recuperação só adiciona registros que ainda não existem na sua conta.</p>
+        <div class="recovery-actions">
+          <button class="btn-sm" style="flex:1; justify-content:center;" onclick="scanRecoverySources()">🔎 Verificar fontes de recuperação</button>
+        </div>
+        <div id="recovery-diagnostic"></div>
+      </div>
+
+<div class="data-backup-box danger-note">
         <h4>Recuperação de emergência</h4>
         <p id="emergency-backup-status">Será criado automaticamente um backup local antes de migrações e restaurações importantes.</p>
         <button class="btn-sm" style="margin-top:10px; width:100%; justify-content:center;" onclick="downloadEmergencyBackup()">⬇ Baixar último backup de emergência</button>
@@ -5192,6 +5221,255 @@
         downloadJsonFile(`minha_agenda_emergency_${stamp}.json`, payload);
         showToast('Backup de emergência exportado.');
       } catch (e) { showToast('Não foi possível baixar o backup de emergência: ' + e.message); }
+    }
+
+    // Recuperação segura: leitura comparativa e inclusão somente de registros ausentes.
+    let recoveryCandidates = [];
+    let recoveryScanReport = null;
+
+    function recoveryCollectionLabel(type) {
+      return type === 'items' ? 'Tarefas' : type === 'areas' ? 'Pastas' : 'Modelos';
+    }
+
+    function recoveryItemLabel(type, value) {
+      if (type === 'items') return value?.title || ('Tarefa ' + String(value?.id || '').slice(0,12));
+      return value?.name || value?.title || (recoveryCollectionLabel(type) + ' ' + String(value?.id || '').slice(0,12));
+    }
+
+    function recoverySafeLocalJson(key) {
+      try {
+        const raw = localStorage.getItem(key);
+        return raw ? JSON.parse(raw) : null;
+      } catch (_) {
+        return null;
+      }
+    }
+
+    function recoveryNormalizeSource(payload) {
+      if (!payload || typeof payload !== 'object') return null;
+      const data = payload.data && typeof payload.data === 'object' ? payload.data : payload;
+      return {
+        items: Array.isArray(data.items) ? cloneData(data.items) : [],
+        areas: Array.isArray(data.areas) ? cloneData(data.areas) : [],
+        templates: Array.isArray(data.templates) ? cloneData(data.templates) : []
+      };
+    }
+
+    async function recoveryReadUserCache() {
+      try {
+        const [itemsSnap, areasSnap, templatesSnap] = await Promise.all([
+          userCollectionRef(USER_ITEMS_COLLECTION).get({ source: 'cache' }),
+          userCollectionRef(USER_AREAS_COLLECTION).get({ source: 'cache' }),
+          userCollectionRef(USER_TEMPLATES_COLLECTION).get({ source: 'cache' })
+        ]);
+        return {
+          items: itemsSnap.docs.map(d => ({ id:d.id, ...d.data() })),
+          areas: areasSnap.docs.map(d => ({ id:d.id, ...d.data() })),
+          templates: templatesSnap.docs.map(d => ({ id:d.id, ...d.data() }))
+        };
+      } catch (err) {
+        console.warn('Recovery user cache read failed:', err);
+        return null;
+      }
+    }
+
+    async function recoveryReadLegacy(source) {
+      try {
+        const snap = await db.collection('shared').doc('agenda-vida').get({ source });
+        return snap.exists ? parseLegacyState(snap.data()) : null;
+      } catch (err) {
+        console.warn('Recovery legacy read failed (' + source + '):', err);
+        return null;
+      }
+    }
+
+    function recoveryAddSource(sourceLabel, state, current, seen, candidates, conflicts, sourceCounts) {
+      if (!state) return;
+      ['items','areas','templates'].forEach(type => {
+        const rows = Array.isArray(state[type]) ? state[type] : [];
+        sourceCounts[sourceLabel][type] = rows.length;
+        const currentMap = new Map((current[type] || []).filter(x => x?.id).map(x => [String(x.id), x]));
+        rows.forEach(row => {
+          if (!row?.id) return;
+          const id = String(row.id);
+          const key = type + '::' + id;
+          const existingCurrent = currentMap.get(id);
+          if (existingCurrent) {
+            if (JSON.stringify(existingCurrent) !== JSON.stringify(row)) {
+              conflicts.push({ source:sourceLabel, type, id, title:recoveryItemLabel(type,row) });
+            }
+            return;
+          }
+          if (seen.has(key)) {
+            const existingCandidate = seen.get(key);
+            existingCandidate.sources = Array.from(new Set([...(existingCandidate.sources || []), sourceLabel]));
+            return;
+          }
+          const candidate = { key, source:sourceLabel, sources:[sourceLabel], type, id:row.id, value:cloneData(row) };
+          seen.set(key, candidate);
+          candidates.push(candidate);
+        });
+      });
+    }
+
+    function recoveryRenderReport(report) {
+      const box = document.getElementById('recovery-diagnostic');
+      if (!box) return;
+      recoveryCandidates = report.candidates || [];
+      const sourceNames = {
+        userCache:'Cache deste navegador',
+        legacyServer:'Legado no Firebase',
+        legacyCache:'Legado em cache',
+        emergencyBackup:'Backup de emergência local',
+        legacySnapshot:'Snapshot local do legado'
+      };
+      const sourceStats = Object.entries(report.sourceCounts).map(([source,counts]) =>
+        '<div class="recovery-stat"><strong>' +
+        (counts.items + counts.areas + counts.templates) +
+        '</strong><span>' + escapeHtml(sourceNames[source] || source) +
+        '<br>Tarefas: ' + counts.items + ' · Pastas: ' + counts.areas + ' · Modelos: ' + counts.templates +
+        '</span></div>'
+      ).join('');
+      let html = '<div class="recovery-panel">';
+      html += '<div style="font-size:.76rem;font-weight:800;">Resultado da análise</div>';
+      html += '<div class="recovery-summary">' +
+        '<div class="recovery-stat"><strong>' + report.current.items.length + '</strong><span>Tarefas atuais na conta</span></div>' +
+        '<div class="recovery-stat"><strong>' + report.current.areas.length + '</strong><span>Pastas atuais na conta</span></div>' +
+        '<div class="recovery-stat"><strong>' + report.candidates.length + '</strong><span>Registros ausentes candidatos</span></div>' +
+        '<div class="recovery-stat"><strong>' + report.conflicts.length + '</strong><span>Conflitos detectados, não sobrescritos</span></div>' +
+      '</div>';
+      html += '<div class="recovery-summary">' + sourceStats + '</div>';
+      if (!report.candidates.length) {
+        html += '<div class="recovery-ok">Nenhum registro ausente foi encontrado nas fontes acessíveis. Nada foi alterado.</div>';
+      } else {
+        html += '<div class="recovery-warning">Os candidatos abaixo estão ausentes da conta atual. Selecionar e recuperar somente adicionará esses registros. Conflitos por mesmo ID não são sobrescritos.</div>';
+        html += '<div class="recovery-actions">' +
+          '<button class="btn-sm" onclick="recoverySelectAll(true)">Selecionar todos</button>' +
+          '<button class="btn-sm" onclick="recoverySelectAll(false)">Limpar seleção</button>' +
+          '<button class="btn-sm" style="margin-left:auto;" onclick="recoverSelectedCandidates()">↪ Recuperar selecionados</button>' +
+        '</div>';
+        html += '<div class="recovery-candidates">';
+        const groups = {};
+        report.candidates.forEach((candidate, idx) => {
+          const group = candidate.type;
+          if (!groups[group]) groups[group] = [];
+          groups[group].push({candidate,idx});
+        });
+        ['items','areas','templates'].forEach(type => {
+          if (!groups[type]?.length) return;
+          html += '<div class="recovery-source">';
+          html += '<div class="recovery-source-title">' + recoveryCollectionLabel(type) + ' (' + groups[type].length + ')</div>';
+          html += groups[type].map(({candidate,idx}) => {
+            const value=candidate.value||{};
+            const dateMeta = type==='items' ? [value.date||'',value.time||'',value.status||''].filter(Boolean).join(' · ') : '';
+            return '<label class="recovery-candidate">' +
+              '<input type="checkbox" class="recovery-candidate-check" data-recovery-index="' + idx + '">' +
+              '<span class="recovery-candidate-main">' +
+              '<span class="recovery-candidate-title">' + escapeHtml(recoveryItemLabel(type,value)) + '</span>' +
+              '<span class="recovery-candidate-meta">Fonte: ' + escapeHtml(candidate.sources.join(' + ')) +
+              (dateMeta ? ' · ' + escapeHtml(dateMeta) : '') +
+              '</span></span></label>';
+          }).join('');
+          html += '</div>';
+        });
+        html += '</div>';
+      }
+      html += '</div>';
+      box.innerHTML = html;
+    }
+
+    function recoverySelectAll(checked) {
+      document.querySelectorAll('.recovery-candidate-check').forEach(el => { el.checked = !!checked; });
+    }
+
+    async function scanRecoverySources() {
+      if (!auth.currentUser) {
+        showToast('Entre na conta antes de verificar fontes de recuperação.');
+        return;
+      }
+      const box=document.getElementById('recovery-diagnostic');
+      if (box) box.innerHTML='<div class="recovery-panel">🔎 Analisando conta atual, cache do navegador, legado e backups locais. Nenhum dado será alterado.</div>';
+      try {
+        const current = await readCollectionState();
+        const userCache = await recoveryReadUserCache();
+        const legacyServer = await recoveryReadLegacy('server');
+        const legacyCache = await recoveryReadLegacy('cache');
+        const emergencyBackup = recoveryNormalizeSource(recoverySafeLocalJson('agenda_emergency_backup_v2'));
+        const legacySnapshot = recoveryNormalizeSource(recoverySafeLocalJson('agenda_legacy_recovery_snapshot_v3'));
+        const sourceCounts = {
+          userCache:{items:0,areas:0,templates:0},
+          legacyServer:{items:0,areas:0,templates:0},
+          legacyCache:{items:0,areas:0,templates:0},
+          emergencyBackup:{items:0,areas:0,templates:0},
+          legacySnapshot:{items:0,areas:0,templates:0}
+        };
+        const candidates=[], conflicts=[], seen=new Map();
+        recoveryAddSource('userCache',userCache,current,seen,candidates,conflicts,sourceCounts);
+        recoveryAddSource('legacyServer',legacyServer,current,seen,candidates,conflicts,sourceCounts);
+        recoveryAddSource('legacyCache',legacyCache,current,seen,candidates,conflicts,sourceCounts);
+        recoveryAddSource('emergencyBackup',emergencyBackup,current,seen,candidates,conflicts,sourceCounts);
+        recoveryAddSource('legacySnapshot',legacySnapshot,current,seen,candidates,conflicts,sourceCounts);
+        recoveryScanReport={ current, candidates, conflicts, sourceCounts };
+        recoveryRenderReport(recoveryScanReport);
+      } catch (err) {
+        console.error('Recovery scan error:',err);
+        if (box) box.innerHTML='<div class="recovery-panel recovery-warning">Não foi possível concluir a análise: '+escapeHtml(err.message||String(err))+'</div>';
+      }
+    }
+
+    async function recoverSelectedCandidates() {
+      const checks=Array.from(document.querySelectorAll('.recovery-candidate-check')).filter(el=>el.checked);
+      const selected=checks.map(el=>recoveryCandidates[Number(el.dataset.recoveryIndex)]).filter(Boolean);
+      if (!selected.length) {
+        showToast('Nenhum registro foi selecionado para recuperação.');
+        return;
+      }
+      const summary=selected.reduce((acc,c)=>{acc[c.type]=(acc[c.type]||0)+1;return acc;},{});
+      const label=Object.entries(summary).map(([type,n])=>n+' '+recoveryCollectionLabel(type).toLowerCase()).join(', ');
+      if (!confirm('Recuperar '+label+'? Esta operação NÃO exclui nada e NÃO sobrescreve registros que já existam na conta.')) return;
+      try {
+        if (!createEmergencyBackup('before-safe-selected-recovery')) {
+          throw new Error('Não foi possível criar o backup local de emergência. A recuperação foi interrompida.');
+        }
+        const current=await readCollectionState();
+        const ids={
+          items:new Set((current.items||[]).map(x=>String(x.id))),
+          areas:new Set((current.areas||[]).map(x=>String(x.id))),
+          templates:new Set((current.templates||[]).map(x=>String(x.id)))
+        };
+        const toRecover={items:[],areas:[],templates:[]};
+        selected.forEach(candidate=>{
+          const type=candidate.type, value=cloneData(candidate.value);
+          if (!value?.id || ids[type].has(String(value.id))) return;
+          toRecover[type].push(value);
+          ids[type].add(String(value.id));
+        });
+        const attachmentReport=await migrateLegacyAttachments(toRecover);
+        const ops=[];
+        toRecover.items.forEach(item=>ops.push({type:'set',ref:userCollectionRef(USER_ITEMS_COLLECTION).doc(item.id),data:item}));
+        toRecover.areas.forEach(area=>ops.push({type:'set',ref:userCollectionRef(USER_AREAS_COLLECTION).doc(area.id),data:area}));
+        toRecover.templates.forEach(template=>ops.push({type:'set',ref:userCollectionRef(USER_TEMPLATES_COLLECTION).doc(template.id),data:template}));
+        if (!ops.length) {
+          showToast('Nenhum registro continuava ausente. Nada foi alterado.');
+          return;
+        }
+        setSyncStatus('syncing','Recuperando registros selecionados com segurança...');
+        await commitBatchOperations(ops);
+        const fresh=await readCollectionState();
+        S={items:fresh.items,areas:fresh.areas,templates:fresh.templates};
+        normalizeState();
+        lastPersistedSnapshot=cloneData(S);
+        dataReady=true;
+        render();
+        updateTabTitleAndAlerts();
+        setSyncStatus('ok','Sincronizado');
+        showToast('Recuperação concluída. Adicionados: '+ops.length+' registro(s). Anexos migrados: '+attachmentReport.migrated+' · Falhas: '+attachmentReport.failed+'.');
+        await scanRecoverySources();
+      } catch (err) {
+        console.error('Selected recovery error:',err);
+        setSyncStatus('error','Falha na recuperação');
+        showToast('A recuperação não foi concluída: '+(err.message||String(err)));
+      }
     }
 
     function openDataModal() {
