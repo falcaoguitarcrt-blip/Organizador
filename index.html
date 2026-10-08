@@ -1081,7 +1081,7 @@
     <div class="auth-card">
       <h2 style="margin-bottom: 8px;">Minha Agenda Pro</h2>
       <p style="color: var(--muted); font-size: 0.9rem;">Sincronizando tarefas offline e nuvem...</p>
-      <button class="btn-google" onclick="loginGoogle()">Entrar com o Google</button>
+      <button id="btn-google-login" class="btn-google" onclick="loginGoogle()">Entrar com o Google</button><div id="auth-error" style="display:none;margin-top:12px;color:#fca5a5;font-size:.78rem;line-height:1.45;"></div>
     </div>
   </div>
 
@@ -2402,11 +2402,82 @@
       }
     });
 
-    function loginGoogle() {
-      return auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).catch(err => {
-        showToast('Não foi possível entrar com o Google: ' + (err.message || err));
-      });
+    function setAuthLoginFeedback(message, isError = false) {
+      const el = document.getElementById('auth-error');
+      if (!el) return;
+      el.textContent = message || '';
+      el.style.display = message ? 'block' : 'none';
+      el.style.color = isError ? '#fca5a5' : 'var(--muted)';
     }
+
+    async function loginGoogle() {
+      const btn = document.getElementById('btn-google-login');
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = 'Abrindo login...';
+      }
+      setAuthLoginFeedback('Conectando ao Google...', false);
+
+      try {
+        await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+        const provider = new firebase.auth.GoogleAuthProvider();
+        provider.setCustomParameters({ prompt: 'select_account' });
+
+        try {
+          await auth.signInWithPopup(provider);
+          setAuthLoginFeedback('');
+          return;
+        } catch (err) {
+          const code = err && err.code ? String(err.code) : '';
+          console.warn('Login Google via popup falhou:', err);
+
+          // Alguns navegadores bloqueiam popup ou não suportam o fluxo atual.
+          // Nesses casos, o redirect é um fallback seguro e não altera nenhum dado.
+          if (code === 'auth/popup-blocked' || code === 'auth/operation-not-supported-in-this-environment') {
+            setAuthLoginFeedback('A janela de login foi bloqueada. Redirecionando para o Google...', false);
+            await auth.signInWithRedirect(provider);
+            return;
+          }
+
+          if (code === 'auth/popup-closed-by-user') {
+            throw new Error('A janela de login foi fechada antes da conclusão.');
+          }
+
+          throw err;
+        }
+      } catch (err) {
+        console.error('Login Google:', err);
+        const code = err && err.code ? String(err.code) : '';
+        let message = err && err.message ? String(err.message) : 'Erro desconhecido ao entrar com o Google.';
+
+        if (code === 'auth/unauthorized-domain') {
+          message = 'Este endereço da agenda não está autorizado no Firebase Authentication. Adicione o domínio atual em Authentication > Settings > Authorized domains.';
+        } else if (code === 'auth/network-request-failed') {
+          message = 'Não foi possível conectar ao Firebase. Verifique a internet e tente novamente.';
+        } else if (code === 'auth/popup-blocked') {
+          message = 'O navegador bloqueou a janela do Google. Permita pop-ups para esta página e tente novamente.';
+        }
+
+        setAuthLoginFeedback(message, true);
+        showToast('Login Google: ' + message);
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = 'Entrar com o Google';
+        }
+      }
+    }
+
+    auth.getRedirectResult().catch(err => {
+      if (!err) return;
+      console.error('Resultado do login por redirecionamento:', err);
+      const code = err.code ? String(err.code) : '';
+      let message = err.message || 'Não foi possível concluir o login por redirecionamento.';
+      if (code === 'auth/unauthorized-domain') {
+        message = 'Este endereço da agenda não está autorizado no Firebase Authentication. Adicione o domínio atual em Authentication > Settings > Authorized domains.';
+      }
+      setAuthLoginFeedback(message, true);
+    });
 
     function logout() {
       unsubscribeFirestore.forEach(fn => { try { fn(); } catch (_) {} });
