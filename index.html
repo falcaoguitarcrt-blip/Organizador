@@ -6711,10 +6711,10 @@
         </div>` : ''}
 
         <div id="phase-g-week-summary" class="phase-g-week-summary">
-          <div class="phase-g-stat"><div class="phase-g-stat-label">Tarefas</div><div class="phase-g-stat-value">${phaseGWeekPending.length}</div><div class="phase-g-stat-note">pendentes na semana</div></div>
-          <div class="phase-g-stat"><div class="phase-g-stat-label">Tempo</div><div class="phase-g-stat-value">${phase3FormatMinutes(phaseGWeekMinutes)}</div><div class="phase-g-stat-note">duração agendada</div></div>
-          <div class="phase-g-stat"><div class="phase-g-stat-label">Recorrentes</div><div class="phase-g-stat-value">${phaseGWeekRecurring}</div><div class="phase-g-stat-note">ocorrências na semana</div></div>
-          <div class="phase-g-stat"><div class="phase-g-stat-label">Atenção</div><div class="phase-g-stat-value">${phaseGWeekOverdue}</div><div class="phase-g-stat-note">atrasadas</div></div>
+          <div class="phase-g-stat"><span class="phase-g-stat-icon" aria-hidden="true">✓</span><div class="phase-g-stat-label">Tarefas</div><div class="phase-g-stat-value">${phaseGWeekPending.length}</div><div class="phase-g-stat-note">pendentes na semana</div></div>
+          <div class="phase-g-stat"><span class="phase-g-stat-icon" aria-hidden="true">◷</span><div class="phase-g-stat-label">Tempo</div><div class="phase-g-stat-value">${phase3FormatMinutes(phaseGWeekMinutes)}</div><div class="phase-g-stat-note">duração agendada</div></div>
+          <div class="phase-g-stat"><span class="phase-g-stat-icon" aria-hidden="true">↻</span><div class="phase-g-stat-label">Recorrentes</div><div class="phase-g-stat-value">${phaseGWeekRecurring}</div><div class="phase-g-stat-note">ocorrências na semana</div></div>
+          <div class="phase-g-stat phase-g-stat-attention ${phaseGWeekOverdue > 0 ? 'has-attention' : 'no-attention'}"><span class="phase-g-stat-icon" aria-hidden="true">${phaseGWeekOverdue > 0 ? '!' : '✓'}</span><div class="phase-g-stat-label">Atenção</div><div class="phase-g-stat-value">${phaseGWeekOverdue}</div><div class="phase-g-stat-note">${phaseGWeekOverdue > 0 ? 'atrasadas' : 'tudo em dia'}</div></div>
         </div>
         <div class="weekly-compact-wrap" style="overflow-x:auto;padding-bottom:4px;">
           <div class="weekly-compact-grid" style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;width:100%;"></div>
@@ -6755,38 +6755,46 @@
         const column = document.createElement('section');
         column.style.cssText = `display:flex;flex-direction:column;min-height:300px;min-width:0;border:1px solid ${isToday ? 'rgba(45,212,191,.65)' : 'var(--border)'};border-radius:10px;overflow:hidden;background:${isToday ? 'rgba(45,212,191,.035)' : 'rgba(255,255,255,.012)'};`;
 
+        const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+        column.classList.add('phase-h-day-column');
+        if (isToday) column.classList.add('is-today');
+        if (isWeekend) column.classList.add('is-weekend');
+        column.dataset.date = dStr;
         const header = document.createElement('div');
-        header.style.cssText = `padding:8px 5px 7px;text-align:center;background:${isToday ? 'rgba(45,212,191,.10)' : 'rgba(255,255,255,.025)'};border-bottom:1px solid var(--border);`;
+        header.className = 'phase-h-day-header';
         header.innerHTML = `
-          <div style="font-size:.68rem;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:${isToday ? 'var(--accent)' : 'var(--muted)'};">${dayNames[d.getDay()]}</div>
-          <div style="font-size:.94rem;font-weight:800;margin-top:2px;">${d.getDate()}/${d.getMonth()+1}</div>
-          <div style="font-size:.62rem;color:var(--muted);margin-top:3px;">${itemsForDay.length} ${itemsForDay.length === 1 ? 'item' : 'itens'} ${isToday ? '• HOJE' : ''}</div>
+          <div class="phase-h-day-name">${dayNames[d.getDay()]}</div>
+          <div class="phase-h-day-number-row"><span class="phase-h-day-number ${isToday ? 'is-today' : ''}">${d.getDate()}</span>${isToday ? '<span class="phase-h-today-badge">HOJE</span>' : ''}</div>
+          ${itemsForDay.length ? `<span class="phase-h-day-count">${itemsForDay.length} ${itemsForDay.length === 1 ? 'item' : 'itens'}</span>` : ''}
         `;
         column.appendChild(header);
 
         const body = document.createElement('div');
-        body.style.cssText = 'display:flex;flex-direction:column;gap:5px;padding:5px;flex:1;min-width:0;';
-
+        body.className = 'phase-h-day-body';
         if (!itemsForDay.length) {
-          body.innerHTML = `<div style="padding:12px 5px;text-align:center;color:var(--muted);font-size:.68rem;">Sem compromissos</div>`;
+          const empty = document.createElement('button');
+          empty.type = 'button'; empty.className = 'phase-h-day-empty'; empty.setAttribute('aria-label', `Criar tarefa em ${d.getDate()}/${d.getMonth()+1}`);
+          empty.title = 'Criar tarefa neste dia'; empty.innerHTML = '<span aria-hidden="true">＋</span>';
+          empty.onclick = () => openItemModalAtCalendarSlot(dStr, 9 * 60);
+          body.appendChild(empty);
         } else {
           itemsForDay.forEach(item => {
             const hierarchy = getHierarchy(item.area);
-            const timeLabel = item.time || '—';
+            const timeLabel = item.time || 'Sem horário';
             const priority = item.priority === 'high' ? 'Alta' : item.priority === 'medium' ? 'Média' : item.priority === 'low' ? 'Baixa' : '';
+            const priorityClass = item.priority === 'high' ? 'high' : item.priority === 'medium' ? 'medium' : 'low';
+            const duration = phase3EnsureDurationValue(item.duration);
             const row = document.createElement('button');
-            row.type = 'button';
-            row.style.cssText = `width:100%;text-align:left;padding:7px 7px;border:1px solid var(--border);border-left:3px solid ${escapeHtml(hierarchy.color || 'var(--accent)')};border-radius:7px;background:var(--card);color:var(--text);cursor:pointer;min-height:56px;`;
-            row.title = `${item.title || ''}${item.time ? ' • ' + item.time : ''}`;
+            row.type = 'button'; row.className = 'phase-h-event-card';
+            row.style.setProperty('--event-folder-color', hierarchy.color || 'var(--accent)');
+            row.title = `${item.title || ''} · ${item.time || 'Sem horário'} · ${hierarchy.text || 'Sem pasta'} · Prioridade: ${priority || 'não definida'}${item.desc ? ' · ' + item.desc : ''}`;
+            row.setAttribute('aria-label', `${item.title || 'Sem título'}, ${timeLabel}, pasta ${hierarchy.text || 'não definida'}, prioridade ${priority || 'não definida'}`);
             row.onclick = () => openItemModal(S.items.find(x => x.id === item.id));
             row.oncontextmenu = (event) => handleContextMenuEvent(event, item.id);
             row.innerHTML = `
-              <div style="font-size:.67rem;font-weight:800;color:${item.time ? 'var(--accent)' : 'var(--muted)'};font-variant-numeric:tabular-nums;margin-bottom:3px;">${escapeHtml(timeLabel)}</div>
-              <div style="font-size:.72rem;font-weight:700;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${escapeHtml(item.title || 'Sem título')}</div>
-              <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:3px;font-size:.57rem;color:var(--muted);white-space:nowrap;overflow:hidden;">
-                ${hierarchy.text ? `<span>📁 ${escapeHtml(hierarchy.text)}</span>` : ''}
-                ${priority ? `<span>• ${escapeHtml(priority)}</span>` : ''}
-              </div>
+              <span class="phase-h-event-time">${escapeHtml(item.time || '—')}</span>
+              <span class="phase-h-event-title">${escapeHtml(item.title || 'Sem título')}</span>
+              <span class="phase-h-event-meta"><span>${duration ? phase3FormatMinutes(duration) : 'Duração não definida'}</span>${priority ? `<span class="phase-h-priority ${priorityClass}"><i></i>${priority}</span>` : ''}<span class="phase-h-event-check" aria-hidden="true">✓</span></span>
             `;
             body.appendChild(row);
           });
@@ -8548,6 +8556,57 @@ html[data-theme="light"] #phase-f-quick-filters .phase-f-chip.active{background:
 @media(max-width:980px){#header-container .folder-toolbar{align-items:flex-start;flex-direction:column}#header-container .folder-toolbar .folder-actions{width:100%}#header-container .folder-toolbar-meta{width:100%;justify-content:flex-end}#header-container .phase-g-week-controls{grid-template-columns:1fr auto;row-gap:8px}#header-container .phase-g-week-period{grid-column:1/-1;grid-row:1;justify-content:flex-start;text-align:left;white-space:normal}#header-container .phase-g-week-nav{grid-row:2}#header-container .phase-g-week-nav-right{grid-column:2;justify-content:flex-end}}
 @media(max-width:600px){#header-container .folder-toolbar .folder-actions{flex-wrap:wrap}#header-container .folder-toolbar .view-selector{width:100%}#header-container .folder-toolbar-meta{justify-content:space-between}#header-container .folder-sort-select{max-width:58vw;flex:1}#header-container .phase-g-week-controls{grid-template-columns:1fr 1fr}#header-container .phase-g-week-period{grid-column:1/-1}#header-container .phase-g-week-nav{flex-wrap:wrap}#header-container .phase-g-week-nav-right{grid-column:1/-1;justify-content:space-between}#header-container .phase-g-nav-btn{flex:1;padding-inline:7px}#header-container .phase-g-today-btn{flex:0 0 auto}}
 @media(prefers-reduced-motion:reduce){#header-container .subfolder-chips .chip,#header-container .folder-sort-select{transition:none}}
+
+
+/* FASE 3 — grade semanal, cartões de eventos e estatísticas */
+#header-container .phase-g-week-summary{gap:9px;margin-bottom:12px}
+#header-container .phase-g-stat{position:relative;min-height:80px;padding:12px 14px;border-radius:12px}
+#header-container .phase-g-stat-icon{position:absolute;top:11px;right:12px;display:grid;place-items:center;width:25px;height:25px;border-radius:8px;background:rgba(45,212,191,.09);color:var(--accent);font-size:15px;font-weight:800}
+#header-container .phase-g-stat-label{font-size:11px;letter-spacing:.06em;padding-right:28px}
+#header-container .phase-g-stat-value{font-size:25px;line-height:1.15;margin-top:5px}
+#header-container .phase-g-stat-note{font-size:12px;margin-top:3px}
+#header-container .phase-g-stat-attention.has-attention .phase-g-stat-icon{background:rgba(248,113,113,.12);color:#f87171}
+#header-container .phase-g-stat-attention.has-attention .phase-g-stat-value{color:#f87171}
+#header-container .phase-g-stat-attention.no-attention .phase-g-stat-icon{background:rgba(52,211,153,.12);color:#34d399}
+#header-container .phase-g-stat-attention.no-attention .phase-g-stat-value{color:#34d399}
+#header-container .weekly-compact-wrap{overflow-x:auto!important;overscroll-behavior-x:contain;scrollbar-width:thin;padding:3px 2px 12px!important}
+#header-container .weekly-compact-grid{grid-template-columns:repeat(7,minmax(150px,1fr))!important;min-width:1080px;gap:8px!important}
+#header-container .weekly-compact-grid>.phase-h-day-column{position:relative;min-height:300px!important;border-radius:12px!important;overflow:visible!important;background:rgba(255,255,255,.018)!important;transition:border-color 180ms ease-out,background 180ms ease-out,box-shadow 180ms ease-out}
+#header-container .weekly-compact-grid>.phase-h-day-column.is-weekend{background:rgba(148,163,184,.035)!important}
+#header-container .weekly-compact-grid>.phase-h-day-column.is-today{border:1.5px solid var(--accent)!important;background:rgba(45,212,191,.045)!important;box-shadow:0 0 0 1px rgba(45,212,191,.06),0 6px 22px rgba(45,212,191,.05)}
+#header-container .phase-h-day-header{position:sticky;top:0;z-index:3;display:flex;flex-direction:column;align-items:center;gap:5px;min-height:86px;padding:10px 7px 8px;text-align:center;border-bottom:1px solid var(--border);border-radius:11px 11px 0 0;background:var(--card)}
+#header-container .is-today>.phase-h-day-header{background:rgba(45,212,191,.09);border-bottom-color:rgba(45,212,191,.22)}
+#header-container .phase-h-day-name{font-size:11px;font-weight:750;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+#header-container .phase-h-day-number-row{display:flex;align-items:center;justify-content:center;gap:6px;min-height:30px}
+#header-container .phase-h-day-number{display:grid;place-items:center;width:30px;height:30px;border-radius:50%;font-size:22px;line-height:1;font-weight:750;font-variant-numeric:tabular-nums}
+#header-container .phase-h-day-number.is-today{background:var(--accent);color:#06201d;box-shadow:0 2px 10px rgba(45,212,191,.24)}
+#header-container .phase-h-today-badge{padding:3px 6px;border-radius:999px;background:rgba(45,212,191,.15);color:var(--accent);font-size:10px;font-weight:800;letter-spacing:.04em}
+#header-container .phase-h-day-count{padding:3px 7px;border-radius:999px;background:rgba(148,163,184,.11);color:var(--muted);font-size:11px;font-weight:650}
+#header-container .phase-h-day-body{display:flex;flex-direction:column;gap:6px;padding:7px;flex:1;min-width:0}
+#header-container .phase-h-day-empty{display:grid;place-items:center;min-height:90px;width:100%;border:1px dashed rgba(148,163,184,.12);border-radius:9px;background:transparent;color:var(--muted);cursor:pointer;transition:background 160ms ease-out,border-color 160ms ease-out,color 160ms ease-out}
+#header-container .phase-h-day-empty span{display:grid;place-items:center;width:27px;height:27px;border-radius:50%;font-size:20px;opacity:.42;transition:opacity 160ms ease-out,background 160ms ease-out}
+#header-container .phase-h-day-empty:hover{border-color:rgba(45,212,191,.45);background:rgba(45,212,191,.045);color:var(--accent)}
+#header-container .phase-h-day-empty:hover span{opacity:1;background:rgba(45,212,191,.12)}
+#header-container .phase-h-event-card{position:relative;display:flex;flex-direction:column;gap:5px;width:100%;min-width:0;min-height:70px;padding:8px 8px 8px 10px;text-align:left;border:1px solid var(--border);border-left:3px solid var(--event-folder-color,var(--accent));border-radius:9px;background:var(--card);color:var(--text);cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.06);transition:transform 160ms ease-out,border-color 160ms ease-out,box-shadow 160ms ease-out}
+#header-container .phase-h-event-card:hover{z-index:2;transform:translateY(-1px);border-color:var(--ui-border-hover,rgba(45,212,191,.42));box-shadow:0 7px 18px rgba(0,0,0,.14)}
+#header-container .phase-h-event-time{font-size:12px;font-weight:800;line-height:1.2;color:var(--accent);font-variant-numeric:tabular-nums}
+#header-container .phase-h-event-title{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:12px;font-weight:700;line-height:1.35;overflow-wrap:anywhere}
+#header-container .phase-h-event-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;color:var(--muted);font-size:11px;line-height:1.3}
+#header-container .phase-h-priority{display:inline-flex;align-items:center;gap:4px}
+#header-container .phase-h-priority i{width:6px;height:6px;border-radius:50%;background:#60a5fa}
+#header-container .phase-h-priority.high i{background:#f87171}
+#header-container .phase-h-priority.medium i{background:#fbbf24}
+#header-container .phase-h-priority.low i{background:#60a5fa}
+#header-container .phase-h-event-check{display:grid;place-items:center;width:17px;height:17px;margin-left:auto;border:1px solid var(--border);border-radius:50%;opacity:0;transform:scale(.85);transition:opacity 150ms ease-out,transform 150ms ease-out;color:var(--accent);font-size:11px}
+#header-container .phase-h-event-card:hover .phase-h-event-check,#header-container .phase-h-event-card:focus-visible .phase-h-event-check{opacity:1;transform:scale(1)}
+#header-container .phase-h-event-card:focus-visible,#header-container .phase-h-day-empty:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+html[data-theme="light"] #header-container .phase-h-event-card{background:#fff;box-shadow:0 2px 7px rgba(15,23,42,.05)}
+html[data-theme="light"] #header-container .phase-h-day-column{background:#f8fafc!important}
+html[data-theme="light"] #header-container .phase-h-day-column.is-weekend{background:#f1f5f9!important}
+html[data-theme="light"] #header-container .phase-h-day-header{background:#fff}
+html[data-theme="light"] #header-container .phase-h-day-column.is-today{background:#f0fdfa!important}
+@media(max-width:768px){#header-container .phase-g-week-summary{grid-template-columns:repeat(2,minmax(0,1fr))}#header-container .phase-g-stat{min-height:76px;padding:10px 11px}#header-container .phase-g-stat-value{font-size:22px}#header-container .weekly-compact-grid{min-width:1080px!important}}
+@media(prefers-reduced-motion:reduce){#header-container .phase-h-event-card,#header-container .phase-h-day-empty,#header-container .phase-h-day-empty span{transition:none}}
 
 </style>
 <script id="m9b-recurrence-script">
