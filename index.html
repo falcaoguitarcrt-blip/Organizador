@@ -1088,6 +1088,70 @@
       .myday-focus-item:hover { transform:none; }
     }
 
+
+    /* ETAPA 5 — acabamento da área principal e consistência responsiva */
+    #main { min-width:0; }
+    #main > .top-bar { position:relative; align-items:center; gap:10px; margin-bottom:14px; }
+    #main .search-input { min-height:44px; border-radius:11px; padding:11px 14px; background:rgba(255,255,255,.025); transition:border-color .18s,box-shadow .18s,background .18s; }
+    #main .search-input:focus { background:var(--card); border-color:var(--accent); box-shadow:0 0 0 3px rgba(45,212,191,.09); }
+    #main .quick-capture { align-items:stretch; gap:9px; margin-bottom:20px; }
+    #main .quick-capture input { min-width:0; min-height:46px; border-radius:11px; background:rgba(255,255,255,.025); transition:border-color .18s,box-shadow .18s,background .18s; }
+    #main .quick-capture input:focus { background:var(--card); border-color:var(--accent); box-shadow:0 0 0 3px rgba(45,212,191,.09); }
+    #main .quick-capture .btn { min-height:46px; border-radius:11px; padding-inline:18px; box-shadow:0 4px 12px rgba(45,212,191,.10); }
+    #main .chip { transition:color .16s,border-color .16s,background .16s; }
+    #main .chip:focus-visible,#main .btn:focus-visible,#main .btn-sm:focus-visible,#main button:focus-visible,#main select:focus-visible,#main input:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+    #main .myday-v2 { gap:15px; }
+    #main .myday-filter-bar { flex-wrap:wrap; padding:8px 10px; border:1px solid var(--border); border-radius:11px; background:rgba(255,255,255,.018); }
+    #main .myday-filter-bar .chip { min-height:30px; padding:4px 10px; font-size:.73rem; }
+    #main .myday-grid { align-items:start; }
+    #main .myday-grid > div { min-width:0; }
+    #main .myday-section,#main .myday-next-card { box-shadow:0 7px 22px rgba(0,0,0,.09); }
+    #main .myday-section-title { letter-spacing:-.012em; }
+    #main .myday-count-pill { flex-shrink:0; }
+    #main .empty-state { max-width:100%; border:1px dashed var(--border); border-radius:14px; padding:24px 18px; background:rgba(255,255,255,.015); text-align:center; }
+    #main .empty-state p { color:var(--muted); line-height:1.55; margin-bottom:12px; }
+    #main .empty-state .btn-sm { margin-inline:auto; }
+    #main .folder-header-area { min-width:0; }
+    #main .folder-title { overflow-wrap:anywhere; }
+    #main .folder-actions,#main .subfolder-chips { row-gap:8px; }
+    #main .view-selector { max-width:100%; overflow-x:auto; scrollbar-width:none; }
+    #main .view-selector::-webkit-scrollbar { display:none; }
+    @media(max-width:900px) {
+      #main { padding:20px; }
+      #main .top-bar { align-items:stretch; }
+      #main .search-input { flex-basis:100%; }
+      #main .quick-capture { margin-bottom:17px; }
+    }
+    @media(max-width:700px) {
+      #main { padding:14px; }
+      #main .top-bar { gap:8px; }
+      #main .search-input { width:100%; min-width:0; flex-basis:100%; }
+      #main .quick-capture { gap:7px; margin-bottom:16px; }
+      #main .quick-capture input { padding:11px 12px; font-size:.88rem; }
+      #main .quick-capture .btn { padding-inline:12px; white-space:nowrap; }
+      #main .myday-v2 { gap:12px; margin-bottom:18px; }
+      #main .myday-grid { gap:12px; }
+      #main .myday-grid > div { gap:12px; }
+      #main .myday-section { padding:13px; }
+      #main .folder-title { font-size:1.35rem; }
+      #main .folder-actions > * { max-width:100%; }
+      #main .subfolder-chips { overflow-x:auto; flex-wrap:nowrap; padding-bottom:4px; scrollbar-width:thin; }
+      #main .subfolder-chips .chip { flex:0 0 auto; }
+      #main .view-selector { width:100%; }
+      #main .view-btn { flex:0 0 auto; }
+      #main .empty-state { padding:20px 13px; }
+    }
+    @media(max-width:380px) {
+      #main { padding:11px; }
+      #main .quick-capture .btn { padding-inline:9px; font-size:.78rem; }
+      #main .myday-hero-v2 { padding:15px; }
+      #main .myday-stats { gap:7px; }
+      #main .myday-stat { padding:10px; }
+    }
+    @media(prefers-reduced-motion:reduce) {
+      #main .search-input,#main .quick-capture input,#main .chip { transition:none; }
+    }
+
 </style>
   <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-storage-compat.js"></script>
 
