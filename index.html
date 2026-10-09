@@ -1036,6 +1036,58 @@
     .phase-h-integrity { margin-top:10px; padding:10px 11px; border-radius:10px; background:rgba(45,212,191,.06); border:1px solid rgba(45,212,191,.18); font-size:.74rem; line-height:1.45; }
     .phase-h-actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
     @media (max-width:640px){ .phase-h-security-grid{grid-template-columns:1fr;} .phase-h-actions .btn-sm{flex:1 1 100%;} }
+
+    /* ETAPA 4 — foco, próximo compromisso e linha do tempo */
+    .myday-focus-card { position:relative; overflow:hidden; }
+    .myday-focus-card::before { content:""; position:absolute; inset:0 auto 0 0; width:3px; background:linear-gradient(180deg,var(--accent),rgba(45,212,191,.08)); }
+    .myday-focus-card .myday-section-head { padding-bottom:10px; border-bottom:1px solid var(--border); }
+    .myday-section-icon { width:34px; height:34px; display:grid; place-items:center; border:1px solid rgba(45,212,191,.2); border-radius:11px; color:var(--accent); background:rgba(45,212,191,.08); }
+    .myday-section-icon svg { width:19px; height:19px; fill:none; stroke:currentColor; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round; }
+    .myday-focus-list { gap:7px; }
+    .myday-focus-item { min-height:58px; padding:10px 11px; border-color:rgba(148,163,184,.09); transition:background .18s,border-color .18s,transform .18s; }
+    .myday-focus-item:hover { border-color:rgba(45,212,191,.35); background:rgba(45,212,191,.045); transform:translateX(2px); }
+    .myday-focus-index { width:27px; height:27px; border:1px solid rgba(45,212,191,.15); border-radius:9px; }
+    .myday-focus-copy strong { font-size:.82rem; line-height:1.35; }
+    .myday-focus-copy small { display:flex; align-items:center; flex-wrap:wrap; gap:5px; line-height:1.45; }
+    .myday-focus-copy small .priority-badge { margin-left:2px; }
+    .myday-arrow { width:24px; height:24px; display:grid; place-items:center; border-radius:7px; font-size:1.1rem; transition:color .18s,background .18s; }
+    .myday-focus-item:hover .myday-arrow { color:var(--accent); background:rgba(45,212,191,.09); }
+    .myday-next-card { align-items:center; padding:17px; border-color:rgba(45,212,191,.22); box-shadow:inset 0 1px rgba(255,255,255,.025); }
+    .myday-next-card > div { min-width:0; flex:1; }
+    .myday-next-card .myday-section-kicker { margin-bottom:7px; }
+    .myday-next-title { font-size:.94rem; line-height:1.4; overflow-wrap:anywhere; }
+    .myday-next-meta { display:flex; flex-wrap:wrap; gap:5px; line-height:1.5; }
+    .myday-next-card .btn-sm { flex-shrink:0; border-color:rgba(45,212,191,.3); color:var(--accent); background:rgba(45,212,191,.07); padding:7px 13px; }
+    .myday-next-card .btn-sm:hover { background:rgba(45,212,191,.14); }
+    .myday-empty-state { display:flex; align-items:center; min-height:54px; padding:12px 10px; border-radius:10px; background:rgba(255,255,255,.018); line-height:1.5; }
+    .myday-section .myday-empty-title { display:flex; align-items:center; gap:8px; font-size:.85rem; }
+    .myday-section .muted.text-sm { line-height:1.55; font-size:.76rem; }
+    .timeline-panel { position:relative; overflow:hidden; padding:16px; background:linear-gradient(145deg,rgba(255,255,255,.025),rgba(255,255,255,.008)); }
+    .timeline-panel .myday-section-head { padding-bottom:10px; border-bottom:1px solid var(--border); margin-bottom:5px; }
+    .timeline-list { position:relative; gap:0; }
+    .timeline-row { position:relative; grid-template-columns:54px 12px minmax(0,1fr); gap:10px; min-height:56px; padding:10px 3px; border-bottom-color:rgba(148,163,184,.09); transition:background .16s; }
+    .timeline-row:hover { background:rgba(45,212,191,.035); }
+    .timeline-time { padding-top:1px; font-size:.72rem; font-weight:750; color:var(--text); letter-spacing:.01em; }
+    .timeline-dot { position:relative; z-index:1; margin-top:5px; width:9px; height:9px; border:2px solid var(--card); box-sizing:content-box; }
+    .timeline-row:not(:last-child) .timeline-dot::after { content:""; position:absolute; top:8px; left:2px; width:1px; height:calc(100% + 38px); min-height:34px; background:rgba(45,212,191,.22); z-index:-1; }
+    .timeline-copy strong { font-size:.8rem; line-height:1.4; }
+    .timeline-copy small { display:block; margin-top:4px; line-height:1.45; }
+    .timeline-more { padding-top:10px; border-top:1px solid rgba(148,163,184,.09); }
+    .timeline-more button { border:0; background:transparent; color:var(--accent); cursor:pointer; font-size:.75rem; font-weight:750; padding:5px 0; }
+    .timeline-more button:hover { text-decoration:underline; }
+    .untimed-note { padding:9px 10px; border-radius:9px; background:rgba(245,158,11,.07); color:var(--muted); line-height:1.45; }
+    @media(max-width:700px) {
+      .myday-next-card { align-items:flex-start; gap:10px; padding:14px; }
+      .myday-next-card .btn-sm { align-self:center; padding:7px 10px; }
+      .timeline-panel { padding:13px; }
+      .timeline-row { grid-template-columns:46px 10px minmax(0,1fr); gap:8px; }
+      .myday-focus-item { padding:10px 8px; }
+    }
+    @media(prefers-reduced-motion:reduce) {
+      .myday-focus-item,.myday-arrow,.timeline-row { transition:none; }
+      .myday-focus-item:hover { transform:none; }
+    }
+
 </style>
   <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-storage-compat.js"></script>
 
@@ -6046,7 +6098,7 @@
       const completionBase = todayCount + doneToday;
       const completionPct = completionBase ? Math.round((doneToday / completionBase) * 100) : 0;
       const activeFilter = currentDashboardFilter;
-      const focusHtml = data.focus.length ? `<section class="myday-section myday-focus-card"><div class="myday-section-head"><div><div class="myday-section-kicker">PRIORIDADE</div><div class="myday-section-title">Foco sugerido</div></div><span class="myday-section-icon">🎯</span></div><div class="myday-focus-list">${data.focus.map((i,idx)=>`<button class="myday-focus-item" onclick="openItemModal(S.items.find(x=>x.id==='${i.id}'))"><span class="myday-focus-index">${idx+1}</span><span class="myday-focus-copy"><strong>${escapeHtml(i.title)}</strong><small>${i.date && i.date < data.today ? '⚠ Atrasada' : (i.time ? 'Hoje às '+escapeHtml(i.time) : 'Hoje')} ${buildPhase2PriorityHtml(i)}</small></span><span class="myday-arrow">›</span></button>`).join('')}</div></section>` : `<section class="myday-section"><div class="myday-empty-title">🎯 Nenhum foco crítico identificado</div><div class="muted text-sm">Sua agenda está livre de itens de alta prioridade, atrasados ou marcados com estrela.</div></section>`;
+      const focusHtml = data.focus.length ? `<section class="myday-section myday-focus-card"><div class="myday-section-head"><div><div class="myday-section-kicker">PRIORIDADE</div><div class="myday-section-title">Foco sugerido</div></div><span class="myday-section-icon" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><circle cx="12" cy="12" r="8.5"></circle><circle cx="12" cy="12" r="4.5"></circle><circle cx="12" cy="12" r="1"></circle></svg></span></div><div class="myday-focus-list">${data.focus.map((i,idx)=>`<button class="myday-focus-item" onclick="openItemModal(S.items.find(x=>x.id==='${i.id}'))"><span class="myday-focus-index">${idx+1}</span><span class="myday-focus-copy"><strong>${escapeHtml(i.title)}</strong><small>${i.date && i.date < data.today ? '⚠ Atrasada' : (i.time ? 'Hoje às '+escapeHtml(i.time) : 'Hoje')} ${buildPhase2PriorityHtml(i)}</small></span><span class="myday-arrow">›</span></button>`).join('')}</div></section>` : `<section class="myday-section"><div class="myday-empty-title">🎯 Nenhum foco crítico identificado</div><div class="muted text-sm">Sua agenda está livre de itens de alta prioridade, atrasados ou marcados com estrela.</div></section>`;
       const nextHtml = data.next ? `<section class="myday-next-card"><div><div class="myday-section-kicker">A SEGUIR</div><div class="myday-next-title">${escapeHtml(data.next.title)}</div><div class="myday-next-meta">${data.next.date === data.today ? 'Hoje' : escapeHtml(formatBR(data.next.date,''))}${data.next.time ? ' · '+escapeHtml(data.next.time) : ''}${data.next.area ? ' · '+escapeHtml(getHierarchy(data.next.area).text) : ''}</div></div><button class="btn-sm" onclick="openItemModal(S.items.find(x=>x.id==='${data.next.id}'))">Abrir</button></section>` : '';
       const timelineHtml = `<section class="myday-section timeline-panel"><div class="myday-section-head"><div><div class="myday-section-kicker">AGENDA</div><div class="myday-section-title">Linha do tempo de hoje</div></div><span class="myday-count-pill">${scheduledToday}</span></div>${data.timedToday.length ? `<div class="timeline-list">${data.timedToday.slice(0,4).map(i=>`<button class="timeline-row" onclick="openItemModal(S.items.find(x=>x.id==='${i.id}'))"><span class="timeline-time">${escapeHtml(i.time)}</span><span class="timeline-dot"></span><span class="timeline-copy"><strong>${escapeHtml(i.title)}</strong><small>${i.priority ? priorityLabel(i.priority) : 'Sem prioridade'} ${i.area ? '• '+escapeHtml(getHierarchy(i.area).text) : ''}</small></span></button>`).join('')}</div>${data.timedToday.length>4 ? '<div class="timeline-more"><button type="button" onclick="filterDashboard(\'today\');setViewMode(\'list\')">Ver todos os compromissos →</button></div>' : ''}` : '<div class="myday-empty-state">Nenhum compromisso com horário definido hoje.</div>'}${data.noTimeToday.length ? `<div class="untimed-note">+ ${data.noTimeToday.length} item(ns) de hoje sem horário definido.</div>` : ''}</section>`;
       c.innerHTML = `<div class="myday-v2">
