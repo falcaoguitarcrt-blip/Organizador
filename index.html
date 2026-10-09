@@ -3755,8 +3755,8 @@
               </div>
             </div>
             <div class="folder-workspace-actions">
-              ${!isSubfolderActive ? `<button class="btn-sm" onclick="openItemModal(); event.stopPropagation();">＋ Nova tarefa</button>` : ''}
-              ${!isSubfolderActive ? `<button class="btn-sm" onclick="openFolderModal('${workspaceRootId}'); event.stopPropagation();">＋ Subpasta</button>` : ''}
+              <button class="btn-sm" onclick="openItemModal(); event.stopPropagation();">＋ Nova tarefa</button>
+              <button class="btn-sm" onclick="openFolderModal('${currentArea}'); event.stopPropagation();">＋ Subpasta</button>
               <button class="btn-sm" onclick="setArea('all'); event.stopPropagation();">← Agenda geral</button>
             </div>
           </div>
