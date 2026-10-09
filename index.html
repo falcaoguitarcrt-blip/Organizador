@@ -1152,6 +1152,50 @@
       #main .search-input,#main .quick-capture input,#main .chip { transition:none; }
     }
 
+
+    /* ETAPA 6 — consistência entre temas e modos de visualização */
+    .view-selector { background:var(--card); border-color:var(--border); gap:2px; }
+    .view-btn { border:1px solid transparent; transition:background .16s,color .16s,border-color .16s; }
+    .view-btn.active { background:rgba(45,212,191,.10); border-color:rgba(45,212,191,.22); color:var(--accent); }
+    .view-btn:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+    .card,.cal-col,.month-cell,.kanban-column,.kanban-lane { transition:background-color .16s,border-color .16s,box-shadow .16s; }
+    .card-title { color:var(--text); }
+    .card:hover { border-color:var(--accent); }
+    .cal-col { background:rgba(255,255,255,.025); }
+    .cal-item { background:var(--card); color:var(--text); }
+    .cal-item:hover { border-color:var(--accent); background:rgba(45,212,191,.06); }
+    .month-cell { background:rgba(255,255,255,.025); }
+    .month-cell.other-month { background:rgba(0,0,0,.12); }
+    .month-cell.today { background:rgba(45,212,191,.07); }
+    @media(max-width:700px) {
+      .view-selector { scroll-snap-type:x proximity; }
+      .view-btn { scroll-snap-align:start; }
+    }
+    html[data-theme="light"] .view-selector { background:#edf2f7; border-color:#dce3eb; }
+    html[data-theme="light"] .view-btn { color:#58677a; }
+    html[data-theme="light"] .view-btn.active { background:#fff; color:#087f74; border-color:rgba(15,159,145,.30); box-shadow:0 1px 3px rgba(15,23,42,.06); }
+    html[data-theme="light"] .card-title { color:#202b38; }
+    html[data-theme="light"] .card:hover { border-color:#0f9f91; box-shadow:0 4px 14px rgba(15,23,42,.06); }
+    html[data-theme="light"] .cal-col { background:#f8fafc; border-color:#dce3eb; }
+    html[data-theme="light"] .cal-header { color:#58677a; border-bottom-color:#dce3eb; }
+    html[data-theme="light"] .cal-item { background:#fff; color:#202b38; border-color:#dce3eb; box-shadow:0 1px 3px rgba(15,23,42,.035); }
+    html[data-theme="light"] .cal-item:hover { background:#f0fdfa; border-color:#0f9f91; }
+    html[data-theme="light"] .month-cell { background:#fff; border-color:#dce3eb; }
+    html[data-theme="light"] .month-cell.other-month { background:#edf2f7; opacity:.72; }
+    html[data-theme="light"] .month-cell.today { background:#f0fdfa; border-color:#0f9f91; }
+    html[data-theme="light"] .kanban-board { color:#202b38; }
+    html[data-theme="light"] .kanban-column,
+    html[data-theme="light"] .kanban-lane { background:#f8fafc; border-color:#dce3eb; }
+    html[data-theme="light"] .kanban-column .card,
+    html[data-theme="light"] .kanban-lane .card { background:#fff; color:#202b38; }
+    html[data-theme="light"] .kanban-column .card-title,
+    html[data-theme="light"] .kanban-lane .card-title { color:#202b38; }
+    html[data-theme="light"] .empty-state { color:#334155; border-color:#dce3eb; }
+    html[data-theme="light"] .empty-state p { color:#58677a; }
+    @media(prefers-reduced-motion:reduce) {
+      .view-btn,.card,.cal-col,.month-cell,.kanban-column,.kanban-lane { transition:none; }
+    }
+
 </style>
   <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-storage-compat.js"></script>
 
