@@ -3706,9 +3706,9 @@
       const workspaceRoot = getFolderConfig(workspaceRootId) || folder;
       let workspaceIncludeSubfolders = true;
       try { workspaceIncludeSubfolders = localStorage.getItem('agenda_folder_include_subfolders') !== '0'; } catch (_) {}
-      const workspaceFolderIds = new Set([currentArea, workspaceRootId].filter(Boolean));
-      if (workspaceIncludeSubfolders && workspaceRootId) {
-        const queue = [workspaceRootId];
+      const workspaceFolderIds = new Set([currentArea].filter(Boolean));
+      if (workspaceIncludeSubfolders && currentArea && currentArea !== 'all') {
+        const queue = [currentArea];
         while (queue.length) {
           const parent = queue.shift();
           S.areas.filter(a => a.parentId === parent).forEach(a => {
