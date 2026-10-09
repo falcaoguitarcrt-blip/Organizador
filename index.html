@@ -3241,18 +3241,18 @@
         el.ondragleave = () => el.classList.remove('drag-over-folder');
         el.ondrop = (e) => handleFolderDrop(e, area.id);
 
-        let chevronHtml = hasSubs 
-          ? `<button class="chevron-btn" onclick="toggleFolderCollapse('${area.id}'); event.stopPropagation();">${isCollapsed ? '▸' : '▾'}</button>` 
-          : `<span style="width:28px;"></span>`;
+        let chevronHtml = hasSubs
+          ? `<button type="button" class="chevron-btn folder-chevron-slot" aria-label="${isCollapsed ? 'Expandir' : 'Recolher'} ${escapeHtml(area.name)}" onclick="toggleFolderCollapse('${area.id}'); event.stopPropagation();">${isCollapsed ? '▸' : '▾'}</button>`
+          : `<span class="folder-chevron-slot" aria-hidden="true"></span>`;
 
         el.innerHTML = `
           ${chevronHtml}
-          <span style="display:flex; align-items:center; gap:8px; flex:1; overflow:hidden;">
-            <span class="color-dot" style="background:${escapeHtml(area.color||'#ccc')}"></span> 
-            <span title="${escapeHtml(area.name)}" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(area.name)}</span>
+          <span class="folder-main">
+            <span class="color-dot folder-dot" style="--folder-color:${escapeHtml(area.color||'#ccc')};background:${escapeHtml(area.color||'#ccc')}"></span>
+            <span class="folder-name" title="${escapeHtml(area.name)}">${escapeHtml(area.name)}</span>
           </span>
           ${pendingCount > 0 ? `<span class="folder-badge">${pendingCount}</span>` : ''}
-          <button class="folder-menu-btn" onclick="toggleFolderMenu('${area.id}', event)">⋮</button>
+          <button type="button" class="folder-menu-btn" aria-label="Ações de ${escapeHtml(area.name)}" title="Ações da pasta" onclick="toggleFolderMenu('${area.id}', event)">⋮</button>
           <div id="f-menu-${area.id}" class="dropdown">
             <button class="dropdown-item" onclick="togglePinFolder('${area.id}'); event.stopPropagation();">${area.pinned ? '📌 Desafixar' : '📌 Fixar no topo'}</button>
             <button class="dropdown-item" onclick="moveFolderOrder('${area.id}', -1); event.stopPropagation();">⬆ Mover para cima</button>
@@ -3272,12 +3272,13 @@
             subEl.className = `nav-item sub ${isSubSelected ? 'active' : ''}`;
             subEl.onclick = () => setArea(sub.id);
             subEl.innerHTML = `
-              <span style="display:flex; align-items:center; gap:6px; flex:1; overflow:hidden;">
-                <span class="color-dot" style="background:${escapeHtml(sub.color||'#ccc')}; width:7px; height:7px;"></span> 
-                <span title="${escapeHtml(sub.name)}" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(sub.name)}</span>
+              <span class="folder-chevron-slot" aria-hidden="true"></span>
+              <span class="folder-main">
+                <span class="color-dot folder-dot" style="--folder-color:${escapeHtml(sub.color||'#ccc')};background:${escapeHtml(sub.color||'#ccc')}"></span>
+                <span class="folder-name" title="${escapeHtml(sub.name)}">${escapeHtml(sub.name)}</span>
               </span>
               ${subPending > 0 ? `<span class="folder-badge">${subPending}</span>` : ''}
-              <button class="folder-menu-btn" onclick="toggleFolderMenu('${sub.id}', event)">⋮</button>
+              <button type="button" class="folder-menu-btn" aria-label="Ações de ${escapeHtml(sub.name)}" onclick="toggleFolderMenu('${sub.id}', event)">⋮</button>
               <div id="f-menu-${sub.id}" class="dropdown">
                 <button class="dropdown-item" onclick="moveFolderOrder('${sub.id}', -1); event.stopPropagation();">⬆ Mover para cima</button>
                 <button class="dropdown-item" onclick="moveFolderOrder('${sub.id}', 1); event.stopPropagation();">⬇ Mover para baixo</button>
@@ -8091,6 +8092,54 @@ html[data-theme="light"] .sidebar-footer>.btn-sm,html[data-theme="light"] .sideb
   .calendar-controls>div:nth-child(2){order:-1;min-width:100%!important}
 }
 @media(prefers-reduced-motion:reduce){#sidebar,.myday-stat,.weekly-compact-grid>section,.weekly-compact-grid>section>div:nth-child(2)>button{transition:none!important;animation:none!important}}
+
+
+/* Etapa 1: sidebar alinhada e navegação lateral */
+#sidebar{width:var(--sidebar-w,292px);flex:0 0 var(--sidebar-w,292px)}
+#sidebar .user-profile{position:relative}
+#sidebar .sidebar-collapse-toggle{flex:0 0 30px;width:30px;height:30px;font-size:0;position:relative}
+#sidebar .sidebar-collapse-toggle::before{content:"";width:7px;height:7px;border-top:2px solid currentColor;border-right:2px solid currentColor;transform:rotate(225deg);transition:transform 160ms ease-out}
+body.sidebar-is-collapsed #sidebar .sidebar-collapse-toggle::before{transform:rotate(45deg)}
+#sidebar .nav-item:not(#nav-all){grid-template-columns:16px 10px minmax(0,1fr) auto 18px;column-gap:8px;min-height:42px;height:42px;padding:0 7px 0 9px}
+#sidebar .nav-item .folder-chevron-slot{grid-column:1;display:flex;align-items:center;justify-content:center;width:16px;min-width:16px;height:30px;margin:0;padding:0}
+#sidebar .nav-item button.folder-chevron-slot{border:0;background:transparent;color:var(--ui-muted);cursor:pointer}
+#sidebar .nav-item button.folder-chevron-slot:hover{color:var(--ui-accent)}
+#sidebar .nav-item .folder-main{display:contents}
+#sidebar .nav-item .folder-dot{grid-column:2;display:block;width:10px!important;height:10px!important;min-width:10px;border-radius:50%;filter:drop-shadow(0 0 3px var(--folder-color));}
+#sidebar .nav-item.sub .folder-dot{width:8px!important;height:8px!important;min-width:8px;margin:0 1px}
+#sidebar .nav-item .folder-name{grid-column:3;display:block;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.35}
+#sidebar .nav-item .folder-badge{grid-column:4;min-width:24px;height:22px;padding:2px 6px;display:inline-flex;align-items:center;justify-content:center;justify-self:end;line-height:1;font-size:11px;font-variant-numeric:tabular-nums}
+#sidebar .nav-item .folder-menu-btn{grid-column:5;display:inline-flex;align-items:center;justify-content:center;justify-self:end;width:18px;min-width:18px;height:30px;padding:0;opacity:0;border:0;border-radius:6px;background:transparent;color:var(--ui-muted);font-size:17px;line-height:1;cursor:pointer;transition:opacity 140ms ease-out,color 140ms ease-out,background 140ms ease-out}
+#sidebar .nav-item:hover .folder-menu-btn,#sidebar .nav-item:focus-within .folder-menu-btn,#sidebar .nav-item .folder-menu-btn[aria-expanded="true"]{opacity:1}
+#sidebar .nav-item .folder-menu-btn:hover{background:rgba(255,255,255,.07);color:var(--ui-accent)}
+#sidebar .nav-item .dropdown{z-index:900}
+#sidebar .nav-item.sub{padding-left:9px}
+#sidebar .nav-item.sub .folder-chevron-slot{visibility:hidden}
+#sidebar .nav-item.sub .folder-name{font-size:13px}
+#sidebar .nav-section-title{min-height:30px}
+#sidebar .sidebar-footer{margin-top:auto}
+body.sidebar-is-collapsed #sidebar{flex-basis:76px}
+body.sidebar-is-collapsed #main{margin-left:76px;width:calc(100% - 76px)}
+body.sidebar-is-collapsed #sidebar .user-profile{justify-content:center;flex-wrap:nowrap;padding:12px 8px;min-height:64px}
+body.sidebar-is-collapsed #sidebar .user-avatar-shell{margin:0 auto}
+body.sidebar-is-collapsed #sidebar .sidebar-collapse-toggle{position:absolute;top:7px;right:5px;width:23px;height:23px;flex-basis:23px;background:#111A24}
+body.sidebar-is-collapsed #sidebar .nav-item:not(#nav-all){grid-template-columns:1fr;justify-items:center;padding:0}
+body.sidebar-is-collapsed #sidebar .nav-item .folder-chevron-slot,
+body.sidebar-is-collapsed #sidebar .nav-item .folder-badge,
+body.sidebar-is-collapsed #sidebar .nav-item .folder-menu-btn{display:none!important}
+body.sidebar-is-collapsed #sidebar .nav-item .folder-dot{grid-column:1;margin:auto}
+body.sidebar-is-collapsed #sidebar .nav-item .folder-name{display:none!important}
+body.sidebar-is-collapsed #sidebar .nav-item .folder-main{display:contents!important}
+body.sidebar-is-collapsed #sidebar .nav-item .dropdown{display:none!important}
+@media(max-width:1024px){
+  #sidebar{width:min(88vw,320px);flex-basis:min(88vw,320px)}
+  body.sidebar-is-collapsed #sidebar{width:min(88vw,320px);flex-basis:min(88vw,320px)}
+  body.sidebar-is-collapsed #sidebar .user-info,
+  body.sidebar-is-collapsed #sidebar .nav-label,
+  body.sidebar-is-collapsed #sidebar .nav-section-title,
+  body.sidebar-is-collapsed #sidebar .sidebar-folders-heading,
+  body.sidebar-is-collapsed #sidebar .folder-name{display:initial!important}
+}
 
 </style>
 <script id="m9b-recurrence-script">
