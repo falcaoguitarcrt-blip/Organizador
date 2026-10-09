@@ -8392,6 +8392,42 @@ html[data-theme="light"] #phase-f-quick-filters .phase-f-chip.active{background:
 @media(max-width:768px){.myday-hero-v2{align-items:flex-start;flex-direction:column;padding:18px;gap:14px}.myday-header-actions{width:100%;justify-content:space-between}.myday-header-actions .myday-primary-action{flex:1}.phase3-dashboard-metrics{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.phase3-primary-stat{min-height:126px;padding:13px;grid-template-columns:36px minmax(0,1fr);column-gap:9px}.phase3-primary-stat .myday-stat-icon{width:36px;height:36px}.phase3-primary-stat .myday-stat-icon svg{width:19px;height:19px}.phase3-primary-stat .phase3-stat-copy strong{font-size:28px}.phase3-stat-note{font-size:11px}.phase3-primary-progress{grid-column:1/-1;min-height:135px;padding:15px}.phase3-progress-foot{gap:5px}.myday-title{font-size:25px}}
 @media(prefers-reduced-motion:reduce){.phase3-primary-stat,.phase3-primary-progress .myday-progress-track span,.myday-primary-action{transition:none!important}}
 
+
+/* ETAPA 7 - acessibilidade, estados de interação e usabilidade mobile */
+:where(button,[role="button"],a[href],input,select,textarea,[tabindex]:not([tabindex="-1"])) {
+  -webkit-tap-highlight-color: transparent;
+}
+:where(button,[role="button"],a[href],input,select,textarea,[tabindex]:not([tabindex="-1"])):focus-visible {
+  outline: 2px solid var(--accent, #2dd4bf);
+  outline-offset: 3px;
+}
+:where(button,[role="button"],a[href]) {
+  touch-action: manipulation;
+}
+@media (max-width: 768px) {
+  :where(button,[role="button"]) {
+    scroll-margin-block: 12px;
+  }
+  :where(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),select,textarea) {
+    font-size: 16px;
+  }
+  :where(button,[role="button"],a[href]) {
+    -webkit-tap-highlight-color: rgba(45,212,191,.12);
+  }
+}
+@media (max-width: 380px) {
+  :where(button,[role="button"]) {
+    overflow-wrap: anywhere;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  :where(*), :where(*::before), :where(*::after) {
+    scroll-behavior: auto !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}
 </style>
 <script id="m9b-recurrence-script">
 /* M9-B — Recorrência completa. Isolada da estrutura de dados existente. */
