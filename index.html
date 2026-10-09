@@ -4384,10 +4384,12 @@
 
          itemsForDay.forEach(item => {
             const folderInfo = getHierarchy(item.area);
+            const label = `${item.time ? item.time + ', ' : ''}${item.title || 'Sem título'}`;
             cell.innerHTML += `
-              <div class="cal-item" 
+              <div class="cal-item" role="button" tabindex="0" aria-label="Abrir compromisso: ${escapeHtml(label)}"
                    style="border-left-color:${escapeHtml(folderInfo.color)}; font-size:0.7rem; padding:4px;" 
                    onclick="openItemModal(S.items.find(x=>x.id==='${item.id}'))"
+                   onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openItemModal(S.items.find(x=>x.id==='${item.id}'))}"
                    oncontextmenu="handleContextMenuEvent(event, '${item.id}')">
                 ${item.time ? escapeHtml(item.time)+' ' : ''}${escapeHtml(item.title)}
               </div>`;
@@ -6794,7 +6796,7 @@
             row.innerHTML = `
               <span class="phase-h-event-time">${escapeHtml(item.time || '—')}</span>
               <span class="phase-h-event-title">${escapeHtml(item.title || 'Sem título')}</span>
-              <span class="phase-h-event-meta"><span>${duration ? phase3FormatMinutes(duration) : 'Duração não definida'}</span>${priority ? `<span class="phase-h-priority ${priorityClass}"><i></i>${priority}</span>` : ''}<span class="phase-h-event-check" aria-hidden="true">✓</span></span>
+              <span class="phase-h-event-meta"><span>${duration ? phase3FormatMinutes(duration) : 'Duração não definida'}</span>${priority ? `<span class="phase-h-priority ${priorityClass}"><i></i>${priority}</span>` : ''}<span class="phase-h-event-check" aria-hidden="true">↗</span></span>
             `;
             body.appendChild(row);
           });
