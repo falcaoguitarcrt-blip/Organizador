@@ -6384,7 +6384,7 @@
       const startDate = new Date(week[0] + 'T12:00:00');
       const monthLabel = startDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
       const dateRange = `${formatBR(week[0])} – ${formatBR(week[6])}`;
-      const weeklyFilterEnabled = currentArea === 'all';
+      // O seletor de pastas permanece disponível na visão semanal, inclusive quando a navegação muda de contexto.\n      const weeklyFilterEnabled = true;
       const mainFolders = getWeeklyMainFolders();
       const allFolderIds = mainFolders.map(f => f.id);
       const selectedFolderIds = Array.isArray(prefs.weeklyMainFolders) ? prefs.weeklyMainFolders : [];
