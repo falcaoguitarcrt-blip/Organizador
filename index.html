@@ -2505,7 +2505,7 @@
       const image = document.getElementById('u-avatar');
       const fallback = document.getElementById('u-avatar-fallback');
       if (!image || !fallback) return;
-      const initials = String(displayName || 'Minha Agenda').trim().split(/\\s+/).filter(Boolean).slice(0, 2).map(part => part.charAt(0).toUpperCase()).join('') || 'MP';
+      const initials = String(displayName || 'Minha Agenda').trim().split(/\s+/).filter(Boolean).slice(0, 2).map(part => part.charAt(0).toUpperCase()).join('') || 'MP';
       fallback.textContent = initials;
       fallback.hidden = false;
       image.hidden = true;
