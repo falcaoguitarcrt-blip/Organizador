@@ -1136,7 +1136,7 @@
   <div id="sidebar">
     <div class="mobile-drawer-header"><strong>Minha Agenda Pro</strong><button type="button" class="mobile-drawer-close" onclick="toggleSidebar()" aria-label="Fechar menu">✕</button></div>
     <div class="user-profile">
-      <img id="u-avatar" class="user-avatar" src="" alt="Avatar">
+      <div class="user-avatar-shell"><div id="u-avatar-fallback" class="user-avatar-fallback" aria-hidden="true">MP</div><img id="u-avatar" class="user-avatar" alt="" hidden></div>
       <div class="user-info">
         <div id="u-name" class="user-name">Carregando...</div>
         <button class="btn-logout" onclick="logout()">Sair</button>
@@ -2501,12 +2501,30 @@
       return saveQueue;
     }
 
+    function phaseSetUserAvatar(photoURL, displayName) {
+      const image = document.getElementById('u-avatar');
+      const fallback = document.getElementById('u-avatar-fallback');
+      if (!image || !fallback) return;
+      const initials = String(displayName || 'Minha Agenda').trim().split(/\\s+/).filter(Boolean).slice(0, 2).map(part => part.charAt(0).toUpperCase()).join('') || 'MP';
+      fallback.textContent = initials;
+      fallback.hidden = false;
+      image.hidden = true;
+      image.onload = () => { image.hidden = false; fallback.hidden = true; };
+      image.onerror = () => { image.hidden = true; fallback.hidden = false; };
+      if (photoURL) {
+        image.src = photoURL;
+      } else {
+        image.removeAttribute('src');
+      }
+    }
+
     // Autenticação
     auth.onAuthStateChanged(user => {
       if (user) {
         document.getElementById('auth-overlay').style.display = 'none';
-        document.getElementById('u-avatar').src = user.photoURL || '';
-        document.getElementById('u-name').innerText = user.displayName || user.email;
+        const displayName = user.displayName || user.email || 'Minha Agenda';
+        document.getElementById('u-name').innerText = displayName;
+        phaseSetUserAvatar(user.photoURL, displayName);
         loadData();
       } else {
         unsubscribeFirestore.forEach(fn => { try { fn(); } catch (_) {} });
@@ -7539,6 +7557,14 @@ html[data-theme="light"] .section-subtitle{color:#58677a}
 html[data-theme="light"] .btn-logout{color:#58677a}
 html[data-theme="light"] .btn-logout:hover{color:#202b38}
 html[data-theme="light"] .theme-picker-row select{background:#fff;color:#202b38}
+
+  
+/* Avatar resiliente: nunca mostrar imagem quebrada nem texto alternativo */
+.user-avatar-shell{position:relative;width:38px;height:38px;flex:0 0 38px;border-radius:50%;overflow:hidden;background:linear-gradient(145deg,#2dd4bf,#0f766e);border:1px solid rgba(45,212,191,.28)}
+.user-avatar{display:block;width:100%;height:100%;border:0!important;border-radius:50%;object-fit:cover;background:transparent}
+.user-avatar[hidden],.user-avatar-fallback[hidden]{display:none!important}
+.user-avatar-fallback{width:100%;height:100%;display:grid;place-items:center;color:#062a27;font-size:13px;font-weight:800;letter-spacing:.3px;user-select:none}
+html[data-theme="light"] .user-avatar-shell{background:linear-gradient(145deg,#5eead4,#0f9f91);border-color:rgba(15,159,145,.25)}
 
   </style>
 <script id="m9b-recurrence-script">
