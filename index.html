@@ -1193,7 +1193,8 @@
       <div class="phase2-top-actions">
         <button class="btn-sm ai-launch-btn phase2-control" type="button" onclick="openAIAssistant()"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3Z"></path><path d="m19 15 .9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9L19 15Z"></path></svg><span>Assistente</span></button>
         <button class="btn phase2-new-item" onclick="openItemModal()"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg><span>Novo item</span></button>
-      </div>   </div>
+      </div>
+    </div>
 
     <div id="search-filters-panel">
       <div class="filter-grid">
@@ -8147,6 +8148,7 @@ body.sidebar-is-collapsed #sidebar .nav-item .dropdown{display:none!important}
 
 
 /* Etapa 2: barra superior, busca, atalhos e captura rápida */
+.phase2-search-actions::before{content:none!important;display:none!important}
 #main{min-width:0}
 #main .top-bar{display:flex;align-items:center;gap:10px;flex-wrap:nowrap;margin-bottom:12px}
 .phase2-search-actions{display:flex;align-items:center;gap:10px;flex:1 1 auto;min-width:220px;width:auto}
