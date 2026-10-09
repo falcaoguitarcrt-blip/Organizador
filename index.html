@@ -3688,14 +3688,12 @@
       let subchips = '';
       if (currentArea !== 'all') {
         const parentId = folder?.parentId || currentArea;
-        const subfolders = S.areas.filter(a => a.parentId === parentId);
-        if (subfolders.length > 0) {
-          const parentFolder = getFolderConfig(parentId);
-          const related = [parentFolder, ...subfolders].filter(Boolean);
-          subchips = `<div class="subfolder-chips">` + related.map(r => `
-            <button class="chip ${r.id === currentArea ? 'active' : ''}" onclick="setArea('${r.id}')">
-              <span class="color-dot" style="background:${escapeHtml(r.color||'#ccc')}"></span> ${escapeHtml(r.name)}
-            </button>`).join('') + `</div>`;
+        const parentFolder = getFolderConfig(parentId);
+        const subfolders = S.areas.filter(a => a.parentId === parentId).sort((a,b)=>(a.order||0)-(b.order||0));
+        if (parentFolder && subfolders.length) {
+          const pendingCount = id => S.items.filter(i => i.area === id && i.status !== 'done').length;
+          subchips = `<div class="subfolder-chips" role="group" aria-label="Navegar entre subpastas"><button type="button" class="chip folder-chip-all ${currentArea === parentFolder.id ? 'active' : ''}" onclick="setArea('${parentFolder.id}')" aria-pressed="${currentArea === parentFolder.id ? 'true' : 'false'}"><span class="color-dot" style="background:${escapeHtml(parentFolder.color||'#2dd4bf')}"></span><span>Todas</span><span class="folder-chip-count">${S.items.filter(i => (i.area === parentFolder.id || getFolderConfig(i.area)?.parentId === parentFolder.id) && i.status !== 'done').length}</span></button>` +
+          subfolders.map(r => { const active=r.id===currentArea; const chipColor=r.color||parentFolder.color||'#2dd4bf'; return `<button type="button" class="chip ${active?'active':''}" onclick="setArea('${r.id}')" aria-pressed="${active?'true':'false'}"><span class="color-dot" style="background:${escapeHtml(chipColor)}"></span><span class="folder-chip-name">${escapeHtml(r.name)}</span><span class="folder-chip-count">${pendingCount(r.id)}</span></button>`; }).join('') + `</div>`;
         }
       }
 
@@ -3781,6 +3779,8 @@
       c.innerHTML = `
         ${workspaceHtml}
         <div class="folder-header-area">
+          ${subchips}
+          <div class="folder-toolbar">
           <div class="folder-actions">
             <div class="view-selector">
               <button class="view-btn ${prefs.viewMode === 'list' ? 'active' : ''}" onclick="setViewMode('list')">📋 Lista</button>
@@ -3791,9 +3791,25 @@
             </div>
             ${(currentArea !== 'all' && !isSubfolderActive) ? `<button class="btn-sm" onclick="openFolderModal('${currentArea}')">+ Subpasta</button>` : ''}
           </div>
-          ${subchips}
+          <div class="folder-toolbar-meta">
+            <span class="folder-sort-label">↕ Ordenação</span>
+            <select id="phase-f-sort-toolbar" class="folder-sort-select" aria-label="Ordenar tarefas" onchange="phaseFSetSort(this.value"><option value="smart">Relevância</option><option value="date_asc">Data próxima</option><option value="date_desc">Data distante</option><option value="priority">Prioridade</option><option value="title">Título A-Z</option><option value="updated">Mais recentes</option></select>
+          </div>
+          </div>
         </div>
       `;
+      phaseHMountFolderToolbar();
+    }
+
+
+    function phaseHMountFolderToolbar() {
+      const host=document.querySelector('#header-container .folder-toolbar-meta');
+      const meta=document.getElementById('phase-f-search-meta');
+      const toolbarSort=document.getElementById('phase-f-sort-toolbar');
+      const existingSort=document.getElementById('phase-f-sort');
+      if(host && meta){host.prepend(meta);meta.classList.add('folder-search-meta-mounted');meta.hidden=false;}
+      else if(meta){meta.classList.remove('folder-search-meta-mounted');}
+      if(toolbarSort){toolbarSort.value=(typeof phaseFSort!=='undefined'&&phaseFSort)||(existingSort&&existingSort.value)||'smart';}
     }
 
     // Gerador de Card HTML
@@ -6656,18 +6672,10 @@
       const phaseGWeekOverdue = phaseGWeekPending.filter(item => item.date && item.date < today).length;
 
       c.innerHTML = `
-        <div class="calendar-controls" style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
-          <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
-            <button class="btn-sm" onclick="navCalendar(-1)">◀ Semana anterior</button>
-            <button class="btn-sm" onclick="navCalendar(0)">Hoje</button>
-          </div>
-          <div style="font-weight:800;font-size:.92rem;text-align:center;flex:1;min-width:190px;">
-            📅 ${String(monthLabel).charAt(0).toUpperCase()+String(monthLabel).slice(1)} • ${dateRange}
-          </div>
-          <div style="display:flex;gap:6px;align-items:center;">
-            ${weeklyFilterEnabled ? '<button type="button" class="btn-sm" id="weekly-folder-filter-btn">📁 Pastas</button>' : ''}
-            <button class="btn-sm" onclick="navCalendar(1)">Próxima semana ▶</button>
-          </div>
+        <div class="calendar-controls phase-g-week-controls">
+          <div class="phase-g-week-nav"><button type="button" class="btn-sm phase-g-nav-btn" onclick="navCalendar(-1)"><span aria-hidden="true">‹</span> Semana anterior</button><button type="button" class="btn-sm phase-g-today-btn" onclick="navCalendar(0)">Hoje</button></div>
+          <div class="phase-g-week-period"><span class="phase-g-period-icon" aria-hidden="true">▦</span><span>${String(monthLabel).charAt(0).toUpperCase()+String(monthLabel).slice(1)} • ${dateRange}</span></div>
+          <div class="phase-g-week-nav phase-g-week-nav-right">${weeklyFilterEnabled ? '<button type="button" class="btn-sm phase-g-folder-filter-btn" id="weekly-folder-filter-btn">☷ Filtrar pastas</button>' : ''}<button type="button" class="btn-sm phase-g-nav-btn" onclick="navCalendar(1)">Próxima semana <span aria-hidden="true">›</span></button></div>
         </div>
 
         ${weeklyFilterEnabled ? `
@@ -8499,6 +8507,39 @@ html[data-theme="light"] #phase-f-quick-filters .phase-f-chip.active{background:
 @media(max-width:900px){#header-container .folder-workspace-top{align-items:flex-start;flex-direction:column;gap:12px}#header-container .folder-workspace-actions{justify-content:flex-start;width:100%}}
 @media(max-width:620px){#header-container .folder-workspace{padding:12px 12px 9px}#header-container .folder-workspace-title h2{font-size:23px}#header-container .folder-workspace-actions{display:grid;grid-template-columns:1fr 1fr}#header-container .folder-workspace-actions .btn-sm{width:100%;white-space:normal}#header-container .folder-workspace-actions .btn-sm:last-child{grid-column:1/-1}#header-container .folder-workspace-stats{grid-template-columns:repeat(5,minmax(72px,1fr));overflow-x:auto}#header-container .folder-workspace-stat{padding-inline:5px}#header-container .folder-workspace-stat-num{font-size:21px}#header-container .folder-workspace-stat-label{font-size:10px}#header-container .folder-workspace-scope{align-items:flex-start;flex-direction:column;gap:6px}}
 @media(prefers-reduced-motion:reduce){#header-container .folder-workspace *,#header-container .folder-workspace *::before,#header-container .folder-workspace *::after{transition-duration:.01ms!important;animation-duration:.01ms!important}}
+
+
+/* FASE 2 — chips, barra de ferramentas e navegação semanal */
+#header-container .folder-header-area{display:flex;flex-direction:column;gap:10px;margin-bottom:16px}
+#header-container .subfolder-chips{display:flex;align-items:center;gap:7px;flex-wrap:nowrap;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:thin;padding:2px 1px 7px;margin:0}
+#header-container .subfolder-chips .chip{display:inline-flex;align-items:center;gap:7px;flex:0 0 auto;min-height:32px;height:32px;padding:4px 10px;border-radius:999px;border:1px solid var(--border);background:rgba(255,255,255,.015);color:var(--text);font-size:12px;white-space:nowrap;transition:background 180ms ease-out,border-color 180ms ease-out,color 180ms ease-out}
+#header-container .subfolder-chips .chip .color-dot{width:8px;height:8px}
+#header-container .subfolder-chips .chip:hover{background:rgba(45,212,191,.07);border-color:rgba(45,212,191,.45)}
+#header-container .subfolder-chips .chip.active{background:rgba(45,212,191,.14);border-color:var(--accent);color:#f4fffe;font-weight:650}
+#header-container .folder-chip-count{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:rgba(148,163,184,.14);color:inherit;font-size:11px;font-weight:700;font-variant-numeric:tabular-nums}
+#header-container .subfolder-chips .chip.active .folder-chip-count{background:rgba(45,212,191,.2)}
+#header-container .folder-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;min-width:0}
+#header-container .folder-toolbar .folder-actions{min-width:0;margin:0;flex:1}
+#header-container .folder-toolbar .view-selector{max-width:100%;overflow-x:auto;scrollbar-width:none}
+#header-container .folder-toolbar .view-selector::-webkit-scrollbar{display:none}
+#header-container .folder-toolbar-meta{display:flex;align-items:center;gap:8px;flex:0 0 auto;min-width:0}
+#header-container .folder-sort-label{display:inline-flex;align-items:center;gap:5px;color:var(--muted);font-size:12px;white-space:nowrap}
+#header-container .folder-sort-select{min-height:38px;max-width:170px;padding:7px 28px 7px 10px;border:1px solid var(--border);border-radius:9px;background:var(--card);color:var(--text);font-size:12px;cursor:pointer}
+#header-container .folder-sort-select:focus-visible,#header-container .subfolder-chips .chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+#header-container .folder-toolbar .view-btn{min-height:38px;font-size:12px;white-space:nowrap}
+#phase-f-search-meta.folder-search-meta-mounted{display:flex!important;align-items:center;gap:7px;flex-wrap:wrap;min-height:32px;margin:-4px 0 10px;padding:6px 10px;border:1px solid var(--border);border-radius:9px;background:rgba(255,255,255,.025);color:var(--muted);font-size:12px}
+#phase-f-search-meta.folder-search-meta-mounted strong{color:var(--text)}
+#header-container .phase-g-week-controls{display:grid!important;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:10px;margin-bottom:12px;padding:8px 10px;border-radius:12px}
+#header-container .phase-g-week-nav{display:flex;align-items:center;gap:6px;min-width:0}
+#header-container .phase-g-week-nav-right{justify-content:flex-end}
+#header-container .phase-g-nav-btn,#header-container .phase-g-today-btn,#header-container .phase-g-folder-filter-btn{min-height:38px;height:38px;display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:7px 11px;font-size:12px;white-space:nowrap}
+#header-container .phase-g-nav-btn span{font-size:21px;line-height:1;color:var(--accent)}
+#header-container .phase-g-week-period{display:flex;align-items:center;justify-content:center;gap:8px;font-size:14px;font-weight:650;text-align:center;white-space:nowrap}
+#header-container .phase-g-period-icon{color:var(--accent);font-size:16px}
+#header-container .phase-g-folder-filter-btn{border-style:dashed;color:var(--muted)}
+@media(max-width:980px){#header-container .folder-toolbar{align-items:flex-start;flex-direction:column}#header-container .folder-toolbar .folder-actions{width:100%}#header-container .folder-toolbar-meta{width:100%;justify-content:flex-end}#header-container .phase-g-week-controls{grid-template-columns:1fr auto;row-gap:8px}#header-container .phase-g-week-period{grid-column:1/-1;grid-row:1;justify-content:flex-start;text-align:left;white-space:normal}#header-container .phase-g-week-nav{grid-row:2}#header-container .phase-g-week-nav-right{grid-column:2;justify-content:flex-end}}
+@media(max-width:600px){#header-container .folder-toolbar .folder-actions{flex-wrap:wrap}#header-container .folder-toolbar .view-selector{width:100%}#header-container .folder-toolbar-meta{justify-content:space-between}#header-container .folder-sort-select{max-width:58vw;flex:1}#header-container .phase-g-week-controls{grid-template-columns:1fr 1fr}#header-container .phase-g-week-period{grid-column:1/-1}#header-container .phase-g-week-nav{flex-wrap:wrap}#header-container .phase-g-week-nav-right{grid-column:1/-1;justify-content:space-between}#header-container .phase-g-nav-btn{flex:1;padding-inline:7px}#header-container .phase-g-today-btn{flex:0 0 auto}}
+@media(prefers-reduced-motion:reduce){#header-container .subfolder-chips .chip,#header-container .folder-sort-select{transition:none}}
 
 </style>
 <script id="m9b-recurrence-script">
