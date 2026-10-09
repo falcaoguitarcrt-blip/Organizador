@@ -5937,7 +5937,7 @@
       const activeFilter = currentDashboardFilter;
       const focusHtml = data.focus.length ? `<section class="myday-section myday-focus-card"><div class="myday-section-head"><div><div class="myday-section-kicker">PRIORIDADE</div><div class="myday-section-title">Foco sugerido</div></div><span class="myday-section-icon">🎯</span></div><div class="myday-focus-list">${data.focus.map((i,idx)=>`<button class="myday-focus-item" onclick="openItemModal(S.items.find(x=>x.id==='${i.id}'))"><span class="myday-focus-index">${idx+1}</span><span class="myday-focus-copy"><strong>${escapeHtml(i.title)}</strong><small>${i.date && i.date < data.today ? '⚠ Atrasada' : (i.time ? 'Hoje às '+escapeHtml(i.time) : 'Hoje')} ${buildPhase2PriorityHtml(i)}</small></span><span class="myday-arrow">›</span></button>`).join('')}</div></section>` : `<section class="myday-section"><div class="myday-empty-title">🎯 Nenhum foco crítico identificado</div><div class="muted text-sm">Sua agenda está livre de itens de alta prioridade, atrasados ou marcados com estrela.</div></section>`;
       const nextHtml = data.next ? `<section class="myday-next-card"><div><div class="myday-section-kicker">A SEGUIR</div><div class="myday-next-title">${escapeHtml(data.next.title)}</div><div class="myday-next-meta">${data.next.date === data.today ? 'Hoje' : escapeHtml(formatBR(data.next.date,''))}${data.next.time ? ' · '+escapeHtml(data.next.time) : ''}${data.next.area ? ' · '+escapeHtml(getHierarchy(data.next.area).text) : ''}</div></div><button class="btn-sm" onclick="openItemModal(S.items.find(x=>x.id==='${data.next.id}'))">Abrir</button></section>` : '';
-      const timelineHtml = `<section class="myday-section timeline-panel"><div class="myday-section-head"><div><div class="myday-section-kicker">AGENDA</div><div class="myday-section-title">Linha do tempo de hoje</div></div><span class="myday-count-pill">${scheduledToday}</span></div>${data.timedToday.length ? `<div class="timeline-list">${data.timedToday.map(i=>`<button class="timeline-row" onclick="openItemModal(S.items.find(x=>x.id==='${i.id}'))"><span class="timeline-time">${escapeHtml(i.time)}</span><span class="timeline-dot"></span><span class="timeline-copy"><strong>${escapeHtml(i.title)}</strong><small>${i.priority ? priorityLabel(i.priority) : 'Sem prioridade'} ${i.area ? '• '+escapeHtml(getHierarchy(i.area).text) : ''}</small></span></button>`).join('')}</div>` : '<div class="myday-empty-state">Nenhum compromisso com horário definido hoje.</div>'}${data.noTimeToday.length ? `<div class="untimed-note">+ ${data.noTimeToday.length} item(ns) de hoje sem horário definido.</div>` : ''}</section>`;
+      const timelineHtml = `<section class="myday-section timeline-panel"><div class="myday-section-head"><div><div class="myday-section-kicker">AGENDA</div><div class="myday-section-title">Linha do tempo de hoje</div></div><span class="myday-count-pill">${scheduledToday}</span></div>${data.timedToday.length ? `<div class="timeline-list">${data.timedToday.slice(0,4).map(i=>`<button class="timeline-row" onclick="openItemModal(S.items.find(x=>x.id==='${i.id}'))"><span class="timeline-time">${escapeHtml(i.time)}</span><span class="timeline-dot"></span><span class="timeline-copy"><strong>${escapeHtml(i.title)}</strong><small>${i.priority ? priorityLabel(i.priority) : 'Sem prioridade'} ${i.area ? '• '+escapeHtml(getHierarchy(i.area).text) : ''}</small></span></button>`).join('')}</div>${data.timedToday.length>4 ? '<div class="timeline-more"><button type="button" onclick="filterDashboard(\'today\');setViewMode(\'list\')">Ver todos os compromissos →</button></div>' : ''}` : '<div class="myday-empty-state">Nenhum compromisso com horário definido hoje.</div>'}${data.noTimeToday.length ? `<div class="untimed-note">+ ${data.noTimeToday.length} item(ns) de hoje sem horário definido.</div>` : ''}</section>`;
       c.innerHTML = `<div class="myday-v2">
         <div class="myday-hero-v2"><div><div class="myday-eyebrow">CENTRO DE COMANDO</div><div class="myday-title">${greeting}, ${escapeHtml(name)}</div><div class="myday-subtitle">${dateExt.charAt(0).toUpperCase()+dateExt.slice(1)} · organize o que realmente importa hoje.</div></div><div class="myday-header-actions"><button class="btn myday-primary-action" onclick="openItemModal()">＋ Nova tarefa</button><select class="form-control phase2-mobile-view" onchange="setViewMode(this.value)"><option value="list" ${prefs.viewMode==='list'?'selected':''}>📋 Lista</option><option value="cards" ${prefs.viewMode==='cards'?'selected':''}>🔲 Cards</option><option value="kanban" ${prefs.viewMode==='kanban'?'selected':''}>📊 Kanban</option><option value="calendar" ${prefs.viewMode==='calendar'?'selected':''}>📅 Semana</option><option value="month" ${prefs.viewMode==='month'?'selected':''}>🗓️ Mês</option></select></div></div>
         <div class="myday-stats">
@@ -7329,7 +7329,35 @@ button,input,select,textarea{font:inherit} button{-webkit-tap-highlight-color:tr
   .phase-j-install-card{gap:8px;padding:10px}.phase-j-install-copy span{display:none}.phase-j-install-actions .btn-sm{padding:6px 8px;font-size:.68rem}
 }
 
-</style>
+/* Refinamento minimalista do Meu Dia: hierarquia primeiro, detalhes sob demanda */
+.myday-v2{gap:11px}
+.myday-hero-v2{padding:16px 20px;box-shadow:none;background:linear-gradient(110deg,rgba(45,212,191,.07),rgba(255,255,255,.012) 65%)}
+.myday-eyebrow{margin-bottom:3px}
+.myday-title{font-size:1.35rem}
+.myday-subtitle{margin-top:3px}
+.myday-stats{grid-template-columns:minmax(150px,.85fr) minmax(150px,.85fr) minmax(210px,1.3fr);gap:8px}
+.myday-stat{min-height:58px;padding:10px 12px;background:rgba(255,255,255,.015)}
+.myday-stat:nth-child(3),.myday-stat:nth-child(4){display:none}
+.myday-progress{min-width:0;padding:10px 12px}
+.myday-grid{grid-template-columns:minmax(0,.95fr) minmax(0,1.05fr);gap:12px}
+.myday-grid>div{gap:10px}
+.myday-section,.myday-next-card{padding:13px;border-radius:12px;box-shadow:none}
+.myday-section-head{margin-bottom:8px}
+.myday-section-kicker{font-size:.62rem;letter-spacing:.8px;margin-bottom:3px}
+.myday-section-title{font-size:.88rem}
+.myday-focus-list{gap:4px}
+.myday-focus-item{padding:8px 9px;background:transparent}
+.myday-focus-index{width:20px;height:20px;background:rgba(45,212,191,.08)}
+.myday-focus-copy strong{font-size:.78rem}
+.myday-next-card{background:rgba(255,255,255,.015)}
+.timeline-row{padding:8px 2px}
+.timeline-copy small{font-size:.63rem}
+.timeline-more{display:flex;justify-content:flex-end;padding-top:8px}
+.timeline-more button{border:0;background:transparent;color:var(--accent);font-size:.73rem;font-weight:700;padding:5px 2px;cursor:pointer}
+.myday-bottom{padding-top:0}
+@media(max-width:1050px){.myday-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.myday-progress{grid-column:1/-1}.myday-grid{grid-template-columns:1fr}}
+@media(max-width:700px){.myday-hero-v2{padding:15px}.myday-title{font-size:1.2rem}.myday-stats{grid-template-columns:1fr 1fr}.myday-progress{grid-column:1/-1}.myday-grid{gap:10px}.myday-section,.myday-next-card{padding:12px}}
+  </style>
 <script id="m9b-recurrence-script">
 /* M9-B — Recorrência completa. Isolada da estrutura de dados existente. */
 (function(){
