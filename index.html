@@ -3249,7 +3249,7 @@
           ${chevronHtml}
           <span style="display:flex; align-items:center; gap:8px; flex:1; overflow:hidden;">
             <span class="color-dot" style="background:${escapeHtml(area.color||'#ccc')}"></span> 
-            <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(area.name)}</span>
+            <span title="${escapeHtml(area.name)}" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(area.name)}</span>
           </span>
           ${pendingCount > 0 ? `<span class="folder-badge">${pendingCount}</span>` : ''}
           <button class="folder-menu-btn" onclick="toggleFolderMenu('${area.id}', event)">⋮</button>
@@ -3274,7 +3274,7 @@
             subEl.innerHTML = `
               <span style="display:flex; align-items:center; gap:6px; flex:1; overflow:hidden;">
                 <span class="color-dot" style="background:${escapeHtml(sub.color||'#ccc')}; width:7px; height:7px;"></span> 
-                <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(sub.name)}</span>
+                <span title="${escapeHtml(sub.name)}" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(sub.name)}</span>
               </span>
               ${subPending > 0 ? `<span class="folder-badge">${subPending}</span>` : ''}
               <button class="folder-menu-btn" onclick="toggleFolderMenu('${sub.id}', event)">⋮</button>
@@ -8011,6 +8011,13 @@ body.sidebar-is-collapsed #sidebar .nav-item>span[style*="display:flex"]>span:la
 body.sidebar-is-collapsed #sidebar .nav-item>span[style*="width:28px"],
 body.sidebar-is-collapsed #sidebar .nav-item>button.chevron-btn{display:none!important}
 body.sidebar-is-collapsed #sidebar .nav-item .color-dot{display:none!important}
+body.sidebar-is-collapsed #sidebar .nav-item .color-dot{display:block!important;grid-column:auto!important;width:10px!important;height:10px!important;margin:auto}
+body.sidebar-is-collapsed #sidebar #nav-all{font-size:0}
+body.sidebar-is-collapsed #sidebar #nav-all:before{content:"▦";font-size:21px;line-height:1;color:var(--ui-accent)}
+body.sidebar-is-collapsed #sidebar .sidebar-footer>.btn-sm,body.sidebar-is-collapsed #sidebar .sidebar-config-trigger{font-size:18px!important;line-height:1}
+body.sidebar-is-collapsed #sidebar .sidebar-footer-primary .nav-label,body.sidebar-is-collapsed #sidebar .sidebar-footer-alerts .nav-label{display:none!important}
+body.sidebar-is-collapsed #sidebar .sidebar-footer .sidebar-alert-count{display:inline-flex!important;position:absolute;top:1px;right:1px;min-width:15px;height:15px;padding:1px 3px;font-size:9px}
+
 body.sidebar-is-collapsed #sidebar .nav-item .folder-badge{display:none!important}
 body.sidebar-is-collapsed #sidebar .nav-item .folder-menu-btn{display:none!important}
 body.sidebar-is-collapsed #sidebar .sidebar-footer{padding:10px 8px}
