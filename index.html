@@ -1141,32 +1141,38 @@
         <div id="u-name" class="user-name">Carregando...</div>
         <button class="btn-logout" onclick="logout()">Sair</button>
       </div>
+      <button type="button" class="sidebar-collapse-toggle" onclick="toggleSidebarCollapse()" aria-label="Recolher ou expandir menu lateral" title="Recolher ou expandir menu lateral">‹</button>
     </div>
     
-    <div class="nav-group" id="sidebar-nav-group">
-      <div class="nav-item" id="nav-all" onclick="setArea('all')">
-        <span>📋 Agenda geral</span>
-      </div>
-      
-      <div id="pinned-folders-section">
-        <div class="nav-section-title">📌 FIXADAS</div>
-        <div id="pinned-folder-tree"></div>
-      </div>
-
-      <div>
-        <div class="nav-section-title">
-          <span>PASTAS</span>
-          <button class="btn-sm" style="padding: 2px 6px; font-size: 0.7rem; min-height: auto;" onclick="toggleAllFoldersCollapse(event)" id="btn-toggle-all-folders">Recolher todas</button>
+    <div class="sidebar-workspace">
+      <div class="nav-group" id="sidebar-nav-group">
+        <div class="nav-item" id="nav-all" onclick="setArea('all')" title="Agenda geral">
+          <span class="nav-label">📋 Agenda geral</span>
+        </div>
+        <div id="pinned-folders-section">
+          <div class="nav-section-title"><span class="nav-label">📌 FIXADAS</span></div>
+          <div id="pinned-folder-tree"></div>
+        </div>
+        <div class="sidebar-folders-heading">
+          <div class="nav-section-title"><span class="nav-label">PASTAS</span></div>
+          <button class="btn-sm sidebar-collapse-all" onclick="toggleAllFoldersCollapse(event)" id="btn-toggle-all-folders" title="Recolher ou expandir pastas">Recolher todas</button>
         </div>
         <div id="folder-tree"></div>
       </div>
-
-      <button class="btn-sm" style="margin: 16px 8px 8px; width: calc(100% - 16px); justify-content: center;" onclick="openFolderModal()">+ Nova Pasta</button>
-      <button class="btn-sm" style="margin: 4px 8px; width: calc(100% - 16px); justify-content: center;" onclick="openAlertsModal()">🔔 Alertas</button>
-      <button class="btn-sm" style="margin: 4px 8px; width: calc(100% - 16px); justify-content: center;" onclick="openManageTemplatesModal()">⚙ Gerenciar Modelos</button>
-      <label class="theme-picker-row" for="theme-mode-select"><span>◐ Aparência</span><select id="theme-mode-select" class="form-control" aria-label="Escolher aparência" onchange="applyThemeMode(this.value)"><option value="dark">Escuro</option><option value="light">Claro</option><option value="system">Sistema</option></select></label>
+    </div>
+    <div class="sidebar-footer">
+      <button class="btn-sm sidebar-footer-primary" onclick="openFolderModal()" title="Nova Pasta">＋ <span class="nav-label">Nova Pasta</span></button>
+      <button class="btn-sm sidebar-footer-alerts" onclick="openAlertsModal()" title="Alertas">♧ <span class="nav-label">Alertas</span><span id="sidebar-alert-count" class="sidebar-alert-count" hidden>0</span></button>
+      <div class="sidebar-config-wrap">
+        <button type="button" class="btn-sm sidebar-config-trigger" id="sidebar-config-trigger" aria-expanded="false" aria-controls="sidebar-config-menu" onclick="toggleSidebarConfig(event)">⚙ <span class="nav-label">Configurações</span><span class="sidebar-config-chevron">›</span></button>
+        <div id="sidebar-config-menu" class="sidebar-config-menu" hidden>
+          <button type="button" class="sidebar-config-item" onclick="openManageTemplatesModal();toggleSidebarConfig()">⚙ <span>Gerenciar Modelos</span></button>
+          <label class="theme-picker-row" for="theme-mode-select"><span>◐ Aparência</span><select id="theme-mode-select" class="form-control" aria-label="Escolher aparência" onchange="applyThemeMode(this.value)"><option value="dark">Escuro</option><option value="light">Claro</option><option value="system">Sistema</option></select></label>
+          <button type="button" class="sidebar-config-item" onclick="openDataModal();toggleSidebarConfig()">▣ <span>Backup e Dados</span></button>
+          <button type="button" id="phase-j-share-btn" class="sidebar-config-item phase-j-share" onclick="window.phaseJShareAgenda?.();toggleSidebarConfig()">↗ <span>Compartilhar resumo de hoje</span></button>
+        </div>
+      </div>
       <div id="sync-status" class="sync-status" title="Estado da sincronização"><span class="sync-dot"></span><span id="sync-status-text">Aguardando conexão...</span></div>
-      <button class="btn-sm" style="margin: 4px 8px; width: calc(100% - 16px); justify-content: center;" onclick="openDataModal()">💾 Backup e Dados</button>
     </div>
   </div>
 
@@ -3141,6 +3147,58 @@
       return S.items.filter(i => i.status !== 'done' && targetFolders.has(i.area)).length;
     }
 
+    function toggleSidebarConfig(event) {
+      if (event) event.stopPropagation();
+      const menu = document.getElementById('sidebar-config-menu');
+      const trigger = document.getElementById('sidebar-config-trigger');
+      if (!menu || !trigger) return;
+      const opening = menu.hidden;
+      menu.hidden = !opening;
+      trigger.setAttribute('aria-expanded', String(opening));
+    }
+
+    function toggleSidebarCollapse() {
+      const sidebar = document.getElementById('sidebar');
+      if (!sidebar) return;
+      const collapsed = !sidebar.classList.contains('sidebar-collapsed');
+      sidebar.classList.toggle('sidebar-collapsed', collapsed);
+      document.body.classList.toggle('sidebar-is-collapsed', collapsed);
+      try { localStorage.setItem('agenda_sidebar_collapsed', collapsed ? '1' : '0'); } catch (_) {}
+    }
+
+    function phaseUpdateSidebarAlertCount() {
+      const badge = document.getElementById('sidebar-alert-count');
+      if (!badge) return;
+      const today = typeof getTodayBR === 'function' ? getTodayBR() : new Date().toISOString().slice(0,10);
+      const count = (Array.isArray(S?.items) ? S.items : []).filter(item => item.status !== 'done' && item.date && item.date < today).length;
+      badge.textContent = count > 99 ? '99+' : String(count);
+      badge.hidden = count < 1;
+    }
+
+    document.addEventListener('click', function(event) {
+      const wrap = document.querySelector('.sidebar-config-wrap');
+      if (wrap && !wrap.contains(event.target)) {
+        const menu = document.getElementById('sidebar-config-menu');
+        const trigger = document.getElementById('sidebar-config-trigger');
+        if (menu) menu.hidden = true;
+        if (trigger) trigger.setAttribute('aria-expanded', 'false');
+      }
+    });
+    document.addEventListener('keydown', function(event) {
+      if (event.key === 'Escape') {
+        const menu = document.getElementById('sidebar-config-menu');
+        const trigger = document.getElementById('sidebar-config-trigger');
+        if (menu) menu.hidden = true;
+        if (trigger) trigger.setAttribute('aria-expanded', 'false');
+      }
+    });
+    try {
+      if (localStorage.getItem('agenda_sidebar_collapsed') === '1' && window.innerWidth > 1024) {
+        document.getElementById('sidebar')?.classList.add('sidebar-collapsed');
+        document.body.classList.add('sidebar-is-collapsed');
+      }
+    } catch (_) {}
+
     function renderSidebar() {
       const pinnedContainer = document.getElementById('pinned-folder-tree');
       const mainContainer = document.getElementById('folder-tree');
@@ -3234,6 +3292,7 @@
 
       pinned.forEach(a => renderFolderItem(a, pinnedContainer));
       unpinned.forEach(a => renderFolderItem(a, mainContainer));
+      phaseUpdateSidebarAlertCount();
     }
 
     function toggleFolderCollapse(id) {
@@ -7880,6 +7939,152 @@ html[data-theme="light"] .view-selector .view-btn.active{background:rgba(15,159,
 html[data-theme="light"] .phase-g-stat-note{color:#58677A}
 
   .phase2-search-actions{position:relative;min-width:0}.phase2-search-actions::before{content:'⌕';position:absolute;z-index:2;left:13px;top:50%;transform:translateY(-53%);font-size:23px;line-height:1;color:var(--ui-muted);pointer-events:none}.phase2-search-actions:focus-within::before{color:var(--ui-accent)}
+
+/* Rodada 2: sidebar organizada, pastas alinhadas e dashboard refinado */
+:root{--sidebar-w:292px;--ui-space-section:24px;--ui-space-card:16px}
+#sidebar{width:var(--sidebar-w);display:flex;flex-direction:column;overflow:hidden;transition:width 180ms ease-out,transform 180ms ease-out;background:#0b141e;border-right:1px solid rgba(255,255,255,.06)}
+#main{margin-left:var(--sidebar-w);max-width:1400px;width:calc(100% - var(--sidebar-w));padding:24px clamp(20px,2vw,32px)}
+.user-profile{flex:0 0 auto;display:flex;align-items:center;gap:10px;min-height:76px;padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.06)}
+.user-info{min-width:0;flex:1}
+.sidebar-collapse-toggle{display:grid;place-items:center;flex:0 0 32px;width:32px;height:32px;border-radius:8px;border:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.025);color:var(--ui-muted);font-size:22px;cursor:pointer}
+.sidebar-collapse-toggle:hover{color:var(--ui-accent);border-color:var(--ui-border-hover);background:rgba(45,212,191,.06)}
+.sidebar-workspace{flex:1 1 auto;min-height:0;overflow:hidden;display:flex;flex-direction:column}
+#sidebar-nav-group{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:12px 8px 16px;scrollbar-width:thin;scrollbar-color:rgba(139,154,171,.2) transparent}
+#sidebar-nav-group::-webkit-scrollbar{width:5px}
+#sidebar-nav-group::-webkit-scrollbar-thumb{background:rgba(139,154,171,.2);border-radius:8px}
+.sidebar-folders-heading{display:flex;align-items:center;justify-content:space-between;gap:6px}
+.sidebar-folders-heading .nav-section-title{margin-bottom:8px}
+.sidebar-collapse-all{min-height:29px!important;padding:4px 7px!important;font-size:11px!important;white-space:nowrap}
+#sidebar .nav-item{display:grid;grid-template-columns:16px 10px minmax(0,1fr) auto 18px;align-items:center;column-gap:8px;min-height:42px;height:42px;padding:0 8px 0 10px;margin:2px 0;position:relative;overflow:visible}
+#sidebar #nav-all{display:flex;gap:10px;align-items:center;padding-left:12px}
+#sidebar .nav-item>button.chevron-btn{grid-column:1;width:16px;height:28px;display:grid;place-items:center;padding:0;margin:0;background:transparent;border:0;color:var(--ui-muted);font-size:13px}
+#sidebar .nav-item>span[style*="width:28px"]{grid-column:1;width:16px!important;display:block}
+#sidebar .nav-item>span[style*="display:flex"]{grid-column:2/4;display:contents!important;min-width:0}
+#sidebar .nav-item .color-dot{grid-column:2;width:10px!important;height:10px!important;border-radius:50%;box-shadow:0 0 7px color-mix(in srgb,currentColor 25%,transparent)}
+#sidebar .nav-item>span[style*="display:flex"] .color-dot{grid-column:2}
+#sidebar .nav-item>span[style*="display:flex"]>span:last-child{grid-column:3;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#sidebar .nav-item .folder-badge{grid-column:4;justify-self:end;min-width:24px;height:22px;padding:3px 6px;display:inline-flex;align-items:center;justify-content:center;border-radius:999px;font-variant-numeric:tabular-nums}
+#sidebar .nav-item .folder-menu-btn{grid-column:5;justify-self:end;width:18px;min-width:18px;height:30px;padding:0;opacity:0;border:0;background:transparent;color:var(--ui-muted);transition:opacity 140ms ease-out,color 140ms ease-out}
+#sidebar .nav-item:hover .folder-menu-btn,#sidebar .nav-item:focus-within .folder-menu-btn{opacity:1}
+#sidebar .nav-item .dropdown{z-index:700}
+#sidebar .nav-item[ data-folder-id ]{cursor:pointer}
+#sidebar .nav-item[title],#sidebar .nav-item .folder-menu-btn{position:relative}
+#sidebar .nav-item.sub{grid-template-columns:16px 10px minmax(0,1fr) auto 18px;padding-left:26px}
+#sidebar .nav-item.sub:before{content:"";grid-column:1;width:16px}
+#sidebar .nav-item.sub>span[style*="display:flex"]{grid-column:2/4}
+#sidebar .nav-section-title{display:flex;align-items:center;min-height:28px;margin:14px 8px 7px;font-size:11px;letter-spacing:.09em}
+#pinned-folder-tree .nav-item,#folder-tree .nav-item{width:100%}
+.sidebar-footer{position:relative;z-index:20;flex:0 0 auto;padding:10px 12px 14px;border-top:1px solid rgba(255,255,255,.06);background:linear-gradient(180deg,rgba(11,20,30,.94),#0b141e 28%);display:grid;gap:7px}
+.sidebar-footer>.btn-sm,.sidebar-config-trigger{width:100%;min-height:40px;margin:0!important;display:flex;align-items:center;justify-content:flex-start;gap:10px;padding:9px 12px!important;border-radius:9px;border:1px solid rgba(255,255,255,.075);background:rgba(255,255,255,.018);font-size:13px}
+.sidebar-footer>.btn-sm:hover,.sidebar-config-trigger:hover{border-color:var(--ui-border-hover);background:rgba(45,212,191,.05)}
+.sidebar-footer-primary{border-style:dashed!important}
+.sidebar-footer-alerts{position:relative}
+.sidebar-alert-count{margin-left:auto;min-width:21px;height:21px;padding:2px 6px;border-radius:99px;background:rgba(248,113,113,.15);color:#F87171;font-size:11px;font-weight:800;display:inline-flex;align-items:center;justify-content:center}
+.sidebar-alert-count[hidden]{display:none}
+.sidebar-config-wrap{position:relative}
+.sidebar-config-trigger{cursor:pointer;color:var(--ui-text)}
+.sidebar-config-chevron{margin-left:auto;font-size:20px;line-height:1;color:var(--ui-muted);transition:transform 150ms ease-out}
+.sidebar-config-trigger[aria-expanded="true"] .sidebar-config-chevron{transform:rotate(90deg)}
+.sidebar-config-menu{position:absolute;left:0;right:0;bottom:calc(100% + 8px);z-index:800;padding:7px;border:1px solid var(--ui-border);border-radius:12px;background:#111a24;box-shadow:0 16px 36px rgba(0,0,0,.38);display:grid;gap:4px}
+.sidebar-config-menu[hidden]{display:none!important}
+.sidebar-config-item{width:100%;min-height:40px;display:flex;align-items:center;gap:10px;padding:9px 10px;border:0;border-radius:8px;background:transparent;color:var(--ui-text);text-align:left;font:inherit;font-size:13px;cursor:pointer}
+.sidebar-config-item:hover{background:rgba(45,212,191,.08);color:var(--ui-accent)}
+.sidebar-config-menu .theme-picker-row{margin:0;border:0;border-radius:8px;background:rgba(255,255,255,.025);min-height:40px}
+.sidebar-config-menu .theme-picker-row select{width:116px}
+#sync-status.sync-status{display:flex;align-items:center;gap:7px;margin:2px 4px 0!important;padding:5px 4px!important;border:0!important;background:transparent!important;box-shadow:none!important;color:var(--ui-muted);font-size:11px;min-height:24px}
+#sync-status .sync-dot{width:7px;height:7px;box-shadow:0 0 8px rgba(52,211,153,.25)}
+#phase-j-share-btn.available{display:flex!important}
+body.sidebar-is-collapsed #sidebar{width:76px}
+body.sidebar-is-collapsed #main{margin-left:76px;width:calc(100% - 76px)}
+body.sidebar-is-collapsed #sidebar .user-profile{justify-content:center;padding:12px 8px;flex-wrap:wrap}
+body.sidebar-is-collapsed #sidebar .user-info,
+body.sidebar-is-collapsed #sidebar .nav-label,
+body.sidebar-is-collapsed #sidebar .nav-section-title,
+body.sidebar-is-collapsed #sidebar .sidebar-folders-heading,
+body.sidebar-is-collapsed #sidebar .sidebar-collapse-all,
+body.sidebar-is-collapsed #sidebar .sidebar-config-chevron,
+body.sidebar-is-collapsed #sidebar .sidebar-footer .sidebar-alert-count,
+body.sidebar-is-collapsed #sidebar #sync-status #sync-status-text{display:none!important}
+body.sidebar-is-collapsed #sidebar .nav-item{display:flex;justify-content:center;padding:0;margin:3px 0}
+body.sidebar-is-collapsed #sidebar .nav-item>span[style*="display:flex"]{display:flex!important;flex:0 0 auto!important}
+body.sidebar-is-collapsed #sidebar .nav-item>span[style*="display:flex"]>span:last-child{display:none!important}
+body.sidebar-is-collapsed #sidebar .nav-item>span[style*="width:28px"],
+body.sidebar-is-collapsed #sidebar .nav-item>button.chevron-btn{display:none!important}
+body.sidebar-is-collapsed #sidebar .nav-item .color-dot{display:none!important}
+body.sidebar-is-collapsed #sidebar .nav-item .folder-badge{display:none!important}
+body.sidebar-is-collapsed #sidebar .nav-item .folder-menu-btn{display:none!important}
+body.sidebar-is-collapsed #sidebar .sidebar-footer{padding:10px 8px}
+body.sidebar-is-collapsed #sidebar .sidebar-footer>.btn-sm,
+body.sidebar-is-collapsed #sidebar .sidebar-config-trigger{justify-content:center;padding:8px!important;font-size:0}
+body.sidebar-is-collapsed #sidebar .sidebar-config-menu{position:fixed;left:82px;bottom:20px;right:auto;width:230px}
+body.sidebar-is-collapsed #sidebar #sync-status{justify-content:center}
+body.sidebar-is-collapsed #sidebar #sync-status .sync-dot{width:9px;height:9px}
+html[data-theme="light"] #sidebar{background:#f8fafc;border-right-color:rgba(35,51,70,.12)}
+html[data-theme="light"] .sidebar-footer{background:linear-gradient(180deg,rgba(248,250,252,.94),#f8fafc);border-top-color:rgba(35,51,70,.1)}
+html[data-theme="light"] .sidebar-config-menu{background:#fff;border-color:rgba(35,51,70,.14);box-shadow:0 16px 36px rgba(15,23,42,.15)}
+html[data-theme="light"] .sidebar-config-item{color:#334155}
+html[data-theme="light"] .sidebar-config-item:hover{background:rgba(15,159,145,.08);color:#087f74}
+html[data-theme="light"] .sidebar-config-menu .theme-picker-row{background:#f8fafc}
+html[data-theme="light"] #sync-status.sync-status{color:#64748b}
+html[data-theme="light"] .sidebar-footer>.btn-sm,html[data-theme="light"] .sidebar-config-trigger{background:#fff;border-color:rgba(35,51,70,.13);color:#334155}
+#main{background:radial-gradient(ellipse at 50% 0%,rgba(45,212,191,.055),transparent 52%),var(--bg);margin-right:auto}
+.myday-stat{min-height:84px;border-radius:14px}
+.myday-stat-icon{width:44px;height:44px;flex:0 0 44px;border-radius:50%;display:grid;place-items:center;font-size:22px}
+.myday-stat strong{font-size:32px!important;font-weight:750}
+.myday-stat small{text-transform:uppercase;letter-spacing:.06em;font-size:12px!important}
+.myday-stat.danger{border-color:rgba(248,113,113,.22);box-shadow:0 0 20px rgba(248,113,113,.035)}
+.myday-stat.danger .myday-stat-icon{background:rgba(248,113,113,.14);color:#F87171}
+.myday-stat.warning .myday-stat-icon{background:rgba(251,191,36,.13);color:#FBBF24}
+.myday-progress-track{height:8px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden}
+.myday-progress-track span{position:relative;min-width:0;transition:width 240ms ease-out}
+.myday-progress-track span[style*="width:0%"]::before{content:"";position:absolute;left:0;top:0;width:8px;height:8px;border-radius:50%;background:#2DD4BF;box-shadow:0 0 10px rgba(45,212,191,.3)}
+.myday-progress-head strong{font-size:20px!important}
+.myday-section,.myday-next-card{min-height:174px;padding:20px!important;border-radius:14px}
+.myday-grid{gap:16px}
+.myday-focus-item{transition:transform 160ms ease-out,border-color 160ms ease-out,background 160ms ease-out}
+.myday-focus-item:hover{transform:translateY(-1px)}
+.myday-next-card{display:flex;align-items:center}
+.myday-next-title{font-weight:750}
+.myday-next-card .btn-sm{min-height:38px}
+.weekly-compact-grid>section{min-height:340px!important;position:relative}
+.weekly-compact-grid>section>div:first-child{min-height:88px;position:relative}
+.weekly-compact-grid>section>div:first-child>div:first-child{font-size:11px!important;text-transform:uppercase;letter-spacing:.08em}
+.weekly-compact-grid>section>div:first-child>div:nth-child(2){font-size:22px!important}
+.weekly-compact-grid>section>div:nth-child(2)>button{position:relative;overflow:hidden;min-height:76px!important}
+.weekly-compact-grid>section>div:nth-child(2)>button::before{content:"";position:absolute;left:0;top:8px;bottom:8px;width:3px;border-radius:0 3px 3px 0;background:var(--ui-accent);opacity:.85}
+.weekly-compact-grid>section>div:nth-child(2)>div{padding:10px 4px!important;text-align:center;font-size:12px!important;color:var(--ui-tertiary)!important}
+.calendar-controls{margin-bottom:16px!important;gap:10px!important}
+.calendar-controls>.btn-sm,.calendar-controls button.btn-sm{min-height:38px!important;padding:8px 12px!important;border-radius:9px!important;font-size:13px!important}
+.calendar-controls button[onclick="navCalendar(0)"]{background:rgba(45,212,191,.11)!important;border-color:rgba(45,212,191,.25)!important;color:var(--ui-accent)!important}
+#weekly-folder-filter-btn{background:rgba(45,212,191,.08)!important;border-color:rgba(45,212,191,.2)!important;color:var(--ui-accent)!important}
+.phase-g-week-summary{gap:12px!important;margin-bottom:16px!important}
+.phase-g-stat{min-height:96px;padding:15px!important;border-radius:12px!important;background:var(--ui-surface)!important;border-color:var(--ui-border)!important}
+.phase-g-stat-label{font-size:12px!important;letter-spacing:.07em!important}
+.phase-g-stat-value{font-size:28px!important;line-height:1.15!important;margin-top:7px!important}
+.phase-g-stat-note{font-size:12px!important;line-height:1.4!important;white-space:normal!important;color:var(--ui-muted)!important}
+.phase-g-week-summary .phase-g-stat:nth-child(4) .phase-g-stat-value{color:var(--ui-text)}
+.phase-g-week-summary .phase-g-stat:nth-child(4):has(.phase-g-stat-value:not(:empty)){}
+@media(max-width:1024px){
+  #sidebar{width:min(88vw,320px);transform:translateX(-100%);position:fixed;z-index:600}
+  #sidebar.open{transform:translateX(0)}
+  #main,body.sidebar-is-collapsed #main{margin-left:0;width:100%;max-width:none;padding:18px}
+  #mobile-nav-overlay{display:none}
+  #mobile-nav-overlay.open{display:block;position:fixed;inset:0;z-index:590;background:rgba(0,0,0,.5)}
+  body.sidebar-is-collapsed #sidebar{width:min(88vw,320px)}
+  body.sidebar-is-collapsed #sidebar .nav-label,body.sidebar-is-collapsed #sidebar .user-info{display:block!important}
+}
+@media(max-width:767px){
+  #main{padding:12px}
+  .myday-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .myday-stat strong{font-size:27px!important}
+  .phase-g-week-summary{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .weekly-compact-grid{min-width:1080px}
+  .calendar-controls{align-items:stretch!important}
+  .calendar-controls>div{flex:1 1 100%;justify-content:space-between}
+  .calendar-controls>div:nth-child(2){order:-1;min-width:100%!important}
+}
+@media(prefers-reduced-motion:reduce){#sidebar,.myday-stat,.weekly-compact-grid>section,.weekly-compact-grid>section>div:nth-child(2)>button{transition:none!important;animation:none!important}}
+
 </style>
 <script id="m9b-recurrence-script">
 /* M9-B — Recorrência completa. Isolada da estrutura de dados existente. */
@@ -8235,17 +8440,13 @@ html[data-theme="light"] .phase-g-stat-note{color:#58677A}
   };
 
   function injectShareButton(){
-    const nav=document.querySelector('#sidebar .nav-group');
-    if(!nav || document.getElementById('phase-j-share-btn')) return;
-    const b=document.createElement('button');
-    b.id='phase-j-share-btn'; b.type='button'; b.className='btn-sm phase-j-share';
-    b.innerHTML='📤 Compartilhar resumo de hoje'; b.onclick=window.phaseJShareAgenda;
-    nav.appendChild(b);
-    if(navigator.share || navigator.clipboard) b.classList.add('available');
-    const hint=document.createElement('div'); hint.className='phase-j-mobile-hint';
-    hint.textContent='Dica: instale o app para abrir a agenda direto da tela inicial.';
+    const b=document.getElementById('phase-j-share-btn');
+    if(b) { b.onclick=window.phaseJShareAgenda; if(navigator.share || navigator.clipboard) b.classList.add('available'); }
     const drawer=document.querySelector('#sidebar .nav-group');
-    if(drawer && isMobile() && !document.getElementById('phase-j-mobile-hint')){hint.id='phase-j-mobile-hint';drawer.prepend(hint);}
+    if(drawer && isMobile() && !document.getElementById('phase-j-mobile-hint')){
+      const hint=document.createElement('div'); hint.className='phase-j-mobile-hint'; hint.id='phase-j-mobile-hint';
+      hint.textContent='Dica: instale o app para abrir a agenda direto da tela inicial.'; drawer.prepend(hint);
+    }
   }
 
   document.addEventListener('DOMContentLoaded',()=>{
