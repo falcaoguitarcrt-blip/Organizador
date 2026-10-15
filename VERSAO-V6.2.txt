@@ -1,0 +1,14 @@
+MINHA AGENDA - ATUALIZAÇÃO VISUAL V6.2
+
+Esta atualização registra a versão visual mais recente preparada para produção.
+
+Principais melhorias:
+- reorganização da faixa de métricas;
+- correção da área de progresso do dia;
+- melhoria de contraste no tema claro;
+- cards de Prioridade e Agenda refinados;
+- sidebar com seleção mais leve;
+- tema claro e escuro usando a mesma composição;
+- preservação da lógica e das funcionalidades existentes.
+
+Commit de referência da implementação visual: 719167b933362ade1a350a10ed5bef3ebb2dd9c9
