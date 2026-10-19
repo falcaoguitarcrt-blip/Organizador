@@ -1,4 +1,4 @@
-const CACHE_NAME='minha-agenda-pro-v14';
+const CACHE_NAME='minha-agenda-pro-v15';
 const APP_SHELL=['./','./index.html','./manifest.webmanifest','./icon-192.svg','./icon-512.svg'];
 
 const UI_PATCH=String.raw`<style id="ui-production-v7">
