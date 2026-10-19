@@ -1,0 +1,47 @@
+name: Refresh V9 Theme
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    if: ${{ !contains(github.event.head_commit.message, 'refresh V9 theme cache') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Apply V9 blue-gray theme and bump cache
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('service-worker.js')
+          s = p.read_text()
+          replacements = {
+              '#18c6c9':'#3f8cff',
+              '#0ea5a8':'#3278db',
+              '#22d3d6':'#69a5ff',
+              'rgba(24,198,201,':'rgba(63,140,255,',
+              'rgba(34,211,214,':'rgba(105,165,255,',
+          }
+          for old,new in replacements.items():
+              s = s.replace(old,new)
+          s = s.replace("minha-agenda-pro-v13", "minha-agenda-pro-v14")
+          p.write_text(s)
+          PY
+
+      - name: Commit real service worker update and remove temporary workflow
+        shell: bash
+        run: |
+          rm -f .github/workflows/fix-v9-cache.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add service-worker.js .github/workflows/fix-v9-cache.yml
+          git diff --cached --quiet && exit 0
+          git commit -m "chore: refresh V9 theme cache"
+          git push
