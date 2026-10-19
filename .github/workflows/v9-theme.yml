@@ -44,7 +44,6 @@ jobs:
               for old, new in replacements.items():
                   text = text.replace(old, new)
               if filename == 'index.html':
-                  text = text.replace('theme-color" content="#3f8cff"', 'theme-color" content="#3f8cff"')
                   marker = '</head>'
                   css = '''<style id="v9-theme">
           :root{--v9-blue:#3f8cff;--v9-blue-hover:#3278db;--v9-blue-soft:rgba(63,140,255,.12);--v9-charcoal:#181d22;--v9-panel:#1d252d;--v9-panel-2:#222b34;}
@@ -59,12 +58,13 @@ jobs:
                   p.write_text(text, encoding='utf-8')
           PY
 
-      - name: Commit V9 integration
+      - name: Commit V9 integration and clean helper files
         shell: bash
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add index.html service-worker.js
+          rm -f V9-INTEGRATION-TRIGGER.md .github/workflows/v9-theme.yml
+          git add index.html service-worker.js V9-INTEGRATION-TRIGGER.md .github/workflows/v9-theme.yml
           if git diff --cached --quiet; then
             echo "No V9 changes detected"
             exit 0
