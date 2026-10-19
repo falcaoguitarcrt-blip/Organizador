@@ -13,8 +13,8 @@ const UI_PATCH=String.raw`<style id="ui-production-v7">
   --ui-border:#dbe4ee;
   --ui-text:#102033;
   --ui-muted:#66788c;
-  --ui-accent:#18c6c9;
-  --ui-accent-strong:#0ea5a8;
+  --ui-accent:#3f8cff;
+  --ui-accent-strong:#3278db;
   --ui-danger:#ef4444;
   --ui-warning:#f59e0b;
   --ui-success:#10b981;
@@ -27,8 +27,8 @@ body[data-ui-theme="dark"],body[data-theme="dark"],body.dark{
   --ui-border:#26384d;
   --ui-text:#f4f8fc;
   --ui-muted:#93a6bb;
-  --ui-accent:#22d3d6;
-  --ui-accent-strong:#14b8a6;
+  --ui-accent:#69a5ff;
+  --ui-accent-strong:#3278db;
   --ui-shadow:0 12px 30px rgba(0,0,0,.24);
 }
 
