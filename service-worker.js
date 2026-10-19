@@ -21,10 +21,10 @@ const UI_PATCH=String.raw`<style id="ui-production-v7">
   --ui-shadow:0 8px 24px rgba(15,23,42,.055);
 }
 body[data-ui-theme="dark"],body[data-theme="dark"],body.dark{
-  --ui-bg:#08121f;
-  --ui-surface:#0f1b29;
-  --ui-surface-2:#132235;
-  --ui-border:#26384d;
+  --ui-bg:#181d22;
+  --ui-surface:#20262d;
+  --ui-surface-2:#252c34;
+  --ui-border:#343d47;
   --ui-text:#f4f8fc;
   --ui-muted:#93a6bb;
   --ui-accent:#69a5ff;
@@ -57,7 +57,7 @@ body{background:var(--ui-bg)!important;color:var(--ui-text)!important}
 #main>.top-bar .search-input::placeholder{color:var(--ui-muted)!important;opacity:1!important}
 #main>.top-bar button,#main>.top-bar .btn{height:42px!important;min-height:42px!important;padding:0 14px!important;border-radius:10px!important;background:var(--ui-surface)!important;color:var(--ui-text)!important;border:1px solid var(--ui-border)!important;box-shadow:none!important;font-weight:700!important}
 #main>.top-bar button:hover,#main>.top-bar .btn:hover{border-color:rgba(63,140,255,.4)!important;background:rgba(63,140,255,.045)!important;color:var(--ui-accent-strong)!important}
-#main>.top-bar .btn-primary,#main>.top-bar .primary,#main>.top-bar button[class*="primary"]{background:var(--ui-accent)!important;border-color:var(--ui-accent)!important;color:#062629!important;box-shadow:0 7px 16px rgba(63,140,255,.16)!important}
+#main>.top-bar .btn-primary,#main>.top-bar .primary,#main>.top-bar button[class*="primary"]{background:var(--ui-accent)!important;border-color:var(--ui-accent)!important;color:#ffffff!important;box-shadow:0 7px 16px rgba(63,140,255,.16)!important}
 
 /* Atalhos */
 .phase-f-quick-filters,#main .shortcuts,.shortcuts-row,#main .quick-filters{display:flex!important;align-items:center!important;gap:6px!important;flex-wrap:wrap!important;margin:0 0 12px!important}
@@ -70,7 +70,7 @@ body{background:var(--ui-bg)!important;color:var(--ui-text)!important}
 .quick-capture{min-height:52px!important;margin:0 0 16px!important;padding:6px 7px 6px 13px!important;border-radius:12px!important;background:var(--ui-surface)!important;border:1px solid var(--ui-border)!important;box-shadow:var(--ui-shadow)!important}
 .quick-capture input,.quick-capture textarea{height:38px!important;background:transparent!important;border:0!important;color:var(--ui-text)!important;box-shadow:none!important}
 .quick-capture input::placeholder{color:var(--ui-muted)!important}
-.quick-capture button{height:38px!important;border-radius:9px!important;background:var(--ui-accent)!important;color:#062629!important;border:0!important;font-weight:750!important}
+.quick-capture button{height:38px!important;border-radius:9px!important;background:var(--ui-accent)!important;color:#ffffff!important;border:0!important;font-weight:750!important}
 
 /* Meu Dia: uma única linguagem visual */
 .myday-v2{display:flex!important;flex-direction:column!important;gap:14px!important;margin-bottom:18px!important}
@@ -80,7 +80,7 @@ body{background:var(--ui-bg)!important;color:var(--ui-text)!important}
 .myday-title{font-size:1.58rem!important;line-height:1.12!important;font-weight:800!important;letter-spacing:-.035em!important;color:var(--ui-text)!important;margin-top:2px!important}
 .myday-subtitle{color:var(--ui-muted)!important;font-size:.78rem!important;margin-top:5px!important}
 .myday-header-actions{gap:8px!important}
-.myday-primary-action{height:38px!important;min-height:38px!important;border-radius:10px!important;background:var(--ui-accent)!important;color:#062629!important;border:0!important;font-weight:750!important;box-shadow:0 7px 16px rgba(63,140,255,.15)!important}
+.myday-primary-action{height:38px!important;min-height:38px!important;border-radius:10px!important;background:var(--ui-accent)!important;color:#ffffff!important;border:0!important;font-weight:750!important;box-shadow:0 7px 16px rgba(63,140,255,.15)!important}
 
 /* Métricas: o HTML atual possui 2 indicadores + progresso. Não forçar 5 colunas. */
 .myday-stats{display:grid!important;grid-template-columns:minmax(190px,.75fr) minmax(190px,.75fr) minmax(320px,1.5fr)!important;gap:0!important;min-height:82px!important;height:82px!important;overflow:hidden!important;background:var(--ui-surface)!important;border:1px solid var(--ui-border)!important;border-radius:14px!important;box-shadow:var(--ui-shadow)!important}
