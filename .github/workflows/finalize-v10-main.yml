@@ -1,0 +1,58 @@
+name: Finalize V10 blue-gray theme from main
+
+on:
+  push:
+    branches:
+      - release/v10-blue-gray-main
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Normalize visual theme
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          replacements = {
+              '#2dd4bf': '#3f8cff',
+              '#14b8a6': '#3278db',
+              '#062629': '#ffffff',
+              'rgba(45, 212, 191,': 'rgba(63, 140, 255,',
+              'rgba(45,212,191,': 'rgba(63,140,255,',
+              'rgba(24,198,201,': 'rgba(63,140,255,',
+              'rgba(24, 198, 201,': 'rgba(63, 140, 255,',
+              '#08121f': '#181d22',
+              '#0f1b29': '#20262d',
+              '#132235': '#252c34',
+              '#26384d': '#343d47',
+              '#121820': '#181d22',
+              '#1a232e': '#20262d',
+              '#2a3646': '#343d47',
+          }
+
+          for name in ('index.html', 'service-worker.js'):
+              p = Path(name)
+              text = p.read_text(encoding='utf-8')
+              for old, new in replacements.items():
+                  text = text.replace(old, new)
+              if name == 'service-worker.js':
+                  text = text.replace("minha-agenda-pro-v13", "minha-agenda-pro-v15")
+              p.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Commit final V10
+        run: |
+          rm -f .github/workflows/finalize-v10-main.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html service-worker.js .github/workflows/finalize-v10-main.yml
+          git commit -m 'feat: finalize V10 blue gray visual theme'
+          git push
