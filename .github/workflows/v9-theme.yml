@@ -1,0 +1,73 @@
+name: V9 Theme Integration
+
+on:
+  push:
+    branches:
+      - preview/v9-azul-cinza
+
+permissions:
+  contents: write
+
+jobs:
+  apply-theme:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout preview branch
+        uses: actions/checkout@v4
+        with:
+          ref: preview/v9-azul-cinza
+
+      - name: Apply V9 blue and charcoal theme
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          replacements = {
+              '#2dd4bf': '#3f8cff',
+              '#14b8a6': '#3278db',
+              '#18c6c9': '#3f8cff',
+              '#0ea5a8': '#3278db',
+              '#22d3d6': '#69a5ff',
+              '#0f766e': '#285fb8',
+              '#134e4a': '#1e3a68',
+              '#115e59': '#234b80',
+          }
+
+          for filename in ('index.html', 'service-worker.js'):
+              p = Path(filename)
+              if not p.exists():
+                  continue
+              text = p.read_text(encoding='utf-8')
+              original = text
+              for old, new in replacements.items():
+                  text = text.replace(old, new)
+              if filename == 'index.html':
+                  text = text.replace('theme-color" content="#3f8cff"', 'theme-color" content="#3f8cff"')
+                  marker = '</head>'
+                  css = '''<style id="v9-theme">
+          :root{--v9-blue:#3f8cff;--v9-blue-hover:#3278db;--v9-blue-soft:rgba(63,140,255,.12);--v9-charcoal:#181d22;--v9-panel:#1d252d;--v9-panel-2:#222b34;}
+          body{background:#181d22;}
+          button,.btn,.tab,.nav-item{transition:background .16s ease,border-color .16s ease,box-shadow .16s ease,transform .16s ease;}
+          button:hover,.btn:hover{transform:translateY(-1px);}
+          :focus-visible{outline:2px solid rgba(128,180,255,.85);outline-offset:2px;}
+          </style>'''
+                  if 'id="v9-theme"' not in text and marker in text:
+                      text = text.replace(marker, css + '\n' + marker, 1)
+              if text != original:
+                  p.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Commit V9 integration
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html service-worker.js
+          if git diff --cached --quiet; then
+            echo "No V9 changes detected"
+            exit 0
+          fi
+          git commit -m "feat: integrate V9 blue charcoal theme"
+          git push origin preview/v9-azul-cinza
