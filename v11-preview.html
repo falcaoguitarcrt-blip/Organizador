@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Minha Agenda Pro · V11 Preview</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;background:#10161d;color:#eaf1f9;font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}body{overflow:hidden}.bar{height:42px;display:flex;align-items:center;gap:10px;padding:0 14px;background:#111820;border-bottom:1px solid #303b47;font-size:12px}.dot{width:8px;height:8px;border-radius:50%;background:#3f8cff;box-shadow:0 0 12px rgba(63,140,255,.55)}.label{font-weight:700}.meta{color:#94a3b8}iframe{display:block;width:100%;height:calc(100% - 42px);border:0;background:#151a20}
+</style>
+</head>
+<body>
+<div class="bar"><span class="dot"></span><span class="label">PRÉVIA V11</span><span class="meta">Azul + cinza-chumbo · estrutura real da Agenda</span></div>
+<iframe id="app" src="./index.html" title="Prévia funcional da Minha Agenda Pro"></iframe>
+<script>
+const frame=document.getElementById('app');
+function applyTheme(){
+  try{
+    const doc=frame.contentDocument;
+    if(!doc||!doc.head)return;
+    if(doc.getElementById('v11-theme'))return;
+    const link=doc.createElement('link');link.id='v11-theme';link.rel='stylesheet';link.href='./v11-theme.css?v=11';doc.head.appendChild(link);
+  }catch(e){console.error(e)}
+}
+frame.addEventListener('load',applyTheme);
+setTimeout(applyTheme,1200);
+</script>
+</body>
+</html>
