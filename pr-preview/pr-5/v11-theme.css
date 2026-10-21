@@ -1,0 +1,57 @@
+:root{
+  --v11-bg:#151a20;
+  --v11-surface:#1b222a;
+  --v11-surface-2:#202932;
+  --v11-border:#303b47;
+  --v11-blue:#3f8cff;
+  --v11-blue-2:#69a7ff;
+  --v11-text:#f3f6fb;
+  --v11-muted:#94a3b8;
+  --v11-danger:#ef6671;
+  --v11-warning:#f4b740;
+}
+html,body{background:var(--v11-bg)!important;color:var(--v11-text)!important}
+body{letter-spacing:.005em}
+#sidebar{background:linear-gradient(180deg,#111820 0%,#151c24 100%)!important;border-right:1px solid var(--v11-border)!important;box-shadow:8px 0 28px rgba(0,0,0,.14)}
+#main{background:var(--v11-bg)!important;padding:26px 28px!important}
+.user-profile{border-bottom-color:var(--v11-border)!important}
+.nav-item{border:1px solid transparent!important;border-radius:11px!important;color:#a7b4c6!important}
+.nav-item:hover{background:rgba(63,140,255,.055)!important;color:#dce8f7!important}
+.nav-item.active{background:linear-gradient(90deg,rgba(63,140,255,.20),rgba(63,140,255,.08))!important;border-color:rgba(63,140,255,.42)!important;color:var(--v11-blue-2)!important;box-shadow:inset 3px 0 0 var(--v11-blue)!important}
+.top-bar{margin-bottom:14px!important}
+.search-input,.quick-capture input{background:#171f27!important;border:1px solid var(--v11-border)!important;border-radius:12px!important;color:var(--v11-text)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.02)}
+.search-input:focus,.quick-capture input:focus{border-color:rgba(63,140,255,.75)!important;box-shadow:0 0 0 3px rgba(63,140,255,.10)!important}
+.btn{background:var(--v11-blue)!important;color:#fff!important;border-radius:10px!important;box-shadow:0 8px 18px rgba(63,140,255,.16)!important}
+.btn:hover{background:#3278db!important}
+button,.chip,.view-btn{transition:all .18s ease!important}
+.chip,.view-selector{background:#171f27!important;border-color:var(--v11-border)!important}
+.chip.active,.view-btn.active{color:var(--v11-blue-2)!important;border-color:rgba(63,140,255,.55)!important;background:rgba(63,140,255,.10)!important}
+.quick-capture{gap:10px!important;margin-bottom:20px!important}
+.quick-capture:before{color:var(--v11-blue)!important}
+.quick-preview{background:var(--v11-surface)!important;border-color:rgba(63,140,255,.55)!important}
+.overdue-banner{background:rgba(239,68,68,.09)!important;border-color:rgba(239,68,68,.55)!important;border-radius:13px!important;padding:15px 18px!important}
+.overdue-banner-text{color:#ff9ba3!important}
+.dashboard-hero,.myday-hero-v2{background:linear-gradient(110deg,#19232d 0%,#17212b 58%,#15243a 100%)!important;border:1px solid rgba(63,140,255,.28)!important;border-left:3px solid var(--v11-blue)!important;border-radius:17px!important;box-shadow:0 14px 34px rgba(0,0,0,.18)!important}
+.dashboard-hero h2,.myday-title{color:#f7faff!important}
+.myday-eyebrow,.myday-section-kicker,.myday-section-title,.myday-section-icon{color:var(--v11-blue-2)!important}
+.myday-stat,.myday-progress,.myday-section,.myday-next-card,.dash-card,.dash-special-block{background:var(--v11-surface)!important;border-color:var(--v11-border)!important}
+.myday-stat:hover,.myday-stat.active,.dash-card:hover,.dash-card.active{border-color:rgba(63,140,255,.62)!important;background:rgba(63,140,255,.075)!important}
+.myday-stat-icon.accent,.myday-focus-index,.myday-count-pill{color:var(--v11-blue-2)!important;background:rgba(63,140,255,.12)!important}
+.myday-progress-track span{background:var(--v11-blue)!important}
+.timeline-dot{background:var(--v11-blue)!important;box-shadow:0 0 0 4px rgba(63,140,255,.10)!important}
+.myday-focus-item{background:#18212a!important;border-color:rgba(255,255,255,.035)!important}
+.myday-focus-item:hover{border-color:rgba(63,140,255,.38)!important;background:#1b2631!important}
+.dropdown{background:#18212a!important;border-color:var(--v11-border)!important}
+.folder-badge{background:#202b35!important;color:#aebbd0!important}
+.mobile-nav-toggle{background:var(--v11-blue)!important;color:#fff!important}
+@media(max-width:768px){
+  #main{padding:14px!important}
+  .top-bar{gap:8px!important}
+  .search-input{min-width:100%!important;order:1}
+  .top-bar .btn{flex:1!important}
+  .quick-capture{margin-bottom:16px!important}
+  .quick-capture input{min-width:0!important}
+  .dashboard-hero,.myday-hero-v2{padding:18px!important;border-radius:15px!important}
+}
+/* Elimina a identidade turquesa herdada de versões anteriores */
+[style*="45,212,191"],[style*="#2dd4bf"],[style*="#14b8a6"],[style*="#06b6d4"]{color:var(--v11-blue)!important;background-color:transparent!important;border-color:var(--v11-blue)!important}
