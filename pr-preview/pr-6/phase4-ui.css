@@ -1,0 +1,31 @@
+:root{--p4-speed:180ms;--p4-focus:#3f8cff;--p5-touch:40px}
+/* V11: identidade azul + cinza. Esta camada vem depois das regras antigas para neutralizar o teal residual. */
+:root{--accent:#3f8cff!important;--accent-hover:#3278db!important;--ui-accent:#3f8cff!important;--ui-accent-strong:#3278db!important;--ds-accent:#3f8cff!important;--ds-accent-strong:#3278db!important}
+.btn,.btn-sm,.btn-primary,.top-bar .btn-primary,.mobile-nav-toggle{background:#3f8cff!important;border-color:#3f8cff!important;color:#fff!important;box-shadow:0 6px 18px rgba(63,140,255,.16)!important}
+.btn:hover,.btn-sm:hover,.btn-primary:hover,.top-bar .btn-primary:hover,.mobile-nav-toggle:hover{background:#3278db!important;border-color:#3278db!important}
+.chip.active,.filter-btn.active,.view-btn.active{color:#69a7ff!important;border-color:rgba(63,140,255,.45)!important;background:rgba(63,140,255,.10)!important}
+.nav-item.active{color:#69a7ff!important;background:rgba(63,140,255,.12)!important;box-shadow:inset 3px 0 0 #3f8cff!important}
+.myday-progress-track span{background:#3f8cff!important;box-shadow:0 0 12px rgba(63,140,255,.18)!important}
+.myday-stat-icon.accent,.myday-focus-index,.myday-count-pill{color:#69a7ff!important;background:rgba(63,140,255,.12)!important}
+.myday-section-icon{color:#69a7ff!important;border-color:rgba(63,140,255,.25)!important;background:rgba(63,140,255,.08)!important}
+.timeline-dot{background:#3f8cff!important}
+.timeline-row:not(:last-child) .timeline-dot::after{background:rgba(63,140,255,.22)!important}
+.quick-preview{border-color:rgba(63,140,255,.55)!important}
+.phase-i-ai-badge{color:#69a7ff!important;background:rgba(63,140,255,.10)!important}
+.phase-j-install-card{border-color:rgba(63,140,255,.35)!important}
+.phase-j-install-icon{background:rgba(63,140,255,.12)!important}
+.task-card:hover,.event-card:hover,.cal-item:hover{border-color:rgba(63,140,255,.4)!important}
+.list-row,.task-row{min-height:48px!important;border-radius:10px!important;transition:background var(--p4-speed) ease-out,transform var(--p4-speed) ease-out,border-color var(--p4-speed) ease-out,box-shadow var(--p4-speed) ease-out!important}
+.list-row:hover,.task-row:hover{background:rgba(63,140,255,.055)!important;transform:translateY(-1px)}
+.task-card,.event-card,.cal-item{position:relative!important;border-radius:10px!important;transition:transform var(--p4-speed) ease-out,box-shadow var(--p4-speed) ease-out,border-color var(--p4-speed) ease-out!important}
+.task-card:hover,.event-card:hover,.cal-item:hover{transform:translateY(-2px)!important;box-shadow:0 10px 24px rgba(15,23,42,.12)!important}
+.kanban-col{border-radius:14px!important;padding:8px!important}.kanban-col-header{min-height:42px!important;border-radius:10px!important;padding:8px 10px!important}.kanban-col .task-card{margin-bottom:8px!important}
+.priority-high{color:#ef4444!important}.priority-medium{color:#f59e0b!important}.priority-low{color:#3b82f6!important}
+.empty-state{min-height:120px!important;display:flex!important;align-items:center!important;justify-content:center!important;flex-direction:column!important;gap:8px!important}.empty-state .icon{opacity:.65}
+.tooltip,.popover{border:1px solid var(--p-border)!important;border-radius:10px!important;box-shadow:0 16px 36px rgba(0,0,0,.2)!important}
+.card-enter,.view-enter{animation:p4ViewEnter var(--p4-speed) ease-out both}@keyframes p4ViewEnter{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+button,a,[role="button"],input,select,textarea{min-height:var(--p5-touch)}button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--p4-focus)!important;outline-offset:2px}
+@media(max-width:1100px){#main{padding:18px!important}.top-bar{flex-wrap:wrap!important}.top-bar .search-wrap,.top-bar .search-container{min-width:240px!important;flex:1 1 100%!important}.metrics-row,.dashboard-metrics,.metrics-grid,.myday-stats,.stats-row{grid-template-columns:repeat(3,minmax(150px,1fr))!important;overflow-x:auto!important}}
+@media(max-width:768px){#main{margin-left:0!important;padding:12px!important}.list-row,.task-row{min-height:48px!important}.kanban-col{min-width:280px!important}.task-card,.event-card{width:100%}.view-tabs,.views-bar,.toolbar,.week-toolbar,.calendar-nav{overflow-x:auto!important}.week-grid,.calendar-grid,.month-grid{overflow-x:auto!important}.week-day,.day-column{min-width:155px!important}.quick-capture{flex-wrap:wrap!important}.quick-capture input{min-width:0!important;flex:1 1 100%!important}.quick-capture button{min-width:110px!important}.user-profile{min-height:60px!important}}
+@media(max-width:480px){.phase-h-folder-header,.folder-header,.folder-panel,.myday-hero,.dashboard-hero{padding:14px!important;border-radius:13px!important}.phase-h-folder-header h1,.folder-header h1{font-size:1.45rem!important}.view-btn,.tab{min-height:40px!important;padding-inline:12px!important}.week-day,.day-column{min-width:145px!important}.month-cell{min-width:120px!important}.kanban-col{min-width:270px!important}.empty-state{min-height:96px!important}}
+@media(prefers-reduced-motion:reduce){.card-enter,.view-enter{animation:none!important}*,*::before,*::after{transition:none!important;scroll-behavior:auto!important}}
