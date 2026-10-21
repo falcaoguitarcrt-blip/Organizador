@@ -116,19 +116,39 @@
             </button>
         </nav>
 
-        <!-- Footer / Stats summary -->
-        <div class="p-4 border-t border-slate-700/60 text-xs text-slate-400">
-            <div class="flex justify-between items-center mb-1">
+        <!-- Backup Tools in Sidebar -->
+        <div class="p-4 border-t border-slate-700/60 space-y-2">
+            <span class="text-xs font-semibold uppercase tracking-wider text-slate-400 block mb-2">Gestão de Dados</span>
+            <div class="grid grid-cols-2 gap-2">
+                <button id="btnExportJSON" class="flex items-center justify-center gap-1.5 py-2 px-3 bg-slate-700/60 hover:bg-slate-700 text-xs text-slate-200 font-medium rounded-lg border border-slate-600/50 transition">
+                    <i data-lucide="download" class="w-3.5 h-3.5 text-blue-400"></i>
+                    <span>Exportar</span>
+                </button>
+                <button id="btnImportJSON" class="flex items-center justify-center gap-1.5 py-2 px-3 bg-slate-700/60 hover:bg-slate-700 text-xs text-slate-200 font-medium rounded-lg border border-slate-600/50 transition">
+                    <i data-lucide="upload" class="w-3.5 h-3.5 text-emerald-400"></i>
+                    <span>Importar</span>
+                </button>
+                <input type="file" id="fileInputJSON" accept=".json" class="hidden">
+            </div>
+            <div class="pt-2 text-[11px] text-slate-500 flex justify-between items-center">
                 <span>Armazenamento:</span>
                 <span class="text-emerald-400 font-medium">Local (Offline)</span>
             </div>
-            <p class="text-[11px] text-slate-500">Dados salvos automaticamente no seu navegador.</p>
         </div>
     </aside>
 
     <!-- Main Content Area -->
     <main class="flex-1 flex flex-col h-full overflow-hidden bg-slate-900">
         
+        <!-- Notification / Migration Banner -->
+        <div id="migrationBanner" class="hidden bg-blue-900/40 border-b border-blue-500/30 p-3 px-6 text-xs text-blue-200 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <i data-lucide="info" class="w-4 h-4 text-blue-400"></i>
+                <span>Encontramos dados de uma versão anterior do organizador neste navegador e migramos para o novo layout.</span>
+            </div>
+            <button id="btnCloseBanner" class="text-blue-300 hover:text-white font-medium ml-4">Dispensar</button>
+        </div>
+
         <!-- Views Container -->
         <div class="flex-1 overflow-y-auto p-4 md:p-8">
 
@@ -390,35 +410,79 @@
 
     <!-- Application JavaScript Logic -->
     <script>
-        // Store Application State
-        let tasks = JSON.parse(localStorage.getItem('agenda_pro_tasks')) || [
-            {
-                id: '1',
-                title: 'Organizar repositório no GitHub',
-                description: 'Subir novo layout index.html e atualizar documentação.',
-                dueDate: new Date().toISOString().split('T')[0],
-                category: 'Trabalho',
-                priority: 'Alta',
-                status: 'in_progress',
-                createdAt: new Date().toISOString()
-            },
-            {
-                id: '2',
-                title: 'Revisar checklist do projeto',
-                description: 'Verificar os requisitos de PWA e navegação do app.',
-                dueDate: new Date().toISOString().split('T')[0],
-                category: 'Estudos',
-                priority: 'Média',
-                status: 'todo',
-                createdAt: new Date().toISOString()
-            }
-        ];
+        const PRIMARY_STORAGE_KEY = 'agenda_pro_tasks';
+        const LEGACY_STORAGE_KEYS = ['organizador_tasks', 'tasks', 'organizador_tarefas'];
 
+        let dataMigratedFromOldKey = false;
+
+        // Multi-Key Backward Compatibility Initialization
+        function loadInitialTasks() {
+            // 1. Try reading primary key
+            let stored = localStorage.getItem(PRIMARY_STORAGE_KEY);
+            if (stored) {
+                try { return JSON.parse(stored); } catch(e) {}
+            }
+
+            // 2. Try reading alternative/older keys
+            for (const oldKey of LEGACY_STORAGE_KEYS) {
+                let legacyData = localStorage.getItem(oldKey);
+                if (legacyData) {
+                    try {
+                        const parsed = JSON.parse(legacyData);
+                        if (Array.isArray(parsed) && parsed.length > 0) {
+                            dataMigratedFromOldKey = true;
+                            // Standardize format if needed
+                            return parsed.map((item, idx) => ({
+                                id: item.id || Date.now().toString() + idx,
+                                title: item.title || item.titulo || 'Tarefa sem título',
+                                description: item.description || item.descricao || '',
+                                dueDate: item.dueDate || item.data || new Date().toISOString().split('T')[0],
+                                category: item.category || item.categoria || 'Outros',
+                                priority: item.priority || item.prioridade || 'Média',
+                                status: item.status || (item.concluida ? 'done' : 'todo'),
+                                createdAt: item.createdAt || new Date().toISOString()
+                            }));
+                        }
+                    } catch(e) {}
+                }
+            }
+
+            // 3. Fallback default initial tasks
+            return [
+                {
+                    id: '1',
+                    title: 'Organizar repositório no GitHub',
+                    description: 'Subir novo layout index.html e atualizar documentação.',
+                    dueDate: new Date().toISOString().split('T')[0],
+                    category: 'Trabalho',
+                    priority: 'Alta',
+                    status: 'in_progress',
+                    createdAt: new Date().toISOString()
+                },
+                {
+                    id: '2',
+                    title: 'Revisar checklist do projeto',
+                    description: 'Verificar os requisitos de PWA e navegação do app.',
+                    dueDate: new Date().toISOString().split('T')[0],
+                    category: 'Estudos',
+                    priority: 'Média',
+                    status: 'todo',
+                    createdAt: new Date().toISOString()
+                }
+            ];
+        }
+
+        // State Manager
+        let tasks = loadInitialTasks();
         let draggedTaskId = null;
 
-        // Save State to LocalStorage
+        // Save State to LocalStorage (Persisting across all known keys for safety)
         function saveTasks() {
-            localStorage.setItem('agenda_pro_tasks', JSON.stringify(tasks));
+            const jsonData = JSON.stringify(tasks);
+            localStorage.setItem(PRIMARY_STORAGE_KEY, jsonData);
+            
+            // Mirror to legacy keys so switching to an old code version retains data
+            LEGACY_STORAGE_KEYS.forEach(key => localStorage.setItem(key, jsonData));
             render();
         }
 
@@ -426,6 +490,51 @@
         function refreshIcons() {
             lucide.createIcons();
         }
+
+        // --- EXPORT & IMPORT BACKUP SYSTEM ---
+        const btnExportJSON = document.getElementById('btnExportJSON');
+        const btnImportJSON = document.getElementById('btnImportJSON');
+        const fileInputJSON = document.getElementById('fileInputJSON');
+
+        btnExportJSON.addEventListener('click', () => {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(tasks, null, 2));
+            const downloadAnchor = document.createElement('a');
+            const dateStr = new Date().toISOString().split('T')[0];
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `backup_agenda_pro_${dateStr}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        });
+
+        btnImportJSON.addEventListener('click', () => {
+            fileInputJSON.click();
+        });
+
+        fileInputJSON.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const importedTasks = JSON.parse(event.target.result);
+                    if (Array.isArray(importedTasks)) {
+                        if (confirm(`Deseja importar ${importedTasks.length} tarefas? Isso substituirá suas tarefas atuais.`)) {
+                            tasks = importedTasks;
+                            saveTasks();
+                            alert('Tarefas importadas com sucesso!');
+                        }
+                    } else {
+                        alert('Arquivo de backup inválido.');
+                    }
+                } catch (err) {
+                    alert('Erro ao carregar o arquivo JSON.');
+                }
+            };
+            reader.readAsText(file);
+            fileInputJSON.value = '';
+        });
 
         // --- NAVIGATION CONTROLLER ---
         const navBtns = document.querySelectorAll('.nav-btn');
@@ -446,7 +555,6 @@
                     }
                 });
 
-                // Close mobile menu if open
                 closeMobileSidebar();
             });
         });
@@ -518,10 +626,8 @@
             const status = document.getElementById('taskStatus').value;
 
             if (id) {
-                // Update Existing
                 tasks = tasks.map(t => t.id === id ? { ...t, title, description, dueDate, category, priority, status } : t);
             } else {
-                // Create New
                 const newTask = {
                     id: Date.now().toString(),
                     title,
@@ -557,7 +663,6 @@
             }
         }
 
-        // Priority Badges Helper
         function getPriorityBadge(priority) {
             switch(priority) {
                 case 'Alta': return '<span class="text-xs px-2 py-0.5 rounded-md bg-rose-500/10 text-rose-400 border border-rose-500/20 font-medium">Alta</span>';
@@ -568,7 +673,6 @@
 
         // --- RENDER LOGIC ---
 
-        // 1. Dashboard View
         function renderDashboard() {
             const todayStr = new Date().toISOString().split('T')[0];
             const total = tasks.length;
@@ -611,7 +715,6 @@
             }
         }
 
-        // 2. Task List View
         function renderTaskList() {
             const container = document.getElementById('tasksList');
             const search = document.getElementById('filterSearch').value.toLowerCase();
@@ -669,7 +772,6 @@
             }).join('');
         }
 
-        // 3. Kanban View
         function renderKanban() {
             const columns = {
                 todo: document.getElementById('kanban-todo'),
@@ -701,8 +803,7 @@
                     </div>
                 `;
 
-                // Drag Events
-                card.addEventListener('dragstart', (e) => {
+                card.addEventListener('dragstart', () => {
                     draggedTaskId = t.id;
                     card.classList.add('kanban-ghost');
                 });
@@ -722,7 +823,6 @@
             document.getElementById('count-done').textContent = counts.done;
         }
 
-        // Kanban Drag & Drop Dropzones Initialization
         document.querySelectorAll('.kanban-dropzone').forEach(zone => {
             zone.addEventListener('dragover', (e) => {
                 e.preventDefault();
@@ -745,7 +845,6 @@
             });
         });
 
-        // Helper to Escape HTML Strings
         function escapeHtml(str) {
             return str.replace(/[&<>"']/g, function(m) {
                 return {
@@ -758,7 +857,6 @@
             });
         }
 
-        // Global Render Trigger
         function render() {
             renderDashboard();
             renderTaskList();
@@ -766,7 +864,6 @@
             refreshIcons();
         }
 
-        // Task Filters Event Listeners
         document.getElementById('filterSearch').addEventListener('input', renderTaskList);
         document.getElementById('filterCategory').addEventListener('change', renderTaskList);
         document.getElementById('filterPriority').addEventListener('change', renderTaskList);
@@ -774,17 +871,20 @@
 
         // Initial Setup
         document.addEventListener('DOMContentLoaded', () => {
-            // Set initial active state for navigation button
             document.querySelector('[data-view="dashboard"]').classList.add('bg-blue-600/20', 'text-blue-400', 'border', 'border-blue-500/30');
-            render();
+            
+            // Show migration banner if data was auto-migrated from legacy keys
+            if (dataMigratedFromOldKey) {
+                const banner = document.getElementById('migrationBanner');
+                banner.classList.remove('hidden');
+                document.getElementById('btnCloseBanner').addEventListener('click', () => {
+                    banner.classList.add('hidden');
+                });
+                saveTasks(); // Auto-save into primary key
+            } else {
+                saveTasks();
+            }
         });
-
-        // Register Service Worker Placeholder
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                // Registrar Service Worker customizado futuramente se desejar offline completo
-            });
-        }
     </script>
 </body>
 </html>
