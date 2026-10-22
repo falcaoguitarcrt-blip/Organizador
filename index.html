@@ -1,11 +1,14 @@
 <!DOCTYPE html>
-<html lang="pt-BR" class="h-full bg-slate-900 text-slate-100">
+<html lang="pt-BR" class="h-full bg-[#060e19] text-slate-100">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Organizador - Minha Agenda Pro</title>
+    <title>Minha Agenda Pro • Dashboard de Produtividade</title>
     
-    <!-- Tailwind CSS CDN -->
+    <!-- Fonts & Tailwind CSS CDN -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -16,10 +19,13 @@
                         brand: {
                             50: '#f0f7ff',
                             100: '#e0effe',
-                            500: '#3b82f6',
-                            600: '#2563eb',
-                            700: '#1d4ed8',
+                            500: '#1d72f3',
+                            600: '#1863d6',
+                            700: '#1055c9',
                         }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
                     }
                 }
             }
@@ -29,369 +35,748 @@
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
 
+    <!-- Firebase SDKs (v10.8.0 Compat) -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
     <!-- PWA Basic Meta -->
-    <meta name="theme-color" content="#0f172a">
+    <meta name="theme-color" content="#060e19">
     <meta name="description" content="Organizador pessoal e profissional de tarefas com Kanban e Lista de Afazeres.">
-    <link rel="manifest" href="data:application/manifest+json,{
-        %22name%22:%22Minha%20Agenda%20Pro%22,
-        %22short_name%22:%22AgendaPro%22,
-        %22start_url%22:%22.%22,
-        %22display%22:%22standalone%22,
-        %22background_color%22:%22%230f172a%22,
-        %22theme_color%22:%22%230f172a%22
-    }">
 
     <style>
-        /* Estilização customizada de scrollbar e drag-and-drop */
-        ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
+        :root {
+            --bg-dark: #060e19;
+            --panel-bg: rgba(9, 21, 38, 0.95);
+            --panel-border: rgba(30, 75, 130, 0.48);
+            --panel-glow: rgba(29, 114, 243, 0.22);
+            --text-main: #f0f6ff;
+            --text-muted: #829bba;
+            --blue-primary: #1d72f3;
+            --blue-light: #3892fd;
+            --cyan-accent: #26d0ce;
+            --red-accent: #ff4d61;
+            --yellow-accent: #ffb800;
+            --green-accent: #22c55e;
+            --purple-accent: #c084fc;
         }
-        ::-webkit-scrollbar-track {
-            background: #1e293b;
+
+        body {
+            background-color: var(--bg-dark);
+            background-image: 
+                radial-gradient(circle at 75% 10%, rgba(29, 114, 243, 0.18) 0%, transparent 40%),
+                radial-gradient(circle at 15% 85%, rgba(38, 208, 206, 0.12) 0%, transparent 45%),
+                linear-gradient(135deg, #030811 0%, #061122 50%, #081830 100%);
+            color: var(--text-main);
+            font-family: 'Inter', system-ui, sans-serif;
         }
-        ::-webkit-scrollbar-thumb {
-            background: #334155;
-            border-radius: 4px;
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #1c3d66; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #26558c; }
+
+        /* Main Shell Frame Glow */
+        .shell-frame {
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            box-shadow: 0 24px 70px rgba(0, 0, 0, 0.6), 0 0 50px var(--panel-glow);
+            backdrop-filter: blur(16px);
         }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #475569;
-        }
+
         .kanban-ghost {
             opacity: 0.4;
-            border: 2px dashed #3b82f6;
+            border: 2px dashed #1d72f3;
+        }
+
+        /* Enhanced Glassmorphic Card Borders */
+        .glass-card {
+            background: rgba(10, 24, 44, 0.85);
+            border: 1px solid rgba(28, 61, 102, 0.6);
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .glass-card:hover {
+            border-color: rgba(56, 146, 253, 0.6);
+            box-shadow: 0 8px 25px rgba(29, 114, 243, 0.15);
+        }
+
+        /* SVG Mountain Hero Background */
+        .hero-bg-svg {
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 60%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* Pulse Animation for Live Badge */
+        @keyframes pulseDot {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+        }
+
+        .status-pulse {
+            width: 8px;
+            height: 8px;
+            background-color: #22c55e;
+            border-radius: 50%;
+            display: inline-block;
+            animation: pulseDot 2s infinite;
+        }
+
+        .status-pulse-amber {
+            width: 8px;
+            height: 8px;
+            background-color: #f59e0b;
+            border-radius: 50%;
+            display: inline-block;
+            animation: pulseDot 2s infinite;
         }
     </style>
 </head>
-<body class="h-full flex flex-col md:flex-row overflow-hidden antialiased selection:bg-blue-500 selection:text-white">
+<body class="min-h-screen flex flex-col p-3 md:p-6 antialiased selection:bg-blue-600 selection:text-white">
 
-    <!-- Mobile Header -->
-    <header class="md:hidden flex items-center justify-between p-4 bg-slate-800 border-b border-slate-700/60 z-20">
-        <div class="flex items-center gap-2">
-            <i data-lucide="check-square" class="w-6 h-6 text-blue-500"></i>
-            <span class="font-bold text-lg tracking-wide text-white">Agenda<span class="text-blue-500">Pro</span></span>
-        </div>
-        <button id="mobileMenuBtn" class="p-2 text-slate-300 hover:text-white rounded-lg hover:bg-slate-700/50">
-            <i data-lucide="menu" class="w-6 h-6"></i>
-        </button>
-    </header>
-
-    <!-- Sidebar Overlay (Mobile) -->
-    <div id="sidebarOverlay" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-30 hidden md:hidden"></div>
-
-    <!-- Sidebar Navigation -->
-    <aside id="sidebar" class="fixed md:static inset-y-0 left-0 w-64 bg-slate-800/90 backdrop-blur-md md:backdrop-blur-none border-r border-slate-700/60 flex flex-col z-40 transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out">
-        <!-- Logo -->
-        <div class="hidden md:flex items-center gap-3 p-6 border-b border-slate-700/60">
-            <div class="p-2 bg-blue-600/20 rounded-xl text-blue-500 border border-blue-500/30">
-                <i data-lucide="check-square" class="w-6 h-6"></i>
-            </div>
-            <div>
-                <h1 class="font-bold text-lg text-white leading-none">Agenda<span class="text-blue-500">Pro</span></h1>
-                <span class="text-xs text-slate-400 font-medium">Organizador de Tarefas</span>
-            </div>
-        </div>
-
-        <!-- Action Button -->
-        <div class="p-4">
-            <button id="btnOpenNewTaskModal" class="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-semibold py-3 px-4 rounded-xl shadow-lg shadow-blue-600/20 transition duration-150">
-                <i data-lucide="plus-circle" class="w-5 h-5"></i>
-                <span>Nova Tarefa</span>
-            </button>
-        </div>
-
-        <!-- Navigation Links -->
-        <nav class="flex-1 px-3 space-y-1 py-2">
-            <button data-view="dashboard" class="nav-btn active w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl text-slate-300 hover:bg-slate-700/50 hover:text-white transition">
-                <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
-                <span>Visão Geral</span>
-            </button>
-            <button data-view="tasks" class="nav-btn w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl text-slate-300 hover:bg-slate-700/50 hover:text-white transition">
-                <i data-lucide="list-todo" class="w-5 h-5"></i>
-                <span>Lista de Tarefas</span>
-            </button>
-            <button data-view="kanban" class="nav-btn w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl text-slate-300 hover:bg-slate-700/50 hover:text-white transition">
-                <i data-lucide="kanban" class="w-5 h-5"></i>
-                <span>Quadro Kanban</span>
-            </button>
-        </nav>
-
-        <!-- Backup Tools in Sidebar -->
-        <div class="p-4 border-t border-slate-700/60 space-y-2">
-            <span class="text-xs font-semibold uppercase tracking-wider text-slate-400 block mb-2">Gestão de Dados</span>
-            <div class="grid grid-cols-2 gap-2">
-                <button id="btnExportJSON" class="flex items-center justify-center gap-1.5 py-2 px-3 bg-slate-700/60 hover:bg-slate-700 text-xs text-slate-200 font-medium rounded-lg border border-slate-600/50 transition">
-                    <i data-lucide="download" class="w-3.5 h-3.5 text-blue-400"></i>
-                    <span>Exportar</span>
-                </button>
-                <button id="btnImportJSON" class="flex items-center justify-center gap-1.5 py-2 px-3 bg-slate-700/60 hover:bg-slate-700 text-xs text-slate-200 font-medium rounded-lg border border-slate-600/50 transition">
-                    <i data-lucide="upload" class="w-3.5 h-3.5 text-emerald-400"></i>
-                    <span>Importar</span>
-                </button>
-                <input type="file" id="fileInputJSON" accept=".json" class="hidden">
-            </div>
-            <div class="pt-2 text-[11px] text-slate-500 flex justify-between items-center">
-                <span>Armazenamento:</span>
-                <span class="text-emerald-400 font-medium">Local (Offline)</span>
-            </div>
-        </div>
-    </aside>
-
-    <!-- Main Content Area -->
-    <main class="flex-1 flex flex-col h-full overflow-hidden bg-slate-900">
+    <div class="max-w-[1740px] w-full mx-auto flex-1 flex flex-col">
         
-        <!-- Notification / Migration Banner -->
-        <div id="migrationBanner" class="hidden bg-blue-900/40 border-b border-blue-500/30 p-3 px-6 text-xs text-blue-200 flex items-center justify-between">
-            <div class="flex items-center gap-2">
-                <i data-lucide="info" class="w-4 h-4 text-blue-400"></i>
-                <span>Encontramos dados de uma versão anterior do organizador neste navegador e migramos para o novo layout.</span>
+        <!-- Brand Header Bar -->
+        <header class="flex flex-col lg:flex-row lg:items-center justify-between pb-6 px-2 gap-4">
+            <div>
+                <h1 class="text-3xl lg:text-4xl font-black tracking-tight leading-none text-white">
+                    Minha Agenda <span class="text-blue-500">Pro</span>
+                </h1>
+                <p class="text-slate-400 text-sm mt-1.5 font-normal">Mais foco. Mais resultado. Todos os dias.</p>
             </div>
-            <button id="btnCloseBanner" class="text-blue-300 hover:text-white font-medium ml-4">Dispensar</button>
-        </div>
-
-        <!-- Views Container -->
-        <div class="flex-1 overflow-y-auto p-4 md:p-8">
-
-            <!-- 1. DASHBOARD / VISÃO GERAL -->
-            <section id="view-dashboard" class="view-content space-y-6">
-                <div>
-                    <h2 class="text-2xl font-bold text-white tracking-tight">Resumo Diário</h2>
-                    <p class="text-slate-400 text-sm">Acompanhe seu progresso e métricas do dia.</p>
-                </div>
-
-                <!-- KPI Cards -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div class="bg-slate-800/80 border border-slate-700/60 p-5 rounded-2xl flex items-center gap-4">
-                        <div class="p-3 bg-blue-500/10 text-blue-400 rounded-xl border border-blue-500/20">
-                            <i data-lucide="calendar" class="w-6 h-6"></i>
-                        </div>
-                        <div>
-                            <p class="text-xs font-medium text-slate-400">Tarefas para Hoje</p>
-                            <h3 id="kpiToday" class="text-2xl font-bold text-white mt-1">0</h3>
-                        </div>
-                    </div>
-
-                    <div class="bg-slate-800/80 border border-slate-700/60 p-5 rounded-2xl flex items-center gap-4">
-                        <div class="p-3 bg-emerald-500/10 text-emerald-400 rounded-xl border border-emerald-500/20">
-                            <i data-lucide="check-circle-2" class="w-6 h-6"></i>
-                        </div>
-                        <div>
-                            <p class="text-xs font-medium text-slate-400">Concluídas</p>
-                            <h3 id="kpiCompleted" class="text-2xl font-bold text-white mt-1">0</h3>
-                        </div>
-                    </div>
-
-                    <div class="bg-slate-800/80 border border-slate-700/60 p-5 rounded-2xl flex items-center gap-4">
-                        <div class="p-3 bg-amber-500/10 text-amber-400 rounded-xl border border-amber-500/20">
-                            <i data-lucide="clock" class="w-6 h-6"></i>
-                        </div>
-                        <div>
-                            <p class="text-xs font-medium text-slate-400">Pendentes</p>
-                            <h3 id="kpiPending" class="text-2xl font-bold text-white mt-1">0</h3>
-                        </div>
-                    </div>
-
-                    <div class="bg-slate-800/80 border border-slate-700/60 p-5 rounded-2xl flex items-center gap-4">
-                        <div class="p-3 bg-indigo-500/10 text-indigo-400 rounded-xl border border-indigo-500/20">
-                            <i data-lucide="trending-up" class="w-6 h-6"></i>
-                        </div>
-                        <div class="flex-1">
-                            <p class="text-xs font-medium text-slate-400">Taxa de Conclusão</p>
-                            <h3 id="kpiRate" class="text-2xl font-bold text-white mt-1">0%</h3>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Progress Bar -->
-                <div class="bg-slate-800/80 border border-slate-700/60 p-5 rounded-2xl space-y-2">
-                    <div class="flex justify-between text-sm">
-                        <span class="font-medium text-slate-300">Progresso Geral</span>
-                        <span id="progressText" class="text-slate-400">0 de 0 concluídas</span>
-                    </div>
-                    <div class="w-full bg-slate-700 rounded-full h-3 overflow-hidden">
-                        <div id="progressBar" class="bg-blue-500 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
-                    </div>
-                </div>
-
-                <!-- Recent Tasks Widget -->
-                <div class="bg-slate-800/80 border border-slate-700/60 rounded-2xl p-5 space-y-4">
-                    <div class="flex items-center justify-between">
-                        <h3 class="font-semibold text-white flex items-center gap-2">
-                            <i data-lucide="clock" class="w-4 h-4 text-blue-400"></i> Próximas Vencendo Hoje ou Em Breve
-                        </h3>
-                    </div>
-                    <div id="dashboardRecentList" class="space-y-2">
-                        <!-- Renderizado via JS -->
-                    </div>
-                </div>
-            </section>
-
-            <!-- 2. LISTA DE TAREFAS -->
-            <section id="view-tasks" class="view-content hidden space-y-6">
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            
+            <div class="hidden xl:flex items-center gap-8">
+                <div class="flex items-center gap-3">
+                    <div class="text-blue-400 text-xl"><i data-lucide="monitor"></i></div>
                     <div>
-                        <h2 class="text-2xl font-bold text-white tracking-tight">Lista de Tarefas</h2>
-                        <p class="text-slate-400 text-sm">Gerencie todas as suas atividades com filtros avançados.</p>
+                        <b class="block text-xs font-bold text-white">Visual moderno</b>
+                        <small class="block text-slate-400 text-[11px] leading-snug">Interface profissional<br>e elegante</small>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div class="text-blue-400 text-xl"><i data-lucide="zap"></i></div>
+                    <div>
+                        <b class="block text-xs font-bold text-white">Mais produtividade</b>
+                        <small class="block text-slate-400 text-[11px] leading-snug">Tudo o que importa<br>em um só lugar</small>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div class="text-blue-400 text-xl"><i data-lucide="bar-chart-3"></i></div>
+                    <div>
+                        <b class="block text-xs font-bold text-white">Visão clara</b>
+                        <small class="block text-slate-400 text-[11px] leading-snug">Informações organizadas<br>de forma inteligente</small>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div class="text-blue-400 text-xl"><i data-lucide="smartphone"></i></div>
+                    <div>
+                        <b class="block text-xs font-bold text-white">Experiência fluida</b>
+                        <small class="block text-slate-400 text-[11px] leading-snug">Perfeito no computador<br>e no celular</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profile & Live Status Badge (Interactive Auth Component) -->
+            <div class="flex items-center gap-3 bg-slate-900/90 border border-slate-700/60 rounded-full p-1.5 pr-4 self-start lg:self-auto shadow-md">
+                <div id="authAvatar" class="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 grid place-items-center font-bold text-xs text-white shadow-md overflow-hidden shrink-0">
+                    <i data-lucide="user" class="w-4 h-4"></i>
+                </div>
+                <div class="text-xs">
+                    <b id="authName" class="block leading-tight text-white font-semibold">Verificando...</b>
+                    <small id="authStatusLabel" class="text-slate-400 text-[10px] font-medium flex items-center gap-1.5 mt-0.5">
+                        Aguardando Firebase...
+                    </small>
+                </div>
+                <div id="authActions" class="ml-2 border-l border-slate-800 pl-2">
+                    <button id="btnAuthAction" onclick="handleAuthButtonClick()" class="px-3 py-1 bg-blue-600 hover:bg-blue-500 text-white rounded-full font-bold text-[11px] transition flex items-center gap-1.5 shadow-sm">
+                        <span>Entrar</span>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <div class="shell-frame rounded-3xl flex-1 flex flex-col md:flex-row overflow-hidden relative min-h-[780px]">
+            
+            <!-- Mobile Header Trigger -->
+            <div class="md:hidden flex items-center justify-between p-4 bg-slate-900/90 border-b border-slate-800">
+                <div class="flex items-center gap-2">
+                    <div class="w-7 h-7 bg-gradient-to-br from-blue-500 to-blue-700 rounded-lg grid place-items-center text-white text-xs font-black">
+                        <i data-lucide="check-square" class="w-4 h-4"></i>
+                    </div>
+                    <span class="font-bold text-base text-white">Minha Agenda <span class="text-blue-500">Pro</span></span>
+                </div>
+                <button id="mobileMenuBtn" class="p-2 text-slate-300 hover:text-white rounded-lg hover:bg-slate-800">
+                    <i data-lucide="menu" class="w-6 h-6"></i>
+                </button>
+            </div>
+
+            <!-- Sidebar Overlay (Mobile) -->
+            <div id="sidebarOverlay" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-30 hidden md:hidden"></div>
+
+            <!-- Sidebar Navigation -->
+            <aside id="sidebar" class="fixed md:static inset-y-0 left-0 w-52 bg-[#06101f]/95 border-r border-slate-800 flex flex-col z-40 transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out">
+                <!-- Sidebar Logo -->
+                <div class="hidden md:flex items-center gap-2.5 p-5 mb-2">
+                    <div class="w-7 h-7 bg-gradient-to-br from-blue-500 to-blue-700 rounded-lg grid place-items-center text-white text-xs font-black shadow-lg shadow-blue-500/30">
+                        <i data-lucide="home" class="w-4 h-4"></i>
+                    </div>
+                    <span class="font-extrabold text-sm text-white">Minha Agenda <span class="text-blue-500">Pro</span></span>
+                </div>
+
+                <!-- Navigation Links -->
+                <nav class="flex-1 px-3 space-y-1 py-2">
+                    <button data-view="dashboard" class="nav-btn active w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-semibold rounded-xl text-slate-300 hover:bg-slate-800/60 hover:text-white transition">
+                        <i data-lucide="home" class="w-4 h-4"></i>
+                        <span>Início</span>
+                    </button>
+                    <button data-view="tasks" class="nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-semibold rounded-xl text-slate-300 hover:bg-slate-800/60 hover:text-white transition">
+                        <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+                        <span>Tarefas</span>
+                    </button>
+                    <button data-view="kanban" class="nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-semibold rounded-xl text-slate-300 hover:bg-slate-800/60 hover:text-white transition">
+                        <i data-lucide="kanban" class="w-4 h-4"></i>
+                        <span>Quadro Kanban</span>
+                    </button>
+                    <button data-view="tasks" onclick="setCategoryFilter('Projetos')" class="nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-semibold rounded-xl text-slate-300 hover:bg-slate-800/60 hover:text-white transition">
+                        <i data-lucide="folder" class="w-4 h-4"></i>
+                        <span>Projetos</span>
+                    </button>
+                    <button data-view="tasks" onclick="setCategoryFilter('Trabalho')" class="nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-semibold rounded-xl text-slate-300 hover:bg-slate-800/60 hover:text-white transition">
+                        <i data-lucide="briefcase" class="w-4 h-4"></i>
+                        <span>Categorias</span>
+                    </button>
+                    <button data-view="tasks" onclick="setCategoryFilter('Pessoal')" class="nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-semibold rounded-xl text-slate-300 hover:bg-slate-800/60 hover:text-white transition">
+                        <i data-lucide="users" class="w-4 h-4"></i>
+                        <span>Pessoas</span>
+                    </button>
+                    <button data-view="dashboard" class="nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-semibold rounded-xl text-slate-300 hover:bg-slate-800/60 hover:text-white transition">
+                        <i data-lucide="bar-chart-2" class="w-4 h-4"></i>
+                        <span>Relatórios</span>
+                    </button>
+                </nav>
+
+                <!-- Data Management Tools in Sidebar -->
+                <div class="p-3 border-t border-slate-800 space-y-2 mt-auto">
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-1">Backup & Dados</span>
+                    <div class="grid grid-cols-2 gap-1.5">
+                        <button id="btnExportJSON" class="flex items-center justify-center gap-1 py-1.5 px-2 bg-slate-900 hover:bg-slate-800 text-[11px] text-slate-300 font-medium rounded-lg border border-slate-700/60 transition">
+                            <i data-lucide="download" class="w-3 h-3 text-blue-400"></i>
+                            <span>Exportar</span>
+                        </button>
+                        <button id="btnImportJSON" class="flex items-center justify-center gap-1 py-1.5 px-2 bg-slate-900 hover:bg-slate-800 text-[11px] text-slate-300 font-medium rounded-lg border border-slate-700/60 transition">
+                            <i data-lucide="upload" class="w-3 h-3 text-emerald-400"></i>
+                            <span>Importar</span>
+                        </button>
+                        <input type="file" id="fileInputJSON" accept=".json" class="hidden">
+                    </div>
+                    <!-- Audit Diagnostic Trigger Button -->
+                    <button id="btnEtapa3Diagnostic" onclick="runEtapa3Diagnostic()" class="hidden w-full py-1.5 px-2 bg-blue-950/80 hover:bg-blue-900 text-[11px] text-blue-300 font-semibold rounded-lg border border-blue-500/40 transition flex items-center justify-center gap-1.5 mt-1">
+                        <i data-lucide="database" class="w-3.5 h-3.5 text-cyan-400"></i>
+                        <span>Diagnóstico Etapa 3</span>
+                    </button>
+                </div>
+            </aside>
+
+            <!-- Main Content Area -->
+            <main class="flex-1 flex flex-col min-w-0 overflow-y-auto p-4 md:p-7 space-y-4">
+                
+                <!-- Migration Banner (Preserved) -->
+                <div id="migrationBanner" class="hidden bg-blue-950/80 border border-blue-500/40 p-3 px-4 rounded-xl text-xs text-blue-200 flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="info" class="w-4 h-4 text-blue-400"></i>
+                        <span>Encontramos dados de uma versão anterior do organizador neste navegador e migramos para o novo layout.</span>
+                    </div>
+                    <button id="btnCloseBanner" class="text-blue-300 hover:text-white font-medium ml-4">Dispensar</button>
+                </div>
+
+                <!-- Auth Error Alert (Friendly Notice) -->
+                <div id="authErrorAlert" class="hidden bg-rose-950/90 border border-rose-500/50 p-3 px-4 rounded-xl text-xs text-rose-200 flex items-center justify-between shadow-lg">
+                    <div class="flex items-center gap-2.5">
+                        <i data-lucide="alert-circle" class="w-4 h-4 text-rose-400 shrink-0"></i>
+                        <span id="authErrorMessage">Erro ao realizar login no Firebase.</span>
+                    </div>
+                    <button onclick="document.getElementById('authErrorAlert').classList.add('hidden')" class="text-rose-300 hover:text-white font-bold ml-4">Fechar</button>
+                </div>
+
+                <!-- Toolbar & Omnibox Trigger -->
+                <div class="grid grid-cols-1 md:grid-cols-[1fr_auto_auto_auto] gap-3 items-center">
+                    <div onclick="toggleSpotlight(true)" class="bg-slate-900/90 border border-slate-800 hover:border-slate-700 rounded-xl h-10 px-3.5 flex items-center gap-2.5 text-slate-400 text-xs cursor-pointer transition">
+                        <i data-lucide="search" class="w-4 h-4 text-slate-500"></i>
+                        <input type="text" id="filterSearch" placeholder="Buscar tarefas, projetos, pessoas... (Pressione Ctrl+K)" class="bg-transparent border-none outline-none text-slate-100 text-xs w-full placeholder:text-slate-500 pointer-events-none">
+                        <span class="bg-slate-800/80 border border-slate-700/60 rounded px-1.5 py-0.5 text-[10px] text-slate-400 font-mono">Cmd / Ctrl + K</span>
+                    </div>
+                    <button onclick="toggleNotifications()" id="btnNotify" class="h-10 px-4 rounded-xl bg-slate-900/90 border border-slate-800 text-xs font-semibold text-slate-200 hover:bg-slate-800 flex items-center gap-2">
+                        <i data-lucide="bell" class="w-4 h-4 text-amber-400"></i> Notificações
+                    </button>
+                    <button onclick="triggerAssistantAdvice()" id="btnSparkles" class="h-10 px-4 rounded-xl bg-slate-900/90 border border-slate-800 text-xs font-semibold text-slate-200 hover:bg-slate-800 flex items-center gap-2">
+                        <i data-lucide="sparkles" class="w-4 h-4 text-blue-400"></i> Assistente
+                    </button>
+                    <button id="btnOpenNewTaskModal" class="h-10 px-5 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 border border-blue-400/30 text-xs font-bold text-white shadow-lg shadow-blue-600/30 hover:from-blue-500 hover:to-blue-400 flex items-center justify-center gap-2">
+                        <i data-lucide="plus" class="w-4 h-4"></i> Novo item
+                    </button>
+                </div>
+
+                <!-- Shortcuts Bar -->
+                <div class="flex items-center gap-2 text-xs text-slate-400 flex-wrap pt-1">
+                    <span class="text-slate-500 font-medium">Atalhos:</span>
+                    <button id="btnShortcutToday" onclick="filterShortcutToday()" class="bg-slate-900/80 border border-slate-800 rounded-full px-3 py-1 text-[11px] font-semibold text-slate-300 hover:border-slate-700 flex items-center gap-1.5 transition">
+                        <i data-lucide="calendar" class="w-3 h-3 text-blue-400"></i> Hoje
+                    </button>
+                    <button id="btnShortcutLate" onclick="filterShortcutLate()" class="bg-slate-900/80 border border-slate-800 rounded-full px-3 py-1 text-[11px] font-medium text-slate-300 hover:border-slate-700 flex items-center gap-1.5 transition">
+                        <i data-lucide="alert-triangle" class="w-3 h-3 text-red-400"></i> Atrasadas
+                    </button>
+                    <button onclick="filterShortcutPriority('Alta')" class="bg-slate-900/80 border border-slate-800 rounded-full px-3 py-1 text-[11px] font-medium text-slate-300 hover:border-slate-700 flex items-center gap-1.5">
+                        <i data-lucide="flame" class="w-3 h-3 text-amber-400"></i> Alta prioridade
+                    </button>
+                    <button onclick="filterShortcutNoDate()" class="bg-slate-900/80 border border-slate-800 rounded-full px-3 py-1 text-[11px] font-medium text-slate-300 hover:border-slate-700 flex items-center gap-1.5">
+                        <i data-lucide="calendar-x" class="w-3 h-3"></i> Sem data
+                    </button>
+                    <button onclick="resetAllFilters()" class="bg-slate-900/80 border border-slate-800 rounded-full px-3 py-1 text-[11px] font-medium text-slate-400 hover:text-white flex items-center gap-1.5">
+                        <i data-lucide="x" class="w-3 h-3"></i> Limpar
+                    </button>
+                </div>
+
+                <!-- Alert Banner -->
+                <div class="bg-gradient-to-r from-red-950/90 to-red-900/70 border border-red-500/50 rounded-xl p-3.5 px-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-lg shadow-red-950/40">
+                    <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 rounded-lg bg-red-500/20 border border-red-500/30 grid place-items-center text-red-400 text-lg">
+                            <i data-lucide="alert-triangle" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <b class="block text-xs font-bold text-red-300" id="lateAlertText">Atenção para suas pendências acumuladas</b>
+                            <small class="block text-red-200/70 text-[10px]">Revise suas pendências e mantenha o foco em dia.</small>
+                        </div>
+                    </div>
+                    <div class="flex gap-2 self-end sm:self-auto">
+                        <button onclick="filterShortcutLate()" class="px-3 py-1.5 rounded-lg bg-red-500/20 border border-red-400/40 text-[11px] font-bold text-red-200 hover:bg-red-500/30">
+                            Ver Atrasadas
+                        </button>
+                        <button onclick="postponeAllLateToToday()" class="px-3 py-1.5 rounded-lg bg-red-500/20 border border-red-400/40 text-[11px] font-bold text-red-200 hover:bg-red-500/30">
+                            Adiar todas para hoje
+                        </button>
                     </div>
                 </div>
 
-                <!-- Filters Bar -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 bg-slate-800/80 border border-slate-700/60 p-4 rounded-2xl">
-                    <!-- Search -->
-                    <div class="relative">
-                        <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                        <input type="text" id="filterSearch" placeholder="Buscar tarefa..." class="w-full bg-slate-900 border border-slate-700 text-slate-100 text-sm rounded-xl pl-9 pr-3 py-2 focus:outline-none focus:border-blue-500">
+                <!-- Quick Add Capture Bar -->
+                <form id="quickAddForm" class="bg-slate-900/90 border border-slate-800 rounded-xl p-2 px-3.5 flex items-center gap-3">
+                    <div class="flex items-center gap-2 text-cyan-400 font-bold text-xs shrink-0">
+                        <i data-lucide="zap" class="w-4 h-4 fill-cyan-400"></i> Captura rápida
+                    </div>
+                    <input type="text" id="quickInputTitle" placeholder="Ex: Reunião sexta às 14h #trabalho prioridade alta" class="bg-transparent border-none outline-none text-slate-200 text-xs w-full placeholder:text-slate-600">
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs px-4 py-2 rounded-lg shrink-0 transition">
+                        Adicionar
+                    </button>
+                </form>
+
+                <!-- Hero Centro de Comando Card -->
+                <section class="relative bg-[#081628] border border-blue-500/40 rounded-2xl p-6 overflow-hidden flex flex-col md:flex-row items-start md:items-center justify-between gap-4 min-h-[120px] shadow-inner">
+                    <!-- Mountain Vector Silhouette Background Overlay -->
+                    <svg class="hero-bg-svg" viewBox="0 0 500 150" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <linearGradient id="gradMoon" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#1e58a8" stop-opacity="0.4"/>
+                                <stop offset="100%" stop-color="#081628" stop-opacity="0"/>
+                            </linearGradient>
+                        </defs>
+                        <circle cx="400" cy="40" r="70" fill="url(#gradMoon)"/>
+                        <path d="M150,150 L220,70 L290,120 L380,45 L460,110 L500,80 L500,150 Z" fill="#0d2342" opacity="0.6"/>
+                        <path d="M200,150 L280,85 L350,130 L420,60 L500,125 L500,150 Z" fill="#09182d"/>
+                    </svg>
+
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-2 text-sky-400 font-extrabold text-[10px] tracking-wider uppercase">
+                            <i data-lucide="sun" class="w-4 h-4 text-amber-400 fill-amber-400"></i> CENTRO DE COMANDO
+                        </div>
+                        <h2 id="heroGreetingTitle" class="text-2xl md:text-3xl font-extrabold text-white mt-1 mb-0.5 tracking-tight">Boa tarde, Visitante</h2>
+                        <div class="text-slate-400 text-xs">Organize o que realmente importa hoje.</div>
                     </div>
 
-                    <!-- Category Filter -->
-                    <select id="filterCategory" class="bg-slate-900 border border-slate-700 text-slate-100 text-sm rounded-xl px-3 py-2 focus:outline-none focus:border-blue-500">
-                        <option value="all">Todas as Categorias</option>
-                        <option value="Trabalho">Trabalho</option>
-                        <option value="Estudos">Estudos</option>
-                        <option value="Pessoal">Pessoal</option>
-                        <option value="Saúde">Saúde</option>
-                        <option value="Outros">Outros</option>
-                    </select>
+                    <div class="relative z-10 text-right font-serif italic text-slate-200 text-xs border-l-2 border-blue-500 pl-3 md:border-l-0 md:pl-0">
+                        “Disciplina de hoje,<br>resultados de amanhã.”
+                    </div>
+                </section>
 
-                    <!-- Priority Filter -->
-                    <select id="filterPriority" class="bg-slate-900 border border-slate-700 text-slate-100 text-sm rounded-xl px-3 py-2 focus:outline-none focus:border-blue-500">
-                        <option value="all">Todas as Prioridades</option>
-                        <option value="Baixa">Baixa</option>
-                        <option value="Média">Média</option>
-                        <option value="Alta">Alta</option>
-                    </select>
+                <!-- Views Container -->
+                <div class="flex-1 space-y-4">
 
-                    <!-- Status Filter -->
-                    <select id="filterStatus" class="bg-slate-900 border border-slate-700 text-slate-100 text-sm rounded-xl px-3 py-2 focus:outline-none focus:border-blue-500">
-                        <option value="all">Todos os Status</option>
-                        <option value="todo">A Fazer</option>
-                        <option value="in_progress">Em Andamento</option>
-                        <option value="done">Concluído</option>
-                    </select>
-                </div>
+                    <!-- 1. DASHBOARD / VISÃO GERAL -->
+                    <section id="view-dashboard" class="view-content space-y-4">
+                        
+                        <!-- KPI Metrics Grid -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                            <div class="glass-card p-4 rounded-xl flex items-center justify-between cursor-pointer" onclick="filterShortcutLate()">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-lg bg-red-500/15 text-red-400 grid place-items-center text-lg">
+                                        <i data-lucide="alert-circle" class="w-5 h-5"></i>
+                                    </div>
+                                    <div>
+                                        <h3 id="kpiPending" class="text-2xl font-black text-white leading-none">0</h3>
+                                        <p class="text-xs font-bold text-slate-300 mt-1">Atrasados / Pendentes</p>
+                                    </div>
+                                </div>
+                            </div>
 
-                <!-- Task List Container -->
-                <div id="tasksList" class="space-y-3">
-                    <!-- Cards de tarefa injetados via JS -->
-                </div>
-            </section>
+                            <div class="glass-card p-4 rounded-xl flex items-center justify-between cursor-pointer" onclick="filterShortcutToday()">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-lg bg-amber-500/15 text-amber-400 grid place-items-center text-lg">
+                                        <i data-lucide="calendar" class="w-5 h-5"></i>
+                                    </div>
+                                    <div>
+                                        <h3 id="kpiToday" class="text-2xl font-black text-white leading-none">0</h3>
+                                        <p class="text-xs font-bold text-slate-300 mt-1">Hoje</p>
+                                    </div>
+                                </div>
+                            </div>
 
-            <!-- 3. QUADRO KANBAN -->
-            <section id="view-kanban" class="view-content hidden space-y-6">
-                <div>
-                    <h2 class="text-2xl font-bold text-white tracking-tight">Quadro Kanban</h2>
-                    <p class="text-slate-400 text-sm">Visualize seu fluxo de trabalho. Arraste os cards para atualizar o status.</p>
-                </div>
+                            <div class="glass-card p-4 rounded-xl flex items-center justify-between cursor-pointer" onclick="filterShortcutStatus('done')">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-lg bg-emerald-500/15 text-emerald-400 grid place-items-center text-lg">
+                                        <i data-lucide="check-circle" class="w-5 h-5"></i>
+                                    </div>
+                                    <div>
+                                        <h3 id="kpiCompleted" class="text-2xl font-black text-white leading-none">0</h3>
+                                        <p class="text-xs font-bold text-slate-300 mt-1">Concluídos</p>
+                                    </div>
+                                </div>
+                            </div>
 
-                <!-- Kanban Columns Container -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-start overflow-x-auto pb-4">
-                    
-                    <!-- Column: A Fazer -->
-                    <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-4 flex flex-col min-h-[500px]">
-                        <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-700/60">
-                            <div class="flex items-center gap-2">
-                                <span class="w-3 h-3 rounded-full bg-slate-400"></span>
-                                <h3 class="font-bold text-slate-200">A Fazer</h3>
-                                <span id="count-todo" class="text-xs bg-slate-700 text-slate-300 font-semibold px-2 py-0.5 rounded-full">0</span>
+                            <!-- Progress Card -->
+                            <div class="glass-card p-4 rounded-xl flex flex-col justify-between space-y-2">
+                                <div class="flex justify-between items-center text-xs">
+                                    <span class="font-bold text-slate-300">Progresso do dia</span>
+                                    <span id="kpiRate" class="text-sm font-black text-white">0%</span>
+                                </div>
+                                <div class="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
+                                    <div id="progressBar" class="bg-gradient-to-r from-cyan-400 to-blue-500 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+                                </div>
+                                <div class="flex justify-between items-center text-[10px] text-slate-500 border-t border-slate-800/80 pt-1.5">
+                                    <span>Próximos 7 dias <b class="text-slate-300" id="progressText">0 tarefa(s)</b></span>
+                                    <span>Concluídos hoje <b class="text-emerald-400" id="doneCountSub">0 ✓</b></span>
+                                </div>
                             </div>
                         </div>
-                        <div id="kanban-todo" data-status="todo" class="kanban-dropzone flex-1 space-y-3 min-h-[200px]">
-                            <!-- Draggable Tasks -->
-                        </div>
-                    </div>
 
-                    <!-- Column: Em Andamento -->
-                    <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-4 flex flex-col min-h-[500px]">
-                        <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-700/60">
-                            <div class="flex items-center gap-2">
-                                <span class="w-3 h-3 rounded-full bg-amber-400"></span>
-                                <h3 class="font-bold text-slate-200">Em Andamento</h3>
-                                <span id="count-in_progress" class="text-xs bg-slate-700 text-slate-300 font-semibold px-2 py-0.5 rounded-full">0</span>
+                        <!-- Lower Grid Panels -->
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                            <!-- Focus Suggested -->
+                            <article class="glass-card border-l-4 border-l-cyan-400 rounded-xl p-4 flex flex-col justify-between min-h-[260px]">
+                                <div class="flex justify-between items-start mb-3">
+                                    <div>
+                                        <h3 class="text-sm font-bold text-blue-400">Foco sugerido</h3>
+                                        <p class="text-[10px] text-slate-500">Com base nas suas prioridades e prazos</p>
+                                    </div>
+                                    <div class="w-7 h-7 rounded-lg bg-blue-500/10 border border-blue-500/30 text-blue-400 grid place-items-center text-xs">
+                                        <i data-lucide="target" class="w-4 h-4"></i>
+                                    </div>
+                                </div>
+                                <div id="dashboardFocusContainer" class="space-y-2 flex-1">
+                                    <!-- Dynamic Items injected via JS -->
+                                </div>
+                            </article>
+
+                            <!-- Timeline & Pomodoro Widget -->
+                            <article class="glass-card rounded-xl p-4 flex flex-col justify-between min-h-[260px]">
+                                <div class="flex justify-between items-start mb-3">
+                                    <div>
+                                        <h3 class="text-sm font-bold text-blue-400">Linha do tempo de hoje</h3>
+                                        <p class="text-[10px] text-slate-500">Sua agenda & Pomodoro Timer</p>
+                                    </div>
+                                    <!-- Pomodoro Widget Display -->
+                                    <div id="pomodoroDisplay" class="bg-blue-950/80 border border-blue-500/30 rounded-lg px-2.5 py-1 flex items-center gap-2">
+                                        <i data-lucide="timer" class="w-3.5 h-3.5 text-cyan-400"></i>
+                                        <span id="pomoTimerText" class="text-xs font-mono font-bold text-white">25:00</span>
+                                        <button onclick="togglePomodoro()" id="btnPomoStart" class="text-[10px] bg-blue-600 hover:bg-blue-500 text-white font-bold px-1.5 py-0.5 rounded">▶</button>
+                                        <button onclick="resetPomodoro()" class="text-[10px] bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold px-1.5 py-0.5 rounded">↺</button>
+                                    </div>
+                                </div>
+                                <div id="dashboardRecentList" class="space-y-2 flex-1">
+                                    <!-- Dynamic Timeline Items -->
+                                </div>
+                            </article>
+
+                            <!-- Category Donut Chart Visualization -->
+                            <article class="glass-card rounded-xl p-4 flex flex-col justify-between min-h-[260px]">
+                                <div class="flex justify-between items-start mb-2">
+                                    <div>
+                                        <h3 class="text-sm font-bold text-blue-400">Distribuição de tarefas</h3>
+                                        <p class="text-[10px] text-slate-500">Visão geral por categoria</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center justify-around gap-2 my-auto">
+                                    <div class="relative w-24 h-24 rounded-full grid place-items-center" style="background: conic-gradient(#1d72f3 0% 35%, #c084fc 35% 55%, #ffb800 55% 75%, #26d0ce 75% 100%);">
+                                        <div class="w-16 h-16 rounded-full bg-slate-950 grid place-items-center text-center">
+                                            <span id="donutTotalCount" class="text-base font-extrabold text-white">0</span>
+                                        </div>
+                                    </div>
+                                    <div id="categoryLegend" class="space-y-1 text-[11px] text-slate-400">
+                                        <div class="flex items-center justify-between gap-3"><span class="flex items-center gap-1.5"><i class="w-2 h-2 rounded-sm bg-blue-500 inline-block"></i>Trabalho</span> <b id="catCountTrabalho" class="text-white">0</b></div>
+                                        <div class="flex items-center justify-between gap-3"><span class="flex items-center gap-1.5"><i class="w-2 h-2 rounded-sm bg-purple-400 inline-block"></i>Pessoal</span> <b id="catCountPessoal" class="text-white">0</b></div>
+                                        <div class="flex items-center justify-between gap-3"><span class="flex items-center gap-1.5"><i class="w-2 h-2 rounded-sm bg-amber-400 inline-block"></i>Estudos</span> <b id="catCountEstudos" class="text-white">0</b></div>
+                                        <div class="flex items-center justify-between gap-3"><span class="flex items-center gap-1.5"><i class="w-2 h-2 rounded-sm bg-cyan-400 inline-block"></i>Outros</span> <b id="catCountOutros" class="text-white">0</b></div>
+                                    </div>
+                                </div>
+                            </article>
+                        </div>
+                    </section>
+
+                    <!-- 2. LISTA DE TAREFAS -->
+                    <section id="view-tasks" class="view-content hidden space-y-4">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <div>
+                                <h2 class="text-xl font-bold text-white tracking-tight">Lista de Tarefas</h2>
+                                <p class="text-slate-400 text-xs">Gerencie todas as suas atividades com filtros avançados.</p>
                             </div>
                         </div>
-                        <div id="kanban-in_progress" data-status="in_progress" class="kanban-dropzone flex-1 space-y-3 min-h-[200px]">
-                            <!-- Draggable Tasks -->
-                        </div>
-                    </div>
 
-                    <!-- Column: Concluído -->
-                    <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-4 flex flex-col min-h-[500px]">
-                        <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-700/60">
-                            <div class="flex items-center gap-2">
-                                <span class="w-3 h-3 rounded-full bg-emerald-400"></span>
-                                <h3 class="font-bold text-slate-200">Concluído</h3>
-                                <span id="count-done" class="text-xs bg-slate-700 text-slate-300 font-semibold px-2 py-0.5 rounded-full">0</span>
+                        <!-- Filters Bar -->
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 glass-card p-3 rounded-xl">
+                            <select id="filterCategory" class="bg-slate-950 border border-slate-800 text-slate-200 text-xs rounded-lg px-3 py-2 outline-none focus:border-blue-500">
+                                <option value="all">Todas as Categorias</option>
+                                <option value="Trabalho">Trabalho</option>
+                                <option value="Estudos">Estudos</option>
+                                <option value="Pessoal">Pessoal</option>
+                                <option value="Saúde">Saúde</option>
+                                <option value="Projetos">Projetos</option>
+                                <option value="Outros">Outros</option>
+                            </select>
+
+                            <select id="filterPriority" class="bg-slate-950 border border-slate-800 text-slate-200 text-xs rounded-lg px-3 py-2 outline-none focus:border-blue-500">
+                                <option value="all">Todas as Prioridades</option>
+                                <option value="Baixa">Baixa</option>
+                                <option value="Média">Média</option>
+                                <option value="Alta">Alta</option>
+                            </select>
+
+                            <select id="filterStatus" class="bg-slate-950 border border-slate-800 text-slate-200 text-xs rounded-lg px-3 py-2 outline-none focus:border-blue-500">
+                                <option value="all">Todos os Status</option>
+                                <option value="todo">A Fazer</option>
+                                <option value="in_progress">Em Andamento</option>
+                                <option value="done">Concluído</option>
+                                <option value="no_date">Sem Data Definida</option>
+                            </select>
+                        </div>
+
+                        <!-- Task List Container -->
+                        <div id="tasksList" class="space-y-2">
+                            <!-- Cards de tarefa injetados via JS -->
+                        </div>
+                    </section>
+
+                    <!-- 3. QUADRO KANBAN -->
+                    <section id="view-kanban" class="view-content hidden space-y-4">
+                        <div>
+                            <h2 class="text-xl font-bold text-white tracking-tight">Quadro Kanban</h2>
+                            <p class="text-slate-400 text-xs">Visualize seu fluxo de trabalho. Arraste os cards para atualizar o status.</p>
+                        </div>
+
+                        <!-- Kanban Columns Container -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-start overflow-x-auto pb-4">
+                            
+                            <!-- Column: A Fazer -->
+                            <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-3 flex flex-col min-h-[480px]">
+                                <div class="flex items-center justify-between pb-2 mb-3 border-b border-slate-800">
+                                    <div class="flex items-center gap-2">
+                                        <span class="w-2.5 h-2.5 rounded-full bg-slate-400"></span>
+                                        <h3 class="font-bold text-xs text-slate-200">A Fazer</h3>
+                                        <span id="count-todo" class="text-[10px] bg-slate-800 text-slate-300 font-bold px-2 py-0.5 rounded-full">0</span>
+                                    </div>
+                                </div>
+                                <div id="kanban-todo" data-status="todo" class="kanban-dropzone flex-1 space-y-2 min-h-[200px]">
+                                    <!-- Draggable Tasks -->
+                                </div>
                             </div>
+
+                            <!-- Column: Em Andamento -->
+                            <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-3 flex flex-col min-h-[480px]">
+                                <div class="flex items-center justify-between pb-2 mb-3 border-b border-slate-800">
+                                    <div class="flex items-center gap-2">
+                                        <span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
+                                        <h3 class="font-bold text-xs text-slate-200">Em Andamento</h3>
+                                        <span id="count-in_progress" class="text-[10px] bg-slate-800 text-slate-300 font-bold px-2 py-0.5 rounded-full">0</span>
+                                    </div>
+                                </div>
+                                <div id="kanban-in_progress" data-status="in_progress" class="kanban-dropzone flex-1 space-y-2 min-h-[200px]">
+                                    <!-- Draggable Tasks -->
+                                </div>
+                            </div>
+
+                            <!-- Column: Concluído -->
+                            <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-3 flex flex-col min-h-[480px]">
+                                <div class="flex items-center justify-between pb-2 mb-3 border-b border-slate-800">
+                                    <div class="flex items-center gap-2">
+                                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+                                        <h3 class="font-bold text-xs text-slate-200">Concluído</h3>
+                                        <span id="count-done" class="text-[10px] bg-slate-800 text-slate-300 font-bold px-2 py-0.5 rounded-full">0</span>
+                                    </div>
+                                </div>
+                                <div id="kanban-done" data-status="done" class="kanban-dropzone flex-1 space-y-2 min-h-[200px]">
+                                    <!-- Draggable Tasks -->
+                                </div>
+                            </div>
+
                         </div>
-                        <div id="kanban-done" data-status="done" class="kanban-dropzone flex-1 space-y-3 min-h-[200px]">
-                            <!-- Draggable Tasks -->
-                        </div>
-                    </div>
+                    </section>
 
                 </div>
-            </section>
 
+                <!-- Footer Note -->
+                <div class="flex justify-between items-center text-[10px] text-slate-500 pt-2 border-t border-slate-800/80">
+                    <span id="footerStatusText" class="flex items-center gap-1.5"><span class="status-pulse"></span> Sistema Local Ativo</span>
+                    <span>Minha Agenda Pro · Visão Geral</span>
+                </div>
+            </main>
         </div>
-    </main>
+    </div>
+
+    <!-- SPOTLIGHT / OMNIBOX MODAL (Ctrl + K) -->
+    <div id="spotlightModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md hidden flex items-start justify-center pt-20 p-4">
+        <div class="bg-[#0a182e] border border-blue-500/50 rounded-2xl w-full max-w-xl overflow-hidden shadow-2xl">
+            <div class="p-3.5 border-b border-slate-800 flex items-center gap-3">
+                <i data-lucide="search" class="w-5 h-5 text-blue-400"></i>
+                <input type="text" id="spotlightInput" placeholder="O que você precisa fazer agora? (digite para filtrar)..." class="bg-transparent border-none outline-none text-slate-100 text-sm w-full placeholder:text-slate-500">
+                <span class="text-[10px] bg-slate-800 border border-slate-700/60 rounded px-2 py-1 text-slate-400 font-mono">ESC</span>
+            </div>
+            <div id="spotlightResults" class="p-2 max-h-80 overflow-y-auto space-y-1">
+                <!-- Search results injected live -->
+            </div>
+            <div class="bg-slate-900/60 p-2.5 border-t border-slate-800 text-[10px] text-slate-400 flex justify-between items-center px-4">
+                <span>Pressione <b class="text-slate-200">↑ ↓</b> para navegar</span>
+                <span>Pressione <b class="text-slate-200">Enter</b> para selecionar</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ETAPA 3: DIAGNOSTIC & MIGRATION AUDIT MODAL -->
+    <div id="etapa3AuditModal" class="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md hidden flex items-center justify-center p-4">
+        <div class="bg-[#0a182e] border border-blue-500/50 rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl flex flex-col max-h-[85vh]">
+            <!-- Header -->
+            <div class="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-900/60">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-lg bg-blue-500/20 border border-blue-500/40 grid place-items-center text-blue-400">
+                        <i data-lucide="database" class="w-4 h-4"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-bold text-white">Etapa 3 • Diagnóstico de Dados e Reconciliação</h3>
+                        <p class="text-[10px] text-slate-400">Análise segura entre localStorage local e Firestore remoto (Sem alterações destrutivas)</p>
+                    </div>
+                </div>
+                <button onclick="document.getElementById('etapa3AuditModal').classList.add('hidden')" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+
+            <!-- Content Body -->
+            <div class="p-5 overflow-y-auto space-y-4 text-xs font-mono">
+                <!-- Summary KPI Cards -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 font-sans">
+                    <div class="bg-slate-900/80 border border-slate-800 p-2.5 rounded-xl text-center">
+                        <span class="text-[10px] text-slate-400 uppercase font-bold block">localStorage</span>
+                        <b id="diagLocalCount" class="text-lg font-black text-blue-400">0</b>
+                    </div>
+                    <div class="bg-slate-900/80 border border-slate-800 p-2.5 rounded-xl text-center">
+                        <span class="text-[10px] text-slate-400 uppercase font-bold block">Firestore</span>
+                        <b id="diagRemoteCount" class="text-lg font-black text-cyan-400">0</b>
+                    </div>
+                    <div class="bg-slate-900/80 border border-slate-800 p-2.5 rounded-xl text-center">
+                        <span class="text-[10px] text-slate-400 uppercase font-bold block">Conflitos</span>
+                        <b id="diagConflictCount" class="text-lg font-black text-amber-400">0</b>
+                    </div>
+                    <div class="bg-slate-900/80 border border-slate-800 p-2.5 rounded-xl text-center">
+                        <span class="text-[10px] text-slate-400 uppercase font-bold block">Duplicados</span>
+                        <b id="diagDupCount" class="text-lg font-black text-purple-400">0</b>
+                    </div>
+                </div>
+
+                <!-- Detailed Classification Log -->
+                <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 space-y-2 font-mono text-[11px] leading-relaxed text-slate-300 max-h-60 overflow-y-auto">
+                    <div class="text-emerald-400 font-bold border-b border-slate-800 pb-1">📊 DIAGNÓSTICO DE COMPARAÇÃO EM TEMPO REAL</div>
+                    <div id="diagLogOutput">
+                        Iniciando leitura e mapeamento de dados...
+                    </div>
+                </div>
+
+                <!-- Safety Notice -->
+                <div class="p-3 bg-blue-950/40 border border-blue-500/30 rounded-xl text-[11px] font-sans text-blue-200 flex items-start gap-2.5">
+                    <i data-lucide="shield-check" class="w-4 h-4 text-cyan-400 shrink-0 mt-0.5"></i>
+                    <div>
+                        <b>Modo de Análise Ativo:</b> Nenhuma gravação, alteração ou exclusão foi feita no `localStorage` ou no `Firestore`. Todos os registros locais e remotos foram preservados intactos.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="p-3 border-t border-slate-800 bg-slate-900/60 flex justify-end gap-2">
+                <button onclick="document.getElementById('etapa3AuditModal').classList.add('hidden')" class="px-4 py-1.5 text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg">Fechar</button>
+            </div>
+        </div>
+    </div>
 
     <!-- TASK MODAL (Nova/Editar Tarefa) -->
     <div id="taskModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
-        <div class="bg-slate-800 border border-slate-700/80 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl">
+        <div class="bg-[#0a182e] border border-blue-500/40 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl">
             <!-- Modal Header -->
-            <div class="p-5 border-b border-slate-700 flex justify-between items-center bg-slate-800/50">
-                <h3 id="modalTitle" class="text-lg font-bold text-white">Nova Tarefa</h3>
-                <button id="btnCloseModal" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-700/50">
-                    <i data-lucide="x" class="w-5 h-5"></i>
+            <div class="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-900/50">
+                <h3 id="modalTitle" class="text-sm font-bold text-white">Nova Tarefa</h3>
+                <button id="btnCloseModal" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800">
+                    <i data-lucide="x" class="w-4 h-4"></i>
                 </button>
             </div>
 
             <!-- Modal Form -->
-            <form id="taskForm" class="p-5 space-y-4">
+            <form id="taskForm" class="p-4 space-y-3">
                 <input type="hidden" id="taskId">
 
                 <!-- Title -->
                 <div>
-                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Título *</label>
-                    <input type="text" id="taskTitle" required placeholder="Ex: Finalizar relatório financeiro" class="w-full bg-slate-900 border border-slate-700 text-slate-100 rounded-xl p-2.5 text-sm focus:outline-none focus:border-blue-500">
+                    <label class="block text-[11px] font-semibold text-slate-400 mb-1">Título *</label>
+                    <input type="text" id="taskTitle" required placeholder="Ex: Finalizar relatório financeiro" class="w-full bg-slate-950 border border-slate-800 text-slate-100 rounded-lg p-2 text-xs outline-none focus:border-blue-500">
                 </div>
 
                 <!-- Description -->
                 <div>
-                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Descrição</label>
-                    <textarea id="taskDescription" rows="3" placeholder="Adicione detalhes ou observações..." class="w-full bg-slate-900 border border-slate-700 text-slate-100 rounded-xl p-2.5 text-sm focus:outline-none focus:border-blue-500 resize-none"></textarea>
+                    <label class="block text-[11px] font-semibold text-slate-400 mb-1">Descrição</label>
+                    <textarea id="taskDescription" rows="2" placeholder="Adicione detalhes ou observações..." class="w-full bg-slate-950 border border-slate-800 text-slate-100 rounded-lg p-2 text-xs outline-none focus:border-blue-500 resize-none"></textarea>
                 </div>
 
                 <!-- Row 1: Due Date & Category -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Data de Vencimento</label>
-                        <input type="date" id="taskDueDate" class="w-full bg-slate-900 border border-slate-700 text-slate-100 rounded-xl p-2.5 text-sm focus:outline-none focus:border-blue-500">
+                        <label class="block text-[11px] font-semibold text-slate-400 mb-1">Vencimento</label>
+                        <input type="date" id="taskDueDate" class="w-full bg-slate-950 border border-slate-800 text-slate-100 rounded-lg p-2 text-xs outline-none focus:border-blue-500">
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Categoria</label>
-                        <select id="taskCategory" class="w-full bg-slate-900 border border-slate-700 text-slate-100 rounded-xl p-2.5 text-sm focus:outline-none focus:border-blue-500">
+                        <label class="block text-[11px] font-semibold text-slate-400 mb-1">Categoria</label>
+                        <select id="taskCategory" class="w-full bg-slate-950 border border-slate-800 text-slate-100 rounded-lg p-2 text-xs outline-none focus:border-blue-500">
                             <option value="Trabalho">Trabalho</option>
                             <option value="Estudos">Estudos</option>
                             <option value="Pessoal">Pessoal</option>
                             <option value="Saúde">Saúde</option>
+                            <option value="Projetos">Projetos</option>
                             <option value="Outros">Outros</option>
                         </select>
                     </div>
                 </div>
 
                 <!-- Row 2: Priority & Status -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Prioridade</label>
-                        <select id="taskPriority" class="w-full bg-slate-900 border border-slate-700 text-slate-100 rounded-xl p-2.5 text-sm focus:outline-none focus:border-blue-500">
+                        <label class="block text-[11px] font-semibold text-slate-400 mb-1">Prioridade</label>
+                        <select id="taskPriority" class="w-full bg-slate-950 border border-slate-800 text-slate-100 rounded-lg p-2 text-xs outline-none focus:border-blue-500">
                             <option value="Baixa">Baixa</option>
                             <option value="Média" selected>Média</option>
                             <option value="Alta">Alta</option>
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Status</label>
-                        <select id="taskStatus" class="w-full bg-slate-900 border border-slate-700 text-slate-100 rounded-xl p-2.5 text-sm focus:outline-none focus:border-blue-500">
+                        <label class="block text-[11px] font-semibold text-slate-400 mb-1">Status</label>
+                        <select id="taskStatus" class="w-full bg-slate-950 border border-slate-800 text-slate-100 rounded-lg p-2 text-xs outline-none focus:border-blue-500">
                             <option value="todo">A Fazer</option>
                             <option value="in_progress">Em Andamento</option>
                             <option value="done">Concluído</option>
@@ -400,43 +785,396 @@
                 </div>
 
                 <!-- Modal Actions -->
-                <div class="pt-4 border-t border-slate-700 flex justify-end gap-3">
-                    <button type="button" id="btnCancelModal" class="px-4 py-2 text-sm font-medium text-slate-300 hover:text-white rounded-xl hover:bg-slate-700/50">Cancelar</button>
-                    <button type="submit" class="px-5 py-2 text-sm font-semibold bg-blue-600 hover:bg-blue-500 text-white rounded-xl shadow-lg shadow-blue-600/20">Salvar Tarefa</button>
+                <div class="pt-3 border-t border-slate-800 flex justify-end gap-2">
+                    <button type="button" id="btnCancelModal" class="px-3 py-1.5 text-xs font-medium text-slate-400 hover:text-white rounded-lg hover:bg-slate-800">Cancelar</button>
+                    <button type="submit" id="btnSubmitTask" class="px-4 py-1.5 text-xs font-bold bg-blue-600 hover:bg-blue-500 text-white rounded-lg shadow-lg shadow-blue-600/20">Salvar Tarefa</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Application JavaScript Logic -->
+    <!-- Application Engine & Firebase Authentication / Firestore CRUD Logic -->
     <script>
+        // --- 1. FIREBASE CONFIGURATION & INITIALIZATION ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyAvdngV2HMKdAIUmK1f9IF0gm4uEXPdd44",
+            authDomain: "fluxo-de-caixa-59dd1.firebaseapp.com",
+            projectId: "fluxo-de-caixa-59dd1",
+            storageBucket: "fluxo-de-caixa-59dd1.appspot.com",
+            messagingSenderId: "837452325692",
+            appId: "1:837452325692:web:abb7f33bb167d2c13df439"
+        };
+
+        let auth = null;
+        let googleProvider = null;
+        let db = null; // Firestore Reference
+        let currentUserState = null; // Store authenticated user state
+        let firestoreUnsubscribe = null; // Realtime Firestore Unsubscribe listener
+        
+        let firestoreInspectionState = {
+            itemsCount: 0,
+            foldersCount: 0,
+            templatesCount: 0,
+            hasSettings: false,
+            remoteItems: [],
+            checked: false,
+            error: null
+        };
+
+        try {
+            if (!firebase.apps.length) {
+                firebase.initializeApp(firebaseConfig);
+            }
+            auth = firebase.auth();
+            googleProvider = new firebase.auth.GoogleAuthProvider();
+            db = firebase.firestore();
+            console.log("Firebase Auth & Firestore Inicializados com Sucesso.");
+        } catch (err) {
+            console.error("Erro ao inicializar o Firebase/Firestore:", err);
+            showAuthError("Não foi possível conectar ao serviço Firebase/Firestore.");
+        }
+
+        // --- 2. AUTHENTICATION CONTROLLER & STATE LISTENER ---
+        function initAuthListener() {
+            if (!auth) return;
+
+            auth.onAuthStateChanged((user) => {
+                if (user) {
+                    currentUserState = {
+                        uid: user.uid,
+                        displayName: user.displayName || 'Usuário Google',
+                        email: user.email || '',
+                        photoURL: user.photoURL || null
+                    };
+                    updateAuthUIState('AUTHENTICATED');
+                    setupFirestoreRealtimeListener(user.uid);
+                    inspectUserFirestoreData(user.uid);
+                } else {
+                    if (firestoreUnsubscribe) {
+                        firestoreUnsubscribe();
+                        firestoreUnsubscribe = null;
+                    }
+                    currentUserState = null;
+                    firestoreInspectionState = { itemsCount: 0, foldersCount: 0, templatesCount: 0, hasSettings: false, remoteItems: [], checked: false, error: null };
+                    updateAuthUIState('UNAUTHENTICATED');
+                    
+                    tasks = loadInitialTasks();
+                    render();
+                }
+            }, (error) => {
+                console.error("Erro no Auth State Listener:", error);
+                showAuthError("Erro na checagem de sessão do usuário.");
+                updateAuthUIState('UNAUTHENTICATED');
+            });
+        }
+
+        // --- 2.1 FIRESTORE REALTIME SYNC ---
+        function setupFirestoreRealtimeListener(uid) {
+            if (!db || !uid) return;
+
+            if (firestoreUnsubscribe) {
+                firestoreUnsubscribe();
+            }
+
+            const authStatusLabel = document.getElementById('authStatusLabel');
+            const footerStatusText = document.getElementById('footerStatusText');
+
+            if (authStatusLabel) {
+                authStatusLabel.innerHTML = '<span class="status-pulse-amber"></span> Conectando ao Firestore...';
+            }
+
+            firestoreUnsubscribe = db.collection('users').doc(uid).collection('items')
+                .onSnapshot((snapshot) => {
+                    const loadedTasks = [];
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        loadedTasks.push({
+                            id: doc.id,
+                            title: data.title || 'Sem título',
+                            description: data.description || '',
+                            dueDate: data.dueDate || '',
+                            category: data.category || 'Outros',
+                            priority: data.priority || 'Média',
+                            status: data.status || 'todo',
+                            createdAt: data.createdAt || new Date().toISOString(),
+                            updatedAt: data.updatedAt || null,
+                            ...data
+                        });
+                    });
+
+                    tasks = loadedTasks;
+                    saveTasksToLocalCacheOnly(tasks);
+                    render();
+
+                    if (authStatusLabel) {
+                        authStatusLabel.className = 'text-emerald-400 text-[10px] font-medium flex items-center gap-1.5 mt-0.5';
+                        authStatusLabel.innerHTML = `<span class="status-pulse"></span> Sincronizado (${tasks.length} tarefas)`;
+                    }
+
+                    if (footerStatusText) {
+                        footerStatusText.innerHTML = `<span class="status-pulse"></span> Sincronizado Firestore (${tasks.length} itens em tempo real)`;
+                    }
+                }, (error) => {
+                    console.error("[Firestore Sync Error]", error);
+                    if (authStatusLabel) {
+                        authStatusLabel.className = 'text-amber-400 text-[10px] font-medium flex items-center gap-1.5 mt-0.5';
+                        authStatusLabel.innerHTML = '<span class="status-pulse-amber"></span> Erro de Sincronização';
+                    }
+                });
+        }
+
+        function inspectUserFirestoreData(uid) {
+            if (!db || !uid) return;
+
+            const userRef = db.collection('users').doc(uid);
+
+            Promise.all([
+                userRef.collection('items').get(),
+                userRef.collection('folders').get(),
+                userRef.collection('templates').get(),
+                userRef.collection('settings').doc('app').get()
+            ]).then(([itemsSnap, foldersSnap, templatesSnap, settingsSnap]) => {
+                const remoteItems = [];
+                itemsSnap.forEach(doc => remoteItems.push({ id: doc.id, ...doc.data() }));
+
+                firestoreInspectionState = {
+                    itemsCount: itemsSnap.size,
+                    foldersCount: foldersSnap.size,
+                    templatesCount: templatesSnap.size,
+                    hasSettings: settingsSnap.exists,
+                    remoteItems: remoteItems,
+                    checked: true,
+                    error: null
+                };
+            }).catch((err) => {
+                firestoreInspectionState.error = err.message;
+            });
+        }
+
+        // --- 2.2 ETAPA 3: RECONCILIATION & DIAGNOSTIC ENGINE ---
+        function runEtapa3Diagnostic() {
+            const modal = document.getElementById('etapa3AuditModal');
+            const logEl = document.getElementById('diagLogOutput');
+            if (!modal || !logEl) return;
+
+            modal.classList.remove('hidden');
+
+            const localTasks = tasks || [];
+            const remoteItems = firestoreInspectionState.remoteItems || [];
+
+            let onlyLocal = [];
+            let onlyRemote = [];
+            let equals = [];
+            let conflicts = [];
+            let duplicates = [];
+
+            const remoteMap = new Map();
+            remoteItems.forEach(r => remoteMap.set(r.id, r));
+
+            localTasks.forEach(local => {
+                if (remoteMap.has(local.id)) {
+                    const remote = remoteMap.get(local.id);
+                    const isSame = (local.title === remote.title) &&
+                                   (local.status === remote.status) &&
+                                   (local.category === remote.category) &&
+                                   (local.dueDate === remote.dueDate);
+                    if (isSame) equals.push(local);
+                    else conflicts.push({ local, remote });
+                } else {
+                    onlyLocal.push(local);
+                }
+            });
+
+            remoteItems.forEach(remote => {
+                const existsLocally = localTasks.some(l => l.id === remote.id);
+                if (!existsLocally) onlyRemote.push(remote);
+            });
+
+            const titleCount = {};
+            [...localTasks, ...remoteItems].forEach(item => {
+                if (item.title) {
+                    const norm = item.title.trim().toLowerCase();
+                    titleCount[norm] = (titleCount[norm] || 0) + 1;
+                }
+            });
+
+            Object.keys(titleCount).forEach(t => {
+                if (titleCount[t] > 1) duplicates.push(t);
+            });
+
+            document.getElementById('diagLocalCount').textContent = localTasks.length;
+            document.getElementById('diagRemoteCount').textContent = remoteItems.length;
+            document.getElementById('diagConflictCount').textContent = conflicts.length;
+            document.getElementById('diagDupCount').textContent = duplicates.length;
+
+            logEl.innerHTML = `
+                <div><b>▸ UID Autenticado:</b> ${currentUserState ? currentUserState.uid : 'Nenhum (Local)'}</div>
+                <div><b>▸ Registros em localStorage:</b> ${localTasks.length}</div>
+                <div><b>▸ Registros no Firestore:</b> ${remoteItems.length}</div>
+                <div class="text-blue-400"><b>▸ Somente Local:</b> ${onlyLocal.length}</div>
+                <div class="text-cyan-400"><b>▸ Somente Firestore:</b> ${onlyRemote.length}</div>
+                <div class="text-emerald-400"><b>▸ Registros Idênticos:</b> ${equals.length}</div>
+                <div class="text-amber-400"><b>▸ Conflitos:</b> ${conflicts.length}</div>
+                <div class="text-purple-400"><b>▸ Títulos Repetidos/Duplicados:</b> ${duplicates.length}</div>
+                <div><b>▸ Pastas Remotas:</b> ${firestoreInspectionState.foldersCount}</div>
+                <div><b>▸ Modelos Remotos:</b> ${firestoreInspectionState.templatesCount}</div>
+                <div><b>▸ Configurações Remotas:</b> ${firestoreInspectionState.hasSettings ? 'Existe' : 'Inexistente'}</div>
+            `;
+            refreshIcons();
+        }
+
+        function updateAuthUIState(state) {
+            const authName = document.getElementById('authName');
+            const authStatusLabel = document.getElementById('authStatusLabel');
+            const authAvatar = document.getElementById('authAvatar');
+            const btnAuthAction = document.getElementById('btnAuthAction');
+            const heroGreetingTitle = document.getElementById('heroGreetingTitle');
+            const footerStatusText = document.getElementById('footerStatusText');
+
+            if (state === 'LOADING') {
+                if (authName) authName.textContent = 'Carregando...';
+                if (authStatusLabel) authStatusLabel.innerHTML = 'Verificando sessão...';
+                if (btnAuthAction) btnAuthAction.innerHTML = '<span>Aguarde</span>';
+            } else if (state === 'AUTHENTICATED' && currentUserState) {
+                const firstName = currentUserState.displayName.split(' ')[0];
+                if (authName) authName.textContent = currentUserState.displayName;
+                if (authStatusLabel) {
+                    authStatusLabel.className = 'text-emerald-400 text-[10px] font-medium flex items-center gap-1.5 mt-0.5';
+                    authStatusLabel.innerHTML = '<span class="status-pulse"></span> Conectado com Google';
+                }
+                if (heroGreetingTitle) heroGreetingTitle.textContent = `Boa tarde, ${escapeHtml(firstName)}`;
+                if (footerStatusText) footerStatusText.innerHTML = `<span class="status-pulse"></span> Conectado (UID: ${escapeHtml(currentUserState.uid.substring(0, 6))}...)`;
+
+                if (authAvatar) {
+                    if (currentUserState.photoURL) {
+                        authAvatar.innerHTML = `<img src="${escapeHtml(currentUserState.photoURL)}" alt="Avatar" class="w-full h-full object-cover rounded-full">`;
+                    } else {
+                        authAvatar.innerHTML = `<span class="font-bold text-xs text-white">${escapeHtml(firstName.charAt(0).toUpperCase())}</span>`;
+                    }
+                }
+
+                if (btnAuthAction) {
+                    btnAuthAction.className = "px-3 py-1 bg-slate-800 hover:bg-rose-600/80 text-slate-300 hover:text-white rounded-full font-bold text-[11px] transition flex items-center gap-1.5 border border-slate-700/60";
+                    btnAuthAction.innerHTML = `<span>Sair</span>`;
+                }
+            } else {
+                if (authName) authName.textContent = 'Visitante / Local';
+                if (authStatusLabel) {
+                    authStatusLabel.className = 'text-slate-400 text-[10px] font-medium flex items-center gap-1.5 mt-0.5';
+                    authStatusLabel.innerHTML = '● Não autenticado';
+                }
+                if (heroGreetingTitle) heroGreetingTitle.textContent = 'Boa tarde, Visitante';
+                if (footerStatusText) footerStatusText.innerHTML = `<span class="status-pulse"></span> Armazenamento Local Ativo`;
+
+                if (authAvatar) {
+                    authAvatar.innerHTML = `<i data-lucide="user" class="w-4 h-4"></i>`;
+                }
+
+                if (btnAuthAction) {
+                    btnAuthAction.className = "px-3 py-1 bg-blue-600 hover:bg-blue-500 text-white rounded-full font-bold text-[11px] transition flex items-center gap-1.5 shadow-sm";
+                    btnAuthAction.innerHTML = `<span>Entrar com Google</span>`;
+                }
+            }
+            refreshIcons();
+        }
+
+        function handleAuthButtonClick() {
+            if (currentUserState) executeLogout();
+            else executeGoogleLogin();
+        }
+
+        function executeGoogleLogin() {
+            if (!auth || !googleProvider) {
+                showAuthError("Firebase Auth não está devidamente inicializado.");
+                return;
+            }
+
+            hideAuthError();
+            auth.signInWithPopup(googleProvider)
+                .then((result) => console.log("Login com Google efetuado com sucesso! UID:", result.user.uid))
+                .catch((error) => {
+                    console.error("Erro no Google Login:", error);
+                    if (error.code === 'auth/popup-blocked') showAuthError("O pop-up de login foi bloqueado pelo navegador.");
+                    else if (error.code === 'auth/unauthorized-domain') showAuthError("Este domínio não está autorizado no Firebase.");
+                    else if (error.code !== 'auth/popup-closed-by-user') showAuthError(`Falha na autenticação: ${error.message}`);
+                });
+        }
+
+        function executeLogout() {
+            if (!auth) return;
+            auth.signOut()
+                .then(() => {
+                    console.log("Logout efetuado com sucesso.");
+                    hideAuthError();
+                })
+                .catch((error) => {
+                    console.error("Erro ao realizar logout:", error);
+                    showAuthError("Não foi possível encerrar a sessão.");
+                });
+        }
+
+        function showAuthError(msg) {
+            const errorAlert = document.getElementById('authErrorAlert');
+            const errorMessage = document.getElementById('authErrorMessage');
+            if (errorAlert && errorMessage) {
+                errorMessage.textContent = msg;
+                errorAlert.classList.remove('hidden');
+            }
+        }
+
+        function hideAuthError() {
+            const errorAlert = document.getElementById('authErrorAlert');
+            if (errorAlert) errorAlert.classList.add('hidden');
+        }
+
+        // Data local do navegador, evitando divergências de fuso horário causadas por UTC.
+        function getLocalDateString(date = new Date()) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        // --- 3. STORAGE & TASK SYSTEM ---
+        function getUserStorageKey(baseKey) {
+            if (currentUserState && currentUserState.uid) {
+                return `${baseKey}_${currentUserState.uid}`;
+            }
+            return baseKey;
+        }
+
         const PRIMARY_STORAGE_KEY = 'agenda_pro_tasks';
         const LEGACY_STORAGE_KEYS = ['organizador_tasks', 'tasks', 'organizador_tarefas'];
 
         let dataMigratedFromOldKey = false;
 
-        // Multi-Key Backward Compatibility Initialization
         function loadInitialTasks() {
-            // 1. Try reading primary key
-            let stored = localStorage.getItem(PRIMARY_STORAGE_KEY);
+            const key = getUserStorageKey(PRIMARY_STORAGE_KEY);
+            let stored = localStorage.getItem(key);
             if (stored) {
-                try { return JSON.parse(stored); } catch(e) {}
+                try { 
+                    const parsed = JSON.parse(stored);
+                    if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+                } catch(e) {}
             }
 
-            // 2. Try reading alternative/older keys
             for (const oldKey of LEGACY_STORAGE_KEYS) {
-                let legacyData = localStorage.getItem(oldKey);
+                const userOldKey = getUserStorageKey(oldKey);
+                // Dados globais antigos só podem ser usados antes da autenticação.
+                // Após o login, somente o cache explicitamente associado ao UID é elegível.
+                const legacyData = (currentUserState && currentUserState.uid)
+                    ? localStorage.getItem(userOldKey)
+                    : localStorage.getItem(userOldKey) || localStorage.getItem(oldKey);
                 if (legacyData) {
                     try {
                         const parsed = JSON.parse(legacyData);
                         if (Array.isArray(parsed) && parsed.length > 0) {
                             dataMigratedFromOldKey = true;
-                            // Standardize format if needed
                             return parsed.map((item, idx) => ({
                                 id: item.id || Date.now().toString() + idx,
                                 title: item.title || item.titulo || 'Tarefa sem título',
                                 description: item.description || item.descricao || '',
-                                dueDate: item.dueDate || item.data || new Date().toISOString().split('T')[0],
+                                dueDate: item.dueDate || item.data || '',
                                 category: item.category || item.categoria || 'Outros',
                                 priority: item.priority || item.prioridade || 'Média',
                                 status: item.status || (item.concluida ? 'done' : 'todo'),
@@ -447,94 +1185,515 @@
                 }
             }
 
-            // 3. Fallback default initial tasks
-            return [
-                {
-                    id: '1',
-                    title: 'Organizar repositório no GitHub',
-                    description: 'Subir novo layout index.html e atualizar documentação.',
-                    dueDate: new Date().toISOString().split('T')[0],
-                    category: 'Trabalho',
-                    priority: 'Alta',
-                    status: 'in_progress',
-                    createdAt: new Date().toISOString()
-                },
-                {
-                    id: '2',
-                    title: 'Revisar checklist do projeto',
-                    description: 'Verificar os requisitos de PWA e navegação do app.',
-                    dueDate: new Date().toISOString().split('T')[0],
-                    category: 'Estudos',
-                    priority: 'Média',
-                    status: 'todo',
-                    createdAt: new Date().toISOString()
-                }
-            ];
+            // Retorna array vazio por padrão sem injetar tarefas simuladas
+            return [];
         }
 
-        // State Manager
         let tasks = loadInitialTasks();
         let draggedTaskId = null;
 
-        // Save State to LocalStorage (Persisting across all known keys for safety)
-        function saveTasks() {
-            const jsonData = JSON.stringify(tasks);
-            localStorage.setItem(PRIMARY_STORAGE_KEY, jsonData);
-            
-            // Mirror to legacy keys so switching to an old code version retains data
-            LEGACY_STORAGE_KEYS.forEach(key => localStorage.setItem(key, jsonData));
+        function saveTasksToLocalCacheOnly(taskArray) {
+            const jsonData = JSON.stringify(taskArray);
+            const userKey = getUserStorageKey(PRIMARY_STORAGE_KEY);
+            localStorage.setItem(userKey, jsonData);
+            LEGACY_STORAGE_KEYS.forEach(key => {
+                localStorage.setItem(getUserStorageKey(key), jsonData);
+            });
+        }
+
+        // ETAPA 4/5: FIRESTORE CRUD ACTIONS
+        function saveTaskToFirestore(taskObj) {
+            const submitBtn = document.getElementById('btnSubmitTask');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerText = 'Salvando...';
+            }
+
+            if (!currentUserState || !db) {
+                const existingIdx = tasks.findIndex(t => t.id === taskObj.id);
+                if (existingIdx >= 0) tasks[existingIdx] = taskObj;
+                else tasks.push(taskObj);
+                saveTasksToLocalCacheOnly(tasks);
+                render();
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerText = 'Salvar Tarefa';
+                }
+                return Promise.resolve();
+            }
+
+            const uid = currentUserState.uid;
+            const taskRef = db.collection('users').doc(uid).collection('items').doc(taskObj.id);
+            const payload = {
+                ...taskObj,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+
+            return taskRef.set(payload, { merge: true })
+                .then(() => {
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.innerText = 'Salvar Tarefa';
+                    }
+                })
+                .catch(err => {
+                    console.error("Erro ao salvar tarefa no Firestore:", err);
+                    alert("Ocorreu um erro ao salvar a tarefa na nuvem.");
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.innerText = 'Salvar Tarefa';
+                    }
+                    throw err;
+                });
+        }
+
+        function deleteTaskFromFirestore(taskId) {
+            if (!currentUserState || !db) {
+                tasks = tasks.filter(t => t.id !== taskId);
+                saveTasksToLocalCacheOnly(tasks);
+                render();
+                return Promise.resolve();
+            }
+
+            const uid = currentUserState.uid;
+            return db.collection('users').doc(uid).collection('items').doc(taskId).delete()
+                .catch(err => {
+                    console.error("Erro ao excluir tarefa do Firestore:", err);
+                    alert("Não foi possível excluir a tarefa do servidor.");
+                    throw err;
+                });
+        }
+
+        function updateTaskStatusInFirestore(taskId, newStatus) {
+            const targetTask = tasks.find(t => t.id === taskId);
+            if (!targetTask) return;
+            const previousStatus = targetTask.status;
+
+            // Otimista: Atualiza o estado local temporariamente
+            tasks = tasks.map(t => t.id === taskId ? { ...t, status: newStatus } : t);
             render();
+
+            if (!currentUserState || !db) {
+                saveTasksToLocalCacheOnly(tasks);
+                return;
+            }
+
+            const uid = currentUserState.uid;
+            db.collection('users').doc(uid).collection('items').doc(taskId).update({
+                status: newStatus,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            }).catch(err => {
+                console.error("Erro ao atualizar status no Firestore. Revertendo estado...", err);
+                // Rollback em caso de falha de conexão/permissão
+                tasks = tasks.map(t => t.id === taskId ? { ...t, status: previousStatus } : t);
+                render();
+                alert("Falha ao atualizar o status da tarefa no servidor.");
+            });
         }
 
-        // Initialize Lucide Icons
+        // --- ETAPA 5/8: ADIAR TODAS AS ATRASADAS PARA HOJE ---
+        function postponeAllLateToToday() {
+            const todayStr = getLocalDateString();
+            const lateTasks = tasks.filter(t => t.status !== 'done' && t.dueDate && t.dueDate < todayStr);
+
+            if (lateTasks.length === 0) {
+                alert("Não existem tarefas atrasadas no momento!");
+                return;
+            }
+
+            if (!confirm(`Deseja adiar ${lateTasks.length} tarefa(s) atrasada(s) para hoje?`)) return;
+
+            if (!currentUserState || !db) {
+                tasks = tasks.map(t => {
+                    if (t.status !== 'done' && t.dueDate && t.dueDate < todayStr) {
+                        return { ...t, dueDate: todayStr };
+                    }
+                    return t;
+                });
+                saveTasksToLocalCacheOnly(tasks);
+                render();
+                return;
+            }
+
+            const uid = currentUserState.uid;
+            const batch = db.batch();
+
+            lateTasks.forEach(task => {
+                const ref = db.collection('users').doc(uid).collection('items').doc(task.id);
+                batch.update(ref, {
+                    dueDate: todayStr,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            });
+
+            return batch.commit()
+                .then(() => {
+                    console.log("Todas as tarefas atrasadas foram adiadas para hoje no Firestore.");
+                    alert("As tarefas atrasadas foram adiadas para hoje.");
+                })
+                .catch(err => {
+                    console.error("Erro ao adiar tarefas:", err);
+                    alert("Falha ao adiar as tarefas atrasadas. Nenhuma confirmação de sucesso foi emitida.");
+                    throw err;
+                });
+        }
+
         function refreshIcons() {
-            lucide.createIcons();
+            if (window.lucide) {
+                lucide.createIcons();
+            }
         }
 
-        // --- EXPORT & IMPORT BACKUP SYSTEM ---
+        // --- POMODORO TIMER WIDGET ---
+        let pomoSeconds = 25 * 60;
+        let pomoInterval = null;
+        let pomoIsRunning = false;
+
+        function updatePomoDisplay() {
+            const mins = Math.floor(pomoSeconds / 60).toString().padStart(2, '0');
+            const secs = (pomoSeconds % 60).toString().padStart(2, '0');
+            const el = document.getElementById('pomoTimerText');
+            if (el) el.textContent = `${mins}:${secs}`;
+        }
+
+        function togglePomodoro() {
+            const btn = document.getElementById('btnPomoStart');
+            if (pomoIsRunning) {
+                clearInterval(pomoInterval);
+                pomoIsRunning = false;
+                if (btn) btn.textContent = '▶';
+            } else {
+                pomoIsRunning = true;
+                if (btn) btn.textContent = '❚❚';
+                pomoInterval = setInterval(() => {
+                    if (pomoSeconds > 0) {
+                        pomoSeconds--;
+                        updatePomoDisplay();
+                    } else {
+                        clearInterval(pomoInterval);
+                        pomoIsRunning = false;
+                        if (btn) btn.textContent = '▶';
+                        alert('🔔 Pomodoro concluído! Hora de uma pausa de 5 minutos.');
+                        pomoSeconds = 25 * 60;
+                        updatePomoDisplay();
+                    }
+                }, 1000);
+            }
+        }
+
+        function resetPomodoro() {
+            if (pomoInterval) clearInterval(pomoInterval);
+            pomoIsRunning = false;
+            pomoSeconds = 25 * 60;
+            const btn = document.getElementById('btnPomoStart');
+            if (btn) btn.textContent = '▶';
+            updatePomoDisplay();
+        }
+
+        // --- WEB NOTIFICATIONS API ---
+        function toggleNotifications() {
+            if (!("Notification" in window)) {
+                alert("Este navegador não suporta Notificações Nativas.");
+                return;
+            }
+            if (Notification.permission === "granted") {
+                new Notification("Minha Agenda Pro", { body: "As notificações de tarefas já estão ativas!" });
+            } else if (Notification.permission !== "denied") {
+                Notification.requestPermission().then(permission => {
+                    if (permission === "granted") {
+                        new Notification("Minha Agenda Pro", { body: "Notificações ativadas com sucesso!" });
+                    }
+                });
+            } else {
+                alert("As notificações foram bloqueadas nas configurações do navegador.");
+            }
+        }
+
+        function triggerAssistantAdvice() {
+            alert("✦ Assistente Virtual: Suas tarefas do dia estão otimizadas! Foque nas pendências do card de Foco Sugerido.");
+        }
+
+        // --- FILTERS & SHORTCUT HANDLERS (ETAPA 8 FIXES) ---
+        let currentFilterMode = 'all'; // Mode tracker: 'all', 'today', 'late', 'priority', 'no_date', 'status'
+
+        function highlightShortcutButtons(activeId) {
+            const btnToday = document.getElementById('btnShortcutToday');
+            const btnLate = document.getElementById('btnShortcutLate');
+            
+            if (btnToday) {
+                if (activeId === 'today') {
+                    btnToday.className = 'bg-blue-600 border border-blue-400/40 rounded-full px-3 py-1 text-[11px] font-semibold text-white flex items-center gap-1.5 shadow-md shadow-blue-600/20 transition';
+                } else {
+                    btnToday.className = 'bg-slate-900/80 border border-slate-800 rounded-full px-3 py-1 text-[11px] font-semibold text-slate-300 hover:border-slate-700 flex items-center gap-1.5 transition';
+                }
+            }
+
+            if (btnLate) {
+                if (activeId === 'late') {
+                    btnLate.className = 'bg-red-600 border border-red-400/40 rounded-full px-3 py-1 text-[11px] font-semibold text-white flex items-center gap-1.5 shadow-md shadow-red-600/20 transition';
+                } else {
+                    btnLate.className = 'bg-slate-900/80 border border-slate-800 rounded-full px-3 py-1 text-[11px] font-medium text-slate-300 hover:border-slate-700 flex items-center gap-1.5 transition';
+                }
+            }
+        }
+
+        function filterShortcutToday() {
+            resetFilterSelects();
+            currentFilterMode = 'today';
+            highlightShortcutButtons('today');
+            switchView('tasks');
+            renderTaskList();
+        }
+
+        function filterShortcutLate() {
+            resetFilterSelects();
+            currentFilterMode = 'late';
+            highlightShortcutButtons('late');
+            switchView('tasks');
+            renderTaskList();
+        }
+
+        function filterShortcutPriority(prio) {
+            resetFilterSelects();
+            currentFilterMode = 'priority';
+            highlightShortcutButtons(null);
+            document.getElementById('filterPriority').value = prio;
+            switchView('tasks');
+            renderTaskList();
+        }
+
+        function filterShortcutNoDate() {
+            resetFilterSelects();
+            currentFilterMode = 'no_date';
+            highlightShortcutButtons(null);
+            document.getElementById('filterStatus').value = 'no_date';
+            switchView('tasks');
+            renderTaskList();
+        }
+
+        function filterShortcutStatus(status) {
+            resetFilterSelects();
+            currentFilterMode = 'status';
+            highlightShortcutButtons(null);
+            document.getElementById('filterStatus').value = status;
+            switchView('tasks');
+            renderTaskList();
+        }
+
+        function setCategoryFilter(cat) {
+            resetFilterSelects();
+            currentFilterMode = 'category';
+            highlightShortcutButtons(null);
+            document.getElementById('filterCategory').value = cat;
+            switchView('tasks');
+            renderTaskList();
+        }
+
+        function resetAllFilters() {
+            document.getElementById('filterSearch').value = '';
+            currentFilterMode = 'all';
+            highlightShortcutButtons(null);
+            resetFilterSelects();
+            renderTaskList();
+        }
+
+        function resetFilterSelects() {
+            document.getElementById('filterCategory').value = 'all';
+            document.getElementById('filterPriority').value = 'all';
+            document.getElementById('filterStatus').value = 'all';
+        }
+
+        function switchView(viewName) {
+            const navBtns = document.querySelectorAll('.nav-btn');
+            const viewContents = document.querySelectorAll('.view-content');
+
+            navBtns.forEach(b => {
+                if (b.getAttribute('data-view') === viewName) b.classList.add('active', 'bg-blue-600', 'text-white');
+                else b.classList.remove('active', 'bg-blue-600', 'text-white');
+            });
+
+            viewContents.forEach(view => {
+                if (view.id === `view-${viewName}`) view.classList.remove('hidden');
+                else view.classList.add('hidden');
+            });
+        }
+
+        // --- SPOTLIGHT OMNIBOX (Cmd + K) ---
+        const spotlightModal = document.getElementById('spotlightModal');
+        const spotlightInput = document.getElementById('spotlightInput');
+        const spotlightResults = document.getElementById('spotlightResults');
+
+        function toggleSpotlight(show) {
+            if (!spotlightModal) return;
+            if (show) {
+                spotlightModal.classList.remove('hidden');
+                spotlightInput.value = '';
+                renderSpotlightResults('');
+                spotlightInput.focus();
+            } else {
+                spotlightModal.classList.add('hidden');
+            }
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+                e.preventDefault();
+                toggleSpotlight(true);
+            }
+            if (e.key === 'Escape') {
+                toggleSpotlight(false);
+            }
+        });
+
+        if (spotlightModal) {
+            spotlightModal.addEventListener('click', (e) => {
+                if (e.target === spotlightModal) toggleSpotlight(false);
+            });
+        }
+
+        if (spotlightInput) {
+            spotlightInput.addEventListener('input', (e) => {
+                renderSpotlightResults(e.target.value);
+            });
+        }
+
+        function renderSpotlightResults(query) {
+            if (!spotlightResults) return;
+            const q = query.toLowerCase().trim();
+            const filtered = tasks.filter(t => t.title.toLowerCase().includes(q) || (t.category && t.category.toLowerCase().includes(q)));
+
+            if (filtered.length === 0) {
+                spotlightResults.innerHTML = `<p class="text-xs text-slate-500 py-4 text-center">Nenhuma tarefa encontrada.</p>`;
+                return;
+            }
+
+            spotlightResults.innerHTML = filtered.map(t => `
+                <div onclick="openModal('${t.id}'); toggleSpotlight(false);" class="p-2.5 rounded-lg hover:bg-slate-800/80 cursor-pointer flex items-center justify-between border border-transparent hover:border-slate-700 transition">
+                    <div class="flex items-center gap-2.5">
+                        <i data-lucide="check-square" class="w-4 h-4 text-blue-400"></i>
+                        <div>
+                            <h4 class="text-xs font-semibold text-white">${escapeHtml(t.title)}</h4>
+                            <span class="text-[10px] text-slate-400">${escapeHtml(t.category)} • ${escapeHtml(t.dueDate) || 'Sem data'}</span>
+                        </div>
+                    </div>
+                    <span class="text-[10px] bg-slate-900 border border-slate-700 rounded px-2 py-0.5 text-slate-300 font-medium">${escapeHtml(t.priority)}</span>
+                </div>
+            `).join('');
+            refreshIcons();
+        }
+
+        // --- EXPORT & IMPORT BACKUP SYSTEM (ETAPA 8 SAFE IMPORT) ---
         const btnExportJSON = document.getElementById('btnExportJSON');
         const btnImportJSON = document.getElementById('btnImportJSON');
         const fileInputJSON = document.getElementById('fileInputJSON');
 
-        btnExportJSON.addEventListener('click', () => {
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(tasks, null, 2));
-            const downloadAnchor = document.createElement('a');
-            const dateStr = new Date().toISOString().split('T')[0];
-            downloadAnchor.setAttribute("href", dataStr);
-            downloadAnchor.setAttribute("download", `backup_agenda_pro_${dateStr}.json`);
-            document.body.appendChild(downloadAnchor);
-            downloadAnchor.click();
-            downloadAnchor.remove();
-        });
+        if (btnExportJSON) {
+            btnExportJSON.addEventListener('click', () => {
+                const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(tasks, null, 2));
+                const downloadAnchor = document.createElement('a');
+                const dateStr = getLocalDateString();
+                downloadAnchor.setAttribute("href", dataStr);
+                downloadAnchor.setAttribute("download", `backup_agenda_pro_${dateStr}.json`);
+                document.body.appendChild(downloadAnchor);
+                downloadAnchor.click();
+                downloadAnchor.remove();
+            });
+        }
 
-        btnImportJSON.addEventListener('click', () => {
-            fileInputJSON.click();
-        });
+        if (btnImportJSON) btnImportJSON.addEventListener('click', () => fileInputJSON.click());
 
-        fileInputJSON.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
+        if (fileInputJSON) {
+            fileInputJSON.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
 
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                try {
-                    const importedTasks = JSON.parse(event.target.result);
-                    if (Array.isArray(importedTasks)) {
-                        if (confirm(`Deseja importar ${importedTasks.length} tarefas? Isso substituirá suas tarefas atuais.`)) {
-                            tasks = importedTasks;
-                            saveTasks();
-                            alert('Tarefas importadas com sucesso!');
+                const reader = new FileReader();
+                reader.onload = async (event) => {
+                    try {
+                        const importedTasks = JSON.parse(event.target.result);
+                        if (!Array.isArray(importedTasks)) {
+                            alert('Erro: O arquivo de backup precisa ser uma lista válida de tarefas (array JSON).');
+                            return;
                         }
-                    } else {
-                        alert('Arquivo de backup inválido.');
+
+                        if (!confirm(`Deseja importar ${importedTasks.length} tarefa(s)? Os registros válidos serão salvos com segurança.`)) {
+                            return;
+                        }
+
+                        btnImportJSON.disabled = true;
+                        btnImportJSON.innerText = 'Importando...';
+
+                        const invalidItems = importedTasks.filter(item => !item || typeof item !== 'object' || !String(item.title || '').trim());
+                        if (invalidItems.length > 0) {
+                            throw new Error(`O backup contém ${invalidItems.length} registro(s) inválido(s) ou sem título.`);
+                        }
+
+                        const importPromises = importedTasks.map((item, index) => {
+                            const taskObj = {
+                                ...item,
+                                id: item.id || `${Date.now()}_${index}_${Math.random().toString(36).substring(2, 7)}`,
+                                title: String(item.title).trim(),
+                                description: item.description || '',
+                                dueDate: item.dueDate || item.data || '',
+                                category: item.category || item.categoria || 'Outros',
+                                priority: item.priority || item.prioridade || 'Média',
+                                status: item.status || 'todo',
+                                createdAt: item.createdAt || new Date().toISOString()
+                            };
+                            return saveTaskToFirestore(taskObj);
+                        });
+
+                        await Promise.all(importPromises);
+                        btnImportJSON.disabled = false;
+                        btnImportJSON.innerHTML = `<i data-lucide="upload" class="w-3 h-3 text-emerald-400"></i><span>Importar</span>`;
+                        alert(`Sucesso! ${importedTasks.length} tarefas foram processadas e salvas.`);
+                        refreshIcons();
+                    } catch (err) {
+                        console.error("[Import JSON Error]", err);
+                        alert('Ocorreu um erro ao processar o arquivo de backup.');
+                        btnImportJSON.disabled = false;
+                        btnImportJSON.innerHTML = `<i data-lucide="upload" class="w-3 h-3 text-emerald-400"></i><span>Importar</span>`;
+                        refreshIcons();
                     }
+                };
+                reader.readAsText(file);
+                fileInputJSON.value = '';
+            });
+        }
+
+        // Quick Add Handler
+        const quickAddForm = document.getElementById('quickAddForm');
+        if (quickAddForm) {
+            quickAddForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const input = document.getElementById('quickInputTitle');
+                const val = input.value.trim();
+                if (!val) return;
+
+                let cat = 'Trabalho';
+                if (val.toLowerCase().includes('#pessoal')) cat = 'Pessoal';
+                if (val.toLowerCase().includes('#estudos')) cat = 'Estudos';
+                if (val.toLowerCase().includes('#projetos')) cat = 'Projetos';
+
+                const newTask = {
+                    id: Date.now().toString(),
+                    title: val.replace(/#\w+/g, '').trim(),
+                    description: '',
+                    dueDate: getLocalDateString(),
+                    category: cat,
+                    priority: val.toLowerCase().includes('alta') ? 'Alta' : 'Média',
+                    status: 'todo',
+                    createdAt: new Date().toISOString()
+                };
+
+                try {
+                    await saveTaskToFirestore(newTask);
+                    input.value = '';
                 } catch (err) {
-                    alert('Erro ao carregar o arquivo JSON.');
+                    console.error("[Quick Add Error]", err);
                 }
-            };
-            reader.readAsText(file);
-            fileInputJSON.value = '';
-        });
+            });
+        }
 
         // --- NAVIGATION CONTROLLER ---
         const navBtns = document.querySelectorAll('.nav-btn');
@@ -543,9 +1702,10 @@
         navBtns.forEach(btn => {
             btn.addEventListener('click', () => {
                 const targetView = btn.getAttribute('data-view');
+                if (!targetView) return;
                 
-                navBtns.forEach(b => b.classList.remove('active', 'bg-blue-600/20', 'text-blue-400', 'border', 'border-blue-500/30'));
-                btn.classList.add('active', 'bg-blue-600/20', 'text-blue-400', 'border', 'border-blue-500/30');
+                navBtns.forEach(b => b.classList.remove('active', 'bg-blue-600', 'text-white'));
+                btn.classList.add('active', 'bg-blue-600', 'text-white');
 
                 viewContents.forEach(view => {
                     if (view.id === `view-${targetView}`) {
@@ -554,12 +1714,10 @@
                         view.classList.add('hidden');
                     }
                 });
-
                 closeMobileSidebar();
             });
         });
 
-        // Mobile Sidebar Controls
         const mobileMenuBtn = document.getElementById('mobileMenuBtn');
         const sidebar = document.getElementById('sidebar');
         const sidebarOverlay = document.getElementById('sidebarOverlay');
@@ -574,8 +1732,8 @@
             sidebarOverlay.classList.add('hidden');
         }
 
-        mobileMenuBtn.addEventListener('click', openMobileSidebar);
-        sidebarOverlay.addEventListener('click', closeMobileSidebar);
+        if (mobileMenuBtn) mobileMenuBtn.addEventListener('click', openMobileSidebar);
+        if (sidebarOverlay) sidebarOverlay.addEventListener('click', closeMobileSidebar);
 
         // --- TASK CRUD & MODAL ---
         const taskModal = document.getElementById('taskModal');
@@ -596,9 +1754,9 @@
                     document.getElementById('taskTitle').value = task.title;
                     document.getElementById('taskDescription').value = task.description || '';
                     document.getElementById('taskDueDate').value = task.dueDate || '';
-                    document.getElementById('taskCategory').value = task.category;
-                    document.getElementById('taskPriority').value = task.priority;
-                    document.getElementById('taskStatus').value = task.status;
+                    document.getElementById('taskCategory').value = task.category || 'Trabalho';
+                    document.getElementById('taskPriority').value = task.priority || 'Média';
+                    document.getElementById('taskStatus').value = task.status || 'todo';
                     document.getElementById('modalTitle').textContent = 'Editar Tarefa';
                 }
             }
@@ -610,74 +1768,72 @@
             taskModal.classList.add('hidden');
         }
 
-        btnOpenNewTaskModal.addEventListener('click', () => openModal());
-        btnCloseModal.addEventListener('click', closeModal);
-        btnCancelModal.addEventListener('click', closeModal);
+        if (btnOpenNewTaskModal) btnOpenNewTaskModal.addEventListener('click', () => openModal());
+        if (btnCloseModal) btnCloseModal.addEventListener('click', closeModal);
+        if (btnCancelModal) btnCancelModal.addEventListener('click', closeModal);
 
-        taskForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            
-            const id = document.getElementById('taskId').value;
-            const title = document.getElementById('taskTitle').value.trim();
-            const description = document.getElementById('taskDescription').value.trim();
-            const dueDate = document.getElementById('taskDueDate').value;
-            const category = document.getElementById('taskCategory').value;
-            const priority = document.getElementById('taskPriority').value;
-            const status = document.getElementById('taskStatus').value;
+        if (taskForm) {
+            taskForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const id = document.getElementById('taskId').value || Date.now().toString();
+                const title = document.getElementById('taskTitle').value.trim();
+                const description = document.getElementById('taskDescription').value.trim();
+                const dueDate = document.getElementById('taskDueDate').value;
+                const category = document.getElementById('taskCategory').value;
+                const priority = document.getElementById('taskPriority').value;
+                const status = document.getElementById('taskStatus').value;
 
-            if (id) {
-                tasks = tasks.map(t => t.id === id ? { ...t, title, description, dueDate, category, priority, status } : t);
-            } else {
-                const newTask = {
-                    id: Date.now().toString(),
+                const existingTask = tasks.find(t => t.id === id);
+
+                const taskObj = {
+                    ...(existingTask || {}),
+                    id,
                     title,
                     description,
                     dueDate,
                     category,
                     priority,
                     status,
-                    createdAt: new Date().toISOString()
+                    createdAt: existingTask ? (existingTask.createdAt || new Date().toISOString()) : new Date().toISOString()
                 };
-                tasks.push(newTask);
-            }
 
-            saveTasks();
-            closeModal();
-        });
+                try {
+                    await saveTaskToFirestore(taskObj);
+                    closeModal();
+                } catch (err) {
+                    console.error("[Task Save Error]", err);
+                }
+            });
+        }
 
         function toggleTaskComplete(id) {
-            tasks = tasks.map(t => {
-                if (t.id === id) {
-                    const newStatus = t.status === 'done' ? 'todo' : 'done';
-                    return { ...t, status: newStatus };
-                }
-                return t;
-            });
-            saveTasks();
+            const task = tasks.find(t => t.id === id);
+            if (!task) return;
+            const newStatus = task.status === 'done' ? 'todo' : 'done';
+            updateTaskStatusInFirestore(id, newStatus);
         }
 
         function deleteTask(id) {
             if (confirm('Tem certeza de que deseja excluir esta tarefa?')) {
-                tasks = tasks.filter(t => t.id !== id);
-                saveTasks();
+                deleteTaskFromFirestore(id).catch(err => {
+                    console.error("[Delete Task Error]", err);
+                });
             }
         }
 
         function getPriorityBadge(priority) {
             switch(priority) {
-                case 'Alta': return '<span class="text-xs px-2 py-0.5 rounded-md bg-rose-500/10 text-rose-400 border border-rose-500/20 font-medium">Alta</span>';
-                case 'Média': return '<span class="text-xs px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-400 border border-amber-500/20 font-medium">Média</span>';
-                default: return '<span class="text-xs px-2 py-0.5 rounded-md bg-slate-500/10 text-slate-400 border border-slate-500/20 font-medium">Baixa</span>';
+                case 'Alta': return '<span class="text-[10px] px-2 py-0.5 rounded-full bg-red-500/15 text-red-400 border border-red-500/30 font-bold">Alta</span>';
+                case 'Média': return '<span class="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/30 font-bold">Média</span>';
+                default: return '<span class="text-[10px] px-2 py-0.5 rounded-full bg-slate-500/15 text-slate-400 border border-slate-500/30 font-bold">Baixa</span>';
             }
         }
 
-        // --- RENDER LOGIC ---
-
         function renderDashboard() {
-            const todayStr = new Date().toISOString().split('T')[0];
+            const todayStr = getLocalDateString();
             const total = tasks.length;
             const completed = tasks.filter(t => t.status === 'done').length;
-            const pending = tasks.filter(t => t.status !== 'done').length;
+            const pending = tasks.filter(t => t.status !== 'done' && t.dueDate && t.dueDate < todayStr).length;
             const todayTasks = tasks.filter(t => t.dueDate === todayStr).length;
             const rate = total > 0 ? Math.round((completed / total) * 100) : 0;
 
@@ -686,8 +1842,47 @@
             document.getElementById('kpiPending').textContent = pending;
             document.getElementById('kpiRate').textContent = `${rate}%`;
 
-            document.getElementById('progressText').textContent = `${completed} de ${total} concluídas`;
+            document.getElementById('progressText').textContent = `${todayTasks} tarefa(s)`;
+            document.getElementById('doneCountSub').textContent = `${completed} ✓`;
             document.getElementById('progressBar').style.width = `${rate}%`;
+
+            const lateAlertText = document.getElementById('lateAlertText');
+            if (lateAlertText) lateAlertText.textContent = `${pending} tarefa(s) pendente(s) ou atrasada(s)`;
+
+            const focusContainer = document.getElementById('dashboardFocusContainer');
+            const focusItems = tasks.filter(t => t.status !== 'done').slice(0, 3);
+            if (focusContainer) {
+                if (focusItems.length === 0) {
+                    focusContainer.innerHTML = `<p class="text-xs text-slate-500 py-3">Tudo em dia por aqui! 🎉</p>`;
+                } else {
+                    focusContainer.innerHTML = focusItems.map((t, i) => `
+                        <div onclick="openModal('${t.id}')" class="flex items-center justify-between p-2 rounded-lg bg-slate-950/60 border border-slate-800 cursor-pointer hover:border-slate-700 transition">
+                            <div class="flex items-center gap-2.5">
+                                <span class="w-6 h-6 rounded-md bg-blue-900/60 border border-blue-500/30 text-blue-400 font-extrabold text-[11px] grid place-items-center">${i + 1}</span>
+                                <div>
+                                    <h4 class="text-xs font-semibold text-slate-200">${escapeHtml(t.title)}</h4>
+                                    <small class="text-[10px] text-slate-500">${escapeHtml(t.priority)} prioridade · ${escapeHtml(t.category)}</small>
+                                </div>
+                            </div>
+                            <span class="text-[10px] text-slate-400">Hoje ›</span>
+                        </div>
+                    `).join('');
+                }
+            }
+
+            const donutTotalCount = document.getElementById('donutTotalCount');
+            if (donutTotalCount) donutTotalCount.textContent = total;
+
+            const countsCat = { Trabalho: 0, Pessoal: 0, Estudos: 0, Outros: 0 };
+            tasks.forEach(t => {
+                const cat = t.category || 'Outros';
+                if (countsCat[cat] !== undefined) countsCat[cat]++;
+                else countsCat.Outros++;
+            });
+            if (document.getElementById('catCountTrabalho')) document.getElementById('catCountTrabalho').textContent = countsCat.Trabalho;
+            if (document.getElementById('catCountPessoal')) document.getElementById('catCountPessoal').textContent = countsCat.Pessoal;
+            if (document.getElementById('catCountEstudos')) document.getElementById('catCountEstudos').textContent = countsCat.Estudos;
+            if (document.getElementById('catCountOutros')) document.getElementById('catCountOutros').textContent = countsCat.Outros;
 
             const dashboardRecentList = document.getElementById('dashboardRecentList');
             const recent = [...tasks]
@@ -695,47 +1890,65 @@
                 .sort((a, b) => (a.dueDate || '9999') > (b.dueDate || '9999') ? 1 : -1)
                 .slice(0, 4);
 
-            if (recent.length === 0) {
-                dashboardRecentList.innerHTML = `<p class="text-sm text-slate-500 py-2">Nenhuma tarefa pendente para exibição.</p>`;
-            } else {
-                dashboardRecentList.innerHTML = recent.map(t => `
-                    <div class="flex items-center justify-between p-3 bg-slate-900/60 rounded-xl border border-slate-700/40">
-                        <div class="flex items-center gap-3">
-                            <button onclick="toggleTaskComplete('${t.id}')" class="text-slate-500 hover:text-emerald-400 transition">
-                                <i data-lucide="circle" class="w-5 h-5"></i>
-                            </button>
-                            <div>
-                                <h4 class="text-sm font-medium text-slate-200">${escapeHtml(t.title)}</h4>
-                                <span class="text-xs text-slate-400">${t.dueDate ? 'Vence: ' + t.dueDate : 'Sem data'} • ${t.category}</span>
+            if (dashboardRecentList) {
+                if (recent.length === 0) {
+                    dashboardRecentList.innerHTML = `<p class="text-xs text-slate-500 py-2">Nenhuma tarefa marcada para hoje.</p>`;
+                } else {
+                    dashboardRecentList.innerHTML = recent.map(t => `
+                        <div class="flex items-center justify-between p-2 bg-slate-950/60 rounded-lg border border-slate-800 hover:border-slate-700 transition">
+                            <div class="flex items-center gap-2.5">
+                                <button onclick="toggleTaskComplete('${t.id}')" class="text-blue-400 hover:text-emerald-400 transition">
+                                    <i data-lucide="play" class="w-3.5 h-3.5 fill-blue-400"></i>
+                                </button>
+                                <div>
+                                    <h4 class="text-xs font-semibold text-slate-200">${escapeHtml(t.title)}</h4>
+                                    <span class="text-[10px] text-slate-500">${escapeHtml(t.category)} • ${escapeHtml(t.dueDate) || 'Sem data'}</span>
+                                </div>
                             </div>
+                            ${getPriorityBadge(t.priority)}
                         </div>
-                        ${getPriorityBadge(t.priority)}
-                    </div>
-                `).join('');
+                    `).join('');
+                }
             }
         }
 
         function renderTaskList() {
             const container = document.getElementById('tasksList');
+            if (!container) return;
             const search = document.getElementById('filterSearch').value.toLowerCase();
             const category = document.getElementById('filterCategory').value;
             const priority = document.getElementById('filterPriority').value;
             const status = document.getElementById('filterStatus').value;
+            const todayStr = getLocalDateString();
 
             const filtered = tasks.filter(t => {
                 const matchesSearch = t.title.toLowerCase().includes(search) || (t.description && t.description.toLowerCase().includes(search));
                 const matchesCategory = category === 'all' || t.category === category;
                 const matchesPriority = priority === 'all' || t.priority === priority;
-                const matchesStatus = status === 'all' || t.status === status;
+                
+                let matchesStatus = true;
+                if (status === 'no_date') {
+                    matchesStatus = !t.dueDate || t.dueDate.trim() === '';
+                } else if (status !== 'all') {
+                    matchesStatus = t.status === status;
+                }
 
-                return matchesSearch && matchesCategory && matchesPriority && matchesStatus;
+                // ETAPA 8 ATALHOS LÓGICA RÍGIDA
+                let matchesShortcut = true;
+                if (currentFilterMode === 'today') {
+                    matchesShortcut = t.dueDate === todayStr;
+                } else if (currentFilterMode === 'late') {
+                    matchesShortcut = t.status !== 'done' && t.dueDate && t.dueDate < todayStr;
+                }
+
+                return matchesSearch && matchesCategory && matchesPriority && matchesStatus && matchesShortcut;
             });
 
             if (filtered.length === 0) {
                 container.innerHTML = `
-                    <div class="text-center py-12 bg-slate-800/40 border border-slate-700/40 rounded-2xl">
-                        <i data-lucide="inbox" class="w-10 h-10 mx-auto text-slate-500 mb-2"></i>
-                        <p class="text-slate-400 font-medium">Nenhuma tarefa encontrada com os filtros selecionados.</p>
+                    <div class="text-center py-10 bg-slate-900/60 border border-slate-800 rounded-xl">
+                        <i data-lucide="inbox" class="w-8 h-8 mx-auto text-slate-600 mb-2"></i>
+                        <p class="text-slate-400 text-xs font-medium">Nenhuma tarefa encontrada com os filtros selecionados.</p>
                     </div>
                 `;
                 return;
@@ -744,26 +1957,26 @@
             container.innerHTML = filtered.map(t => {
                 const isDone = t.status === 'done';
                 return `
-                    <div class="bg-slate-800/80 border border-slate-700/60 rounded-2xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 transition hover:border-slate-600">
+                    <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-3 flex flex-col md:flex-row md:items-center justify-between gap-3 transition hover:border-slate-700">
                         <div class="flex items-start gap-3">
                             <button onclick="toggleTaskComplete('${t.id}')" class="mt-0.5 ${isDone ? 'text-emerald-400' : 'text-slate-500 hover:text-slate-300'} transition">
-                                <i data-lucide="${isDone ? 'check-circle-2' : 'circle'}" class="w-5 h-5"></i>
+                                <i data-lucide="${isDone ? 'check-circle' : 'circle'}" class="w-5 h-5"></i>
                             </button>
                             <div>
-                                <h3 class="font-semibold text-slate-100 ${isDone ? 'line-through text-slate-500' : ''}">${escapeHtml(t.title)}</h3>
-                                ${t.description ? `<p class="text-xs text-slate-400 mt-1 line-clamp-2">${escapeHtml(t.description)}</p>` : ''}
-                                <div class="flex flex-wrap items-center gap-2 mt-2">
-                                    <span class="text-xs px-2 py-0.5 rounded-md bg-slate-700 text-slate-300 font-medium">${t.category}</span>
+                                <h3 class="font-semibold text-xs text-slate-100 ${isDone ? 'line-through text-slate-500' : ''}">${escapeHtml(t.title)}</h3>
+                                ${t.description ? `<p class="text-[11px] text-slate-400 mt-0.5 line-clamp-2">${escapeHtml(t.description)}</p>` : ''}
+                                <div class="flex flex-wrap items-center gap-2 mt-1.5">
+                                    <span class="text-[10px] px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 font-medium">${escapeHtml(t.category)}</span>
                                     ${getPriorityBadge(t.priority)}
-                                    ${t.dueDate ? `<span class="text-xs text-slate-400 flex items-center gap-1"><i data-lucide="calendar" class="w-3 h-3"></i> ${t.dueDate}</span>` : ''}
+                                    ${t.dueDate ? `<span class="text-[10px] text-slate-400 flex items-center gap-1"><i data-lucide="calendar" class="w-3 h-3"></i> ${escapeHtml(t.dueDate)}</span>` : '<span class="text-[10px] text-slate-500 italic">Sem data</span>'}
                                 </div>
                             </div>
                         </div>
-                        <div class="flex items-center gap-2 self-end md:self-center border-t md:border-t-0 pt-2 md:pt-0 border-slate-700/60 w-full md:w-auto justify-end">
-                            <button onclick="openModal('${t.id}')" class="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-700/50 transition">
+                        <div class="flex items-center gap-1.5 self-end md:self-center border-t md:border-t-0 pt-2 md:pt-0 border-slate-800 w-full md:w-auto justify-end">
+                            <button onclick="openModal('${t.id}')" class="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition">
                                 <i data-lucide="edit-3" class="w-4 h-4"></i>
                             </button>
-                            <button onclick="deleteTask('${t.id}')" class="p-2 text-slate-400 hover:text-rose-400 rounded-lg hover:bg-slate-700/50 transition">
+                            <button onclick="deleteTask('${t.id}')" class="p-1.5 text-slate-400 hover:text-rose-400 rounded-lg hover:bg-slate-800 transition">
                                 <i data-lucide="trash-2" class="w-4 h-4"></i>
                             </button>
                         </div>
@@ -779,6 +1992,7 @@
                 done: document.getElementById('kanban-done')
             };
 
+            if (!columns.todo) return;
             Object.values(columns).forEach(col => col.innerHTML = '');
 
             const counts = { todo: 0, in_progress: 0, done: 0 };
@@ -787,19 +2001,19 @@
                 if (counts[t.status] !== undefined) counts[t.status]++;
 
                 const card = document.createElement('div');
-                card.className = 'bg-slate-900 border border-slate-700/80 rounded-xl p-3.5 space-y-2 cursor-grab active:cursor-grabbing shadow-sm hover:border-slate-600 transition';
+                card.className = 'bg-slate-950 border border-slate-800 rounded-lg p-3 space-y-1.5 cursor-grab active:cursor-grabbing shadow-sm hover:border-slate-700 transition';
                 card.draggable = true;
                 card.dataset.id = t.id;
 
                 card.innerHTML = `
                     <div class="flex justify-between items-start gap-2">
-                        <h4 class="font-medium text-sm text-slate-100 leading-snug">${escapeHtml(t.title)}</h4>
+                        <h4 class="font-semibold text-xs text-slate-100 leading-snug">${escapeHtml(t.title)}</h4>
                         ${getPriorityBadge(t.priority)}
                     </div>
-                    ${t.description ? `<p class="text-xs text-slate-400 line-clamp-2">${escapeHtml(t.description)}</p>` : ''}
-                    <div class="flex justify-between items-center text-xs text-slate-400 pt-2 border-t border-slate-800">
-                        <span class="bg-slate-800 px-2 py-0.5 rounded text-[11px] text-slate-300">${t.category}</span>
-                        ${t.dueDate ? `<span>${t.dueDate}</span>` : ''}
+                    ${t.description ? `<p class="text-[11px] text-slate-400 line-clamp-2">${escapeHtml(t.description)}</p>` : ''}
+                    <div class="flex justify-between items-center text-[10px] text-slate-400 pt-1.5 border-t border-slate-900">
+                        <span class="bg-slate-900 px-1.5 py-0.5 rounded text-[10px] text-slate-300">${escapeHtml(t.category)}</span>
+                        ${t.dueDate ? `<span>${escapeHtml(t.dueDate)}</span>` : '<span class="italic text-slate-600">Sem data</span>'}
                     </div>
                 `;
 
@@ -818,9 +2032,9 @@
                 }
             });
 
-            document.getElementById('count-todo').textContent = counts.todo;
-            document.getElementById('count-in_progress').textContent = counts.in_progress;
-            document.getElementById('count-done').textContent = counts.done;
+            if (document.getElementById('count-todo')) document.getElementById('count-todo').textContent = counts.todo;
+            if (document.getElementById('count-in_progress')) document.getElementById('count-in_progress').textContent = counts.in_progress;
+            if (document.getElementById('count-done')) document.getElementById('count-done').textContent = counts.done;
         }
 
         document.querySelectorAll('.kanban-dropzone').forEach(zone => {
@@ -839,14 +2053,14 @@
                 const targetStatus = zone.dataset.status;
 
                 if (draggedTaskId && targetStatus) {
-                    tasks = tasks.map(t => t.id === draggedTaskId ? { ...t, status: targetStatus } : t);
-                    saveTasks();
+                    updateTaskStatusInFirestore(draggedTaskId, targetStatus);
                 }
             });
         });
 
         function escapeHtml(str) {
-            return str.replace(/[&<>"']/g, function(m) {
+            if (!str) return '';
+            return String(str).replace(/[&<>"']/g, function(m) {
                 return {
                     '&': '&amp;',
                     '<': '&lt;',
@@ -864,26 +2078,36 @@
             refreshIcons();
         }
 
-        document.getElementById('filterSearch').addEventListener('input', renderTaskList);
-        document.getElementById('filterCategory').addEventListener('change', renderTaskList);
-        document.getElementById('filterPriority').addEventListener('change', renderTaskList);
-        document.getElementById('filterStatus').addEventListener('change', renderTaskList);
+        const filterSearchInput = document.getElementById('filterSearch');
+        if (filterSearchInput) filterSearchInput.addEventListener('input', renderTaskList);
+        
+        const filterCategorySelect = document.getElementById('filterCategory');
+        if (filterCategorySelect) filterCategorySelect.addEventListener('change', renderTaskList);
 
-        // Initial Setup
+        const filterPrioritySelect = document.getElementById('filterPriority');
+        if (filterPrioritySelect) filterPrioritySelect.addEventListener('change', renderTaskList);
+
+        const filterStatusSelect = document.getElementById('filterStatus');
+        if (filterStatusSelect) filterStatusSelect.addEventListener('change', renderTaskList);
+
         document.addEventListener('DOMContentLoaded', () => {
-            document.querySelector('[data-view="dashboard"]').classList.add('bg-blue-600/20', 'text-blue-400', 'border', 'border-blue-500/30');
+            const initialNavBtn = document.querySelector('[data-view="dashboard"]');
+            if (initialNavBtn) {
+                initialNavBtn.classList.add('bg-blue-600', 'text-white');
+            }
             
-            // Show migration banner if data was auto-migrated from legacy keys
             if (dataMigratedFromOldKey) {
                 const banner = document.getElementById('migrationBanner');
-                banner.classList.remove('hidden');
-                document.getElementById('btnCloseBanner').addEventListener('click', () => {
-                    banner.classList.add('hidden');
-                });
-                saveTasks(); // Auto-save into primary key
-            } else {
-                saveTasks();
+                if (banner) {
+                    banner.classList.remove('hidden');
+                    const btnClose = document.getElementById('btnCloseBanner');
+                    if (btnClose) btnClose.addEventListener('click', () => banner.classList.add('hidden'));
+                }
             }
+
+            updatePomoDisplay();
+            updateAuthUIState('LOADING');
+            initAuthListener();
         });
     </script>
 </body>
