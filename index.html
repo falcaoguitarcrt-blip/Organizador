@@ -90,6 +90,15 @@
             border: 2px dashed #1d72f3;
         }
 
+        /* Folder sidebar drag & drop */
+        .folder-sidebar-item { transition: opacity .15s ease, transform .15s ease, background-color .15s ease; }
+        .folder-sidebar-item.folder-dragging { opacity: .45; transform: scale(.98); }
+        .folder-sidebar-item.folder-drag-over { background: rgba(37, 99, 235, .14); outline: 1px solid rgba(59, 130, 246, .45); }
+        .folder-drag-handle { cursor: grab; }
+        .folder-drag-handle:active { cursor: grabbing; }
+        .sidebar-folders-collapsed { display: none; }
+        .folder-sidebar-empty { padding: .35rem .65rem; font-size: 10px; color: rgb(100 116 139); }
+
         /* Enhanced Glassmorphic Card Borders */
         .glass-card {
             background: rgba(10, 24, 44, 0.85);
@@ -240,10 +249,15 @@
                         <i data-lucide="check-circle-2" class="w-4 h-4"></i>
                         <span>Tarefas</span>
                     </button>
-                    <button data-view="folders" class="nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-semibold rounded-xl text-slate-300 hover:bg-slate-800/60 hover:text-white transition">
-                        <i data-lucide="folder-plus" class="w-4 h-4"></i>
-                        <span>Pastas</span>
-                    </button>
+                    <div class="flex items-center gap-1">
+                        <button data-view="folders" class="nav-btn flex-1 w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-semibold rounded-xl text-slate-300 hover:bg-slate-800/60 hover:text-white transition">
+                            <i data-lucide="folder-plus" class="w-4 h-4"></i>
+                            <span>Pastas</span>
+                        </button>
+                        <button type="button" id="toggleSidebarFolders" class="shrink-0 p-2 text-slate-500 hover:text-white hover:bg-slate-800/60 rounded-lg transition" title="Expandir/recolher pastas" aria-expanded="true">
+                            <i data-lucide="chevron-up" class="w-4 h-4"></i>
+                        </button>
+                    </div>
                     <button data-view="dashboard" class="nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-semibold rounded-xl text-slate-300 hover:bg-slate-800/60 hover:text-white transition" onclick="showReportsPanel && showReportsPanel()">
                         <i data-lucide="bar-chart-3" class="w-4 h-4"></i>
                         <span>Relatórios</span>
@@ -681,15 +695,28 @@
             <form id="folderForm" class="p-4 space-y-4">
                 <input type="hidden" id="folderId">
                 <div><label class="block text-[11px] font-semibold text-slate-400 mb-1">Nome *</label><input id="folderName" required maxlength="60" class="w-full bg-slate-950 border border-slate-800 text-slate-100 rounded-lg p-2.5 text-xs outline-none focus:border-blue-500" placeholder="Ex: Ministério"></div>
-                <div><label class="block text-[11px] font-semibold text-slate-400 mb-2">Ícone</label><div id="folderIconPicker" class="grid grid-cols-8 gap-2">
-                    <button type="button" data-folder-icon="folder" class="folder-icon-option active p-2 rounded-lg bg-blue-600/20 border border-blue-500/60 text-blue-300"><i data-lucide="folder" class="w-4 h-4 mx-auto"></i></button>
-                    <button type="button" data-folder-icon="briefcase" class="folder-icon-option p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-400"><i data-lucide="briefcase" class="w-4 h-4 mx-auto"></i></button>
-                    <button type="button" data-folder-icon="home" class="folder-icon-option p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-400"><i data-lucide="home" class="w-4 h-4 mx-auto"></i></button>
-                    <button type="button" data-folder-icon="heart" class="folder-icon-option p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-400"><i data-lucide="heart" class="w-4 h-4 mx-auto"></i></button>
-                    <button type="button" data-folder-icon="book-open" class="folder-icon-option p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-400"><i data-lucide="book-open" class="w-4 h-4 mx-auto"></i></button>
-                    <button type="button" data-folder-icon="church" class="folder-icon-option p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-400"><i data-lucide="church" class="w-4 h-4 mx-auto"></i></button>
-                    <button type="button" data-folder-icon="star" class="folder-icon-option p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-400"><i data-lucide="star" class="w-4 h-4 mx-auto"></i></button>
-                    <button type="button" data-folder-icon="target" class="folder-icon-option p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-400"><i data-lucide="target" class="w-4 h-4 mx-auto"></i></button>
+                <div><label class="block text-[11px] font-semibold text-slate-400 mb-2">Ícone da pasta</label><div id="folderIconPicker" class="grid grid-cols-8 gap-2">
+                    <button type="button" data-folder-icon="folder" title="Pasta" class="folder-icon-option active p-2 rounded-lg bg-blue-600/20 border border-blue-500/60 text-blue-300"><i data-lucide="folder" class="w-4 h-4 mx-auto"></i></button>
+                    <button type="button" data-folder-icon="briefcase" title="Trabalho" class="folder-icon-option p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-400"><i data-lucide="briefcase" class="w-4 h-4 mx-auto"></i></button>
+                    <button type="button" data-folder-icon="home" title="Casa" class="folder-icon-option p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-400"><i data-lucide="home" class="w-4 h-4 mx-auto"></i></button>
+                    <button type="button" data-folder-icon="heart" title="Pessoal" class="folder-icon-option p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-400"><i data-lucide="heart" class="w-4 h-4 mx-auto"></i></button>
+                    <button type="button" data-folder-icon="book-open" title="Estudos" class="folder-icon-option p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-400"><i data-lucide="book-open" class="w-4 h-4 mx-auto"></i></button>
+                    <button type="button" data-folder-icon="church" title="Igreja" class="folder-icon-option p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-400"><i data-lucide="church" class="w-4 h-4 mx-auto"></i></button>
+                    <button type="button" data-folder-icon="star" title="Favoritos" class="folder-icon-option p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-400"><i data-lucide="star" class="w-4 h-4 mx-auto"></i></button>
+                    <button type="button" data-folder-icon="target" title="Metas" class="folder-icon-option p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-400"><i data-lucide="target" class="w-4 h-4 mx-auto"></i></button>
+                    <button type="button" data-folder-icon="graduation-cap" title="Academia" class="folder-icon-option p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-400"><i data-lucide="graduation-cap" class="w-4 h-4 mx-auto"></i></button>
+                    <button type="button" data-folder-icon="users" title="Pessoas" class="folder-icon-option p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-400"><i data-lucide="users" class="w-4 h-4 mx-auto"></i></button>
+                    <button type="button" data-folder-icon="calendar-days" title="Agenda" class="folder-icon-option p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-400"><i data-lucide="calendar-days" class="w-4 h-4 mx-auto"></i></button>
+                    <button type="button" data-folder-icon="clipboard-list" title="Lista" class="folder-icon-option p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-400"><i data-lucide="clipboard-list" class="w-4 h-4 mx-auto"></i></button>
+                    <button type="button" data-folder-icon="wrench" title="Manutenção" class="folder-icon-option p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-400"><i data-lucide="wrench" class="w-4 h-4 mx-auto"></i></button>
+                    <button type="button" data-folder-icon="file-text" title="Documentos" class="folder-icon-option p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-400"><i data-lucide="file-text" class="w-4 h-4 mx-auto"></i></button>
+                    <button type="button" data-folder-icon="music" title="Música" class="folder-icon-option p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-400"><i data-lucide="music" class="w-4 h-4 mx-auto"></i></button>
+                    <button type="button" data-folder-icon="shopping-bag" title="Compras" class="folder-icon-option p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-400"><i data-lucide="shopping-bag" class="w-4 h-4 mx-auto"></i></button>
+                    <button type="button" data-folder-icon="car" title="Carro" class="folder-icon-option p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-400"><i data-lucide="car" class="w-4 h-4 mx-auto"></i></button>
+                    <button type="button" data-folder-icon="plane" title="Viagens" class="folder-icon-option p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-400"><i data-lucide="plane" class="w-4 h-4 mx-auto"></i></button>
+                    <button type="button" data-folder-icon="wallet" title="Finanças" class="folder-icon-option p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-400"><i data-lucide="wallet" class="w-4 h-4 mx-auto"></i></button>
+                    <button type="button" data-folder-icon="dumbbell" title="Saúde e treino" class="folder-icon-option p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-400"><i data-lucide="dumbbell" class="w-4 h-4 mx-auto"></i></button>
+                    <button type="button" data-folder-icon="coffee" title="Rotina" class="folder-icon-option p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-400"><i data-lucide="coffee" class="w-4 h-4 mx-auto"></i></button>
                 </div></div>
                 <div class="pt-3 border-t border-slate-800 flex justify-end gap-2"><button type="button" id="btnCancelFolderModal" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs">Cancelar</button><button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-semibold">Salvar pasta</button></div>
             </form>
@@ -1008,9 +1035,9 @@
             if (!db || !uid) return;
             if (folderUnsubscribe) folderUnsubscribe();
             folderUnsubscribe = db.collection('users').doc(uid).collection('folders')
-                .orderBy('name')
                 .onSnapshot((snap) => {
                     folders = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    sortFoldersForDisplay();
                     renderFolders();
                     populateTaskFolderSelect();
                 }, (err) => {
@@ -1022,7 +1049,7 @@
         }
 
         function folderIconHtml(icon, cls='w-4 h-4') {
-            const allowed = ['folder','briefcase','home','heart','book-open','church','star','target'];
+            const allowed = ['folder','briefcase','home','heart','book-open','church','star','target','graduation-cap','users','calendar-days','clipboard-list','wrench','file-text','music','shopping-bag','car','plane','wallet','dumbbell','coffee'];
             const safeIcon = allowed.includes(icon) ? icon : 'folder';
             return `<i data-lucide="${safeIcon}" class="${cls}"></i>`;
         }
@@ -1070,7 +1097,10 @@
             const name = document.getElementById('folderName').value.trim();
             if (!name) return;
             const existing = folders.find(f => f.id === id);
-            const payload = { name, icon: selectedFolderIcon, updatedAt: firebase.firestore.FieldValue.serverTimestamp(), createdAt: existing?.createdAt || firebase.firestore.FieldValue.serverTimestamp() };
+            const nextOrder = existing && Number.isFinite(Number(existing.order))
+                ? Number(existing.order)
+                : (folders.reduce((max, f) => Math.max(max, Number.isFinite(Number(f.order)) ? Number(f.order) : -1), -1) + 1);
+            const payload = { name, icon: selectedFolderIcon, order: nextOrder, updatedAt: firebase.firestore.FieldValue.serverTimestamp(), createdAt: existing?.createdAt || firebase.firestore.FieldValue.serverTimestamp() };
             try {
                 await db.collection('users').doc(currentUserState.uid).collection('folders').doc(id).set(payload, { merge: true });
                 closeFolderModal();
@@ -1155,11 +1185,135 @@
             return tasks.filter(task => taskBelongsToFolder(task, folder));
         }
 
+        function sortFoldersForDisplay() {
+            folders.sort((a, b) => {
+                const ao = Number.isFinite(Number(a.order)) ? Number(a.order) : Number.MAX_SAFE_INTEGER;
+                const bo = Number.isFinite(Number(b.order)) ? Number(b.order) : Number.MAX_SAFE_INTEGER;
+                if (ao !== bo) return ao - bo;
+                return String(a.name || '').localeCompare(String(b.name || ''), 'pt-BR', { sensitivity: 'base' });
+            });
+        }
+
+        function setSidebarFoldersExpanded(expanded) {
+            const list = document.getElementById('sidebarFolders');
+            const toggle = document.getElementById('toggleSidebarFolders');
+            if (!list || !toggle) return;
+            list.classList.toggle('sidebar-folders-collapsed', !expanded);
+            toggle.setAttribute('aria-expanded', String(expanded));
+            toggle.title = expanded ? 'Recolher pastas' : 'Expandir pastas';
+            toggle.innerHTML = `<i data-lucide="${expanded ? 'chevron-up' : 'chevron-down'}" class="w-4 h-4"></i>`;
+            try { localStorage.setItem('agenda_sidebar_folders_expanded', expanded ? '1' : '0'); } catch (e) {}
+            refreshIcons();
+        }
+
+        function toggleSidebarFolders() {
+            const list = document.getElementById('sidebarFolders');
+            const expanded = !(list && !list.classList.contains('sidebar-folders-collapsed'));
+            setSidebarFoldersExpanded(expanded);
+        }
+
+        let draggedFolderId = null;
+
         function renderSidebarFolders() {
             const el = document.getElementById('sidebarFolders');
             if (!el) return;
-            el.innerHTML = folders.map(f => `<button type="button" onclick="openFolderFromSidebar('${f.id}')" class="w-full flex items-center gap-2 px-2.5 py-2 text-[11px] text-slate-400 hover:text-white hover:bg-slate-800/60 rounded-lg truncate"><span class="text-blue-400">${folderIconHtml(f.icon, 'w-3.5 h-3.5')}</span><span class="truncate">${escapeHtml(f.name || 'Sem nome')}</span></button>`).join('');
+
+            sortFoldersForDisplay();
+
+            if (!folders.length) {
+                el.innerHTML = '<div class="folder-sidebar-empty">Nenhuma pasta criada</div>';
+                refreshIcons();
+                return;
+            }
+
+            el.innerHTML = folders.map(f => `
+                <div class="folder-sidebar-item group flex items-center gap-1 rounded-lg"
+                     data-folder-id="${escapeHtml(f.id)}"
+                     draggable="true"
+                     ondragstart="handleFolderDragStart(event, '${f.id}')"
+                     ondragover="handleFolderDragOver(event, '${f.id}')"
+                     ondragleave="handleFolderDragLeave(event)"
+                     ondrop="handleFolderDrop(event, '${f.id}')"
+                     ondragend="handleFolderDragEnd(event)">
+                    <span class="folder-drag-handle shrink-0 p-1 text-slate-600 group-hover:text-slate-400" title="Arraste para reordenar" aria-label="Arrastar pasta">
+                        <i data-lucide="grip-vertical" class="w-3 h-3"></i>
+                    </span>
+                    <button type="button"
+                            onclick="openFolderFromSidebar('${f.id}')"
+                            class="min-w-0 flex-1 flex items-center gap-2 px-1.5 py-2 text-[11px] text-slate-400 hover:text-white hover:bg-slate-800/60 rounded-lg truncate text-left"
+                            title="${escapeHtml(f.name || 'Sem nome')}">
+                        <span class="text-blue-400 shrink-0">${folderIconHtml(f.icon, 'w-3.5 h-3.5')}</span>
+                        <span class="truncate">${escapeHtml(f.name || 'Sem nome')}</span>
+                    </button>
+                </div>
+            `).join('');
+
             refreshIcons();
+        }
+
+        function handleFolderDragStart(event, folderId) {
+            draggedFolderId = folderId;
+            event.dataTransfer.effectAllowed = 'move';
+            event.dataTransfer.setData('text/plain', folderId);
+            const row = event.currentTarget;
+            row.classList.add('folder-dragging');
+        }
+
+        function handleFolderDragOver(event, targetFolderId) {
+            if (!draggedFolderId || draggedFolderId === targetFolderId) return;
+            event.preventDefault();
+            event.dataTransfer.dropEffect = 'move';
+            event.currentTarget.classList.add('folder-drag-over');
+        }
+
+        function handleFolderDragLeave(event) {
+            event.currentTarget.classList.remove('folder-drag-over');
+        }
+
+        async function handleFolderDrop(event, targetFolderId) {
+            event.preventDefault();
+            event.currentTarget.classList.remove('folder-drag-over');
+            const sourceId = draggedFolderId || event.dataTransfer.getData('text/plain');
+            draggedFolderId = null;
+            if (!sourceId || sourceId === targetFolderId) return;
+
+            const sourceIndex = folders.findIndex(f => f.id === sourceId);
+            const targetIndex = folders.findIndex(f => f.id === targetFolderId);
+            if (sourceIndex < 0 || targetIndex < 0) return;
+
+            const reordered = [...folders];
+            const [moved] = reordered.splice(sourceIndex, 1);
+            reordered.splice(targetIndex, 0, moved);
+            folders = reordered;
+            renderSidebarFolders();
+            renderFolders();
+
+            await persistFolderOrder();
+        }
+
+        function handleFolderDragEnd(event) {
+            draggedFolderId = null;
+            document.querySelectorAll('.folder-sidebar-item').forEach(el => {
+                el.classList.remove('folder-dragging', 'folder-drag-over');
+            });
+        }
+
+        async function persistFolderOrder() {
+            if (!currentUserState || !db || !folders.length) return;
+            try {
+                const batch = db.batch();
+                folders.forEach((folder, index) => {
+                    const ref = db.collection('users').doc(currentUserState.uid).collection('folders').doc(folder.id);
+                    batch.set(ref, {
+                        order: index,
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    }, { merge: true });
+                });
+                await batch.commit();
+            } catch (err) {
+                console.error('[Folder Order Error]', err);
+                alert('A ordem foi aplicada visualmente, mas não foi possível salvá-la no Firebase.');
+            }
         }
 
         function openFolderFromSidebar(folderId) {
@@ -2508,6 +2662,7 @@
             btn.addEventListener('click', () => setTaskPeriod(btn.dataset.taskPeriod || 'all'));
         });
 
+        document.getElementById('toggleSidebarFolders')?.addEventListener('click', toggleSidebarFolders);
         document.getElementById('btnNewFolder')?.addEventListener('click', () => openFolderModal());
         document.getElementById('btnCloseFolderModal')?.addEventListener('click', closeFolderModal);
         document.getElementById('btnCancelFolderModal')?.addEventListener('click', closeFolderModal);
@@ -2523,6 +2678,13 @@
         }));
 
         document.addEventListener('DOMContentLoaded', () => {
+            try {
+                const savedExpanded = localStorage.getItem('agenda_sidebar_folders_expanded');
+                setSidebarFoldersExpanded(savedExpanded !== '0');
+            } catch (e) {
+                setSidebarFoldersExpanded(true);
+            }
+
             const initialNavBtn = document.querySelector('[data-view="dashboard"]');
             if (initialNavBtn) {
                 initialNavBtn.classList.add('bg-blue-600', 'text-white');
