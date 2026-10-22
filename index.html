@@ -137,43 +137,7 @@
             display: inline-block;
             animation: pulseDot 2s infinite;
         }
-    
-/* ===== Provérbios do Dia ===== */
-.proverbios-day-card {
-    background: linear-gradient(135deg, rgba(10, 25, 48, .96), rgba(8, 22, 40, .94));
-    border: 1px solid rgba(96, 165, 250, .28);
-}
-.proverbios-preview {
-    display: -webkit-box;
-    -webkit-line-clamp: 4;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-}
-.proverbios-modal-backdrop {
-    position: fixed;
-    inset: 0;
-    z-index: 100;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 1rem;
-    background: rgba(2, 6, 23, .78);
-    backdrop-filter: blur(8px);
-}
-.proverbios-modal-panel {
-    width: min(820px, 100%);
-    max-height: 88vh;
-    overflow: auto;
-    background: #081628;
-    border: 1px solid rgba(96, 165, 250, .35);
-    border-radius: 1.25rem;
-    box-shadow: 0 25px 80px rgba(0,0,0,.45);
-}
-.proverbios-verse {
-    line-height: 1.8;
-}
-
-</style>
+    </style>
 </head>
 <body class="min-h-screen flex flex-col p-3 md:p-6 antialiased selection:bg-blue-600 selection:text-white">
 
@@ -434,53 +398,7 @@
                     <!-- 1. DASHBOARD / VISÃO GERAL -->
                     <section id="view-dashboard" class="view-content space-y-4">
                         
-                        
-<!-- Provérbios do Dia -->
-<section id="proverbiosDayCard" class="proverbios-day-card rounded-2xl p-5 shadow-inner">
-    <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-        <div class="flex items-start gap-3">
-            <div class="w-11 h-11 rounded-xl bg-amber-500/15 text-amber-300 border border-amber-400/20 grid place-items-center shrink-0">
-                <i data-lucide="book-open" class="w-5 h-5"></i>
-            </div>
-            <div>
-                <p class="text-[10px] uppercase tracking-[0.18em] text-amber-300/80 font-black">Palavra do dia</p>
-                <h2 id="proverbiosDayTitle" class="text-lg font-black text-white mt-0.5">Provérbios do Dia</h2>
-                <p id="proverbiosDayMeta" class="text-[11px] text-slate-400 mt-1">Carregando...</p>
-            </div>
-        </div>
-        <button id="btnProverbiosMore" type="button"
-                class="self-start px-3 py-2 rounded-lg bg-blue-600/20 border border-blue-500/30 text-blue-300 hover:bg-blue-600/30 text-xs font-bold transition">
-            Ver mais
-        </button>
-    </div>
-
-    <div id="proverbiosDayPreview" class="proverbios-preview mt-4 text-sm text-slate-200 leading-7">
-        Carregando o capítulo de hoje...
-    </div>
-
-    <div id="proverbiosDayStatus" class="mt-3 text-[10px] text-slate-500"></div>
-</section>
-
-<!-- Modal do capítulo completo -->
-<div id="proverbiosModal" class="hidden proverbios-modal-backdrop">
-    <div class="proverbios-modal-panel">
-        <div class="sticky top-0 z-10 bg-[#081628]/95 backdrop-blur border-b border-slate-800 p-4 flex items-start justify-between gap-4">
-            <div>
-                <p class="text-[10px] uppercase tracking-[0.18em] text-amber-300/80 font-black">Leitura completa</p>
-                <h3 id="proverbiosModalTitle" class="text-xl font-black text-white mt-1">Provérbios</h3>
-                <p id="proverbiosModalMeta" class="text-xs text-slate-400 mt-1"></p>
-            </div>
-            <button id="btnCloseProverbios" type="button" class="w-9 h-9 rounded-lg bg-slate-900 border border-slate-700 text-slate-300 hover:text-white hover:border-slate-500 grid place-items-center">
-                <i data-lucide="x" class="w-4 h-4"></i>
-            </button>
-        </div>
-        <div id="proverbiosModalBody" class="p-5 md:p-7 text-slate-200 text-sm md:text-base proverbios-verse">
-            Carregando...
-        </div>
-    </div>
-</div>
-
-<!-- KPI Metrics Grid -->
+                        <!-- KPI Metrics Grid -->
                         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                             <div class="glass-card p-4 rounded-xl flex items-center justify-between cursor-pointer" onclick="filterShortcutLate()">
                                 <div class="flex items-center gap-3">
@@ -606,6 +524,17 @@
                             </div>
                         </div>
 
+                        <!-- Período das tarefas -->
+                        <div class="glass-card p-2 rounded-xl flex flex-wrap gap-1.5" id="taskPeriodFilters">
+                            <button type="button" data-task-period="all" class="task-period-btn px-3 py-1.5 rounded-lg text-[11px] font-semibold bg-blue-600 text-white">Todas</button>
+                            <button type="button" data-task-period="today" class="task-period-btn px-3 py-1.5 rounded-lg text-[11px] font-semibold text-slate-400 hover:text-white hover:bg-slate-800">Hoje</button>
+                            <button type="button" data-task-period="tomorrow" class="task-period-btn px-3 py-1.5 rounded-lg text-[11px] font-semibold text-slate-400 hover:text-white hover:bg-slate-800">Amanhã</button>
+                            <button type="button" data-task-period="week" class="task-period-btn px-3 py-1.5 rounded-lg text-[11px] font-semibold text-slate-400 hover:text-white hover:bg-slate-800">Esta semana</button>
+                            <button type="button" data-task-period="upcoming" class="task-period-btn px-3 py-1.5 rounded-lg text-[11px] font-semibold text-slate-400 hover:text-white hover:bg-slate-800">Próximas</button>
+                            <button type="button" data-task-period="late" class="task-period-btn px-3 py-1.5 rounded-lg text-[11px] font-semibold text-slate-400 hover:text-white hover:bg-slate-800">Atrasadas</button>
+                            <button type="button" data-task-period="no_date" class="task-period-btn px-3 py-1.5 rounded-lg text-[11px] font-semibold text-slate-400 hover:text-white hover:bg-slate-800">Sem data</button>
+                        </div>
+
                         <!-- Filters Bar -->
                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 glass-card p-3 rounded-xl">
                             <select id="filterCategory" class="bg-slate-950 border border-slate-800 text-slate-200 text-xs rounded-lg px-3 py-2 outline-none focus:border-blue-500">
@@ -631,6 +560,9 @@
                                 <option value="in_progress">Em Andamento</option>
                                 <option value="done">Concluído</option>
                                 <option value="no_date">Sem Data Definida</option>
+                            </select>
+                            <select id="filterFolder" class="bg-slate-950 border border-slate-800 text-slate-200 text-xs rounded-lg px-3 py-2 outline-none focus:border-blue-500">
+                                <option value="all">Todas as Pastas</option>
                             </select>
                         </div>
 
@@ -1765,7 +1697,6 @@
                     if (pomoSeconds > 0) {
                         pomoSeconds--;
                         updatePomoDisplay();
-
                     } else {
                         clearInterval(pomoInterval);
                         pomoIsRunning = false;
@@ -1891,6 +1822,12 @@
             currentFilterMode = 'all';
             highlightShortcutButtons(null);
             resetFilterSelects();
+            document.querySelectorAll('.task-period-btn').forEach(btn => {
+                const active = btn.dataset.taskPeriod === 'all';
+                btn.classList.toggle('bg-blue-600', active);
+                btn.classList.toggle('text-white', active);
+                btn.classList.toggle('text-slate-400', !active);
+            });
             renderTaskList();
         }
 
@@ -1898,6 +1835,7 @@
             document.getElementById('filterCategory').value = 'all';
             document.getElementById('filterPriority').value = 'all';
             document.getElementById('filterStatus').value = 'all';
+            if (document.getElementById('filterFolder')) document.getElementById('filterFolder').value = 'all';
         }
 
         function switchView(viewName) {
@@ -2322,6 +2260,49 @@
             }
         }
 
+        function getTaskPeriodRange(mode) {
+            const today = getLocalDateString();
+            const base = new Date(today + 'T00:00:00');
+            const toDateString = (date) => {
+                const y = date.getFullYear();
+                const m = String(date.getMonth() + 1).padStart(2, '0');
+                const d = String(date.getDate()).padStart(2, '0');
+                return `${y}-${m}-${d}`;
+            };
+            const addDays = (date, days) => {
+                const d = new Date(date);
+                d.setDate(d.getDate() + days);
+                return toDateString(d);
+            };
+            const dayOfWeek = base.getDay();
+            return {
+                today,
+                tomorrow: addDays(base, 1),
+                weekStart: addDays(base, -dayOfWeek),
+                weekEnd: addDays(base, 6 - dayOfWeek)
+            };
+        }
+
+        function refreshTaskFolderFilter() {
+            const select = document.getElementById('filterFolder');
+            if (!select) return;
+            const current = select.value || 'all';
+            select.innerHTML = '<option value="all">Todas as Pastas</option>' +
+                folders.map(f => `<option value="${escapeHtml(f.id)}">${escapeHtml(f.name || 'Sem nome')}</option>`).join('');
+            select.value = folders.some(f => f.id === current) ? current : 'all';
+        }
+
+        function setTaskPeriod(mode) {
+            currentFilterMode = mode;
+            document.querySelectorAll('.task-period-btn').forEach(btn => {
+                const active = btn.dataset.taskPeriod === mode;
+                btn.classList.toggle('bg-blue-600', active);
+                btn.classList.toggle('text-white', active);
+                btn.classList.toggle('text-slate-400', !active);
+            });
+            renderTaskList();
+        }
+
         function renderTaskList() {
             const container = document.getElementById('tasksList');
             if (!container) return;
@@ -2329,29 +2310,42 @@
             const category = document.getElementById('filterCategory').value;
             const priority = document.getElementById('filterPriority').value;
             const status = document.getElementById('filterStatus').value;
-            const todayStr = getLocalDateString();
+            const folderFilter = document.getElementById('filterFolder')?.value || 'all';
+            const range = getTaskPeriodRange(currentFilterMode);
 
             const filtered = tasks.filter(t => {
-                const matchesSearch = t.title.toLowerCase().includes(search) || (t.description && t.description.toLowerCase().includes(search));
+                const title = String(t.title || '').toLowerCase();
+                const description = String(t.description || '').toLowerCase();
+                const matchesSearch = title.includes(search) || description.includes(search);
                 const matchesCategory = category === 'all' || t.category === category;
                 const matchesPriority = priority === 'all' || t.priority === priority;
-                
+
                 let matchesStatus = true;
-                if (status === 'no_date') {
-                    matchesStatus = !t.dueDate || t.dueDate.trim() === '';
-                } else if (status !== 'all') {
-                    matchesStatus = t.status === status;
+                if (status !== 'all') {
+                    matchesStatus = status === 'no_date'
+                        ? !t.dueDate || String(t.dueDate).trim() === ''
+                        : t.status === status;
                 }
 
-                // ETAPA 8 ATALHOS LÓGICA RÍGIDA
-                let matchesShortcut = true;
+                const matchesFolder = folderFilter === 'all' || getTaskFolderId(t) === folderFilter;
+                const due = String(t.dueDate || '').trim();
+                let matchesPeriod = true;
+
                 if (currentFilterMode === 'today') {
-                    matchesShortcut = t.dueDate === todayStr;
+                    matchesPeriod = due === range.today;
+                } else if (currentFilterMode === 'tomorrow') {
+                    matchesPeriod = due === range.tomorrow;
+                } else if (currentFilterMode === 'week') {
+                    matchesPeriod = !!due && due >= range.weekStart && due <= range.weekEnd;
+                } else if (currentFilterMode === 'upcoming') {
+                    matchesPeriod = !!due && due > range.weekEnd;
                 } else if (currentFilterMode === 'late') {
-                    matchesShortcut = t.status !== 'done' && t.dueDate && t.dueDate < todayStr;
+                    matchesPeriod = !!due && due < range.today && t.status !== 'done';
+                } else if (currentFilterMode === 'no_date') {
+                    matchesPeriod = !due;
                 }
 
-                return matchesSearch && matchesCategory && matchesPriority && matchesStatus && matchesShortcut;
+                return matchesSearch && matchesCategory && matchesPriority && matchesStatus && matchesFolder && matchesPeriod;
             });
 
             if (filtered.length === 0) {
@@ -2377,6 +2371,10 @@
                                 ${t.description ? `<p class="text-[11px] text-slate-400 mt-0.5 line-clamp-2">${escapeHtml(t.description)}</p>` : ''}
                                 <div class="flex flex-wrap items-center gap-2 mt-1.5">
                                     <span class="text-[10px] px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 font-medium">${escapeHtml(t.category)}</span>
+                                    ${(() => {
+                                        const tf = folders.find(f => f.id === getTaskFolderId(t));
+                                        return tf ? `<span class="text-[10px] px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-300 font-medium flex items-center gap-1">${folderIconHtml(tf.icon,'w-3 h-3')} ${escapeHtml(tf.name || 'Pasta')}</span>` : '';
+                                    })()}
                                     ${getPriorityBadge(t.priority)}
                                     ${t.dueDate ? `<span class="text-[10px] text-slate-400 flex items-center gap-1"><i data-lucide="calendar" class="w-3 h-3"></i> ${escapeHtml(t.dueDate)}</span>` : '<span class="text-[10px] text-slate-500 italic">Sem data</span>'}
                                 </div>
@@ -2483,9 +2481,11 @@
 
         function render() {
             renderDashboard();
+            renderFolders();
+            refreshTaskFolderFilter();
             renderTaskList();
             renderKanban();
-            renderFolders();
+            renderFolderTasks();
             refreshIcons();
         }
 
@@ -2501,6 +2501,13 @@
         const filterStatusSelect = document.getElementById('filterStatus');
         if (filterStatusSelect) filterStatusSelect.addEventListener('change', renderTaskList);
 
+        const filterFolderSelect = document.getElementById('filterFolder');
+        if (filterFolderSelect) filterFolderSelect.addEventListener('change', renderTaskList);
+
+        document.querySelectorAll('.task-period-btn').forEach(btn => {
+            btn.addEventListener('click', () => setTaskPeriod(btn.dataset.taskPeriod || 'all'));
+        });
+
         document.getElementById('btnNewFolder')?.addEventListener('click', () => openFolderModal());
         document.getElementById('btnCloseFolderModal')?.addEventListener('click', closeFolderModal);
         document.getElementById('btnCancelFolderModal')?.addEventListener('click', closeFolderModal);
@@ -2515,142 +2522,7 @@
             });
         }));
 
-
-        // ===== Provérbios do Dia =====
-        // Dia 1 = Provérbios 1, dia 7 = Provérbios 7 ... dia 31 = Provérbios 31.
-        // A fonte utilizada é Almeida 1819 (Bíblia Livre), disponibilizada como texto de uso livre.
-        const PROVERBIOS_API_BASE = 'https://api.midvash.com/v1/almeida-livre/proverbs';
-        let proverbiosDayData = null;
-
-        function getProverbiosDayNumber(date = new Date()) {
-            return Math.min(Math.max(date.getDate(), 1), 31);
-        }
-
-        function normalizeBibleVerses(data) {
-            if (!data) return [];
-            if (Array.isArray(data.verses)) {
-                return data.verses.map((v, index) => {
-                    if (typeof v === 'string') return { number: index + 1, text: v };
-                    return {
-                        number: v.number || v.verse || index + 1,
-                        text: v.text || v.content || ''
-                    };
-                }).filter(v => v.text);
-            }
-            if (Array.isArray(data)) {
-                return data.map((v, index) => ({
-                    number: v.number || v.verse || index + 1,
-                    text: typeof v === 'string' ? v : (v.text || v.content || '')
-                })).filter(v => v.text);
-            }
-            if (typeof data.text === 'string' && data.text.trim()) {
-                return data.text.split(/\n+/).filter(Boolean).map((text, index) => ({
-                    number: index + 1,
-                    text: text.trim()
-                }));
-            }
-            return [];
-        }
-
-        function escapeBibleText(value) {
-            return escapeHtml(String(value || ''));
-        }
-
-        function renderProverbiosDay(data, chapter) {
-            const verses = normalizeBibleVerses(data);
-            const title = document.getElementById('proverbiosDayTitle');
-            const meta = document.getElementById('proverbiosDayMeta');
-            const preview = document.getElementById('proverbiosDayPreview');
-            const status = document.getElementById('proverbiosDayStatus');
-
-            if (!verses.length) {
-                if (title) title.textContent = `Provérbios ${chapter}`;
-                if (meta) meta.textContent = `Capítulo ${chapter} • Dia ${getProverbiosDayNumber()}`;
-                if (preview) preview.textContent = 'Não foi possível carregar o capítulo agora.';
-                if (status) status.textContent = 'Verifique sua conexão e tente novamente.';
-                return;
-            }
-
-            const previewVerses = verses.slice(0, 4);
-            if (title) title.textContent = `Provérbios ${chapter}`;
-            if (meta) meta.textContent = `Capítulo ${chapter} • Dia ${getProverbiosDayNumber()}`;
-            if (preview) {
-                preview.innerHTML = previewVerses.map(v =>
-                    `<span class="block mb-1"><strong class="text-amber-300 mr-1">${escapeBibleText(v.number)}</strong>${escapeBibleText(v.text)}</span>`
-                ).join('');
-            }
-
-            const copyright = data?.copyright || data?.meta?.copyright || 'Almeida 1819 (Bíblia Livre), uso livre.';
-            if (status) status.textContent = copyright.replace(/\n/g, ' ');
-
-            proverbiosDayData = {
-                chapter,
-                verses,
-                copyright
-            };
-        }
-
-        async function loadProverbiosDoDia() {
-            const chapter = getProverbiosDayNumber();
-            const preview = document.getElementById('proverbiosDayPreview');
-            const meta = document.getElementById('proverbiosDayMeta');
-
-            if (meta) meta.textContent = `Capítulo ${chapter} • Dia ${chapter}`;
-            if (preview) preview.textContent = `Carregando Provérbios ${chapter}...`;
-
-            try {
-                const response = await fetch(`${PROVERBIOS_API_BASE}/${chapter}`, {
-                    method: 'GET',
-                    headers: { 'Accept': 'application/json' },
-                    cache: 'force-cache'
-                });
-
-                if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-                const body = await response.json();
-                const data = body.data || body;
-                renderProverbiosDay(data, chapter);
-            } catch (error) {
-                console.error('[Provérbios do Dia]', error);
-                if (preview) {
-                    preview.textContent = 'O capítulo de hoje não pôde ser carregado neste momento.';
-                }
-                const status = document.getElementById('proverbiosDayStatus');
-                if (status) status.textContent = 'Tente novamente quando estiver conectado à internet.';
-            }
-        }
-
-        function openProverbiosModal() {
-            const modal = document.getElementById('proverbiosModal');
-            const body = document.getElementById('proverbiosModalBody');
-            const title = document.getElementById('proverbiosModalTitle');
-            const meta = document.getElementById('proverbiosModalMeta');
-
-            if (!modal || !body) return;
-
-            if (!proverbiosDayData?.verses?.length) {
-                body.innerHTML = '<p class="text-slate-400">O capítulo ainda não foi carregado.</p>';
-            } else {
-                const { chapter, verses, copyright } = proverbiosDayData;
-                if (title) title.textContent = `Provérbios ${chapter}`;
-                if (meta) meta.textContent = `Dia ${chapter} • ${copyright.replace(/\n/g, ' ')}`;
-                body.innerHTML = verses.map(v =>
-                    `<p class="mb-3"><strong class="text-amber-300 mr-2">${escapeBibleText(v.number)}</strong>${escapeBibleText(v.text)}</p>`
-                ).join('');
-            }
-
-            modal.classList.remove('hidden');
-            document.body.classList.add('overflow-hidden');
-            refreshIcons();
-        }
-
-        function closeProverbiosModal() {
-            const modal = document.getElementById('proverbiosModal');
-            if (modal) modal.classList.add('hidden');
-            document.body.classList.remove('overflow-hidden');
-        }
-
-                document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', () => {
             const initialNavBtn = document.querySelector('[data-view="dashboard"]');
             if (initialNavBtn) {
                 initialNavBtn.classList.add('bg-blue-600', 'text-white');
@@ -2666,15 +2538,6 @@
             }
 
             updatePomoDisplay();
-
-            // Provérbios do Dia
-            document.getElementById('btnProverbiosMore')?.addEventListener('click', openProverbiosModal);
-            document.getElementById('btnCloseProverbios')?.addEventListener('click', closeProverbiosModal);
-            document.getElementById('proverbiosModal')?.addEventListener('click', (event) => {
-                if (event.target.id === 'proverbiosModal') closeProverbiosModal();
-            });
-            loadProverbiosDoDia();
-
             updateAuthUIState('LOADING');
             initAuthListener();
         });
