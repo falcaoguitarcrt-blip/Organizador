@@ -137,7 +137,43 @@
             display: inline-block;
             animation: pulseDot 2s infinite;
         }
-    </style>
+    
+/* ===== Provérbios do Dia ===== */
+.proverbios-day-card {
+    background: linear-gradient(135deg, rgba(10, 25, 48, .96), rgba(8, 22, 40, .94));
+    border: 1px solid rgba(96, 165, 250, .28);
+}
+.proverbios-preview {
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.proverbios-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    background: rgba(2, 6, 23, .78);
+    backdrop-filter: blur(8px);
+}
+.proverbios-modal-panel {
+    width: min(820px, 100%);
+    max-height: 88vh;
+    overflow: auto;
+    background: #081628;
+    border: 1px solid rgba(96, 165, 250, .35);
+    border-radius: 1.25rem;
+    box-shadow: 0 25px 80px rgba(0,0,0,.45);
+}
+.proverbios-verse {
+    line-height: 1.8;
+}
+
+</style>
 </head>
 <body class="min-h-screen flex flex-col p-3 md:p-6 antialiased selection:bg-blue-600 selection:text-white">
 
@@ -398,7 +434,53 @@
                     <!-- 1. DASHBOARD / VISÃO GERAL -->
                     <section id="view-dashboard" class="view-content space-y-4">
                         
-                        <!-- KPI Metrics Grid -->
+                        
+<!-- Provérbios do Dia -->
+<section id="proverbiosDayCard" class="proverbios-day-card rounded-2xl p-5 shadow-inner">
+    <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+        <div class="flex items-start gap-3">
+            <div class="w-11 h-11 rounded-xl bg-amber-500/15 text-amber-300 border border-amber-400/20 grid place-items-center shrink-0">
+                <i data-lucide="book-open" class="w-5 h-5"></i>
+            </div>
+            <div>
+                <p class="text-[10px] uppercase tracking-[0.18em] text-amber-300/80 font-black">Palavra do dia</p>
+                <h2 id="proverbiosDayTitle" class="text-lg font-black text-white mt-0.5">Provérbios do Dia</h2>
+                <p id="proverbiosDayMeta" class="text-[11px] text-slate-400 mt-1">Carregando...</p>
+            </div>
+        </div>
+        <button id="btnProverbiosMore" type="button"
+                class="self-start px-3 py-2 rounded-lg bg-blue-600/20 border border-blue-500/30 text-blue-300 hover:bg-blue-600/30 text-xs font-bold transition">
+            Ver mais
+        </button>
+    </div>
+
+    <div id="proverbiosDayPreview" class="proverbios-preview mt-4 text-sm text-slate-200 leading-7">
+        Carregando o capítulo de hoje...
+    </div>
+
+    <div id="proverbiosDayStatus" class="mt-3 text-[10px] text-slate-500"></div>
+</section>
+
+<!-- Modal do capítulo completo -->
+<div id="proverbiosModal" class="hidden proverbios-modal-backdrop">
+    <div class="proverbios-modal-panel">
+        <div class="sticky top-0 z-10 bg-[#081628]/95 backdrop-blur border-b border-slate-800 p-4 flex items-start justify-between gap-4">
+            <div>
+                <p class="text-[10px] uppercase tracking-[0.18em] text-amber-300/80 font-black">Leitura completa</p>
+                <h3 id="proverbiosModalTitle" class="text-xl font-black text-white mt-1">Provérbios</h3>
+                <p id="proverbiosModalMeta" class="text-xs text-slate-400 mt-1"></p>
+            </div>
+            <button id="btnCloseProverbios" type="button" class="w-9 h-9 rounded-lg bg-slate-900 border border-slate-700 text-slate-300 hover:text-white hover:border-slate-500 grid place-items-center">
+                <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+        </div>
+        <div id="proverbiosModalBody" class="p-5 md:p-7 text-slate-200 text-sm md:text-base proverbios-verse">
+            Carregando...
+        </div>
+    </div>
+</div>
+
+<!-- KPI Metrics Grid -->
                         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                             <div class="glass-card p-4 rounded-xl flex items-center justify-between cursor-pointer" onclick="filterShortcutLate()">
                                 <div class="flex items-center gap-3">
@@ -1683,6 +1765,13 @@
                     if (pomoSeconds > 0) {
                         pomoSeconds--;
                         updatePomoDisplay();
+
+            document.getElementById('btnProverbiosMore')?.addEventListener('click', openProverbiosModal);
+            document.getElementById('btnCloseProverbios')?.addEventListener('click', closeProverbiosModal);
+            document.getElementById('proverbiosModal')?.addEventListener('click', (event) => {
+                if (event.target.id === 'proverbiosModal') closeProverbiosModal();
+            });
+            loadProverbiosDoDia();
                     } else {
                         clearInterval(pomoInterval);
                         pomoIsRunning = false;
@@ -2432,7 +2521,142 @@
             });
         }));
 
-        document.addEventListener('DOMContentLoaded', () => {
+
+        // ===== Provérbios do Dia =====
+        // Dia 1 = Provérbios 1, dia 7 = Provérbios 7 ... dia 31 = Provérbios 31.
+        // A fonte utilizada é Almeida 1819 (Bíblia Livre), disponibilizada como texto de uso livre.
+        const PROVERBIOS_API_BASE = 'https://api.midvash.com/v1/almeida-livre/proverbios';
+        let proverbiosDayData = null;
+
+        function getProverbiosDayNumber(date = new Date()) {
+            return Math.min(Math.max(date.getDate(), 1), 31);
+        }
+
+        function normalizeBibleVerses(data) {
+            if (!data) return [];
+            if (Array.isArray(data.verses)) {
+                return data.verses.map((v, index) => {
+                    if (typeof v === 'string') return { number: index + 1, text: v };
+                    return {
+                        number: v.number || v.verse || index + 1,
+                        text: v.text || v.content || ''
+                    };
+                }).filter(v => v.text);
+            }
+            if (Array.isArray(data)) {
+                return data.map((v, index) => ({
+                    number: v.number || v.verse || index + 1,
+                    text: typeof v === 'string' ? v : (v.text || v.content || '')
+                })).filter(v => v.text);
+            }
+            if (typeof data.text === 'string' && data.text.trim()) {
+                return data.text.split(/\n+/).filter(Boolean).map((text, index) => ({
+                    number: index + 1,
+                    text: text.trim()
+                }));
+            }
+            return [];
+        }
+
+        function escapeBibleText(value) {
+            return escapeHtml(String(value || ''));
+        }
+
+        function renderProverbiosDay(data, chapter) {
+            const verses = normalizeBibleVerses(data);
+            const title = document.getElementById('proverbiosDayTitle');
+            const meta = document.getElementById('proverbiosDayMeta');
+            const preview = document.getElementById('proverbiosDayPreview');
+            const status = document.getElementById('proverbiosDayStatus');
+
+            if (!verses.length) {
+                if (title) title.textContent = `Provérbios ${chapter}`;
+                if (meta) meta.textContent = `Capítulo ${chapter} • Dia ${getProverbiosDayNumber()}`;
+                if (preview) preview.textContent = 'Não foi possível carregar o capítulo agora.';
+                if (status) status.textContent = 'Verifique sua conexão e tente novamente.';
+                return;
+            }
+
+            const previewVerses = verses.slice(0, 4);
+            if (title) title.textContent = `Provérbios ${chapter}`;
+            if (meta) meta.textContent = `Capítulo ${chapter} • Dia ${getProverbiosDayNumber()}`;
+            if (preview) {
+                preview.innerHTML = previewVerses.map(v =>
+                    `<span class="block mb-1"><strong class="text-amber-300 mr-1">${escapeBibleText(v.number)}</strong>${escapeBibleText(v.text)}</span>`
+                ).join('');
+            }
+
+            const copyright = data?.copyright || data?.meta?.copyright || 'Almeida 1819 (Bíblia Livre), uso livre.';
+            if (status) status.textContent = copyright.replace(/\n/g, ' ');
+
+            proverbiosDayData = {
+                chapter,
+                verses,
+                copyright
+            };
+        }
+
+        async function loadProverbiosDoDia() {
+            const chapter = getProverbiosDayNumber();
+            const preview = document.getElementById('proverbiosDayPreview');
+            const meta = document.getElementById('proverbiosDayMeta');
+
+            if (meta) meta.textContent = `Capítulo ${chapter} • Dia ${chapter}`;
+            if (preview) preview.textContent = `Carregando Provérbios ${chapter}...`;
+
+            try {
+                const response = await fetch(`${PROVERBIOS_API_BASE}/${chapter}`, {
+                    method: 'GET',
+                    headers: { 'Accept': 'application/json' },
+                    cache: 'force-cache'
+                });
+
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+                const body = await response.json();
+                const data = body.data || body;
+                renderProverbiosDay(data, chapter);
+            } catch (error) {
+                console.error('[Provérbios do Dia]', error);
+                if (preview) {
+                    preview.textContent = 'O capítulo de hoje não pôde ser carregado neste momento.';
+                }
+                const status = document.getElementById('proverbiosDayStatus');
+                if (status) status.textContent = 'Tente novamente quando estiver conectado à internet.';
+            }
+        }
+
+        function openProverbiosModal() {
+            const modal = document.getElementById('proverbiosModal');
+            const body = document.getElementById('proverbiosModalBody');
+            const title = document.getElementById('proverbiosModalTitle');
+            const meta = document.getElementById('proverbiosModalMeta');
+
+            if (!modal || !body) return;
+
+            if (!proverbiosDayData?.verses?.length) {
+                body.innerHTML = '<p class="text-slate-400">O capítulo ainda não foi carregado.</p>';
+            } else {
+                const { chapter, verses, copyright } = proverbiosDayData;
+                if (title) title.textContent = `Provérbios ${chapter}`;
+                if (meta) meta.textContent = `Dia ${chapter} • ${copyright.replace(/\n/g, ' ')}`;
+                body.innerHTML = verses.map(v =>
+                    `<p class="mb-3"><strong class="text-amber-300 mr-2">${escapeBibleText(v.number)}</strong>${escapeBibleText(v.text)}</p>`
+                ).join('');
+            }
+
+            modal.classList.remove('hidden');
+            document.body.classList.add('overflow-hidden');
+            refreshIcons();
+        }
+
+        function closeProverbiosModal() {
+            const modal = document.getElementById('proverbiosModal');
+            if (modal) modal.classList.add('hidden');
+            document.body.classList.remove('overflow-hidden');
+        }
+
+                document.addEventListener('DOMContentLoaded', () => {
             const initialNavBtn = document.querySelector('[data-view="dashboard"]');
             if (initialNavBtn) {
                 initialNavBtn.classList.add('bg-blue-600', 'text-white');
