@@ -1766,12 +1766,6 @@
                         pomoSeconds--;
                         updatePomoDisplay();
 
-            document.getElementById('btnProverbiosMore')?.addEventListener('click', openProverbiosModal);
-            document.getElementById('btnCloseProverbios')?.addEventListener('click', closeProverbiosModal);
-            document.getElementById('proverbiosModal')?.addEventListener('click', (event) => {
-                if (event.target.id === 'proverbiosModal') closeProverbiosModal();
-            });
-            loadProverbiosDoDia();
                     } else {
                         clearInterval(pomoInterval);
                         pomoIsRunning = false;
@@ -2525,7 +2519,7 @@
         // ===== Provérbios do Dia =====
         // Dia 1 = Provérbios 1, dia 7 = Provérbios 7 ... dia 31 = Provérbios 31.
         // A fonte utilizada é Almeida 1819 (Bíblia Livre), disponibilizada como texto de uso livre.
-        const PROVERBIOS_API_BASE = 'https://api.midvash.com/v1/almeida-livre/proverbios';
+        const PROVERBIOS_API_BASE = 'https://api.midvash.com/v1/almeida-livre/proverbs';
         let proverbiosDayData = null;
 
         function getProverbiosDayNumber(date = new Date()) {
@@ -2672,6 +2666,15 @@
             }
 
             updatePomoDisplay();
+
+            // Provérbios do Dia
+            document.getElementById('btnProverbiosMore')?.addEventListener('click', openProverbiosModal);
+            document.getElementById('btnCloseProverbios')?.addEventListener('click', closeProverbiosModal);
+            document.getElementById('proverbiosModal')?.addEventListener('click', (event) => {
+                if (event.target.id === 'proverbiosModal') closeProverbiosModal();
+            });
+            loadProverbiosDoDia();
+
             updateAuthUIState('LOADING');
             initAuthListener();
         });
