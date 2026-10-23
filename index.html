@@ -108,6 +108,17 @@
         .sidebar-folders-collapsed { display: none; }
         .folder-sidebar-empty { padding: .35rem .65rem; font-size: 10px; color: rgb(100 116 139); }
 
+        .agenda-day-modal-list { max-height: 55vh; overflow:auto; }
+        .agenda-day-modal-list::-webkit-scrollbar { width: 6px; }
+        .agenda-day-modal-list::-webkit-scrollbar-thumb { background: rgba(71,85,105,.6); border-radius: 999px; }
+        @media (max-width: 640px) {
+            .agenda-week-calendar-grid { min-width: 0 !important; grid-template-columns: 1fr !important; }
+            .agenda-week-calendar-grid .agenda-week-column { min-height: auto; }
+            .agenda-week-calendar-grid .agenda-week-column .agenda-task-chip { font-size: 11px; padding: 8px; }
+            .agenda-month-calendar-scroll { overflow-x: auto; }
+            .agenda-month-calendar-grid { min-width: 680px; }
+        }
+
         /* Enhanced Glassmorphic Card Borders */
         .glass-card {
             background: rgba(10, 24, 44, 0.85);
@@ -513,33 +524,16 @@
                                 </div>
                             </article>
 
-                            <!-- Category Donut Chart Visualization -->
+                            <!-- Folder Distribution -->
                             <article class="glass-card rounded-xl p-4 flex flex-col justify-between min-h-[260px]">
-                                <div class="flex justify-between items-start mb-2">
-                                    <div class="glass-card rounded-2xl border border-slate-800/80 p-5 h-full">
-    <div class="flex items-start justify-between gap-3">
-        <div>
-            <h3 class="text-sm font-bold text-blue-400">Distribuição por pasta</h3>
-            <p class="text-[11px] text-slate-500">Visão geral das suas tarefas por espaço</p>
-        </div>
-        <i data-lucide="folder-tree" class="w-5 h-5 text-blue-400"></i>
-    </div>
-    <div id="folderDistributionChart" class="mt-5"></div>
-</div>
-                                </div>
-                                <div class="flex items-center justify-around gap-2 my-auto">
-                                    <div class="relative w-24 h-24 rounded-full grid place-items-center" style="background: conic-gradient(#1d72f3 0% 35%, #c084fc 35% 55%, #ffb800 55% 75%, #26d0ce 75% 100%);">
-                                        <div class="w-16 h-16 rounded-full bg-slate-950 grid place-items-center text-center">
-                                            <span id="donutTotalCount" class="text-base font-extrabold text-white">0</span>
-                                        </div>
+                                <div class="flex items-start justify-between gap-3 mb-3">
+                                    <div>
+                                        <h3 class="text-sm font-bold text-blue-400">Distribuição por pasta</h3>
+                                        <p class="text-[10px] text-slate-500">Suas tarefas organizadas por espaço</p>
                                     </div>
-                                    <div id="categoryLegend" class="space-y-1 text-[11px] text-slate-400">
-                                        <div class="flex items-center justify-between gap-3"><span class="flex items-center gap-1.5"><i class="w-2 h-2 rounded-sm bg-blue-500 inline-block"></i>Trabalho</span> <b id="catCountTrabalho" class="text-white">0</b></div>
-                                        <div class="flex items-center justify-between gap-3"><span class="flex items-center gap-1.5"><i class="w-2 h-2 rounded-sm bg-purple-400 inline-block"></i>Pessoal</span> <b id="catCountPessoal" class="text-white">0</b></div>
-                                        <div class="flex items-center justify-between gap-3"><span class="flex items-center gap-1.5"><i class="w-2 h-2 rounded-sm bg-amber-400 inline-block"></i>Estudos</span> <b id="catCountEstudos" class="text-white">0</b></div>
-                                        <div class="flex items-center justify-between gap-3"><span class="flex items-center gap-1.5"><i class="w-2 h-2 rounded-sm bg-cyan-400 inline-block"></i>Outros</span> <b id="catCountOutros" class="text-white">0</b></div>
-                                    </div>
+                                    <i data-lucide="folder-tree" class="w-5 h-5 text-blue-400"></i>
                                 </div>
+                                <div id="folderDistributionChart" class="flex-1"></div>
                             </article>
                         </div>
                     </section>
@@ -579,18 +573,12 @@
                         </div>
 
                         <!-- Filters Bar -->
+                        <div class="text-[10px] text-slate-500 -mb-1 px-1 flex items-center gap-1.5">
+                            <i data-lucide="folder-tree" class="w-3 h-3 text-blue-400"></i>
+                            <span>As pastas são a organização principal da agenda. Prioridade e status continuam disponíveis como filtros.</span>
+                        </div>
                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 glass-card p-3 rounded-xl">
-                            <select id="filterCategory" class="bg-slate-950 border border-slate-800 text-slate-200 text-xs rounded-lg px-3 py-2 outline-none focus:border-blue-500">
-                                <option value="all">Todas as Categorias</option>
-                                <option value="Trabalho">Trabalho</option>
-                                <option value="Estudos">Estudos</option>
-                                <option value="Pessoal">Pessoal</option>
-                                <option value="Saúde">Saúde</option>
-                                <option value="Projetos">Projetos</option>
-                                <option value="Outros">Outros</option>
-                            </select>
-
-                            <select id="filterPriority" class="bg-slate-950 border border-slate-800 text-slate-200 text-xs rounded-lg px-3 py-2 outline-none focus:border-blue-500">
+<select id="filterPriority" class="bg-slate-950 border border-slate-800 text-slate-200 text-xs rounded-lg px-3 py-2 outline-none focus:border-blue-500">
                                 <option value="all">Todas as Prioridades</option>
                                 <option value="Baixa">Baixa</option>
                                 <option value="Média">Média</option>
@@ -857,6 +845,23 @@
     </div>
 
     <!-- TASK MODAL (Nova/Editar Tarefa) -->
+    <!-- Agenda Day Details Modal -->
+    <div id="agendaDayModal" class="fixed inset-0 z-[70] bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="w-full max-w-xl glass-card rounded-2xl border border-slate-800 shadow-2xl overflow-hidden">
+            <div class="flex items-center justify-between gap-3 p-4 border-b border-slate-800">
+                <div>
+                    <p class="text-[10px] text-blue-400 font-semibold uppercase tracking-wider">Agenda do dia</p>
+                    <h3 id="agendaDayModalTitle" class="text-base font-bold text-white">Eventos</h3>
+                </div>
+                <button type="button" id="btnCloseAgendaDayModal" class="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800"><i data-lucide="x" class="w-4 h-4"></i></button>
+            </div>
+            <div id="agendaDayModalList" class="agenda-day-modal-list p-4 space-y-2"></div>
+            <div class="p-4 border-t border-slate-800 flex justify-end gap-2">
+                <button type="button" id="btnNewAgendaTaskFromDay" class="px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold flex items-center gap-1.5"><i data-lucide="plus" class="w-3.5 h-3.5"></i> Nova tarefa neste dia</button>
+            </div>
+        </div>
+    </div>
+
     <div id="taskModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
         <div class="bg-[#0a182e] border border-blue-500/40 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl">
             <!-- Modal Header -->
@@ -882,23 +887,15 @@
                     <label class="block text-[11px] font-semibold text-slate-400 mb-1">Descrição</label>
                     <textarea id="taskDescription" rows="2" placeholder="Adicione detalhes ou observações..." class="w-full bg-slate-950 border border-slate-800 text-slate-100 rounded-lg p-2 text-xs outline-none focus:border-blue-500 resize-none"></textarea>
                 </div>
-
-                <!-- Row 1: Due Date & Category -->
+                <!-- Row 1: Due Date & Time -->
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-[11px] font-semibold text-slate-400 mb-1">Vencimento</label>
+                        <label class="block text-[11px] font-semibold text-slate-400 mb-1">Data</label>
                         <input type="date" id="taskDueDate" class="w-full bg-slate-950 border border-slate-800 text-slate-100 rounded-lg p-2 text-xs outline-none focus:border-blue-500">
                     </div>
                     <div>
-                        <label class="block text-[11px] font-semibold text-slate-400 mb-1">Categoria</label>
-                        <select id="taskCategory" class="w-full bg-slate-950 border border-slate-800 text-slate-100 rounded-lg p-2 text-xs outline-none focus:border-blue-500">
-                            <option value="Trabalho">Trabalho</option>
-                            <option value="Estudos">Estudos</option>
-                            <option value="Pessoal">Pessoal</option>
-                            <option value="Saúde">Saúde</option>
-                            <option value="Projetos">Projetos</option>
-                            <option value="Outros">Outros</option>
-                        </select>
+                        <label class="block text-[11px] font-semibold text-slate-400 mb-1">Horário</label>
+                        <input type="time" id="taskDueTime" class="w-full bg-slate-950 border border-slate-800 text-slate-100 rounded-lg p-2 text-xs outline-none focus:border-blue-500">
                     </div>
                 </div>
 
@@ -908,6 +905,17 @@
                     <select id="taskFolder" class="w-full bg-slate-950 border border-slate-800 text-slate-100 rounded-lg p-2 text-xs outline-none focus:border-blue-500">
                         <option value="">Sem pasta</option>
                     </select>
+                </div>
+
+                <!-- Recurrence -->
+                <div>
+                    <label class="block text-[11px] font-semibold text-slate-400 mb-1">Recorrência</label>
+                    <select id="taskRecurrence" class="w-full bg-slate-950 border border-slate-800 text-slate-100 rounded-lg p-2 text-xs outline-none focus:border-blue-500">
+                        <option value="none">Não repetir</option>
+                        <option value="weekly">Toda semana</option>
+                        <option value="monthly">Todo mês</option>
+                    </select>
+                    <p class="text-[9px] text-slate-600 mt-1">Para novos compromissos, o sistema mantém as próximas ocorrências automaticamente.</p>
                 </div>
 
                 <!-- Row 2: Priority & Status -->
@@ -1144,9 +1152,9 @@
             const today = getLocalDateString();
             const definitions = [];
 
-            // Compromissos fixos da Igreja: toda quinta 20h e todo domingo 19h.
-            const churchThursdays = getNextWeekdayDates(today, 4, 12);
-            const churchSundays = getNextWeekdayDates(today, 0, 12);
+            // Compromissos fixos da Igreja: toda quinta 20h e todo domingo 19h. O horizonte é renovado automaticamente para as próximas 52 ocorrências.
+            const churchThursdays = getNextWeekdayDates(today, 4, 52);
+            const churchSundays = getNextWeekdayDates(today, 0, 52);
             churchThursdays.forEach(date => definitions.push({
                 seedKey: `igreja_culto_quinta_${date}`,
                 title: 'Culto de Quinta-feira', description: 'Compromisso semanal da Igreja.',
@@ -1614,23 +1622,49 @@
         function agendaTaskDate(task) { return String(task.dueDate||'').trim(); }
         function agendaSortTasks(list) { return [...list].sort((a,b)=>{ const ad=agendaTaskDate(a)||'9999-12-31', bd=agendaTaskDate(b)||'9999-12-31'; if(ad!==bd)return ad.localeCompare(bd); return String(a.dueTime||'99:99').localeCompare(String(b.dueTime||'99:99'))||String(a.title||'').localeCompare(String(b.title||''),'pt-BR'); }); }
         function renderAgendaTaskChip(task) { const time=task.dueTime?`<span class="text-blue-300 mr-1">${escapeHtml(task.dueTime)}</span>`:''; return `<button type="button" class="agenda-task-chip ${task.status==='done'?'opacity-55 line-through':''}" onclick="openModal('${task.id}')" title="Editar tarefa">${time}<span>${escapeHtml(task.title||'Sem título')}</span></button>`; }
-        function renderAgendaWeek(tasks,anchorDate,titleEl) {
-            const start=agendaStartOfWeek(anchorDate), names=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'], today=getLocalDateString(); let html='<div class="agenda-scroll-x"><div class="agenda-calendar-grid">';
-            for(let i=0;i<7;i++){ const d=new Date(start); d.setDate(start.getDate()+i); const key=getAgendaDateString(d); const dayTasks=agendaSortTasks(tasks.filter(t=>agendaTaskDate(t)===key)); html+=`<div class="agenda-week-column ${key===today?'is-today':''}"><div class="flex items-center justify-between gap-2 border-b border-slate-800 pb-2 mb-1"><div><div class="text-[10px] font-semibold text-slate-500">${names[i]}</div><div class="text-sm font-bold ${key===today?'text-blue-300':'text-white'}">${d.getDate()}</div></div><span class="text-[9px] text-slate-600">${dayTasks.length}</span></div>${dayTasks.length?dayTasks.map(renderAgendaTaskChip).join(''):'<div class="text-[9px] text-slate-700 pt-2">Sem eventos</div>'}</div>`; }
-            html+='</div></div>'; if(titleEl) titleEl.textContent=`${agendaDateLabel(start)} – ${agendaDateLabel(new Date(start.getFullYear(),start.getMonth(),start.getDate()+6))}`; return html;
+        function renderAgendaWeek(tasks, anchorDate, titleEl) {
+            const start = agendaStartOfWeek(anchorDate), names = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'], today = getLocalDateString();
+            let html = '<div class="agenda-scroll-x"><div class="agenda-calendar-grid agenda-week-calendar-grid">';
+            for (let i = 0; i < 7; i++) {
+                const d = new Date(start); d.setDate(start.getDate() + i);
+                const key = getAgendaDateString(d);
+                const dayTasks = agendaSortTasks(tasks.filter(t => agendaTaskDate(t) === key));
+                html += `<div class="agenda-week-column ${key===today?'is-today':''}">
+                    <div class="flex items-center justify-between gap-2 border-b border-slate-800 pb-2 mb-1">
+                        <div><div class="text-[10px] font-semibold text-slate-500">${names[i]}</div><div class="text-sm font-bold ${key===today?'text-blue-300':'text-white'}">${d.getDate()}</div></div>
+                        <button type="button" class="text-[9px] text-slate-500 hover:text-blue-300" onclick="openAgendaDayModal('${key}')">${dayTasks.length} evento${dayTasks.length===1?'':'s'}</button>
+                    </div>
+                    ${dayTasks.length ? dayTasks.map(renderAgendaTaskChip).join('') : '<div class="text-[9px] text-slate-700 pt-2">Sem eventos</div>'}
+                    <button type="button" class="w-full mt-2 text-[9px] text-slate-600 hover:text-blue-300" onclick="openAgendaDayModal('${key}')">Ver o dia</button>
+                </div>`;
+            }
+            html += '</div></div>';
+            if (titleEl) titleEl.textContent = `${agendaDateLabel(start)} – ${agendaDateLabel(new Date(start.getFullYear(), start.getMonth(), start.getDate()+6))}`;
+            return html;
         }
-        function renderAgendaMonth(tasks,anchorDate,titleEl) {
-            const year=anchorDate.getFullYear(), month=anchorDate.getMonth(), first=new Date(year,month,1), start=agendaStartOfWeek(first), last=new Date(year,month+1,0), end=agendaEndOfWeek(last), today=getLocalDateString(), names=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb']; let html='<div class="agenda-scroll-x"><div class="min-w-[720px]">';
-            html+=`<div class="grid grid-cols-7 gap-1.5 mb-1.5">${names.map(n=>`<div class="text-[9px] font-semibold uppercase text-slate-600 px-1">${n}</div>`).join('')}</div><div class="agenda-calendar-grid">`;
-            for(let d=new Date(start);d<=end;d.setDate(d.getDate()+1)){ const key=getAgendaDateString(d), inMonth=d.getMonth()===month, dayTasks=agendaSortTasks(tasks.filter(t=>agendaTaskDate(t)===key)); html+=`<div class="agenda-day-cell ${key===today?'is-today':''} ${inMonth?'':'is-outside'}"><div class="flex items-center justify-between"><span class="text-[10px] font-bold ${key===today?'text-blue-300':'text-slate-400'}">${d.getDate()}</span><span class="text-[8px] text-slate-700">${dayTasks.length||''}</span></div>${dayTasks.slice(0,5).map(renderAgendaTaskChip).join('')}${dayTasks.length>5?`<div class="text-[9px] text-slate-500 mt-1">+${dayTasks.length-5} mais</div>`:''}</div>`; }
-            html+='</div></div></div>'; if(titleEl) titleEl.textContent=agendaMonthLabel(anchorDate); return html;
+        function renderAgendaMonth(tasks, anchorDate, titleEl) {
+            const year = anchorDate.getFullYear(), month = anchorDate.getMonth(), first = new Date(year, month, 1), start = agendaStartOfWeek(first), last = new Date(year, month+1, 0), end = agendaEndOfWeek(last), today = getLocalDateString(), names = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+            let html = '<div class="agenda-month-calendar-scroll"><div class="agenda-month-calendar-grid">';
+            html += `<div class="grid grid-cols-7 gap-1.5 mb-1.5">${names.map(n=>`<div class="text-[9px] font-semibold uppercase text-slate-600 px-1">${n}</div>`).join('')}</div><div class="agenda-calendar-grid">`;
+            for (let d = new Date(start); d <= end; d.setDate(d.getDate()+1)) {
+                const key = getAgendaDateString(d), inMonth = d.getMonth() === month, dayTasks = agendaSortTasks(tasks.filter(t => agendaTaskDate(t) === key));
+                const visible = dayTasks.slice(0, 5);
+                html += `<div class="agenda-day-cell ${key===today?'is-today':''} ${inMonth?'':'is-outside'} cursor-pointer" onclick="openAgendaDayModal('${key}')">
+                    <div class="flex items-center justify-between"><span class="text-[10px] font-bold ${key===today?'text-blue-300':'text-slate-400'}">${d.getDate()}</span><span class="text-[8px] text-slate-700">${dayTasks.length||''}</span></div>
+                    ${visible.map(renderAgendaTaskChip).join('')}
+                    ${dayTasks.length > 5 ? `<button type="button" class="text-[9px] text-blue-300 hover:text-white mt-1" onclick="event.stopPropagation();openAgendaDayModal('${key}')">+${dayTasks.length-5} mais · Ver todos</button>` : ''}
+                    ${dayTasks.length === 0 && inMonth ? '<div class="text-[9px] text-slate-700 mt-2">Livre</div>' : ''}
+                </div>`;
+            }
+            html += '</div></div></div>';
+            if (titleEl) titleEl.textContent = agendaMonthLabel(anchorDate);
+            return html;
         }
         function getFolderPeriodTasks(folderTasks) {
-            const today=getLocalDateString(), base=new Date(today+'T00:00:00'), tomorrow=new Date(base); tomorrow.setDate(tomorrow.getDate()+1); const tomorrowKey=getAgendaDateString(tomorrow);
-            if(activeFolderPeriod==='today') return folderTasks.filter(t=>agendaTaskDate(t)===today);
-            if(activeFolderPeriod==='tomorrow') return folderTasks.filter(t=>agendaTaskDate(t)===tomorrowKey);
-            if(activeFolderPeriod==='week'){ const a=getAgendaDateString(agendaStartOfWeek(base)), b=getAgendaDateString(agendaEndOfWeek(base)); return folderTasks.filter(t=>agendaTaskDate(t)>=a&&agendaTaskDate(t)<=b); }
-            if(activeFolderPeriod==='month'){ const a=getAgendaDateString(new Date(base.getFullYear(),base.getMonth(),1)), b=getAgendaDateString(new Date(base.getFullYear(),base.getMonth()+1,0)); return folderTasks.filter(t=>agendaTaskDate(t)>=a&&agendaTaskDate(t)<=b); }
+            const today = getLocalDateString(), base = new Date(today+'T00:00:00'), tomorrow = new Date(base); tomorrow.setDate(tomorrow.getDate()+1); const tomorrowKey = getAgendaDateString(tomorrow);
+            if (activeFolderViewMode === 'week' || activeFolderViewMode === 'month') return folderTasks;
+            if (activeFolderPeriod === 'today') return folderTasks.filter(t => agendaTaskDate(t) === today);
+            if (activeFolderPeriod === 'tomorrow') return folderTasks.filter(t => agendaTaskDate(t) === tomorrowKey);
             return folderTasks;
         }
         function updateFolderAgendaControls(){ document.querySelectorAll('.folder-period-btn').forEach(btn=>{const a=btn.dataset.folderPeriod===activeFolderPeriod;btn.classList.toggle('bg-blue-600',a);btn.classList.toggle('text-white',a);btn.classList.toggle('text-slate-400',!a);}); document.querySelectorAll('.folder-view-btn').forEach(btn=>{const a=btn.dataset.folderView===activeFolderViewMode;btn.classList.toggle('bg-blue-600',a);btn.classList.toggle('text-white',a);btn.classList.toggle('text-slate-400',!a);}); }
@@ -1641,7 +1675,7 @@
             const list=document.getElementById('folderTasksList'), nav=document.getElementById('folderCalendarNav');
             if(activeFolderViewMode==='week'){nav.classList.remove('hidden');nav.classList.add('flex');list.innerHTML=renderAgendaWeek(periodTasks,folderCalendarDate,document.getElementById('folderCalendarTitle'));}
             else if(activeFolderViewMode==='month'){nav.classList.remove('hidden');nav.classList.add('flex');list.innerHTML=renderAgendaMonth(periodTasks,folderCalendarDate,document.getElementById('folderCalendarTitle'));}
-            else{nav.classList.add('hidden');nav.classList.remove('flex');list.innerHTML=periodTasks.length?periodTasks.map(t=>`<div class="flex items-center justify-between gap-3 p-3 rounded-xl bg-slate-950/60 border border-slate-800 hover:border-slate-700"><div class="min-w-0"><p class="text-xs font-semibold text-slate-200 ${t.status==='done'?'line-through text-slate-500':''}">${escapeHtml(t.title)}</p><p class="text-[10px] text-slate-500">${escapeHtml(t.category||'Outros')} · ${escapeHtml(t.priority||'Média')}${t.dueDate?' · '+escapeHtml(t.dueDate):''}${t.dueTime?' · '+escapeHtml(t.dueTime):''}</p></div><button type="button" onclick="openModal('${t.id}')" class="p-1.5 text-slate-500 hover:text-white hover:bg-slate-800 rounded-lg"><i data-lucide="pencil" class="w-3.5 h-3.5"></i></button></div>`).join(''):'<div class="text-center py-10"><i data-lucide="calendar-x-2" class="w-8 h-8 text-slate-600 mx-auto mb-2"></i><p class="text-xs text-slate-400">Nenhuma tarefa neste período.</p><p class="text-[10px] text-slate-600 mt-1">As tarefas continuam vinculadas à pasta e aparecem também na aba Tarefas.</p></div>'; updateFolderAgendaControls(); refreshIcons();
+            else{nav.classList.add('hidden');nav.classList.remove('flex');list.innerHTML=periodTasks.length?periodTasks.map(t=>`<div class="flex items-center justify-between gap-3 p-3 rounded-xl bg-slate-950/60 border border-slate-800 hover:border-slate-700"><div class="min-w-0"><p class="text-xs font-semibold text-slate-200 ${t.status==='done'?'line-through text-slate-500':''}">${escapeHtml(t.title)}</p><p class="text-[10px] text-slate-500">${escapeHtml(t.priority||'Média')}${t.dueDate?' · '+escapeHtml(t.dueDate):''}${t.dueTime?' · '+escapeHtml(t.dueTime):''}</p></div><button type="button" onclick="openModal('${t.id}')" class="p-1.5 text-slate-500 hover:text-white hover:bg-slate-800 rounded-lg"><i data-lucide="pencil" class="w-3.5 h-3.5"></i></button></div>`).join(''):'<div class="text-center py-10"><i data-lucide="calendar-x-2" class="w-8 h-8 text-slate-600 mx-auto mb-2"></i><p class="text-xs text-slate-400">Nenhuma tarefa neste período.</p><p class="text-[10px] text-slate-600 mt-1">As tarefas continuam vinculadas à pasta e aparecem também na aba Tarefas.</p></div>'; updateFolderAgendaControls(); refreshIcons();
         }
         }
 
@@ -1997,6 +2031,43 @@
                 });
         }
 
+        async function materializeRecurringOccurrences(taskObj) {
+            if (!taskObj || !taskObj.dueDate || !taskObj.recurrenceRule || taskObj.recurrenceRule === 'none') return;
+            const baseDate = new Date(taskObj.dueDate + 'T00:00:00');
+            const horizon = 52;
+            const occurrences = [];
+            for (let i = 1; i <= horizon; i++) {
+                const d = new Date(baseDate);
+                if (taskObj.recurrenceRule === 'weekly') d.setDate(d.getDate() + (7 * i));
+                else if (taskObj.recurrenceRule === 'monthly') d.setMonth(d.getMonth() + i);
+                else break;
+                const dateKey = getAgendaDateString(d);
+                const id = `${taskObj.id}_r_${dateKey}`;
+                const already = tasks.some(t => t.id === id || (t.recurrenceSeriesId === taskObj.id && t.dueDate === dateKey));
+                if (already) continue;
+                occurrences.push({
+                    ...taskObj,
+                    id,
+                    dueDate: dateKey,
+                    status: 'todo',
+                    recurrenceSeriesId: taskObj.id,
+                    createdAt: new Date().toISOString()
+                });
+            }
+            if (!occurrences.length) return;
+            if (!currentUserState || !db) {
+                tasks.push(...occurrences);
+                saveTasksToLocalCacheOnly(tasks);
+                return;
+            }
+            const batch = db.batch();
+            occurrences.forEach(item => {
+                const ref = db.collection('users').doc(currentUserState.uid).collection('items').doc(item.id);
+                batch.set(ref, { ...item, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
+            });
+            await batch.commit();
+        }
+
         function deleteTaskFromFirestore(taskId) {
             if (!currentUserState || !db) {
                 tasks = tasks.filter(t => t.id !== taskId);
@@ -2234,7 +2305,6 @@
             resetFilterSelects();
             currentFilterMode = 'category';
             highlightShortcutButtons(null);
-            document.getElementById('filterCategory').value = cat;
             switchView('tasks');
             renderTaskList();
         }
@@ -2243,6 +2313,7 @@
             document.getElementById('filterSearch').value = '';
             currentFilterMode = 'all';
             currentTaskViewMode = 'cards';
+            taskCalendarDate = new Date();
             document.querySelectorAll('.task-view-btn').forEach(btn => {
                 const active = btn.dataset.taskView === 'cards';
                 btn.classList.toggle('bg-blue-600', active); btn.classList.toggle('text-white', active); btn.classList.toggle('text-slate-400', !active);
@@ -2259,7 +2330,6 @@
         }
 
         function resetFilterSelects() {
-            document.getElementById('filterCategory').value = 'all';
             document.getElementById('filterPriority').value = 'all';
             document.getElementById('filterStatus').value = 'all';
             if (document.getElementById('filterFolder')) document.getElementById('filterFolder').value = 'all';
@@ -2335,7 +2405,7 @@
                         <i data-lucide="check-square" class="w-4 h-4 text-blue-400"></i>
                         <div>
                             <h4 class="text-xs font-semibold text-white">${escapeHtml(t.title)}</h4>
-                            <span class="text-[10px] text-slate-400">${escapeHtml(t.category)} • ${escapeHtml(t.dueDate) || 'Sem data'}</span>
+                            <span class="text-[10px] text-slate-400">${(() => { const f=folders.find(x=>x.id===getTaskFolderId(t)); return f ? escapeHtml(f.name) : 'Sem pasta'; })()} • ${escapeHtml(t.dueDate) || 'Sem data'}</span>
                         </div>
                     </div>
                     <span class="text-[10px] bg-slate-900 border border-slate-700 rounded px-2 py-0.5 text-slate-300 font-medium">${escapeHtml(t.priority)}</span>
@@ -2517,6 +2587,8 @@
             document.getElementById('modalTitle').textContent = 'Nova Tarefa';
             populateTaskFolderSelect();
             document.getElementById('taskFolder').value = activeFolderId || '';
+            if (document.getElementById('taskDueTime')) document.getElementById('taskDueTime').value = '';
+            if (document.getElementById('taskRecurrence')) document.getElementById('taskRecurrence').value = 'none';
 
             if (taskId) {
                 const task = tasks.find(t => t.id === taskId);
@@ -2526,7 +2598,8 @@
                     document.getElementById('taskTitle').value = task.title;
                     document.getElementById('taskDescription').value = task.description || '';
                     document.getElementById('taskDueDate').value = task.dueDate || '';
-                    document.getElementById('taskCategory').value = task.category || 'Trabalho';
+                    if (document.getElementById('taskDueTime')) document.getElementById('taskDueTime').value = task.dueTime || '';
+                    if (document.getElementById('taskRecurrence')) document.getElementById('taskRecurrence').value = task.recurrenceRule || 'none';
                     document.getElementById('taskPriority').value = task.priority || 'Média';
                     document.getElementById('taskStatus').value = task.status || 'todo';
                     document.getElementById('taskFolder').value = getTaskFolderId(task) || '';
@@ -2552,7 +2625,8 @@
                 const title = document.getElementById('taskTitle').value.trim();
                 const description = document.getElementById('taskDescription').value.trim();
                 const dueDate = document.getElementById('taskDueDate').value;
-                const category = document.getElementById('taskCategory').value;
+                const dueTime = document.getElementById('taskDueTime')?.value || '';
+                const recurrenceRule = document.getElementById('taskRecurrence')?.value || 'none';
                 const priority = document.getElementById('taskPriority').value;
                 const status = document.getElementById('taskStatus').value;
                 const folderId = document.getElementById('taskFolder').value || '';
@@ -2565,7 +2639,9 @@
                     title,
                     description,
                     dueDate,
-                    category,
+                    ...(existingTask?.category ? { category: existingTask.category } : { category: 'Outros' }),
+                    dueTime,
+                    ...(recurrenceRule !== 'none' ? { recurrenceRule } : {}),
                     priority,
                     status,
                     folderId,
@@ -2574,6 +2650,7 @@
 
                 try {
                     await saveTaskToFirestore(taskObj);
+                    if (!existingTask && recurrenceRule !== 'none') await materializeRecurringOccurrences(taskObj);
                     closeModal();
                 } catch (err) {
                     console.error("[Task Save Error]", err);
@@ -2610,7 +2687,7 @@
 
             const counts = folders.map(folder => ({
                 folder,
-                count: tasks.filter(t => getTaskFolderId(t) === folder.id).length
+                count: getTasksForFolder(folder).length
             })).filter(item => item.count > 0);
 
             const total = counts.reduce((sum, item) => sum + item.count, 0);
@@ -2698,7 +2775,7 @@
                                 <span class="w-6 h-6 rounded-md bg-blue-900/60 border border-blue-500/30 text-blue-400 font-extrabold text-[11px] grid place-items-center">${i + 1}</span>
                                 <div>
                                     <h4 class="text-xs font-semibold text-slate-200">${escapeHtml(t.title)}</h4>
-                                    <small class="text-[10px] text-slate-500">${escapeHtml(t.priority)} prioridade · ${escapeHtml(t.category)}</small>
+                                    <small class="text-[10px] text-slate-500">${escapeHtml(t.priority)} prioridade${(() => { const f=folders.find(x=>x.id===getTaskFolderId(t)); return f ? ' · '+escapeHtml(f.name) : ''; })()}</small>
                                 </div>
                             </div>
                             <span class="text-[10px] text-slate-400">Hoje ›</span>
@@ -2706,20 +2783,6 @@
                     `).join('');
                 }
             }
-
-            const donutTotalCount = document.getElementById('donutTotalCount');
-            if (donutTotalCount) donutTotalCount.textContent = total;
-
-            const countsCat = { Trabalho: 0, Pessoal: 0, Estudos: 0, Outros: 0 };
-            tasks.forEach(t => {
-                const cat = t.category || 'Outros';
-                if (countsCat[cat] !== undefined) countsCat[cat]++;
-                else countsCat.Outros++;
-            });
-            if (document.getElementById('catCountTrabalho')) document.getElementById('catCountTrabalho').textContent = countsCat.Trabalho;
-            if (document.getElementById('catCountPessoal')) document.getElementById('catCountPessoal').textContent = countsCat.Pessoal;
-            if (document.getElementById('catCountEstudos')) document.getElementById('catCountEstudos').textContent = countsCat.Estudos;
-            if (document.getElementById('catCountOutros')) document.getElementById('catCountOutros').textContent = countsCat.Outros;
 
             const dashboardRecentList = document.getElementById('dashboardRecentList');
             const recent = [...tasks]
@@ -2739,7 +2802,7 @@
                                 </button>
                                 <div>
                                     <h4 class="text-xs font-semibold text-slate-200">${escapeHtml(t.title)}</h4>
-                                    <span class="text-[10px] text-slate-500">${escapeHtml(t.category)} • ${escapeHtml(t.dueDate) || 'Sem data'}</span>
+                                    <span class="text-[10px] text-slate-500">${(() => { const f=folders.find(x=>x.id===getTaskFolderId(t)); return f ? escapeHtml(f.name) : 'Sem pasta'; })()} • ${escapeHtml(t.dueDate) || 'Sem data'}</span>
                                 </div>
                             </div>
                             ${getPriorityBadge(t.priority)}
@@ -2783,25 +2846,80 @@
 
         function setTaskPeriod(mode) {
             currentFilterMode = mode;
+            if (mode === 'week' || mode === 'month') {
+                currentTaskViewMode = mode;
+                taskCalendarDate = new Date();
+            } else {
+                currentTaskViewMode = 'cards';
+            }
             document.querySelectorAll('.task-period-btn').forEach(btn => {
                 const active = btn.dataset.taskPeriod === mode;
-                btn.classList.toggle('bg-blue-600', active);
-                btn.classList.toggle('text-white', active);
-                btn.classList.toggle('text-slate-400', !active);
+                btn.classList.toggle('bg-blue-600', active); btn.classList.toggle('text-white', active); btn.classList.toggle('text-slate-400', !active);
+            });
+            document.querySelectorAll('.task-view-btn').forEach(btn => {
+                const active = btn.dataset.taskView === currentTaskViewMode;
+                btn.classList.toggle('bg-blue-600', active); btn.classList.toggle('text-white', active); btn.classList.toggle('text-slate-400', !active);
             });
             renderTaskList();
         }
 
         function renderTaskCards(filtered, container) {
-            const ordered=agendaSortTasks(filtered);
-            container.innerHTML=ordered.length?ordered.map(t=>{const folder=folders.find(f=>f.id===getTaskFolderId(t));const done=t.status==='done';return `<div class="bg-slate-900/80 border border-slate-800 rounded-xl p-3 flex flex-col md:flex-row md:items-center justify-between gap-3 transition hover:border-slate-700"><div class="flex items-start gap-3"><button onclick="toggleTaskComplete('${t.id}')" class="mt-0.5 ${done?'text-emerald-400':'text-slate-500 hover:text-slate-300'} transition"><i data-lucide="${done?'check-circle':'circle'}" class="w-5 h-5"></i></button><div><h3 class="font-semibold text-xs text-slate-100 ${done?'line-through text-slate-500':''}">${escapeHtml(t.title)}</h3>${t.description?`<p class="text-[11px] text-slate-400 mt-0.5 line-clamp-2">${escapeHtml(t.description)}</p>`:''}<div class="flex flex-wrap items-center gap-2 mt-1.5"><span class="text-[10px] px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 font-medium">${escapeHtml(t.category||'Outros')}</span>${folder?`<span class="text-[10px] px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-300 font-medium flex items-center gap-1">${folderIconHtml(folder.icon,'w-3 h-3')} ${escapeHtml(folder.name||'Pasta')}</span>`:''}${getPriorityBadge(t.priority)}${t.dueDate?`<span class="text-[10px] text-slate-400 flex items-center gap-1"><i data-lucide="calendar" class="w-3 h-3"></i>${escapeHtml(t.dueDate)}${t.dueTime?' · '+escapeHtml(t.dueTime):''}</span>`:'<span class="text-[10px] text-slate-500 italic">Sem data</span>'}</div></div></div><div class="flex items-center gap-1.5 self-end md:self-center border-t md:border-t-0 pt-2 md:pt-0 border-slate-800 w-full md:w-auto justify-end"><button onclick="openModal('${t.id}')" class="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition"><i data-lucide="edit-3" class="w-4 h-4"></i></button><button onclick="deleteTask('${t.id}')" class="p-1.5 text-slate-400 hover:text-rose-400 rounded-lg hover:bg-slate-800 transition"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div></div>`;}).join(''):'<div class="text-center py-10 bg-slate-900/60 border border-slate-800 rounded-xl"><i data-lucide="inbox" class="w-8 h-8 mx-auto text-slate-600 mb-2"></i><p class="text-slate-400 text-xs font-medium">Nenhuma tarefa encontrada com os filtros selecionados.</p></div>'; refreshIcons();
+            const ordered = agendaSortTasks(filtered);
+            container.innerHTML = ordered.length ? ordered.map(t => {
+                const folder = folders.find(f => f.id === getTaskFolderId(t)); const done = t.status === 'done';
+                const folderBadge = folder ? `<span class="text-[10px] px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-300 font-medium flex items-center gap-1">${folderIconHtml(folder.icon,'w-3 h-3')} ${escapeHtml(folder.name||'Pasta')}</span>` : '<span class="text-[10px] px-2 py-0.5 rounded-md bg-slate-800 text-slate-500 font-medium">Sem pasta</span>';
+                return `<div class="bg-slate-900/80 border border-slate-800 rounded-xl p-3 flex flex-col md:flex-row md:items-center justify-between gap-3 transition hover:border-slate-700">
+                    <div class="flex items-start gap-3"><button onclick="toggleTaskComplete('${t.id}')" class="mt-0.5 ${done?'text-emerald-400':'text-slate-500 hover:text-slate-300'} transition"><i data-lucide="${done?'check-circle':'circle'}" class="w-5 h-5"></i></button>
+                    <div><h3 class="font-semibold text-xs text-slate-100 ${done?'line-through text-slate-500':''}">${escapeHtml(t.title)}</h3>${t.description?`<p class="text-[11px] text-slate-400 mt-0.5 line-clamp-2">${escapeHtml(t.description)}</p>`:''}<div class="flex flex-wrap items-center gap-2 mt-1.5">${folderBadge}${getPriorityBadge(t.priority)}${t.dueDate?`<span class="text-[10px] text-slate-400 flex items-center gap-1"><i data-lucide="calendar" class="w-3 h-3"></i>${escapeHtml(t.dueDate)}${t.dueTime?' · '+escapeHtml(t.dueTime):''}</span>`:'<span class="text-[10px] text-slate-500 italic">Sem data</span>'}${t.recurrenceRule?'<span class="text-[10px] text-cyan-300 flex items-center gap-1"><i data-lucide="repeat" class="w-3 h-3"></i>Recorrente</span>':''}</div></div></div>
+                    <div class="flex items-center gap-1.5 self-end md:self-center border-t md:border-t-0 pt-2 md:pt-0 border-slate-800 w-full md:w-auto justify-end"><button onclick="openModal('${t.id}')" class="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition"><i data-lucide="edit-3" class="w-4 h-4"></i></button><button onclick="deleteTask('${t.id}')" class="p-1.5 text-slate-400 hover:text-rose-400 rounded-lg transition"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div>
+                </div>`;
+            }).join('') : '<div class="text-center py-10 bg-slate-900/60 border border-slate-800 rounded-xl"><i data-lucide="inbox" class="w-8 h-8 mx-auto text-slate-600 mb-2"></i><p class="text-slate-400 text-xs font-medium">Nenhuma tarefa encontrada com os filtros selecionados.</p></div>';
+            refreshIcons();
         }
-        function setTaskViewMode(mode){currentTaskViewMode=mode;document.querySelectorAll('.task-view-btn').forEach(btn=>{const a=btn.dataset.taskView===mode;btn.classList.toggle('bg-blue-600',a);btn.classList.toggle('text-white',a);btn.classList.toggle('text-slate-400',!a);});renderTaskList();}
+        function setTaskViewMode(mode){currentTaskViewMode=mode;if(mode==='week'||mode==='month'){currentFilterMode=mode;taskCalendarDate=new Date();}else if(currentFilterMode==='week'||currentFilterMode==='month'){currentFilterMode='all';}document.querySelectorAll('.task-view-btn').forEach(btn=>{const a=btn.dataset.taskView===mode;btn.classList.toggle('bg-blue-600',a);btn.classList.toggle('text-white',a);btn.classList.toggle('text-slate-400',!a);});document.querySelectorAll('.task-period-btn').forEach(btn=>{const a=btn.dataset.taskPeriod===currentFilterMode;btn.classList.toggle('bg-blue-600',a);btn.classList.toggle('text-white',a);btn.classList.toggle('text-slate-400',!a);});renderTaskList();}
+        function getTaskCalendarFilteredTasks(baseFiltered) {
+            if (currentTaskViewMode === 'cards') return baseFiltered;
+            const anchor = taskCalendarDate;
+            if (currentTaskViewMode === 'week') {
+                const a = getAgendaDateString(agendaStartOfWeek(anchor)), b = getAgendaDateString(agendaEndOfWeek(anchor));
+                return baseFiltered.filter(t => { const d = agendaTaskDate(t); return d && d >= a && d <= b; });
+            }
+            const a = getAgendaDateString(new Date(anchor.getFullYear(), anchor.getMonth(), 1));
+            const b = getAgendaDateString(new Date(anchor.getFullYear(), anchor.getMonth()+1, 0));
+            return baseFiltered.filter(t => { const d = agendaTaskDate(t); return d && d >= a && d <= b; });
+        }
+
         function renderTaskList() {
-            const container=document.getElementById('tasksList'); if(!container)return;
-            const search=document.getElementById('filterSearch').value.toLowerCase(), category=document.getElementById('filterCategory').value, priority=document.getElementById('filterPriority').value, status=document.getElementById('filterStatus').value, folderFilter=document.getElementById('filterFolder')?.value||'all', range=getTaskPeriodRange(currentFilterMode);
-            const filtered=tasks.filter(t=>{const title=String(t.title||'').toLowerCase(),description=String(t.description||'').toLowerCase(),matchesSearch=title.includes(search)||description.includes(search),matchesCategory=category==='all'||t.category===category,matchesPriority=priority==='all'||t.priority===priority,matchesStatus=status==='all'?true:(status==='no_date'?!t.dueDate:t.status===status),matchesFolder=folderFilter==='all'||getTaskFolderId(t)===folderFilter,due=String(t.dueDate||'').trim();let matchesPeriod=true;if(currentFilterMode==='today')matchesPeriod=due===range.today;else if(currentFilterMode==='tomorrow')matchesPeriod=due===range.tomorrow;else if(currentFilterMode==='week')matchesPeriod=!!due&&due>=range.weekStart&&due<=range.weekEnd;else if(currentFilterMode==='upcoming')matchesPeriod=!!due&&due>range.weekEnd;else if(currentFilterMode==='late')matchesPeriod=!!due&&due<range.today&&t.status!=='done';else if(currentFilterMode==='no_date')matchesPeriod=!due;return matchesSearch&&matchesCategory&&matchesPriority&&matchesStatus&&matchesFolder&&matchesPeriod;});
-            const nav=document.getElementById('taskCalendarNav'); if(currentTaskViewMode==='week'){nav.classList.remove('hidden');nav.classList.add('flex');container.innerHTML=renderAgendaWeek(filtered,taskCalendarDate,document.getElementById('taskCalendarTitle'));}else if(currentTaskViewMode==='month'){nav.classList.remove('hidden');nav.classList.add('flex');container.innerHTML=renderAgendaMonth(filtered,taskCalendarDate,document.getElementById('taskCalendarTitle'));}else{nav.classList.add('hidden');nav.classList.remove('flex');renderTaskCards(filtered,container);} refreshIcons();
+            const container = document.getElementById('tasksList'); if (!container) return;
+            const search = document.getElementById('filterSearch')?.value.toLowerCase() || '';
+            const priority = document.getElementById('filterPriority')?.value || 'all';
+            const status = document.getElementById('filterStatus')?.value || 'all';
+            const folderFilter = document.getElementById('filterFolder')?.value || 'all';
+            const range = getTaskPeriodRange(currentFilterMode);
+            const baseFiltered = tasks.filter(t => {
+                const title = String(t.title||'').toLowerCase(), description = String(t.description||'').toLowerCase();
+                const matchesSearch = title.includes(search) || description.includes(search);
+                const matchesPriority = priority === 'all' || t.priority === priority;
+                const matchesStatus = status === 'all' ? true : (status === 'no_date' ? !t.dueDate : t.status === status);
+                const matchesFolder = folderFilter === 'all' || getTaskFolderId(t) === folderFilter;
+                const due = String(t.dueDate||'').trim();
+                let matchesPeriod = true;
+                if (currentTaskViewMode === 'cards') {
+                    if (currentFilterMode === 'today') matchesPeriod = due === range.today;
+                    else if (currentFilterMode === 'tomorrow') matchesPeriod = due === range.tomorrow;
+                    else if (currentFilterMode === 'week') matchesPeriod = !!due && due >= range.weekStart && due <= range.weekEnd;
+                    else if (currentFilterMode === 'upcoming') matchesPeriod = !!due && due > range.weekEnd;
+                    else if (currentFilterMode === 'late') matchesPeriod = !!due && due < range.today && t.status !== 'done';
+                    else if (currentFilterMode === 'no_date') matchesPeriod = !due;
+                }
+                return matchesSearch && matchesPriority && matchesStatus && matchesFolder && matchesPeriod;
+            });
+            const filtered = getTaskCalendarFilteredTasks(baseFiltered);
+            const nav = document.getElementById('taskCalendarNav');
+            if (currentTaskViewMode === 'week') { nav.classList.remove('hidden'); nav.classList.add('flex'); container.innerHTML = renderAgendaWeek(filtered, taskCalendarDate, document.getElementById('taskCalendarTitle')); }
+            else if (currentTaskViewMode === 'month') { nav.classList.remove('hidden'); nav.classList.add('flex'); container.innerHTML = renderAgendaMonth(filtered, taskCalendarDate, document.getElementById('taskCalendarTitle')); }
+            else { nav.classList.add('hidden'); nav.classList.remove('flex'); renderTaskCards(filtered, container); }
+            refreshIcons();
         }
 
         function renderKanban() {
@@ -2831,7 +2949,7 @@
                     </div>
                     ${t.description ? `<p class="text-[11px] text-slate-400 line-clamp-2">${escapeHtml(t.description)}</p>` : ''}
                     <div class="flex justify-between items-center text-[10px] text-slate-400 pt-1.5 border-t border-slate-900">
-                        <span class="bg-slate-900 px-1.5 py-0.5 rounded text-[10px] text-slate-300">${escapeHtml(t.category)}</span>
+                        ${(() => { const f=folders.find(x=>x.id===getTaskFolderId(t)); return f ? `<span class=\"bg-blue-500/10 px-1.5 py-0.5 rounded text-[10px] text-blue-300 flex items-center gap-1\">${folderIconHtml(f.icon,'w-3 h-3')}${escapeHtml(f.name)}</span>` : '<span class=\"text-[10px] text-slate-600\">Sem pasta</span>'; })()}
                         ${t.dueDate ? `<span>${escapeHtml(t.dueDate)}</span>` : '<span class="italic text-slate-600">Sem data</span>'}
                     </div>
                 `;
@@ -2890,6 +3008,33 @@
             });
         }
 
+        function formatAgendaDateLong(dateKey) {
+            const d = new Date(dateKey + 'T00:00:00');
+            return d.toLocaleDateString('pt-BR', { weekday:'long', day:'2-digit', month:'long', year:'numeric' }).replace(/^./, c => c.toUpperCase());
+        }
+        function openAgendaDayModal(dateKey) {
+            const modal = document.getElementById('agendaDayModal'), list = document.getElementById('agendaDayModalList'), title = document.getElementById('agendaDayModalTitle');
+            if (!modal || !list || !title) return;
+            const dayTasks = agendaSortTasks(tasks.filter(t => agendaTaskDate(t) === dateKey));
+            title.textContent = formatAgendaDateLong(dateKey);
+            list.innerHTML = dayTasks.length ? dayTasks.map(t => {
+                const folder = folders.find(f => f.id === getTaskFolderId(t));
+                return `<button type="button" class="w-full text-left p-3 rounded-xl bg-slate-950/70 border border-slate-800 hover:border-blue-500/50" onclick="closeAgendaDayModal();openModal('${t.id}')">
+                    <div class="flex items-start justify-between gap-3"><div class="min-w-0"><p class="text-xs font-semibold text-slate-100 ${t.status==='done'?'line-through text-slate-500':''}">${escapeHtml(t.title)}</p><div class="flex flex-wrap items-center gap-2 mt-1.5">${folder?`<span class="text-[10px] text-blue-300 flex items-center gap-1">${folderIconHtml(folder.icon,'w-3 h-3')}${escapeHtml(folder.name)}</span>`:''}${t.dueTime?`<span class="text-[10px] text-slate-400">${escapeHtml(t.dueTime)}</span>`:''}${getPriorityBadge(t.priority)}</div></div><i data-lucide="chevron-right" class="w-4 h-4 text-slate-600 shrink-0"></i></div>
+                </button>`;
+            }).join('') : '<div class="py-12 text-center"><i data-lucide="calendar-plus" class="w-9 h-9 text-slate-600 mx-auto mb-3"></i><p class="text-xs text-slate-400">Nenhum compromisso neste dia.</p></div>';
+            modal.dataset.date = dateKey;
+            modal.classList.remove('hidden');
+            refreshIcons();
+        }
+        function closeAgendaDayModal() { document.getElementById('agendaDayModal')?.classList.add('hidden'); }
+        function newAgendaTaskFromDay() {
+            const modal = document.getElementById('agendaDayModal'); const dateKey = modal?.dataset.date || getLocalDateString();
+            closeAgendaDayModal(); openModal();
+            if (document.getElementById('taskDueDate')) document.getElementById('taskDueDate').value = dateKey;
+            if (activeFolderId && document.getElementById('taskFolder')) document.getElementById('taskFolder').value = activeFolderId;
+        }
+
         function render() {
             renderDashboard();
             renderFolders();
@@ -2903,9 +3048,6 @@
         const filterSearchInput = document.getElementById('filterSearch');
         if (filterSearchInput) filterSearchInput.addEventListener('input', renderTaskList);
         
-        const filterCategorySelect = document.getElementById('filterCategory');
-        if (filterCategorySelect) filterCategorySelect.addEventListener('change', renderTaskList);
-
         const filterPrioritySelect = document.getElementById('filterPriority');
         if (filterPrioritySelect) filterPrioritySelect.addEventListener('change', renderTaskList);
 
@@ -2921,8 +3063,11 @@
         document.querySelectorAll('.task-view-btn').forEach(btn=>btn.addEventListener('click',()=>setTaskViewMode(btn.dataset.taskView||'cards')));
         document.getElementById('taskCalendarPrev')?.addEventListener('click',()=>{taskCalendarDate=new Date(taskCalendarDate);if(currentTaskViewMode==='week')taskCalendarDate.setDate(taskCalendarDate.getDate()-7);else taskCalendarDate.setMonth(taskCalendarDate.getMonth()-1);renderTaskList();});
         document.getElementById('taskCalendarNext')?.addEventListener('click',()=>{taskCalendarDate=new Date(taskCalendarDate);if(currentTaskViewMode==='week')taskCalendarDate.setDate(taskCalendarDate.getDate()+7);else taskCalendarDate.setMonth(taskCalendarDate.getMonth()+1);renderTaskList();});
-        document.querySelectorAll('.folder-period-btn').forEach(btn=>btn.addEventListener('click',()=>{activeFolderPeriod=btn.dataset.folderPeriod||'all';if(activeFolderPeriod==='week')activeFolderViewMode='week';if(activeFolderPeriod==='month')activeFolderViewMode='month';renderFolderTasks();}));
-        document.querySelectorAll('.folder-view-btn').forEach(btn=>btn.addEventListener('click',()=>{activeFolderViewMode=btn.dataset.folderView||'cards';renderFolderTasks();}));
+        document.getElementById('btnCloseAgendaDayModal')?.addEventListener('click', closeAgendaDayModal);
+        document.getElementById('btnNewAgendaTaskFromDay')?.addEventListener('click', newAgendaTaskFromDay);
+        document.getElementById('agendaDayModal')?.addEventListener('click', (e)=>{ if(e.target.id==='agendaDayModal') closeAgendaDayModal(); });
+        document.querySelectorAll('.folder-period-btn').forEach(btn=>btn.addEventListener('click',()=>{const mode=btn.dataset.folderPeriod||'all';activeFolderPeriod=mode;if(mode==='week'||mode==='month'){activeFolderViewMode=mode;folderCalendarDate=new Date();}else{activeFolderViewMode='cards';}renderFolderTasks();}));
+        document.querySelectorAll('.folder-view-btn').forEach(btn=>btn.addEventListener('click',()=>{activeFolderViewMode=btn.dataset.folderView||'cards';activeFolderPeriod=(activeFolderViewMode==='week'||activeFolderViewMode==='month')?activeFolderViewMode:'all';if(activeFolderViewMode==='week'||activeFolderViewMode==='month')folderCalendarDate=new Date();renderFolderTasks();}));
         document.getElementById('folderCalendarPrev')?.addEventListener('click',()=>{folderCalendarDate=new Date(folderCalendarDate);if(activeFolderViewMode==='week')folderCalendarDate.setDate(folderCalendarDate.getDate()-7);else folderCalendarDate.setMonth(folderCalendarDate.getMonth()-1);renderFolderTasks();});
         document.getElementById('folderCalendarNext')?.addEventListener('click',()=>{folderCalendarDate=new Date(folderCalendarDate);if(activeFolderViewMode==='week')folderCalendarDate.setDate(folderCalendarDate.getDate()+7);else folderCalendarDate.setMonth(folderCalendarDate.getMonth()+1);renderFolderTasks();});
 
