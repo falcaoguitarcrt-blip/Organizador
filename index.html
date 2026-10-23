@@ -516,10 +516,16 @@
                             <!-- Category Donut Chart Visualization -->
                             <article class="glass-card rounded-xl p-4 flex flex-col justify-between min-h-[260px]">
                                 <div class="flex justify-between items-start mb-2">
-                                    <div>
-                                        <h3 class="text-sm font-bold text-blue-400">Distribuição de tarefas</h3>
-                                        <p class="text-[10px] text-slate-500">Visão geral por categoria</p>
-                                    </div>
+                                    <div class="glass-card rounded-2xl border border-slate-800/80 p-5 h-full">
+    <div class="flex items-start justify-between gap-3">
+        <div>
+            <h3 class="text-sm font-bold text-blue-400">Distribuição por pasta</h3>
+            <p class="text-[11px] text-slate-500">Visão geral das suas tarefas por espaço</p>
+        </div>
+        <i data-lucide="folder-tree" class="w-5 h-5 text-blue-400"></i>
+    </div>
+    <div id="folderDistributionChart" class="mt-5"></div>
+</div>
                                 </div>
                                 <div class="flex items-center justify-around gap-2 my-auto">
                                     <div class="relative w-24 h-24 rounded-full grid place-items-center" style="background: conic-gradient(#1d72f3 0% 35%, #c084fc 35% 55%, #ffb800 55% 75%, #26d0ce 75% 100%);">
@@ -2598,7 +2604,69 @@
             }
         }
 
+        function renderFolderDistributionChart() {
+            const el = document.getElementById('folderDistributionChart');
+            if (!el) return;
+
+            const counts = folders.map(folder => ({
+                folder,
+                count: tasks.filter(t => getTaskFolderId(t) === folder.id).length
+            })).filter(item => item.count > 0);
+
+            const total = counts.reduce((sum, item) => sum + item.count, 0);
+
+            if (!counts.length) {
+                el.innerHTML = `
+                    <div class="h-48 flex flex-col items-center justify-center text-center text-slate-500">
+                        <i data-lucide="folder-open" class="w-8 h-8 mb-2"></i>
+                        <p class="text-xs">Nenhuma tarefa vinculada a uma pasta.</p>
+                    </div>`;
+                refreshIcons();
+                return;
+            }
+
+            const maxVisible = 8;
+            const visible = counts.slice(0, maxVisible);
+            const remaining = counts.slice(maxVisible).reduce((sum, item) => sum + item.count, 0);
+
+            const colors = [
+                'bg-blue-500', 'bg-violet-500', 'bg-amber-400', 'bg-cyan-400',
+                'bg-emerald-400', 'bg-rose-400', 'bg-fuchsia-400', 'bg-indigo-400'
+            ];
+
+            el.innerHTML = `
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[11px] text-slate-500">Total</span>
+                        <span class="text-xl font-extrabold text-white">${total}</span>
+                    </div>
+                    <div class="space-y-2.5">
+                        ${visible.map((item, index) => {
+                            const pct = total ? Math.round((item.count / total) * 100) : 0;
+                            return `
+                                <button type="button"
+                                    class="w-full text-left group"
+                                    onclick="openFolderFromSidebar('${item.folder.id}')"
+                                    title="Abrir ${escapeHtml(item.folder.name || 'Pasta')}">
+                                    <div class="flex items-center gap-2 mb-1">
+                                        <span class="w-2.5 h-2.5 rounded-full ${colors[index % colors.length]}"></span>
+                                        <span class="text-[11px] text-slate-300 truncate flex-1">${escapeHtml(item.folder.name || 'Sem nome')}</span>
+                                        <span class="text-[11px] font-semibold text-slate-200">${item.count}</span>
+                                    </div>
+                                    <div class="h-1.5 rounded-full bg-slate-900 overflow-hidden">
+                                        <div class="h-full rounded-full ${colors[index % colors.length]}" style="width:${pct}%"></div>
+                                    </div>
+                                </button>`;
+                        }).join('')}
+                        ${remaining > 0 ? `<div class="text-[10px] text-slate-500 pt-1">+ ${remaining} tarefas em outras pastas</div>` : ''}
+                    </div>
+                </div>`;
+
+            refreshIcons();
+        }
+
         function renderDashboard() {
+            renderFolderDistributionChart();
             const todayStr = getLocalDateString();
             const total = tasks.length;
             const completed = tasks.filter(t => t.status === 'done').length;
