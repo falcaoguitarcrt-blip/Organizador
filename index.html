@@ -910,6 +910,8 @@
         let folderUnsubscribe = null;
         let activeFolderId = null;
         let selectedFolderIcon = 'folder';
+        let agendaSeedTimer = null;
+        let agendaSeedRunning = false;
         
         let firestoreInspectionState = {
             itemsCount: 0,
@@ -1012,6 +1014,7 @@
                     tasks = loadedTasks;
                     saveTasksToLocalCacheOnly(tasks);
                     render();
+                    scheduleAgendaCommitmentsSeed();
 
                     if (authStatusLabel) {
                         authStatusLabel.className = 'text-emerald-400 text-[10px] font-medium flex items-center gap-1.5 mt-0.5';
@@ -1031,6 +1034,179 @@
         }
 
         // --- PASTAS: FIRESTORE REALTIME SYNC ---
+        // --- AGENDA PESSOAL: compromissos solicitados pelo usuário ---
+        // Cria/associa registros de forma idempotente: nunca duplica uma ocorrência já existente.
+        function normalizeAgendaText(value) {
+            return String(value || '')
+                .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                .toLowerCase().trim();
+        }
+
+        function getDateFromParts(year, month, day) {
+            return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        }
+
+        function addDaysToDateString(dateString, days) {
+            const d = new Date(`${dateString}T00:00:00`);
+            d.setDate(d.getDate() + days);
+            return getLocalDateString(d);
+        }
+
+        function getNextWeekdayDates(startDate, weekday, weeksAhead = 12) {
+            const start = new Date(`${startDate}T00:00:00`);
+            const delta = (weekday - start.getDay() + 7) % 7;
+            const first = new Date(start);
+            first.setDate(first.getDate() + delta);
+            const dates = [];
+            for (let i = 0; i < weeksAhead; i++) {
+                const d = new Date(first);
+                d.setDate(first.getDate() + i * 7);
+                dates.push(getLocalDateString(d));
+            }
+            return dates;
+        }
+
+        function findAgendaFolder(name, aliases = []) {
+            const wanted = [name, ...aliases].map(normalizeAgendaText);
+            return folders.find(f => wanted.includes(normalizeAgendaText(f.name)));
+        }
+
+        async function ensureAgendaFolder(name, icon = 'folder', aliases = []) {
+            const existing = findAgendaFolder(name, aliases);
+            if (existing) return existing;
+            if (!currentUserState || !db) return null;
+            const ref = db.collection('users').doc(currentUserState.uid).collection('folders').doc();
+            const payload = {
+                name,
+                icon,
+                order: folders.length,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+            await ref.set(payload, { merge: true });
+            const localFolder = { id: ref.id, name, icon, order: folders.length };
+            folders.push(localFolder);
+            sortFoldersForDisplay();
+            return localFolder;
+        }
+
+        function buildAgendaSeedDefinitions() {
+            const today = getLocalDateString();
+            const definitions = [];
+
+            // Compromissos fixos da Igreja: toda quinta 20h e todo domingo 19h.
+            const churchThursdays = getNextWeekdayDates(today, 4, 12);
+            const churchSundays = getNextWeekdayDates(today, 0, 12);
+            churchThursdays.forEach(date => definitions.push({
+                seedKey: `igreja_culto_quinta_${date}`,
+                title: 'Culto de Quinta-feira', description: 'Compromisso semanal da Igreja.',
+                dueDate: date, dueTime: '20:00', category: 'Igreja', priority: 'Média', status: 'todo',
+                folderName: 'Igreja', folderIcon: 'church', recurrenceRule: 'weekly_thursday'
+            }));
+            churchSundays.forEach(date => definitions.push({
+                seedKey: `igreja_culto_domingo_${date}`,
+                title: 'Culto de Domingo', description: 'Compromisso semanal da Igreja.',
+                dueDate: date, dueTime: '19:00', category: 'Igreja', priority: 'Média', status: 'todo',
+                folderName: 'Igreja', folderIcon: 'church', recurrenceRule: 'weekly_sunday'
+            }));
+
+            // Registros da Jornada de Conhecimento apresentados na programação enviada.
+            definitions.push(
+                { seedKey:'jornada_2026-10-22_apelo_visitantes', title:'Jornada de Conhecimento - Apelo / Visitantes', description:'Culto de quinta-feira 20h.', dueDate:'2026-10-22', dueTime:'20:00', category:'Igreja', priority:'Média', status:'todo', folderName:'Jornada de Conhecimento', folderIcon:'book-open' },
+                { seedKey:'jornada_2026-10-25_captacao_apelo', title:'Jornada de Conhecimento - Captação Apelo', description:'Compromisso de domingo.', dueDate:'2026-10-25', dueTime:'07:30', category:'Igreja', priority:'Média', status:'todo', folderName:'Jornada de Conhecimento', folderIcon:'book-open' },
+                { seedKey:'jornada_2026-10-25_suporte_presencas', title:'Jornada de Conhecimento - Suporte Geral e Presenças', description:'Compromisso de domingo.', dueDate:'2026-10-25', dueTime:'07:30', category:'Igreja', priority:'Média', status:'todo', folderName:'Jornada de Conhecimento', folderIcon:'book-open' },
+                { seedKey:'jornada_2026-10-29_apelo_visitantes', title:'Jornada de Conhecimento - Apelo / Visitantes', description:'Culto de quinta-feira 20h.', dueDate:'2026-10-29', dueTime:'20:00', category:'Igreja', priority:'Média', status:'todo', folderName:'Jornada de Conhecimento', folderIcon:'book-open' }
+            );
+
+            // Supervisão GE.
+            definitions.push(
+                { seedKey:'supervisao_2026-10-23_centro3', title:'Grupo de Encorajamento - Centro 3', description:'Supervisão do grupo de encorajamento Centro 3.', dueDate:'2026-10-23', dueTime:'19:30', category:'Igreja', priority:'Média', status:'todo', folderName:'Supervisão GE', folderIcon:'users' },
+                { seedKey:'supervisao_2026-11-06_lideres_felipe', title:'Reunião de Líderes em Treinamento com Pastor Felipe', description:'Reunião da supervisão.', dueDate:'2026-11-06', category:'Igreja', priority:'Média', status:'todo', folderName:'Supervisão GE', folderIcon:'users' }
+            );
+
+            // Professor. A data da aula não foi informada, então fica sem data para não inventar informação.
+            definitions.push({ seedKey:'professor_dna_aula4', title:'Curso DNA - Aula 4', description:'Próxima aula do curso DNA.', dueDate:'', category:'Estudos', priority:'Média', status:'todo', folderName:'Professor', folderIcon:'graduation-cap' });
+
+            // Inventário.
+            definitions.push(
+                { seedKey:'inventario_2026-10-23_resposta_advogada', title:'Responder à advogada sobre a documentação do inventário', description:'Enviar a resposta necessária para a documentação que será levada ao cartório.', dueDate:'2026-10-23', category:'Outros', priority:'Alta', status:'todo', folderName:'Inventário', folderIcon:'file-text' },
+                { seedKey:'inventario_2026-10-26_advogada_cartorio', title:'Advogada no cartório - Inventário', description:'Acompanhar a ida da advogada ao cartório.', dueDate:'2026-10-26', category:'Outros', priority:'Média', status:'todo', folderName:'Inventário', folderIcon:'file-text' },
+                { seedKey:'inventario_2026-10-22_seguro_tia', title:'Levar documentação do seguro para minha tia assinar', description:'Levar hoje a documentação para assinatura.', dueDate:'2026-10-22', category:'Outros', priority:'Alta', status:'todo', folderName:'Inventário', folderIcon:'file-text' },
+                { seedKey:'inventario_2026-10-23_seguros', title:'Seguros - dar andamento às questões do seguro', description:'Resolver as questões do seguro. Prazo solicitado: amanhã às 23h.', dueDate:'2026-10-23', dueTime:'23:00', category:'Outros', priority:'Alta', status:'todo', folderName:'Inventário', folderIcon:'file-text' }
+            );
+
+            // Área de lazer.
+            definitions.push(
+                { seedKey:'area_lazer_2026-10-24_chaves_anderson', title:'Entregar chaves da Área de Lazer para Anderson', description:'Entrega das chaves e pagamento combinado.', dueDate:'2026-10-24', dueTime:'18:30', category:'Outros', priority:'Alta', status:'todo', folderName:'Área de Lazer', folderIcon:'home' },
+                { seedKey:'area_lazer_2026-10-25_aluguel', title:'Aluguel da Área de Lazer', description:'Programação de aluguel da área de lazer.', dueDate:'2026-10-25', category:'Outros', priority:'Média', status:'todo', folderName:'Área de Lazer', folderIcon:'home' },
+                { seedKey:'area_lazer_2026-10-25_retirar_chaves', title:'Retirar chaves da Área de Lazer', description:'Retirada das chaves após a utilização.', dueDate:'2026-10-25', dueTime:'18:30', category:'Outros', priority:'Média', status:'todo', folderName:'Área de Lazer', folderIcon:'home' }
+            );
+
+            return definitions;
+        }
+
+        async function seedAgendaCommitments() {
+            if (agendaSeedRunning || !currentUserState || !db || !folders.length) return;
+            agendaSeedRunning = true;
+            try {
+                const folderCache = {};
+                const folderSpecs = [
+                    ['Igreja','church',[]], ['Jornada de Conhecimento','book-open',['Jornada de Conhecime...']],
+                    ['Supervisão GE','users',[]], ['Professor','graduation-cap',[]], ['Inventário','file-text',[]], ['Área de Lazer','home',[]]
+                ];
+                for (const [name, icon, aliases] of folderSpecs) folderCache[name] = await ensureAgendaFolder(name, icon, aliases);
+
+                const definitions = buildAgendaSeedDefinitions();
+                const batch = db.batch();
+                let writes = 0;
+                const existingBySeed = new Map(tasks.filter(t => t.agendaSeedKey).map(t => [t.agendaSeedKey, t]));
+
+                for (const def of definitions) {
+                    const folder = folderCache[def.folderName] || findAgendaFolder(def.folderName);
+                    if (!folder) continue;
+                    const existingSeed = existingBySeed.get(def.seedKey);
+                    const fallback = tasks.find(t => {
+                        const titleMatch = normalizeAgendaText(t.title) === normalizeAgendaText(def.title);
+                        const dateMatch = String(t.dueDate || '') === String(def.dueDate || '');
+                        const timeMatch = !def.dueTime || !t.dueTime || String(t.dueTime) === String(def.dueTime);
+                        return titleMatch && dateMatch && timeMatch;
+                    });
+                    const existing = existingSeed || fallback;
+                    const id = existing?.id || `agenda_seed_${def.seedKey.replace(/[^a-zA-Z0-9_-]/g, '_')}`;
+                    const ref = db.collection('users').doc(currentUserState.uid).collection('items').doc(id);
+                    const payload = {
+                        ...(existing || {}),
+                        id,
+                        title: def.title,
+                        description: existing?.description || def.description || '',
+                        dueDate: def.dueDate,
+                        ...(def.dueTime ? { dueTime: def.dueTime } : {}),
+                        category: existing?.category || def.category,
+                        priority: existing?.priority || def.priority,
+                        status: existing?.status || def.status,
+                        folderId: folder.id,
+                        agendaSeedKey: def.seedKey,
+                        ...(def.recurrenceRule ? { recurrenceRule: def.recurrenceRule } : {}),
+                        createdAt: existing?.createdAt || new Date().toISOString(),
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    };
+                    batch.set(ref, payload, { merge: true });
+                    writes++;
+                }
+                if (writes) await batch.commit();
+                render();
+            } catch (err) {
+                console.error('[Agenda Seed Error]', err);
+            } finally {
+                agendaSeedRunning = false;
+            }
+        }
+
+        function scheduleAgendaCommitmentsSeed() {
+            clearTimeout(agendaSeedTimer);
+            agendaSeedTimer = setTimeout(() => seedAgendaCommitments(), 1200);
+        }
+
         function setupFoldersRealtimeListener(uid) {
             if (!db || !uid) return;
             if (folderUnsubscribe) folderUnsubscribe();
@@ -1040,6 +1216,7 @@
                     sortFoldersForDisplay();
                     renderFolders();
                     populateTaskFolderSelect();
+                    scheduleAgendaCommitmentsSeed();
                 }, (err) => {
                     console.error('[Folders Sync Error]', err);
                     folders = [];
@@ -1376,7 +1553,7 @@
             const folderTasks = getTasksForFolder(folder);
             document.getElementById('folderTasksCount').textContent = `${folderTasks.length} tarefa${folderTasks.length === 1 ? '' : 's'}`;
             const list = document.getElementById('folderTasksList');
-            list.innerHTML = folderTasks.length ? folderTasks.map(t => `<div class="flex items-center justify-between gap-3 p-3 rounded-lg bg-slate-950/60 border border-slate-800"><div class="min-w-0"><p class="text-xs font-semibold text-slate-200 truncate ${t.status === 'done' ? 'line-through text-slate-500' : ''}">${escapeHtml(t.title)}</p><p class="text-[10px] text-slate-500">${escapeHtml(t.category || 'Outros')} · ${escapeHtml(t.priority || 'Média')}${t.dueDate ? ' · ' + escapeHtml(t.dueDate) : ''}</p></div><button type="button" onclick="openModal('${t.id}')" class="p-1.5 text-slate-500 hover:text-white hover:bg-slate-800 rounded-lg" title="Editar tarefa"><i data-lucide="pencil" class="w-3.5 h-3.5"></i></button></div>`).join('') : '<div class="text-center py-8"><i data-lucide="folder-open" class="w-8 h-8 text-slate-600 mx-auto mb-2"></i><p class="text-xs text-slate-400">Nenhuma tarefa vinculada a esta pasta.</p><p class="text-[10px] text-slate-600 mt-1">Use “+ Nova tarefa” para adicionar uma tarefa diretamente aqui.</p></div>';
+            list.innerHTML = folderTasks.length ? folderTasks.map(t => `<div class="flex items-center justify-between gap-3 p-3 rounded-lg bg-slate-950/60 border border-slate-800"><div class="min-w-0"><p class="text-xs font-semibold text-slate-200 truncate ${t.status === 'done' ? 'line-through text-slate-500' : ''}">${escapeHtml(t.title)}</p><p class="text-[10px] text-slate-500">${escapeHtml(t.category || 'Outros')} · ${escapeHtml(t.priority || 'Média')}${t.dueDate ? ' · ' + escapeHtml(t.dueDate) : ''}${t.dueTime ? ' · ' + escapeHtml(t.dueTime) : ''}</p></div><button type="button" onclick="openModal('${t.id}')" class="p-1.5 text-slate-500 hover:text-white hover:bg-slate-800 rounded-lg" title="Editar tarefa"><i data-lucide="pencil" class="w-3.5 h-3.5"></i></button></div>`).join('') : '<div class="text-center py-8"><i data-lucide="folder-open" class="w-8 h-8 text-slate-600 mx-auto mb-2"></i><p class="text-xs text-slate-400">Nenhuma tarefa vinculada a esta pasta.</p><p class="text-[10px] text-slate-600 mt-1">Use “+ Nova tarefa” para adicionar uma tarefa diretamente aqui.</p></div>';
             refreshIcons();
         }
 
@@ -2530,7 +2707,7 @@
                                         return tf ? `<span class="text-[10px] px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-300 font-medium flex items-center gap-1">${folderIconHtml(tf.icon,'w-3 h-3')} ${escapeHtml(tf.name || 'Pasta')}</span>` : '';
                                     })()}
                                     ${getPriorityBadge(t.priority)}
-                                    ${t.dueDate ? `<span class="text-[10px] text-slate-400 flex items-center gap-1"><i data-lucide="calendar" class="w-3 h-3"></i> ${escapeHtml(t.dueDate)}</span>` : '<span class="text-[10px] text-slate-500 italic">Sem data</span>'}
+                                    ${t.dueDate ? `<span class="text-[10px] text-slate-400 flex items-center gap-1"><i data-lucide="calendar" class="w-3 h-3"></i> ${escapeHtml(t.dueDate)}${t.dueTime ? ' · ' + escapeHtml(t.dueTime) : ''}</span>` : '<span class="text-[10px] text-slate-500 italic">Sem data</span>'}
                                 </div>
                             </div>
                         </div>
