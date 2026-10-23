@@ -10,6 +10,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com">
+// V49-kanban-navigation: o botão acessa o renderer existente, sem alterar dados ou drag-and-drop.
+
 <!-- V48: dados pessoais e compromissos do usuário vêm exclusivamente do Firestore; o HTML não cria/recria agenda pessoal nem pastas pessoais automaticamente. -->
 <!-- V47: Centro de Comando exclusivo da tela Inicial; agenda e pastas abrem diretamente no conteúdo. -->
 <!-- V45: calendário inicia no mês atual; navegar permite consultar outro mês sem alterar os dados. --></script>
@@ -270,6 +272,7 @@
                     </button>
                     <button data-view="tasks" class="nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-semibold rounded-xl text-slate-300 hover:bg-slate-800/60 hover:text-white transition">
                         <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+<button type="button" class="nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-semibold rounded-xl text-slate-300 hover:bg-slate-800/60 hover:text-white transition" data-view="kanban" aria-label="Quadro Kanban"><span class="nav-icon">▥</span><span>Quadro Kanban</span></button>
                         <span>Tarefas</span>
                     </button>
                     <button data-view="dashboard" class="nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-semibold rounded-xl text-slate-300 hover:bg-slate-800/60 hover:text-white transition" onclick="showReportsPanel && showReportsPanel()">
