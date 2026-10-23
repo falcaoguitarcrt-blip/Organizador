@@ -90,6 +90,15 @@
             border: 2px dashed #1d72f3;
         }
 
+        /* Agenda calendar views */
+        .agenda-calendar-grid { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:6px; min-width:720px; }
+        .agenda-day-cell { min-height:92px; background:rgba(2,6,23,.42); border:1px solid rgba(30,41,59,.9); border-radius:10px; padding:7px; }
+        .agenda-day-cell.is-today { border-color:rgba(59,130,246,.75); box-shadow:0 0 0 1px rgba(59,130,246,.18) inset; }
+        .agenda-day-cell.is-outside { opacity:.42; }
+        .agenda-task-chip { display:block; width:100%; text-align:left; padding:5px 6px; margin-top:5px; border-radius:7px; background:rgba(15,23,42,.9); border:1px solid rgba(51,65,85,.85); color:#cbd5e1; font-size:10px; line-height:1.25; cursor:pointer; overflow:hidden; }
+        .agenda-task-chip:hover { border-color:rgba(59,130,246,.65); color:#fff; }
+        .agenda-week-column { min-height:300px; background:rgba(2,6,23,.42); border:1px solid rgba(30,41,59,.9); border-radius:10px; padding:8px; }
+        .agenda-scroll-x { overflow-x:auto; padding-bottom:4px; }
         /* Folder sidebar drag & drop */
         .folder-sidebar-item { transition: opacity .15s ease, transform .15s ease, background-color .15s ease; }
         .folder-sidebar-item.folder-dragging { opacity: .45; transform: scale(.98); }
@@ -549,6 +558,20 @@
                             <button type="button" data-task-period="no_date" class="task-period-btn px-3 py-1.5 rounded-lg text-[11px] font-semibold text-slate-400 hover:text-white hover:bg-slate-800">Sem data</button>
                         </div>
 
+                        <div class="glass-card p-2 rounded-xl flex flex-wrap items-center justify-between gap-2">
+                            <div class="flex flex-wrap gap-1.5 items-center">
+                                <span class="text-[10px] font-semibold text-slate-500 mr-1">Visualização</span>
+                                <button type="button" data-task-view="cards" class="task-view-btn px-3 py-1.5 rounded-lg text-[11px] font-semibold bg-blue-600 text-white">Cards</button>
+                                <button type="button" data-task-view="week" class="task-view-btn px-3 py-1.5 rounded-lg text-[11px] font-semibold text-slate-400 hover:text-white hover:bg-slate-800">Semana</button>
+                                <button type="button" data-task-view="month" class="task-view-btn px-3 py-1.5 rounded-lg text-[11px] font-semibold text-slate-400 hover:text-white hover:bg-slate-800">Mês</button>
+                            </div>
+                            <div id="taskCalendarNav" class="hidden items-center gap-1">
+                                <button type="button" id="taskCalendarPrev" class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800" title="Período anterior"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
+                                <span id="taskCalendarTitle" class="text-[11px] font-semibold text-slate-300 min-w-[150px] text-center"></span>
+                                <button type="button" id="taskCalendarNext" class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800" title="Próximo período"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
+                            </div>
+                        </div>
+
                         <!-- Filters Bar -->
                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 glass-card p-3 rounded-xl">
                             <select id="filterCategory" class="bg-slate-950 border border-slate-800 text-slate-200 text-xs rounded-lg px-3 py-2 outline-none focus:border-blue-500">
@@ -678,6 +701,27 @@
                         <button type="button" id="btnBackToFolders" class="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-[11px] font-semibold">Pastas</button>
                         <button id="btnNewTaskInFolder" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-[11px] font-semibold">+ Nova tarefa</button>
                     </div>
+                </div>
+                <div class="glass-card p-2 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+                    <div class="flex flex-wrap gap-1.5 items-center">
+                        <span class="text-[10px] font-semibold text-slate-500 mr-1">Período</span>
+                        <button type="button" data-folder-period="all" class="folder-period-btn px-3 py-1.5 rounded-lg text-[11px] font-semibold bg-blue-600 text-white">Todas</button>
+                        <button type="button" data-folder-period="today" class="folder-period-btn px-3 py-1.5 rounded-lg text-[11px] font-semibold text-slate-400 hover:text-white hover:bg-slate-800">Hoje</button>
+                        <button type="button" data-folder-period="tomorrow" class="folder-period-btn px-3 py-1.5 rounded-lg text-[11px] font-semibold text-slate-400 hover:text-white hover:bg-slate-800">Amanhã</button>
+                        <button type="button" data-folder-period="week" class="folder-period-btn px-3 py-1.5 rounded-lg text-[11px] font-semibold text-slate-400 hover:text-white hover:bg-slate-800">Semana</button>
+                        <button type="button" data-folder-period="month" class="folder-period-btn px-3 py-1.5 rounded-lg text-[11px] font-semibold text-slate-400 hover:text-white hover:bg-slate-800">Mês</button>
+                    </div>
+                    <div class="flex flex-wrap gap-1.5 items-center">
+                        <span class="text-[10px] font-semibold text-slate-500 mr-1">Visão</span>
+                        <button type="button" data-folder-view="cards" class="folder-view-btn px-3 py-1.5 rounded-lg text-[11px] font-semibold bg-blue-600 text-white">Cards</button>
+                        <button type="button" data-folder-view="week" class="folder-view-btn px-3 py-1.5 rounded-lg text-[11px] font-semibold text-slate-400 hover:text-white hover:bg-slate-800">Semana</button>
+                        <button type="button" data-folder-view="month" class="folder-view-btn px-3 py-1.5 rounded-lg text-[11px] font-semibold text-slate-400 hover:text-white hover:bg-slate-800">Mês</button>
+                    </div>
+                </div>
+                <div id="folderCalendarNav" class="hidden items-center justify-between gap-2 mb-3">
+                    <button type="button" id="folderCalendarPrev" class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
+                    <span id="folderCalendarTitle" class="text-[11px] font-semibold text-slate-300"></span>
+                    <button type="button" id="folderCalendarNext" class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
                 </div>
                 <div id="folderTasksList" class="space-y-2"></div>
             </div>
@@ -1390,6 +1434,11 @@
         }
 
         let draggedFolderId = null;
+        let activeFolderPeriod = 'all';
+        let activeFolderViewMode = 'cards';
+        let folderCalendarDate = new Date();
+        let currentTaskViewMode = 'cards';
+        let taskCalendarDate = new Date();
 
         function renderSidebarFolders() {
             const el = document.getElementById('sidebarFolders');
@@ -1497,6 +1546,9 @@
             const folder = folders.find(f => f.id === folderId);
             if (!folder) return;
             activeFolderId = folderId;
+            activeFolderPeriod = 'all';
+            activeFolderViewMode = 'cards';
+            folderCalendarDate = new Date();
             switchView('folders');
             renderFolders();
             requestAnimationFrame(() => {
@@ -1535,6 +1587,9 @@
             const folder = folders.find(f => f.id === folderId);
             if (!folder) return;
             activeFolderId = folderId;
+            activeFolderPeriod = 'all';
+            activeFolderViewMode = 'cards';
+            folderCalendarDate = new Date();
             switchView('folders');
             renderFolders();
             requestAnimationFrame(() => {
@@ -1542,25 +1597,55 @@
             });
         }
 
+        function getAgendaDateString(date) {
+            const y = date.getFullYear(); const m = String(date.getMonth()+1).padStart(2,'0'); const d = String(date.getDate()).padStart(2,'0');
+            return `${y}-${m}-${d}`;
+        }
+        function agendaDateLabel(date) { return date.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}); }
+        function agendaMonthLabel(date) { return date.toLocaleDateString('pt-BR',{month:'long',year:'numeric'}).replace(/^./,c=>c.toUpperCase()); }
+        function agendaStartOfWeek(date) { const d=new Date(date); d.setHours(0,0,0,0); d.setDate(d.getDate()-d.getDay()); return d; }
+        function agendaEndOfWeek(date) { const d=agendaStartOfWeek(date); d.setDate(d.getDate()+6); return d; }
+        function agendaTaskDate(task) { return String(task.dueDate||'').trim(); }
+        function agendaSortTasks(list) { return [...list].sort((a,b)=>{ const ad=agendaTaskDate(a)||'9999-12-31', bd=agendaTaskDate(b)||'9999-12-31'; if(ad!==bd)return ad.localeCompare(bd); return String(a.dueTime||'99:99').localeCompare(String(b.dueTime||'99:99'))||String(a.title||'').localeCompare(String(b.title||''),'pt-BR'); }); }
+        function renderAgendaTaskChip(task) { const time=task.dueTime?`<span class="text-blue-300 mr-1">${escapeHtml(task.dueTime)}</span>`:''; return `<button type="button" class="agenda-task-chip ${task.status==='done'?'opacity-55 line-through':''}" onclick="openModal('${task.id}')" title="Editar tarefa">${time}<span>${escapeHtml(task.title||'Sem título')}</span></button>`; }
+        function renderAgendaWeek(tasks,anchorDate,titleEl) {
+            const start=agendaStartOfWeek(anchorDate), names=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'], today=getLocalDateString(); let html='<div class="agenda-scroll-x"><div class="agenda-calendar-grid">';
+            for(let i=0;i<7;i++){ const d=new Date(start); d.setDate(start.getDate()+i); const key=getAgendaDateString(d); const dayTasks=agendaSortTasks(tasks.filter(t=>agendaTaskDate(t)===key)); html+=`<div class="agenda-week-column ${key===today?'is-today':''}"><div class="flex items-center justify-between gap-2 border-b border-slate-800 pb-2 mb-1"><div><div class="text-[10px] font-semibold text-slate-500">${names[i]}</div><div class="text-sm font-bold ${key===today?'text-blue-300':'text-white'}">${d.getDate()}</div></div><span class="text-[9px] text-slate-600">${dayTasks.length}</span></div>${dayTasks.length?dayTasks.map(renderAgendaTaskChip).join(''):'<div class="text-[9px] text-slate-700 pt-2">Sem eventos</div>'}</div>`; }
+            html+='</div></div>'; if(titleEl) titleEl.textContent=`${agendaDateLabel(start)} – ${agendaDateLabel(new Date(start.getFullYear(),start.getMonth(),start.getDate()+6))}`; return html;
+        }
+        function renderAgendaMonth(tasks,anchorDate,titleEl) {
+            const year=anchorDate.getFullYear(), month=anchorDate.getMonth(), first=new Date(year,month,1), start=agendaStartOfWeek(first), last=new Date(year,month+1,0), end=agendaEndOfWeek(last), today=getLocalDateString(), names=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb']; let html='<div class="agenda-scroll-x"><div class="min-w-[720px]">';
+            html+=`<div class="grid grid-cols-7 gap-1.5 mb-1.5">${names.map(n=>`<div class="text-[9px] font-semibold uppercase text-slate-600 px-1">${n}</div>`).join('')}</div><div class="agenda-calendar-grid">`;
+            for(let d=new Date(start);d<=end;d.setDate(d.getDate()+1)){ const key=getAgendaDateString(d), inMonth=d.getMonth()===month, dayTasks=agendaSortTasks(tasks.filter(t=>agendaTaskDate(t)===key)); html+=`<div class="agenda-day-cell ${key===today?'is-today':''} ${inMonth?'':'is-outside'}"><div class="flex items-center justify-between"><span class="text-[10px] font-bold ${key===today?'text-blue-300':'text-slate-400'}">${d.getDate()}</span><span class="text-[8px] text-slate-700">${dayTasks.length||''}</span></div>${dayTasks.slice(0,5).map(renderAgendaTaskChip).join('')}${dayTasks.length>5?`<div class="text-[9px] text-slate-500 mt-1">+${dayTasks.length-5} mais</div>`:''}</div>`; }
+            html+='</div></div></div>'; if(titleEl) titleEl.textContent=agendaMonthLabel(anchorDate); return html;
+        }
+        function getFolderPeriodTasks(folderTasks) {
+            const today=getLocalDateString(), base=new Date(today+'T00:00:00'), tomorrow=new Date(base); tomorrow.setDate(tomorrow.getDate()+1); const tomorrowKey=getAgendaDateString(tomorrow);
+            if(activeFolderPeriod==='today') return folderTasks.filter(t=>agendaTaskDate(t)===today);
+            if(activeFolderPeriod==='tomorrow') return folderTasks.filter(t=>agendaTaskDate(t)===tomorrowKey);
+            if(activeFolderPeriod==='week'){ const a=getAgendaDateString(agendaStartOfWeek(base)), b=getAgendaDateString(agendaEndOfWeek(base)); return folderTasks.filter(t=>agendaTaskDate(t)>=a&&agendaTaskDate(t)<=b); }
+            if(activeFolderPeriod==='month'){ const a=getAgendaDateString(new Date(base.getFullYear(),base.getMonth(),1)), b=getAgendaDateString(new Date(base.getFullYear(),base.getMonth()+1,0)); return folderTasks.filter(t=>agendaTaskDate(t)>=a&&agendaTaskDate(t)<=b); }
+            return folderTasks;
+        }
+        function updateFolderAgendaControls(){ document.querySelectorAll('.folder-period-btn').forEach(btn=>{const a=btn.dataset.folderPeriod===activeFolderPeriod;btn.classList.toggle('bg-blue-600',a);btn.classList.toggle('text-white',a);btn.classList.toggle('text-slate-400',!a);}); document.querySelectorAll('.folder-view-btn').forEach(btn=>{const a=btn.dataset.folderView===activeFolderViewMode;btn.classList.toggle('bg-blue-600',a);btn.classList.toggle('text-white',a);btn.classList.toggle('text-slate-400',!a);}); }
         function renderFolderTasks() {
-            const panel = document.getElementById('folderTasksPanel');
-            if (!panel) return;
-            const folder = folders.find(f => f.id === activeFolderId);
-            if (!folder) { panel.classList.add('hidden'); return; }
-            panel.classList.remove('hidden');
-            document.getElementById('folderTasksTitle').textContent = folder.name || 'Pasta';
-            document.getElementById('folderTasksIcon').innerHTML = folderIconHtml(folder.icon,'w-4 h-4');
-            const folderTasks = getTasksForFolder(folder);
-            document.getElementById('folderTasksCount').textContent = `${folderTasks.length} tarefa${folderTasks.length === 1 ? '' : 's'}`;
-            const list = document.getElementById('folderTasksList');
-            list.innerHTML = folderTasks.length ? folderTasks.map(t => `<div class="flex items-center justify-between gap-3 p-3 rounded-lg bg-slate-950/60 border border-slate-800"><div class="min-w-0"><p class="text-xs font-semibold text-slate-200 truncate ${t.status === 'done' ? 'line-through text-slate-500' : ''}">${escapeHtml(t.title)}</p><p class="text-[10px] text-slate-500">${escapeHtml(t.category || 'Outros')} · ${escapeHtml(t.priority || 'Média')}${t.dueDate ? ' · ' + escapeHtml(t.dueDate) : ''}${t.dueTime ? ' · ' + escapeHtml(t.dueTime) : ''}</p></div><button type="button" onclick="openModal('${t.id}')" class="p-1.5 text-slate-500 hover:text-white hover:bg-slate-800 rounded-lg" title="Editar tarefa"><i data-lucide="pencil" class="w-3.5 h-3.5"></i></button></div>`).join('') : '<div class="text-center py-8"><i data-lucide="folder-open" class="w-8 h-8 text-slate-600 mx-auto mb-2"></i><p class="text-xs text-slate-400">Nenhuma tarefa vinculada a esta pasta.</p><p class="text-[10px] text-slate-600 mt-1">Use “+ Nova tarefa” para adicionar uma tarefa diretamente aqui.</p></div>';
-            refreshIcons();
+            const panel=document.getElementById('folderTasksPanel'); if(!panel)return; const folder=folders.find(f=>f.id===activeFolderId); if(!folder){panel.classList.add('hidden');return;} panel.classList.remove('hidden');
+            document.getElementById('folderTasksTitle').textContent=folder.name||'Pasta'; document.getElementById('folderTasksIcon').innerHTML=folderIconHtml(folder.icon,'w-4 h-4');
+            const allFolderTasks=getTasksForFolder(folder), periodTasks=agendaSortTasks(getFolderPeriodTasks(allFolderTasks)); document.getElementById('folderTasksCount').textContent=`${periodTasks.length} de ${allFolderTasks.length} tarefa${allFolderTasks.length===1?'':'s'}`;
+            const list=document.getElementById('folderTasksList'), nav=document.getElementById('folderCalendarNav');
+            if(activeFolderViewMode==='week'){nav.classList.remove('hidden');nav.classList.add('flex');list.innerHTML=renderAgendaWeek(periodTasks,folderCalendarDate,document.getElementById('folderCalendarTitle'));}
+            else if(activeFolderViewMode==='month'){nav.classList.remove('hidden');nav.classList.add('flex');list.innerHTML=renderAgendaMonth(periodTasks,folderCalendarDate,document.getElementById('folderCalendarTitle'));}
+            else{nav.classList.add('hidden');nav.classList.remove('flex');list.innerHTML=periodTasks.length?periodTasks.map(t=>`<div class="flex items-center justify-between gap-3 p-3 rounded-xl bg-slate-950/60 border border-slate-800 hover:border-slate-700"><div class="min-w-0"><p class="text-xs font-semibold text-slate-200 ${t.status==='done'?'line-through text-slate-500':''}">${escapeHtml(t.title)}</p><p class="text-[10px] text-slate-500">${escapeHtml(t.category||'Outros')} · ${escapeHtml(t.priority||'Média')}${t.dueDate?' · '+escapeHtml(t.dueDate):''}${t.dueTime?' · '+escapeHtml(t.dueTime):''}</p></div><button type="button" onclick="openModal('${t.id}')" class="p-1.5 text-slate-500 hover:text-white hover:bg-slate-800 rounded-lg"><i data-lucide="pencil" class="w-3.5 h-3.5"></i></button></div>`).join(''):'<div class="text-center py-10"><i data-lucide="calendar-x-2" class="w-8 h-8 text-slate-600 mx-auto mb-2"></i><p class="text-xs text-slate-400">Nenhuma tarefa neste período.</p><p class="text-[10px] text-slate-600 mt-1">As tarefas continuam vinculadas à pasta e aparecem também na aba Tarefas.</p></div>'; updateFolderAgendaControls(); refreshIcons();
+        }
         }
 
         const btnBackToFolders = document.getElementById('btnBackToFolders');
         if (btnBackToFolders) {
             btnBackToFolders.addEventListener('click', () => {
                 activeFolderId = null;
+                activeFolderPeriod = 'all';
+                activeFolderViewMode = 'cards';
+                folderCalendarDate = new Date();
                 switchView('folders');
                 renderFolders();
             });
@@ -2151,6 +2236,11 @@
         function resetAllFilters() {
             document.getElementById('filterSearch').value = '';
             currentFilterMode = 'all';
+            currentTaskViewMode = 'cards';
+            document.querySelectorAll('.task-view-btn').forEach(btn => {
+                const active = btn.dataset.taskView === 'cards';
+                btn.classList.toggle('bg-blue-600', active); btn.classList.toggle('text-white', active); btn.classList.toggle('text-slate-400', !active);
+            });
             highlightShortcutButtons(null);
             resetFilterSelects();
             document.querySelectorAll('.task-period-btn').forEach(btn => {
@@ -2634,94 +2724,16 @@
             renderTaskList();
         }
 
+        function renderTaskCards(filtered, container) {
+            const ordered=agendaSortTasks(filtered);
+            container.innerHTML=ordered.length?ordered.map(t=>{const folder=folders.find(f=>f.id===getTaskFolderId(t));const done=t.status==='done';return `<div class="bg-slate-900/80 border border-slate-800 rounded-xl p-3 flex flex-col md:flex-row md:items-center justify-between gap-3 transition hover:border-slate-700"><div class="flex items-start gap-3"><button onclick="toggleTaskComplete('${t.id}')" class="mt-0.5 ${done?'text-emerald-400':'text-slate-500 hover:text-slate-300'} transition"><i data-lucide="${done?'check-circle':'circle'}" class="w-5 h-5"></i></button><div><h3 class="font-semibold text-xs text-slate-100 ${done?'line-through text-slate-500':''}">${escapeHtml(t.title)}</h3>${t.description?`<p class="text-[11px] text-slate-400 mt-0.5 line-clamp-2">${escapeHtml(t.description)}</p>`:''}<div class="flex flex-wrap items-center gap-2 mt-1.5"><span class="text-[10px] px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 font-medium">${escapeHtml(t.category||'Outros')}</span>${folder?`<span class="text-[10px] px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-300 font-medium flex items-center gap-1">${folderIconHtml(folder.icon,'w-3 h-3')} ${escapeHtml(folder.name||'Pasta')}</span>`:''}${getPriorityBadge(t.priority)}${t.dueDate?`<span class="text-[10px] text-slate-400 flex items-center gap-1"><i data-lucide="calendar" class="w-3 h-3"></i>${escapeHtml(t.dueDate)}${t.dueTime?' · '+escapeHtml(t.dueTime):''}</span>`:'<span class="text-[10px] text-slate-500 italic">Sem data</span>'}</div></div></div><div class="flex items-center gap-1.5 self-end md:self-center border-t md:border-t-0 pt-2 md:pt-0 border-slate-800 w-full md:w-auto justify-end"><button onclick="openModal('${t.id}')" class="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition"><i data-lucide="edit-3" class="w-4 h-4"></i></button><button onclick="deleteTask('${t.id}')" class="p-1.5 text-slate-400 hover:text-rose-400 rounded-lg hover:bg-slate-800 transition"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div></div>`;}).join(''):'<div class="text-center py-10 bg-slate-900/60 border border-slate-800 rounded-xl"><i data-lucide="inbox" class="w-8 h-8 mx-auto text-slate-600 mb-2"></i><p class="text-slate-400 text-xs font-medium">Nenhuma tarefa encontrada com os filtros selecionados.</p></div>'; refreshIcons();
+        }
+        function setTaskViewMode(mode){currentTaskViewMode=mode;document.querySelectorAll('.task-view-btn').forEach(btn=>{const a=btn.dataset.taskView===mode;btn.classList.toggle('bg-blue-600',a);btn.classList.toggle('text-white',a);btn.classList.toggle('text-slate-400',!a);});renderTaskList();}
         function renderTaskList() {
-            const container = document.getElementById('tasksList');
-            if (!container) return;
-            const search = document.getElementById('filterSearch').value.toLowerCase();
-            const category = document.getElementById('filterCategory').value;
-            const priority = document.getElementById('filterPriority').value;
-            const status = document.getElementById('filterStatus').value;
-            const folderFilter = document.getElementById('filterFolder')?.value || 'all';
-            const range = getTaskPeriodRange(currentFilterMode);
-
-            const filtered = tasks.filter(t => {
-                const title = String(t.title || '').toLowerCase();
-                const description = String(t.description || '').toLowerCase();
-                const matchesSearch = title.includes(search) || description.includes(search);
-                const matchesCategory = category === 'all' || t.category === category;
-                const matchesPriority = priority === 'all' || t.priority === priority;
-
-                let matchesStatus = true;
-                if (status !== 'all') {
-                    matchesStatus = status === 'no_date'
-                        ? !t.dueDate || String(t.dueDate).trim() === ''
-                        : t.status === status;
-                }
-
-                const matchesFolder = folderFilter === 'all' || getTaskFolderId(t) === folderFilter;
-                const due = String(t.dueDate || '').trim();
-                let matchesPeriod = true;
-
-                if (currentFilterMode === 'today') {
-                    matchesPeriod = due === range.today;
-                } else if (currentFilterMode === 'tomorrow') {
-                    matchesPeriod = due === range.tomorrow;
-                } else if (currentFilterMode === 'week') {
-                    matchesPeriod = !!due && due >= range.weekStart && due <= range.weekEnd;
-                } else if (currentFilterMode === 'upcoming') {
-                    matchesPeriod = !!due && due > range.weekEnd;
-                } else if (currentFilterMode === 'late') {
-                    matchesPeriod = !!due && due < range.today && t.status !== 'done';
-                } else if (currentFilterMode === 'no_date') {
-                    matchesPeriod = !due;
-                }
-
-                return matchesSearch && matchesCategory && matchesPriority && matchesStatus && matchesFolder && matchesPeriod;
-            });
-
-            if (filtered.length === 0) {
-                container.innerHTML = `
-                    <div class="text-center py-10 bg-slate-900/60 border border-slate-800 rounded-xl">
-                        <i data-lucide="inbox" class="w-8 h-8 mx-auto text-slate-600 mb-2"></i>
-                        <p class="text-slate-400 text-xs font-medium">Nenhuma tarefa encontrada com os filtros selecionados.</p>
-                    </div>
-                `;
-                return;
-            }
-
-            container.innerHTML = filtered.map(t => {
-                const isDone = t.status === 'done';
-                return `
-                    <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-3 flex flex-col md:flex-row md:items-center justify-between gap-3 transition hover:border-slate-700">
-                        <div class="flex items-start gap-3">
-                            <button onclick="toggleTaskComplete('${t.id}')" class="mt-0.5 ${isDone ? 'text-emerald-400' : 'text-slate-500 hover:text-slate-300'} transition">
-                                <i data-lucide="${isDone ? 'check-circle' : 'circle'}" class="w-5 h-5"></i>
-                            </button>
-                            <div>
-                                <h3 class="font-semibold text-xs text-slate-100 ${isDone ? 'line-through text-slate-500' : ''}">${escapeHtml(t.title)}</h3>
-                                ${t.description ? `<p class="text-[11px] text-slate-400 mt-0.5 line-clamp-2">${escapeHtml(t.description)}</p>` : ''}
-                                <div class="flex flex-wrap items-center gap-2 mt-1.5">
-                                    <span class="text-[10px] px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 font-medium">${escapeHtml(t.category)}</span>
-                                    ${(() => {
-                                        const tf = folders.find(f => f.id === getTaskFolderId(t));
-                                        return tf ? `<span class="text-[10px] px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-300 font-medium flex items-center gap-1">${folderIconHtml(tf.icon,'w-3 h-3')} ${escapeHtml(tf.name || 'Pasta')}</span>` : '';
-                                    })()}
-                                    ${getPriorityBadge(t.priority)}
-                                    ${t.dueDate ? `<span class="text-[10px] text-slate-400 flex items-center gap-1"><i data-lucide="calendar" class="w-3 h-3"></i> ${escapeHtml(t.dueDate)}${t.dueTime ? ' · ' + escapeHtml(t.dueTime) : ''}</span>` : '<span class="text-[10px] text-slate-500 italic">Sem data</span>'}
-                                </div>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-1.5 self-end md:self-center border-t md:border-t-0 pt-2 md:pt-0 border-slate-800 w-full md:w-auto justify-end">
-                            <button onclick="openModal('${t.id}')" class="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition">
-                                <i data-lucide="edit-3" class="w-4 h-4"></i>
-                            </button>
-                            <button onclick="deleteTask('${t.id}')" class="p-1.5 text-slate-400 hover:text-rose-400 rounded-lg hover:bg-slate-800 transition">
-                                <i data-lucide="trash-2" class="w-4 h-4"></i>
-                            </button>
-                        </div>
-                    </div>
-                `;
-            }).join('');
+            const container=document.getElementById('tasksList'); if(!container)return;
+            const search=document.getElementById('filterSearch').value.toLowerCase(), category=document.getElementById('filterCategory').value, priority=document.getElementById('filterPriority').value, status=document.getElementById('filterStatus').value, folderFilter=document.getElementById('filterFolder')?.value||'all', range=getTaskPeriodRange(currentFilterMode);
+            const filtered=tasks.filter(t=>{const title=String(t.title||'').toLowerCase(),description=String(t.description||'').toLowerCase(),matchesSearch=title.includes(search)||description.includes(search),matchesCategory=category==='all'||t.category===category,matchesPriority=priority==='all'||t.priority===priority,matchesStatus=status==='all'?true:(status==='no_date'?!t.dueDate:t.status===status),matchesFolder=folderFilter==='all'||getTaskFolderId(t)===folderFilter,due=String(t.dueDate||'').trim();let matchesPeriod=true;if(currentFilterMode==='today')matchesPeriod=due===range.today;else if(currentFilterMode==='tomorrow')matchesPeriod=due===range.tomorrow;else if(currentFilterMode==='week')matchesPeriod=!!due&&due>=range.weekStart&&due<=range.weekEnd;else if(currentFilterMode==='upcoming')matchesPeriod=!!due&&due>range.weekEnd;else if(currentFilterMode==='late')matchesPeriod=!!due&&due<range.today&&t.status!=='done';else if(currentFilterMode==='no_date')matchesPeriod=!due;return matchesSearch&&matchesCategory&&matchesPriority&&matchesStatus&&matchesFolder&&matchesPeriod;});
+            const nav=document.getElementById('taskCalendarNav'); if(currentTaskViewMode==='week'){nav.classList.remove('hidden');nav.classList.add('flex');container.innerHTML=renderAgendaWeek(filtered,taskCalendarDate,document.getElementById('taskCalendarTitle'));}else if(currentTaskViewMode==='month'){nav.classList.remove('hidden');nav.classList.add('flex');container.innerHTML=renderAgendaMonth(filtered,taskCalendarDate,document.getElementById('taskCalendarTitle'));}else{nav.classList.add('hidden');nav.classList.remove('flex');renderTaskCards(filtered,container);} refreshIcons();
         }
 
         function renderKanban() {
@@ -2838,6 +2850,13 @@
         document.querySelectorAll('.task-period-btn').forEach(btn => {
             btn.addEventListener('click', () => setTaskPeriod(btn.dataset.taskPeriod || 'all'));
         });
+        document.querySelectorAll('.task-view-btn').forEach(btn=>btn.addEventListener('click',()=>setTaskViewMode(btn.dataset.taskView||'cards')));
+        document.getElementById('taskCalendarPrev')?.addEventListener('click',()=>{taskCalendarDate=new Date(taskCalendarDate);if(currentTaskViewMode==='week')taskCalendarDate.setDate(taskCalendarDate.getDate()-7);else taskCalendarDate.setMonth(taskCalendarDate.getMonth()-1);renderTaskList();});
+        document.getElementById('taskCalendarNext')?.addEventListener('click',()=>{taskCalendarDate=new Date(taskCalendarDate);if(currentTaskViewMode==='week')taskCalendarDate.setDate(taskCalendarDate.getDate()+7);else taskCalendarDate.setMonth(taskCalendarDate.getMonth()+1);renderTaskList();});
+        document.querySelectorAll('.folder-period-btn').forEach(btn=>btn.addEventListener('click',()=>{activeFolderPeriod=btn.dataset.folderPeriod||'all';if(activeFolderPeriod==='week')activeFolderViewMode='week';if(activeFolderPeriod==='month')activeFolderViewMode='month';renderFolderTasks();}));
+        document.querySelectorAll('.folder-view-btn').forEach(btn=>btn.addEventListener('click',()=>{activeFolderViewMode=btn.dataset.folderView||'cards';renderFolderTasks();}));
+        document.getElementById('folderCalendarPrev')?.addEventListener('click',()=>{folderCalendarDate=new Date(folderCalendarDate);if(activeFolderViewMode==='week')folderCalendarDate.setDate(folderCalendarDate.getDate()-7);else folderCalendarDate.setMonth(folderCalendarDate.getMonth()-1);renderFolderTasks();});
+        document.getElementById('folderCalendarNext')?.addEventListener('click',()=>{folderCalendarDate=new Date(folderCalendarDate);if(activeFolderViewMode==='week')folderCalendarDate.setDate(folderCalendarDate.getDate()+7);else folderCalendarDate.setMonth(folderCalendarDate.getMonth()+1);renderFolderTasks();});
 
         document.getElementById('toggleSidebarFolders')?.addEventListener('click', toggleSidebarFolders);
         document.getElementById('btnNewFolder')?.addEventListener('click', () => openFolderModal());
