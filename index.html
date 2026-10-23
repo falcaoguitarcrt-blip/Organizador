@@ -10,6 +10,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com">
+// V50: recorrência, captura rápida e estado de pasta corrigidos.
 // V49-kanban-navigation: o botão acessa o renderer existente, sem alterar dados ou drag-and-drop.
 
 <!-- V48: dados pessoais e compromissos do usuário vêm exclusivamente do Firestore; o HTML não cria/recria agenda pessoal nem pastas pessoais automaticamente. -->
@@ -921,7 +922,10 @@
                         <option value="weekly">Toda semana</option>
                         <option value="monthly">Todo mês</option>
                     </select>
-                    <p class="text-[9px] text-slate-600 mt-1">Para novos compromissos, o sistema mantém as próximas ocorrências automaticamente.</p>
+                    <p class="text-[9px] text-slate-600 mt-1">Ao criar uma recorrência, as próximas 52 ocorrências são criadas de uma vez. Você pode encerrar a série depois.</p>
+                    <button type="button" id="btnRemoveRecurrenceSeries" class="hidden mt-2 w-full px-2.5 py-2 rounded-lg border border-rose-500/30 bg-rose-500/10 text-rose-300 hover:bg-rose-500/15 text-[10px] font-semibold">
+                        Encerrar recorrência desta tarefa
+                    </button>
                 </div>
 
                 <!-- Row 2: Priority & Status -->
@@ -1840,6 +1844,10 @@ if (authStatusLabel) {
                 ...taskObj,
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             };
+            if (payload.__clearRecurrenceRule) {
+                payload.recurrenceRule = firebase.firestore.FieldValue.delete();
+                delete payload.__clearRecurrenceRule;
+            }
 
             return taskRef.set(payload, { merge: true })
                 .then(() => {
@@ -1859,20 +1867,40 @@ if (authStatusLabel) {
                 });
         }
 
+        function addMonthsClamped(date, monthsToAdd) {
+            const source = new Date(date);
+            const originalDay = source.getDate();
+            const target = new Date(source.getFullYear(), source.getMonth() + monthsToAdd, 1);
+            const lastDay = new Date(target.getFullYear(), target.getMonth() + 1, 0).getDate();
+            target.setDate(Math.min(originalDay, lastDay));
+            return target;
+        }
+
         async function materializeRecurringOccurrences(taskObj) {
             if (!taskObj || !taskObj.dueDate || !taskObj.recurrenceRule || taskObj.recurrenceRule === 'none') return;
             const baseDate = new Date(taskObj.dueDate + 'T00:00:00');
             const horizon = 52;
             const occurrences = [];
+
             for (let i = 1; i <= horizon; i++) {
-                const d = new Date(baseDate);
-                if (taskObj.recurrenceRule === 'weekly') d.setDate(d.getDate() + (7 * i));
-                else if (taskObj.recurrenceRule === 'monthly') d.setMonth(d.getMonth() + i);
-                else break;
+                const d = taskObj.recurrenceRule === 'weekly'
+                    ? new Date(baseDate.getTime())
+                    : addMonthsClamped(baseDate, i);
+
+                if (taskObj.recurrenceRule === 'weekly') {
+                    d.setDate(d.getDate() + (7 * i));
+                } else if (taskObj.recurrenceRule !== 'monthly') {
+                    break;
+                }
+
                 const dateKey = getAgendaDateString(d);
                 const id = `${taskObj.id}_r_${dateKey}`;
-                const already = tasks.some(t => t.id === id || (t.recurrenceSeriesId === taskObj.id && t.dueDate === dateKey));
+                const already = tasks.some(t =>
+                    t.id === id ||
+                    (t.recurrenceSeriesId === taskObj.id && t.dueDate === dateKey)
+                );
                 if (already) continue;
+
                 occurrences.push({
                     ...taskObj,
                     id,
@@ -1882,18 +1910,58 @@ if (authStatusLabel) {
                     createdAt: new Date().toISOString()
                 });
             }
+
             if (!occurrences.length) return;
+
             if (!currentUserState || !db) {
                 tasks.push(...occurrences);
                 saveTasksToLocalCacheOnly(tasks);
+                render();
                 return;
             }
+
             const batch = db.batch();
             occurrences.forEach(item => {
                 const ref = db.collection('users').doc(currentUserState.uid).collection('items').doc(item.id);
                 batch.set(ref, { ...item, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
             });
             await batch.commit();
+        }
+
+        async function deleteRecurringSeries(seriesId, includeBase = false) {
+            if (!seriesId) return;
+
+            const seriesTasks = tasks.filter(t =>
+                t.id === seriesId ||
+                t.recurrenceSeriesId === seriesId
+            );
+
+            const base = tasks.find(t => t.id === seriesId);
+            const baseDate = base?.dueDate || '';
+
+            const idsToDelete = seriesTasks
+                .filter(t => includeBase || t.id !== seriesId)
+                .filter(t => !baseDate || t.id === seriesId || String(t.dueDate || '') > String(baseDate))
+                .map(t => t.id);
+
+            if (!idsToDelete.length) return;
+
+            if (!currentUserState || !db) {
+                tasks = tasks.filter(t => !idsToDelete.includes(t.id));
+                saveTasksToLocalCacheOnly(tasks);
+                render();
+                return;
+            }
+
+            const uid = currentUserState.uid;
+            for (let i = 0; i < idsToDelete.length; i += 450) {
+                const chunk = idsToDelete.slice(i, i + 450);
+                const batch = db.batch();
+                chunk.forEach(id => {
+                    batch.delete(db.collection('users').doc(uid).collection('items').doc(id));
+                });
+                await batch.commit();
+            }
         }
 
         function deleteTaskFromFirestore(taskId) {
@@ -2331,7 +2399,70 @@ if (authStatusLabel) {
         }
 
         // Quick Add Handler
-        const quickAddForm = document.getElementById('quickAddForm');
+        function getVisibleViewName() {
+            const visible = Array.from(document.querySelectorAll('.view-content'))
+                .find(el => !el.classList.contains('hidden'));
+            return visible ? visible.id.replace(/^view-/, '') : 'dashboard';
+        }
+
+        function parseQuickAddInput(rawValue) {
+            const raw = String(rawValue || '').trim();
+            const normalized = raw.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+            let dueDate = getLocalDateString();
+            let dueTime = '';
+
+            const timeMatch = normalized.match(/\b(?:as|a)\s*(\d{1,2})(?::(\d{2}))?\s*h?\b/i)
+                || normalized.match(/\b(\d{1,2})(?::(\d{2}))\s*h?\b/i);
+
+            if (timeMatch) {
+                const hour = Number(timeMatch[1]);
+                const minute = Number(timeMatch[2] || 0);
+                if (hour >= 0 && hour <= 23 && minute >= 0 && minute <= 59) {
+                    dueTime = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+                }
+            }
+
+            const base = new Date(getLocalDateString() + 'T00:00:00');
+            const weekdayMap = {
+                domingo: 0, segunda: 1, terca: 2, quarta: 3,
+                quinta: 4, sexta: 5, sabado: 6
+            };
+
+            const relativeDay = normalized.match(/\b(hoje|amanha)\b/);
+            if (relativeDay) {
+                if (relativeDay[1] === 'amanha') base.setDate(base.getDate() + 1);
+                dueDate = getAgendaDateString(base);
+            } else {
+                const weekdayMatch = normalized.match(/\b(domingo|segunda(?:-feira)?|terca(?:-feira)?|quarta(?:-feira)?|quinta(?:-feira)?|sexta(?:-feira)?|sabado)\b/);
+                if (weekdayMatch) {
+                    const dayWord = weekdayMatch[1].replace('-feira', '');
+                    const target = weekdayMap[dayWord];
+                    const delta = (target - base.getDay() + 7) % 7;
+                    base.setDate(base.getDate() + delta);
+                    dueDate = getAgendaDateString(base);
+                }
+            }
+
+            let category = 'Trabalho';
+            if (/\#pessoal\b/i.test(normalized)) category = 'Pessoal';
+            else if (/\#estudos\b/i.test(normalized)) category = 'Estudos';
+            else if (/\#projetos\b/i.test(normalized)) category = 'Projetos';
+
+            const priority = /\b(?:prioridade\s+)?alta\b/i.test(normalized) ? 'Alta' : 'Média';
+
+            const title = raw
+                .replace(/#[\p{L}\p{N}_-]+/gu, '')
+                .replace(/\b(?:prioridade\s+)?alta\b/giu, '')
+                .replace(/\b(?:as|às|a)\s*\d{1,2}(?::\d{2})?\s*h?\b/giu, '')
+                .replace(/\b(hoje|amanha|amanhã|domingo|segunda(?:-feira)?|terça(?:-feira)?|terca(?:-feira)?|quarta(?:-feira)?|quinta(?:-feira)?|sexta(?:-feira)?|sábado|sabado)\b/giu, '')
+                .replace(/\s{2,}/g, ' ')
+                .trim();
+
+            const folderId = getVisibleViewName() === 'folders' && activeFolderId ? activeFolderId : '';
+
+            return { title: title || raw, dueDate, dueTime, category, priority, folderId };
+        }
+
         if (quickAddForm) {
             quickAddForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
@@ -2339,20 +2470,17 @@ if (authStatusLabel) {
                 const val = input.value.trim();
                 if (!val) return;
 
-                let cat = 'Trabalho';
-                if (val.toLowerCase().includes('#pessoal')) cat = 'Pessoal';
-                if (val.toLowerCase().includes('#estudos')) cat = 'Estudos';
-                if (val.toLowerCase().includes('#projetos')) cat = 'Projetos';
-
+                const parsed = parseQuickAddInput(val);
                 const newTask = {
                     id: Date.now().toString(),
-                    title: val.replace(/#\w+/g, '').trim(),
+                    title: parsed.title,
                     description: '',
-                    dueDate: getLocalDateString(),
-                    category: cat,
-                    priority: val.toLowerCase().includes('alta') ? 'Alta' : 'Média',
+                    dueDate: parsed.dueDate,
+                    dueTime: parsed.dueTime,
+                    category: parsed.category,
+                    priority: parsed.priority,
                     status: 'todo',
-                    folderId: activeFolderId || '',
+                    folderId: parsed.folderId,
                     createdAt: new Date().toISOString()
                 };
 
@@ -2431,17 +2559,20 @@ if (authStatusLabel) {
             document.getElementById('taskFolder').value = activeFolderId || '';
             if (document.getElementById('taskDueTime')) document.getElementById('taskDueTime').value = '';
             if (document.getElementById('taskRecurrence')) document.getElementById('taskRecurrence').value = 'none';
+            const seriesBtn = document.getElementById('btnRemoveRecurrenceSeries');
+            if (seriesBtn) seriesBtn.classList.add('hidden');
 
             if (taskId) {
                 const task = tasks.find(t => t.id === taskId);
                 if (task) {
-                    activeFolderId = getTaskFolderId(task) || activeFolderId;
                     document.getElementById('taskId').value = task.id;
                     document.getElementById('taskTitle').value = task.title;
                     document.getElementById('taskDescription').value = task.description || '';
                     document.getElementById('taskDueDate').value = task.dueDate || '';
                     if (document.getElementById('taskDueTime')) document.getElementById('taskDueTime').value = task.dueTime || '';
                     if (document.getElementById('taskRecurrence')) document.getElementById('taskRecurrence').value = task.recurrenceRule || 'none';
+                    const seriesBtn = document.getElementById('btnRemoveRecurrenceSeries');
+                    if (seriesBtn) seriesBtn.classList.toggle('hidden', !(task.recurrenceRule && task.recurrenceRule !== 'none' || task.recurrenceSeriesId));
                     document.getElementById('taskPriority').value = task.priority || 'Média';
                     document.getElementById('taskStatus').value = task.status || 'todo';
                     document.getElementById('taskFolder').value = getTaskFolderId(task) || '';
@@ -2460,6 +2591,36 @@ if (authStatusLabel) {
         if (btnCloseModal) btnCloseModal.addEventListener('click', closeModal);
         if (btnCancelModal) btnCancelModal.addEventListener('click', closeModal);
 
+        const btnRemoveRecurrenceSeries = document.getElementById('btnRemoveRecurrenceSeries');
+        if (btnRemoveRecurrenceSeries) {
+            btnRemoveRecurrenceSeries.addEventListener('click', async () => {
+                const id = document.getElementById('taskId').value;
+                const task = tasks.find(t => t.id === id);
+                if (!task) return;
+
+                const seriesId = task.recurrenceSeriesId || task.id;
+                if (!confirm('Encerrar esta recorrência? As ocorrências futuras desta série serão removidas.')) return;
+
+                try {
+                    await deleteRecurringSeries(seriesId, false);
+
+                    if (task.recurrenceSeriesId) {
+                        await deleteTaskFromFirestore(task.id);
+                    } else {
+                        const clearedTask = { ...task };
+                        delete clearedTask.recurrenceRule;
+                        clearedTask.__clearRecurrenceRule = true;
+                        await saveTaskToFirestore(clearedTask);
+                    }
+
+                    closeModal();
+                    render();
+                } catch (err) {
+                    console.error('[Recurrence Delete Error]', err);
+                }
+            });
+        }
+
         if (taskForm) {
             taskForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
@@ -2474,6 +2635,9 @@ if (authStatusLabel) {
                 const folderId = document.getElementById('taskFolder').value || '';
 
                 const existingTask = tasks.find(t => t.id === id);
+                const oldRecurrence = existingTask?.recurrenceRule || 'none';
+                const isSeriesBase = !!existingTask && !existingTask.recurrenceSeriesId;
+                const recurrenceWasChanged = !!existingTask && oldRecurrence !== recurrenceRule;
 
                 const taskObj = {
                     ...(existingTask || {}),
@@ -2483,16 +2647,31 @@ if (authStatusLabel) {
                     dueDate,
                     ...(existingTask?.category ? { category: existingTask.category } : { category: 'Outros' }),
                     dueTime,
-                    ...(recurrenceRule !== 'none' ? { recurrenceRule } : {}),
                     priority,
                     status,
                     folderId,
                     createdAt: existingTask ? (existingTask.createdAt || new Date().toISOString()) : new Date().toISOString()
                 };
 
+                if (recurrenceRule !== 'none') {
+                    taskObj.recurrenceRule = recurrenceRule;
+                } else {
+                    delete taskObj.recurrenceRule;
+                    if (existingTask?.recurrenceSeriesId) delete taskObj.recurrenceSeriesId;
+                    taskObj.__clearRecurrenceRule = true;
+                }
+
                 try {
+                    if (recurrenceWasChanged && isSeriesBase && oldRecurrence !== 'none') {
+                        await deleteRecurringSeries(existingTask.id, false);
+                    }
+
                     await saveTaskToFirestore(taskObj);
-                    if (!existingTask && recurrenceRule !== 'none') await materializeRecurringOccurrences(taskObj);
+
+                    if ((!existingTask || recurrenceWasChanged) && recurrenceRule !== 'none') {
+                        await materializeRecurringOccurrences(taskObj);
+                    }
+
                     closeModal();
                 } catch (err) {
                     console.error("[Task Save Error]", err);
