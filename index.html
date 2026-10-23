@@ -1,6 +1,10 @@
 <!DOCTYPE html>
 <html lang="pt-BR" class="h-full bg-[#060e19] text-slate-100">
 <head>
+    <!-- V53: performance/a11y foundation. Tailwind CDN remains temporary; Lucide is version-pinned. -->
+    <meta name="theme-color" content="#0f172a">
+    <link rel="manifest" href="manifest.webmanifest">
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Minha Agenda Pro • Dashboard de Produtividade</title>
@@ -10,6 +14,33 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com">
+        function showAgendaToast(message, type = 'info') {
+            let el = document.getElementById('agendaToast');
+            if (!el) {
+                el = document.createElement('div');
+                el.id = 'agendaToast';
+                el.setAttribute('role', 'status');
+                el.setAttribute('aria-live', 'polite');
+                el.className = 'fixed bottom-5 left-1/2 -translate-x-1/2 z-[9999] hidden max-w-[90vw] px-4 py-3 rounded-xl bg-slate-900/95 text-white text-xs shadow-2xl border border-white/10';
+                document.body.appendChild(el);
+            }
+            el.textContent = String(message || '');
+            el.classList.remove('hidden');
+            clearTimeout(window.__agendaToastTimer);
+            window.__agendaToastTimer = setTimeout(() => el.classList.add('hidden'), 3200);
+        }
+
+        function formatAgendaDate(value, options = {}) {
+            if (!value) return 'Sem data';
+            const raw = String(value);
+            const datePart = raw.slice(0, 10);
+            const m = datePart.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+            if (!m) return raw;
+            const [_, y, mo, d] = m;
+            if (options.short) return `${d}/${mo}`;
+            return `${d}/${mo}/${y}`;
+        }
+
 // V52: Firestore Security Rules e Authorized Domains pertencem à configuração
 // do projeto Firebase e não são inventados nem embutidos no cliente.
 
@@ -239,7 +270,15 @@
             display: inline-block;
             animation: pulseDot 2s infinite;
         }
-    </style>
+    
+        /* V53: touch-friendly controls; native DnD remains for desktop. */
+        button, [role="button"], input, select, textarea { touch-action: manipulation; }
+        </style>
+
+<!-- V53-production-hardening:
+     Tailwind CDN remains temporary because this single-file preview still depends on its runtime.
+     Before production, compile Tailwind locally and add SRI/integrity for any external scripts that support it.
+-->
 </head>
 <body class="min-h-screen flex flex-col p-3 md:p-6 antialiased selection:bg-blue-600 selection:text-white">
 
@@ -257,10 +296,7 @@
             <div class="hidden xl:flex items-center gap-8">
                 <div class="flex items-center gap-3">
                     <div class="text-blue-400 text-xl"><i data-lucide="monitor"></i></div>
-                    <div>
-                        <b class="block text-xs font-bold text-white">Visual moderno</b>
-                        <small class="block text-slate-400 text-[11px] leading-snug">Interface profissional<br>e elegante</small>
-                    </div>
+                    
                 </div>
                 <div class="flex items-center gap-3">
                     <div class="text-blue-400 text-xl"><i data-lucide="zap"></i></div>
@@ -278,10 +314,7 @@
                 </div>
                 <div class="flex items-center gap-3">
                     <div class="text-blue-400 text-xl"><i data-lucide="smartphone"></i></div>
-                    <div>
-                        <b class="block text-xs font-bold text-white">Experiência fluida</b>
-                        <small class="block text-slate-400 text-[11px] leading-snug">Perfeito no computador<br>e no celular</small>
-                    </div>
+                    
                 </div>
             </div>
 
@@ -363,11 +396,11 @@
                 <div class="p-3 border-t border-slate-800 space-y-2 mt-auto">
                     <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-1">Backup & Dados</span>
                     <div class="grid grid-cols-2 gap-1.5">
-                        <button id="btnExportJSON" class="flex items-center justify-center gap-1 py-1.5 px-2 bg-slate-900 hover:bg-slate-800 text-[11px] text-slate-300 font-medium rounded-lg border border-slate-700/60 transition">
+                        <button id="btnExportJSON" class="flex items-center justify-center gap-1 py-1.5 px-2 bg-slate-900 hover:bg-slate-800 text-[11px] text-slate-300 font-medium rounded-lg border border-slate-700/60 transition" aria-label="Exportar backup">
                             <i data-lucide="download" class="w-3 h-3 text-blue-400"></i>
                             <span>Exportar</span>
                         </button>
-                        <button id="btnImportJSON" class="flex items-center justify-center gap-1 py-1.5 px-2 bg-slate-900 hover:bg-slate-800 text-[11px] text-slate-300 font-medium rounded-lg border border-slate-700/60 transition">
+                        <button id="btnImportJSON" class="flex items-center justify-center gap-1 py-1.5 px-2 bg-slate-900 hover:bg-slate-800 text-[11px] text-slate-300 font-medium rounded-lg border border-slate-700/60 transition" aria-label="Importar backup">
                             <i data-lucide="upload" class="w-3 h-3 text-emerald-400"></i>
                             <span>Importar</span>
                         </button>
@@ -409,13 +442,13 @@
                         <input type="text" id="filterSearch" placeholder="Buscar tarefas, projetos, pessoas... (Pressione Ctrl+K)" class="bg-transparent border-none outline-none text-slate-100 text-xs w-full placeholder:text-slate-500 pointer-events-none">
                         <span class="bg-slate-800/80 border border-slate-700/60 rounded px-1.5 py-0.5 text-[10px] text-slate-400 font-mono">Cmd / Ctrl + K</span>
                     </div>
-                    <button onclick="toggleNotifications()" id="btnNotify" class="h-10 px-4 rounded-xl bg-slate-900/90 border border-slate-800 text-xs font-semibold text-slate-200 hover:bg-slate-800 flex items-center gap-2">
+                    <button onclick="toggleNotifications()" id="btnNotify" class="h-10 px-4 rounded-xl bg-slate-900/90 border border-slate-800 text-xs font-semibold text-slate-200 hover:bg-slate-800 flex items-center gap-2" aria-label="Notificações">
                         <i data-lucide="bell" class="w-4 h-4 text-amber-400"></i> Notificações
                     </button>
-                    <button onclick="triggerAssistantAdvice()" id="btnSparkles" class="h-10 px-4 rounded-xl bg-slate-900/90 border border-slate-800 text-xs font-semibold text-slate-200 hover:bg-slate-800 flex items-center gap-2">
+                    <button onclick="triggerAssistantAdvice()" id="btnSparkles" class="h-10 px-4 rounded-xl bg-slate-900/90 border border-slate-800 text-xs font-semibold text-slate-200 hover:bg-slate-800 flex items-center gap-2" aria-label="Assistente">
                         <i data-lucide="sparkles" class="w-4 h-4 text-blue-400"></i> Assistente
                     </button>
-                    <button id="btnOpenNewTaskModal" class="h-10 px-5 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 border border-blue-400/30 text-xs font-bold text-white shadow-lg shadow-blue-600/30 hover:from-blue-500 hover:to-blue-400 flex items-center justify-center gap-2">
+                    <button id="btnOpenNewTaskModal" class="h-10 px-5 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 border border-blue-400/30 text-xs font-bold text-white shadow-lg shadow-blue-600/30 hover:from-blue-500 hover:to-blue-400 flex items-center justify-center gap-2" aria-label="Nova tarefa">
                         <i data-lucide="plus" class="w-4 h-4"></i> Novo item
                     </button>
                 </div>
@@ -836,7 +869,7 @@
     </div>
 
     <!-- SPOTLIGHT / OMNIBOX MODAL (Ctrl + K) -->
-    <div id="spotlightModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md hidden flex items-start justify-center pt-20 p-4">
+    <div id="spotlightModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md hidden flex items-start justify-center pt-20 p-4" role="dialog" aria-modal="true">
         <div class="bg-[#0a182e] border border-blue-500/50 rounded-2xl w-full max-w-xl overflow-hidden shadow-2xl">
             <div class="p-3.5 border-b border-slate-800 flex items-center gap-3">
                 <i data-lucide="search" class="w-5 h-5 text-blue-400"></i>
@@ -936,7 +969,7 @@
         </div>
     </div>
 
-    <div id="taskModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div id="taskModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4" role="dialog" aria-modal="true">
         <div class="bg-[#0a182e] border border-blue-500/40 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl">
             <!-- Modal Header -->
             <div class="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-900/50">
@@ -1224,7 +1257,7 @@ if (authStatusLabel) {
 
         async function saveFolder() {
             if (!currentUserState || !db) {
-                alert('Faça login com Google para criar e salvar pastas.');
+                showAgendaToast('Faça login com Google para criar e salvar pastas.', "info");
                 return;
             }
             const id = document.getElementById('folderId').value || db.collection('users').doc(currentUserState.uid).collection('folders').doc().id;
@@ -1240,7 +1273,7 @@ if (authStatusLabel) {
                 closeFolderModal();
             } catch (err) {
                 console.error('[Folder Save Error]', err);
-                alert('Não foi possível salvar a pasta.');
+                showAgendaToast('Não foi possível salvar a pasta.', "info");
             }
         }
 
@@ -1261,7 +1294,7 @@ if (authStatusLabel) {
                 if (activeFolderId === folderId) activeFolderId = null;
             } catch (err) {
                 console.error('[Folder Delete Error]', err);
-                alert('Não foi possível excluir a pasta.');
+                showAgendaToast('Não foi possível excluir a pasta.', "info");
             }
         }
 
@@ -1451,7 +1484,7 @@ if (authStatusLabel) {
                 await batch.commit();
             } catch (err) {
                 console.error('[Folder Order Error]', err);
-                alert('A ordem foi aplicada visualmente, mas não foi possível salvá-la no Firebase.');
+                showAgendaToast('A ordem foi aplicada visualmente, mas não foi possível salvá-la no Firebase.', "info");
             }
         }
 
@@ -1926,7 +1959,7 @@ if (authStatusLabel) {
                 })
                 .catch(err => {
                     console.error("Erro ao salvar tarefa no Firestore:", err);
-                    alert("Ocorreu um erro ao salvar a tarefa na nuvem.");
+                    showAgendaToast("Ocorreu um erro ao salvar a tarefa na nuvem.", "info");
                     if (submitBtn) {
                         submitBtn.disabled = false;
                         submitBtn.innerText = 'Salvar Tarefa';
@@ -2044,7 +2077,7 @@ if (authStatusLabel) {
             return db.collection('users').doc(uid).collection('items').doc(taskId).delete()
                 .catch(err => {
                     console.error("Erro ao excluir tarefa do Firestore:", err);
-                    alert("Não foi possível excluir a tarefa do servidor.");
+                    showAgendaToast("Não foi possível excluir a tarefa do servidor.", "info");
                     throw err;
                 });
         }
@@ -2072,7 +2105,7 @@ if (authStatusLabel) {
                 // Rollback em caso de falha de conexão/permissão
                 tasks = tasks.map(t => t.id === taskId ? { ...t, status: previousStatus } : t);
                 render();
-                alert("Falha ao atualizar o status da tarefa no servidor.");
+                showAgendaToast("Falha ao atualizar o status da tarefa no servidor.", "info");
             });
         }
 
@@ -2082,7 +2115,7 @@ if (authStatusLabel) {
             const lateTasks = tasks.filter(t => t.status !== 'done' && t.dueDate && t.dueDate < todayStr);
 
             if (lateTasks.length === 0) {
-                alert("Não existem tarefas atrasadas no momento!");
+                showAgendaToast("Não existem tarefas atrasadas no momento!", "info");
                 return;
             }
 
@@ -2114,11 +2147,11 @@ if (authStatusLabel) {
             return batch.commit()
                 .then(() => {
                     console.log("Todas as tarefas atrasadas foram adiadas para hoje no Firestore.");
-                    alert("As tarefas atrasadas foram adiadas para hoje.");
+                    showAgendaToast("As tarefas atrasadas foram adiadas para hoje.", "info");
                 })
                 .catch(err => {
                     console.error("Erro ao adiar tarefas:", err);
-                    alert("Falha ao adiar as tarefas atrasadas. Nenhuma confirmação de sucesso foi emitida.");
+                    showAgendaToast("Falha ao adiar as tarefas atrasadas. Nenhuma confirmação de sucesso foi emitida.", "info");
                     throw err;
                 });
         }
@@ -2158,7 +2191,7 @@ if (authStatusLabel) {
                         clearInterval(pomoInterval);
                         pomoIsRunning = false;
                         if (btn) btn.textContent = '▶';
-                        alert('🔔 Pomodoro concluído! Hora de uma pausa de 5 minutos.');
+                        showAgendaToast('🔔 Pomodoro concluído! Hora de uma pausa de 5 minutos.', "info");
                         pomoSeconds = 25 * 60;
                         updatePomoDisplay();
                     }
@@ -2178,7 +2211,7 @@ if (authStatusLabel) {
         // --- WEB NOTIFICATIONS API ---
         function toggleNotifications() {
             if (!("Notification" in window)) {
-                alert("Este navegador não suporta Notificações Nativas.");
+                showAgendaToast("Este navegador não suporta Notificações Nativas.", "info");
                 return;
             }
             if (Notification.permission === "granted") {
@@ -2190,12 +2223,12 @@ if (authStatusLabel) {
                     }
                 });
             } else {
-                alert("As notificações foram bloqueadas nas configurações do navegador.");
+                showAgendaToast("As notificações foram bloqueadas nas configurações do navegador.", "info");
             }
         }
 
         function triggerAssistantAdvice() {
-            alert("✦ Assistente Virtual: Suas tarefas do dia estão otimizadas! Foque nas pendências do card de Foco Sugerido.");
+            showAgendaToast("✦ Assistente Virtual: Suas tarefas do dia estão otimizadas! Foque nas pendências do card de Foco Sugerido.", "info");
         }
 
         // --- FILTERS & SHORTCUT HANDLERS (ETAPA 8 FIXES) ---
@@ -3300,5 +3333,14 @@ if (authStatusLabel) {
             initAuthListener();
         });
     </script>
+
+<script>
+/* V53-service-worker */
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').catch(err => console.warn('[PWA]', err));
+    });
+}
+</script>
 </body>
 </html>
