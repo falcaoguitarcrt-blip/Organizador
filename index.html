@@ -10,6 +10,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com">
+<!-- V47: Centro de Comando exclusivo da tela Inicial; agenda e pastas abrem diretamente no conteúdo. -->
 <!-- V45: calendário inicia no mês atual; navegar permite consultar outro mês sem alterar os dados. --></script>
     <script>
         tailwind.config = {
@@ -400,7 +401,7 @@
                 </form>
 
                 <!-- Hero Centro de Comando Card -->
-                <section class="relative bg-[#081628] border border-blue-500/40 rounded-2xl p-6 overflow-hidden flex flex-col md:flex-row items-start md:items-center justify-between gap-4 min-h-[120px] shadow-inner">
+                <section id="commandCenterHero" class="relative bg-[#081628] border border-blue-500/40 rounded-2xl p-6 overflow-hidden flex flex-col md:flex-row items-start md:items-center justify-between gap-4 min-h-[120px] shadow-inner">
                     <!-- Mountain Vector Silhouette Background Overlay -->
                     <svg class="hero-bg-svg" viewBox="0 0 500 150" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
                         <defs>
@@ -971,6 +972,7 @@
         let selectedFolderIcon = 'folder';
         let agendaSeedTimer = null;
         let agendaSeedRunning = false;
+        const agendaSeedDiagnostics = { calls: 0, writes: 0, lastWriteAt: null };
         
         let firestoreInspectionState = {
             itemsCount: 0,
@@ -1073,6 +1075,8 @@
                     tasks = loadedTasks;
                     saveTasksToLocalCacheOnly(tasks);
                     render();
+                    // Mantemos a checagem agendada para reparar registros faltantes;
+                    // V46 garante que uma checagem sem mudanças faça ZERO writes.
                     scheduleAgendaCommitmentsSeed();
 
                     if (authStatusLabel) {
@@ -1205,24 +1209,41 @@
         }
 
         async function seedAgendaCommitments() {
+            // V46: seed idempotente. Só grava documentos que realmente estão
+            // ausentes ou precisam de correção. Isso evita o ciclo:
+            // onSnapshot -> seed -> serverTimestamp -> onSnapshot -> seed...
             if (agendaSeedRunning || !currentUserState || !db || !folders.length) return;
+
             agendaSeedRunning = true;
+            agendaSeedDiagnostics.calls++;
             try {
                 const folderCache = {};
                 const folderSpecs = [
-                    ['Igreja','church',[]], ['Jornada de Conhecimento','book-open',['Jornada de Conhecime...']],
-                    ['Supervisão GE','users',[]], ['Professor','graduation-cap',[]], ['Inventário','file-text',[]], ['Área de Lazer','home',[]]
+                    ['Igreja','church',[]],
+                    ['Jornada de Conhecimento','book-open',['Jornada de Conhecime...']],
+                    ['Supervisão GE','users',[]],
+                    ['Professor','graduation-cap',[]],
+                    ['Inventário','file-text',[]],
+                    ['Área de Lazer','home',[]]
                 ];
-                for (const [name, icon, aliases] of folderSpecs) folderCache[name] = await ensureAgendaFolder(name, icon, aliases);
+
+                for (const [name, icon, aliases] of folderSpecs) {
+                    folderCache[name] = await ensureAgendaFolder(name, icon, aliases);
+                }
 
                 const definitions = buildAgendaSeedDefinitions();
-                const batch = db.batch();
-                let writes = 0;
-                const existingBySeed = new Map(tasks.filter(t => t.agendaSeedKey).map(t => [t.agendaSeedKey, t]));
+                const existingBySeed = new Map(
+                    tasks.filter(t => t.agendaSeedKey).map(t => [t.agendaSeedKey, t])
+                );
+
+                const writes = [];
+                const uid = currentUserState.uid;
+                const itemsRef = db.collection('users').doc(uid).collection('items');
 
                 for (const def of definitions) {
                     const folder = folderCache[def.folderName] || findAgendaFolder(def.folderName);
                     if (!folder) continue;
+
                     const existingSeed = existingBySeed.get(def.seedKey);
                     const fallback = tasks.find(t => {
                         const titleMatch = normalizeAgendaText(t.title) === normalizeAgendaText(def.title);
@@ -1230,29 +1251,75 @@
                         const timeMatch = !def.dueTime || !t.dueTime || String(t.dueTime) === String(def.dueTime);
                         return titleMatch && dateMatch && timeMatch;
                     });
+
                     const existing = existingSeed || fallback;
                     const id = existing?.id || `agenda_seed_${def.seedKey.replace(/[^a-zA-Z0-9_-]/g, '_')}`;
-                    const ref = db.collection('users').doc(currentUserState.uid).collection('items').doc(id);
-                    const payload = {
-                        ...(existing || {}),
-                        id,
+
+                    // Monta apenas os campos que fazem parte da identidade/configuração
+                    // do compromisso. updatedAt só é enviado se houver uma mudança real.
+                    const desired = {
                         title: def.title,
                         description: existing?.description || def.description || '',
                         dueDate: def.dueDate,
                         ...(def.dueTime ? { dueTime: def.dueTime } : {}),
-                        category: existing?.category || def.category,
-                        priority: existing?.priority || def.priority,
-                        status: existing?.status || def.status,
+                        ...(existing?.category ? {} : { category: def.category }),
+                        ...(existing?.priority ? {} : { priority: def.priority }),
+                        ...(existing?.status ? {} : { status: def.status }),
                         folderId: folder.id,
                         agendaSeedKey: def.seedKey,
                         ...(def.recurrenceRule ? { recurrenceRule: def.recurrenceRule } : {}),
-                        createdAt: existing?.createdAt || new Date().toISOString(),
+                        createdAt: existing?.createdAt || new Date().toISOString()
+                    };
+
+                    const fieldsToCheck = [
+                        'title',
+                        'description',
+                        'dueDate',
+                        'dueTime',
+                        'category',
+                        'priority',
+                        'status',
+                        'folderId',
+                        'agendaSeedKey',
+                        'recurrenceRule'
+                    ];
+
+                    const needsWrite = !existing || fieldsToCheck.some(field => {
+                        const desiredValue = desired[field];
+                        if (desiredValue === undefined) return false;
+                        return String(existing[field] ?? '') !== String(desiredValue ?? '');
+                    });
+
+                    if (!needsWrite) continue;
+
+                    const ref = itemsRef.doc(id);
+
+                    // Somente documentos realmente novos/corrigidos recebem updatedAt.
+                    // Isso quebra o loop de gravação causado pelo serverTimestamp().
+                    const payload = {
+                        ...desired,
+                        id,
                         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                     };
-                    batch.set(ref, payload, { merge: true });
-                    writes++;
+
+                    writes.push({ ref, payload });
                 }
-                if (writes) await batch.commit();
+
+                if (writes.length) {
+                    const batch = db.batch();
+                    writes.forEach(({ ref, payload }) => {
+                        batch.set(ref, payload, { merge: true });
+                    });
+                    await batch.commit();
+                    agendaSeedDiagnostics.writes += writes.length;
+                    agendaSeedDiagnostics.lastWriteAt = new Date().toISOString();
+                    console.info(`[Agenda Seed V46] ${writes.length} registro(s) criado(s)/corrigido(s).`);
+                } else {
+                    console.info('[Agenda Seed V46] Nenhuma gravação necessária.');
+                }
+
+                // Não forçamos nova gravação nem novo snapshot.
+                // O onSnapshot atualizará a interface quando houver alterações reais.
                 render();
             } catch (err) {
                 console.error('[Agenda Seed Error]', err);
@@ -2349,7 +2416,16 @@
                 if (view.id === `view-${viewName}`) view.classList.remove('hidden');
                 else view.classList.add('hidden');
             });
+
+            const commandCenterHero = document.getElementById('commandCenterHero');
+            if (commandCenterHero) {
+                commandCenterHero.classList.toggle('hidden', viewName !== 'dashboard');
+            }
         }
+
+        // V47: Centro de Comando aparece somente na tela Inicial.
+        const commandCenterHeroInitial = document.getElementById('commandCenterHero');
+        if (commandCenterHeroInitial) commandCenterHeroInitial.classList.remove('hidden');
 
         // --- SPOTLIGHT OMNIBOX (Cmd + K) ---
         const spotlightModal = document.getElementById('spotlightModal');
@@ -2554,6 +2630,11 @@
                         view.classList.add('hidden');
                     }
                 });
+
+                const commandCenterHero = document.getElementById('commandCenterHero');
+                if (commandCenterHero) {
+                    commandCenterHero.classList.toggle('hidden', targetView !== 'dashboard');
+                }
                 closeMobileSidebar();
             });
         });
