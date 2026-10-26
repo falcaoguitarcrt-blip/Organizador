@@ -1300,8 +1300,42 @@ button:hover,.btn:hover{transform:translateY(-1px);}
   <!-- Toast Container -->
   <div id="toast-container"></div>
 
+
+  <!-- Referência visual restaurada a partir do HTML fornecido pelo usuário -->
+  <header id="v14-reference-header" aria-label="Minha Agenda Pro">
+    <div class="v14-reference-header-inner">
+      <div class="v14-brand-copy">
+        <div class="v14-brand-title">Minha Agenda <span>Pro</span></div>
+        <p>Mais foco. Mais resultado. Todos os dias.</p>
+      </div>
+      <div class="v14-feature-list" aria-label="Destaques do organizador">
+        <div class="v14-feature">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="13" rx="2"></rect><path d="M8 21h8M12 17v4"></path></svg>
+          <div><strong>Visual moderno</strong><span>Interface profissional<br>e elegante</span></div>
+        </div>
+        <div class="v14-feature">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m13 2-9 12h7l-1 8 10-13h-7l0-7Z"></path></svg>
+          <div><strong>Mais produtividade</strong><span>Tudo o que importa<br>em um só lugar</span></div>
+        </div>
+        <div class="v14-feature">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V13M10 20V5M16 20V9M22 20V2"></path></svg>
+          <div><strong>Visão clara</strong><span>Informações organizadas<br>de forma inteligente</span></div>
+        </div>
+        <div class="v14-feature">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="2"></rect><path d="M10 18h4"></path></svg>
+          <div><strong>Experiência fluida</strong><span>Perfeito no computador<br>e no celular</span></div>
+        </div>
+      </div>
+    </div>
+  </header>
+
   <!-- Sidebar -->
   <div id="sidebar">
+
+    <div class="v14-sidebar-brand" aria-label="Minha Agenda Pro">
+      <span class="v14-sidebar-brand-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5"></path><path d="M5.5 10v10h13V10M9.5 20v-6h5v6"></path></svg></span>
+      <strong>Minha Agenda <span>Pro</span></strong>
+    </div>
     <div class="mobile-drawer-header"><strong>Minha Agenda Pro</strong><button type="button" class="mobile-drawer-close" onclick="toggleSidebar()" aria-label="Fechar menu">✕</button></div>
     <div class="user-profile">
       <div class="user-avatar-shell"><div id="u-avatar-fallback" class="user-avatar-fallback" aria-hidden="true">MP</div><img id="u-avatar" class="user-avatar" alt="" hidden></div>
@@ -6304,7 +6338,15 @@ button:hover,.btn:hover{transform:translateY(-1px);}
       ).join('') : '<div class="myday-empty-state">Ainda não há tarefas para distribuir por categoria.</div>';
       const distributionHtml = '<section class="myday-section myday-distribution-card"><div class="myday-section-head"><div><div class="myday-section-kicker">VISÃO GERAL</div><div class="myday-section-title">Distribuição de tarefas</div><div class="myday-distribution-subtitle">Por pasta e categoria</div></div><span class="myday-count-pill">' + chartTotal + '</span></div><div class="myday-distribution-layout"><div class="myday-donut" style="background:' + chartBackground + '" role="img" aria-label="Distribuição de ' + chartTotal + ' tarefas por categoria"><div class="myday-donut-center"><strong>' + chartTotal + '</strong><span>total</span></div></div><div class="myday-distribution-legend">' + distributionLegend + '</div></div></section>';
       c.innerHTML = `<div class="myday-v2">
-        <div class="myday-hero-v2"><div><div class="myday-eyebrow">CENTRO DE COMANDO</div><div class="myday-title">${greeting}, ${escapeHtml(name)}</div><div class="myday-subtitle">${dateExt.charAt(0).toUpperCase()+dateExt.slice(1)} · organize o que realmente importa hoje.</div></div><div class="myday-header-actions"><button class="btn myday-primary-action" onclick="openItemModal()">＋ Nova tarefa</button><select class="form-control phase2-mobile-view" onchange="setViewMode(this.value)"><option value="list" ${prefs.viewMode==='list'?'selected':''}>📋 Lista</option><option value="cards" ${prefs.viewMode==='cards'?'selected':''}>🔲 Cards</option><option value="kanban" ${prefs.viewMode==='kanban'?'selected':''}>📊 Kanban</option><option value="calendar" ${prefs.viewMode==='calendar'?'selected':''}>📅 Semana</option><option value="month" ${prefs.viewMode==='month'?'selected':''}>🗓️ Mês</option></select></div></div>
+        <div class="myday-hero-v2"><div><div class="myday-eyebrow">CENTRO DE COMANDO</div><div class="myday-title">${greeting}, ${escapeHtml(name)}</div><div class="myday-subtitle">${dateExt.charAt(0).toUpperCase()+dateExt.slice(1)} · organize o que realmente importa hoje.</div></div><div class="myday-header-actions"><button class="btn myday-primary-action" onclick="openItemModal()">＋ Nova tarefa</button><select class="form-control phase2-mobile-view" onchange="setViewMode(this.value)"><option value="list" ${prefs.viewMode==='list'?'selected':''}>📋 Lista</option><option value="cards" ${prefs.viewMode==='cards'?'selected':''}>🔲 Cards</option><option value="kanban" ${prefs.viewMode==='kanban'?'selected':''}>📊 Kanban</option><option value="calendar" ${prefs.viewMode==='calendar'?'selected':''}>📅 Semana</option><option value="month" ${prefs.viewMode==='month'?'selected':''}>🗓️ Mês</option></select></div>
+          <div class="myday-quote">“Disciplina de hoje,<br>resultados de amanhã.”</div>
+          <svg class="myday-mountain-svg" viewBox="0 0 500 150" preserveAspectRatio="none" aria-hidden="true">
+            <defs><linearGradient id="mydayMountainGlow" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#1e58a8" stop-opacity=".42"/><stop offset="100%" stop-color="#081628" stop-opacity="0"/></linearGradient></defs>
+            <circle cx="400" cy="40" r="70" fill="url(#mydayMountainGlow)"/>
+            <path d="M110 150 205 72 268 118 365 42 430 101 500 66 500 150Z" fill="#12345B" opacity=".72"/>
+            <path d="M180 150 278 83 335 125 418 61 500 116 500 150Z" fill="#08182D" opacity=".9"/>
+          </svg>
+        </div>
         <div class="myday-stats phase3-dashboard-metrics">
           <button class="myday-stat phase3-primary-stat ${activeFilter==='overdue'?'active':''}" onclick="filterDashboard('overdue')"><span class="myday-stat-icon danger"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 10 18H2L12 3Z"></path><path d="M12 9v5m0 3h.01"></path></svg></span><span class="phase3-stat-copy"><strong>${overdueCount}</strong><small>Atrasados</small></span><span class="phase3-stat-note">${overdueCount ? 'Precisam de atenção' : 'Nenhuma tarefa atrasada'}</span></button>
           <button class="myday-stat phase3-primary-stat ${activeFilter==='today'?'active':''}" onclick="filterDashboard('today')"><span class="myday-stat-icon warning"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M16 3v4M8 3v4M3 10h18"></path></svg></span><span class="phase3-stat-copy"><strong>${todayCount}</strong><small>Hoje</small></span><span class="phase3-stat-note">Tarefas e compromissos</span></button>
@@ -6925,7 +6967,7 @@ button:hover,.btn:hover{transform:translateY(-1px);}
         return;
       }
       try{
-        phase3ServiceWorkerRegistration=await navigator.serviceWorker.register('./service-worker.js?v=7',{scope:'./'});
+        phase3ServiceWorkerRegistration=await navigator.serviceWorker.register('./service-worker.js?v=8',{scope:'./'});
         await navigator.serviceWorker.ready;
         phase3SetAlertStatus('PWA ativa. Notificações em segundo plano via push ficam preparadas; lembretes agendados ainda dependem do backend de envio.','');
         const installBtn=document.getElementById('phase3-install-btn');
@@ -9634,6 +9676,116 @@ html:not([data-theme="light"]) #header-container .myday-distribution-row strong{
   }
 }
 
+</style>
+
+
+<style id="v14-reference-composition">
+/* Composição estrutural baseada no arquivo HTML de referência fornecido. */
+#v14-reference-header{
+  position:fixed;inset:0 0 auto 0;height:102px;z-index:700;box-sizing:border-box;
+  padding:12px 28px 10px;
+  border-bottom:1px solid rgba(87,145,216,.10);
+  background:linear-gradient(180deg,rgba(6,14,25,.985),rgba(6,14,25,.94) 76%,rgba(6,14,25,.78));
+  backdrop-filter:blur(16px);
+}
+.v14-reference-header-inner{
+  width:100%;max-width:1740px;height:100%;margin:0 auto;
+  display:flex;align-items:center;justify-content:space-between;gap:28px;
+}
+.v14-brand-copy{flex:0 0 auto;min-width:300px}
+.v14-brand-title{font-size:clamp(27px,2.8vw,43px);font-weight:850;letter-spacing:-.045em;line-height:1.05;color:#F4F8FF}
+.v14-brand-title span{color:#328BFF}
+.v14-brand-copy p{margin:7px 0 0;color:#9EC8F8;font-size:clamp(11px,1vw,16px);font-weight:450;letter-spacing:-.01em}
+.v14-feature-list{display:flex;align-items:center;justify-content:flex-end;gap:clamp(12px,2vw,34px);min-width:0}
+.v14-feature{display:flex;align-items:flex-start;gap:10px;min-width:0}
+.v14-feature svg{width:28px;height:28px;flex:0 0 28px;fill:none;stroke:#4DA2FF;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;margin-top:1px}
+.v14-feature strong{display:block;color:#F1F6FF;font-size:clamp(10px,.95vw,14px);font-weight:800;line-height:1.3;white-space:nowrap}
+.v14-feature span{display:block;margin-top:3px;color:#9AB5D7;font-size:clamp(9px,.82vw,12px);line-height:1.42;white-space:nowrap}
+.v14-sidebar-brand{display:flex;align-items:center;gap:8px;padding:16px 12px 17px;margin:0 8px 5px;border-bottom:1px solid rgba(120,164,217,.12);min-height:61px;box-sizing:border-box}
+.v14-sidebar-brand-icon{display:grid;place-items:center;flex:0 0 26px;width:26px;height:26px;border-radius:8px;background:linear-gradient(140deg,#3898FF,#145FC9);box-shadow:0 4px 14px rgba(22,133,255,.2)}
+.v14-sidebar-brand-icon svg{width:16px;height:16px;fill:none;stroke:#fff;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.v14-sidebar-brand strong{color:#EDF5FF;font-size:12px;font-weight:850;white-space:nowrap;letter-spacing:-.025em}
+.v14-sidebar-brand strong span{color:#328BFF}
+html:not([data-theme="light"]) #sidebar{
+  left:22px;top:111px;bottom:18px;width:205px;flex-basis:205px;height:auto;
+  border:1px solid rgba(79,133,196,.20);border-radius:20px;
+  box-shadow:0 18px 44px rgba(0,0,0,.30),0 0 22px rgba(22,133,255,.035);
+  background:linear-gradient(180deg,#0A1727 0%,#091421 58%,#08111C 100%)!important;
+}
+html:not([data-theme="light"]) #sidebar .user-profile{min-height:63px;padding:10px 12px;border-bottom-color:rgba(120,164,217,.12)}
+html:not([data-theme="light"]) #sidebar .sidebar-workspace{padding:4px 8px 8px}
+html:not([data-theme="light"]) #sidebar .sidebar-footer{padding:10px 9px 12px;background:linear-gradient(180deg,rgba(8,17,28,0),rgba(8,17,28,.94))}
+html:not([data-theme="light"]) #main{
+  margin-left:240px!important;width:calc(100% - 240px)!important;max-width:none!important;
+  height:100vh;min-height:0;box-sizing:border-box;
+  padding:119px 24px 24px 14px!important;
+  overflow-y:auto!important;background:transparent!important;
+}
+html:not([data-theme="light"]) body.sidebar-is-collapsed #sidebar{left:22px;width:76px;flex-basis:76px}
+html:not([data-theme="light"]) body.sidebar-is-collapsed #main{margin-left:112px!important;width:calc(100% - 112px)!important}
+html:not([data-theme="light"]) #main .top-bar{margin-bottom:12px}
+html:not([data-theme="light"]) #header-container .myday-hero-v2{
+  position:relative;isolation:isolate;overflow:hidden;min-height:120px;
+  padding:22px 24px!important;border:1px solid rgba(55,145,255,.42)!important;
+  background:linear-gradient(110deg,rgba(8,22,39,.98),rgba(8,27,48,.98) 58%,rgba(7,26,50,.95))!important;
+}
+html:not([data-theme="light"]) #header-container .myday-hero-v2>div:first-child{position:relative;z-index:3;max-width:72%;min-width:0}
+html:not([data-theme="light"]) #header-container .myday-hero-v2 .myday-header-actions{display:none!important}
+html:not([data-theme="light"]) #header-container .myday-hero-v2 .myday-title{font-size:clamp(24px,2.15vw,31px);line-height:1.18}
+html:not([data-theme="light"]) #header-container .myday-mountain-svg{
+  position:absolute;right:0;top:0;bottom:0;width:61%;height:100%;z-index:1;pointer-events:none;opacity:.92
+}
+html:not([data-theme="light"]) #header-container .myday-quote{
+  position:absolute;right:22px;bottom:18px;z-index:3;max-width:175px;
+  color:#E2EDFB;font-family:Georgia,serif;font-style:italic;font-size:13px;line-height:1.55;
+  text-align:right;text-shadow:0 2px 12px rgba(0,0,0,.35);
+}
+html:not([data-theme="light"]) #header-container .myday-hero-v2::before,
+html:not([data-theme="light"]) #header-container .myday-hero-v2::after{content:none!important}
+@media(max-width:1280px){
+  #v14-reference-header{padding-inline:20px}
+  .v14-brand-copy{min-width:260px}
+  .v14-feature-list{gap:14px}
+  .v14-feature svg{width:23px;height:23px;flex-basis:23px}
+  .v14-feature span{font-size:10px}
+}
+@media(max-width:1050px){
+  .v14-feature-list .v14-feature:nth-child(n+3){display:none}
+  .v14-feature-list{gap:24px}
+}
+@media(max-width:768px){
+  #v14-reference-header{height:73px;padding:10px 15px;z-index:500}
+  .v14-reference-header-inner{justify-content:flex-start}
+  .v14-brand-copy{min-width:0}
+  .v14-brand-title{font-size:25px}
+  .v14-brand-copy p{font-size:11px;margin-top:4px}
+  .v14-feature-list{display:none}
+  html:not([data-theme="light"]) #sidebar{
+    left:0;top:0;bottom:0;width:min(88vw,320px);height:100vh;max-height:100vh;
+    border-radius:0;border-left:0;border-top:0;border-bottom:0;z-index:700;
+  }
+  html:not([data-theme="light"]) #sidebar .v14-sidebar-brand{display:none}
+  html:not([data-theme="light"]) #sidebar .mobile-drawer-header{display:flex}
+  html:not([data-theme="light"]) #main{
+    margin-left:0!important;width:100%!important;max-width:none!important;height:auto;min-height:100vh;
+    padding:86px 12px calc(92px + env(safe-area-inset-bottom))!important;overflow:visible!important;
+  }
+  html:not([data-theme="light"]) body.sidebar-is-collapsed #main{margin-left:0!important;width:100%!important}
+  html:not([data-theme="light"]) #header-container .myday-hero-v2{min-height:128px;padding:18px!important}
+  html:not([data-theme="light"]) #header-container .myday-hero-v2>div:first-child{max-width:100%;padding-right:0}
+  html:not([data-theme="light"]) #header-container .myday-title{font-size:24px}
+  html:not([data-theme="light"]) #header-container .myday-quote{right:16px;bottom:12px;font-size:11px;max-width:140px}
+  html:not([data-theme="light"]) #header-container .myday-mountain-svg{width:78%;opacity:.55}
+}
+@media(max-width:390px){
+  #v14-reference-header{height:69px}
+  .v14-brand-title{font-size:23px}
+  html:not([data-theme="light"]) #main{padding-top:80px!important}
+  html:not([data-theme="light"]) #header-container .myday-quote{font-size:10px;max-width:122px}
+}
+@media(prefers-reduced-motion:reduce){
+  #v14-reference-header *,#v14-reference-header *::before,#v14-reference-header *::after{transition:none!important}
+}
 </style>
 
 </body>
