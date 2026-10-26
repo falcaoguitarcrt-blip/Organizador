@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Minha Agenda Pro • V12 Pastas</title>
+<style>
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#10161d;color:#eef4ff;font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+#app{position:fixed;inset:0}
+iframe{width:100%;height:100%;border:0;background:#10161d}
+#preview-badge{position:fixed;right:18px;top:14px;z-index:99999;padding:7px 11px;border:1px solid rgba(63,140,255,.45);border-radius:999px;background:rgba(13,20,29,.88);backdrop-filter:blur(12px);color:#9fc1ff;font-size:12px;font-weight:700;letter-spacing:.2px;box-shadow:0 10px 30px rgba(0,0,0,.25);pointer-events:none}
+#toast{position:fixed;left:50%;bottom:22px;transform:translate(-50%,20px);opacity:0;z-index:100000;padding:10px 14px;border:1px solid #33475f;border-radius:12px;background:#18222d;color:#eaf2ff;font-size:13px;transition:.2s;pointer-events:none}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+</style>
+</head>
+<body>
+<div id="app"><iframe id="site" src="./index.html" title="Prévia V12"></iframe></div>
+<div id="preview-badge">PRÉVIA V12 · PASTAS PERSONALIZÁVEIS</div>
+<div id="toast"></div>
+<script>
+const iframe=document.getElementById('site');
+const toastEl=document.getElementById('toast');
+let toastTimer;
+function toast(msg){toastEl.textContent=msg;toastEl.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>toastEl.classList.remove('show'),1800)}
+function inject(){
+ const d=iframe.contentDocument;
+ if(!d||!d.body)return;
+ if(d.getElementById('v12-style'))return;
+ const style=d.createElement('style');style.id='v12-style';style.textContent=`
+ :root{--v12-bg:#10161d;--v12-panel:#151e28;--v12-panel2:#18232f;--v12-border:#293746;--v12-blue:#3f8cff;--v12-muted:#91a4bb;--v12-text:#edf4ff}
+ body{background:var(--v12-bg)!important;color:var(--v12-text)!important}
+ #sidebar{background:linear-gradient(180deg,#111a24,#0f171f)!important;border-right:1px solid var(--v12-border)!important;width:274px!important;box-shadow:18px 0 50px rgba(0,0,0,.16)}
+ #main{margin-left:274px!important;background:var(--v12-bg)!important}
+ .user-profile{padding:18px 16px!important;border-bottom:1px solid var(--v12-border)!important}
+ .user-avatar{width:40px!important;height:40px!important;background:linear-gradient(135deg,#3f8cff,#6aa7ff)!important;box-shadow:0 0 0 3px rgba(63,140,255,.10)}
+ .nav-group{padding:10px 10px 18px!important}
+ .nav-section-title{font-size:.68rem!important;letter-spacing:1.1px!important;color:#71849a!important;margin:18px 8px 8px!important}
+ .nav-item{border-radius:10px!important;margin-bottom:3px!important;padding:9px 10px!important;color:#94a8bd!important;transition:.16s!important}
+ .nav-item:hover{background:rgba(63,140,255,.07)!important;color:#eaf2ff!important}
+ .nav-item.active{background:linear-gradient(90deg,rgba(63,140,255,.18),rgba(63,140,255,.06))!important;color:#65a1ff!important;box-shadow:inset 2px 0 #3f8cff!important}
+ #v12-folder-panel{margin:8px 2px 0;padding:0 2px 10px;border-top:1px solid rgba(255,255,255,.05)}
+ #v12-folder-head{display:flex;align-items:center;justify-content:space-between;padding:16px 7px 8px}
+ #v12-folder-title{font-size:11px;font-weight:800;letter-spacing:1.1px;color:#71849a}
+ #v12-add-folder{width:28px;height:28px;border:1px solid #2c3d50;border-radius:9px;background:#151f2a;color:#8fb8ff;font-size:18px;line-height:1;cursor:pointer}
+ #v12-add-folder:hover{border-color:#3f8cff;background:#17283c}
+ .v12-folder{display:flex;align-items:center;gap:8px;width:100%;min-height:42px;padding:7px 8px;border:1px solid transparent;border-radius:11px;background:transparent;color:#a9bbcf;cursor:pointer;box-sizing:border-box;position:relative;margin-bottom:3px}
+ .v12-folder:hover{background:rgba(255,255,255,.035);border-color:#263748;color:#eef4ff}
+ .v12-folder.active{background:linear-gradient(90deg,rgba(63,140,255,.15),rgba(63,140,255,.045));border-color:rgba(63,140,255,.28);color:#eef4ff}
+ .v12-folder.dragging{opacity:.45}
+ .v12-folder.drop-target{border-color:#3f8cff;background:rgba(63,140,255,.10)}
+ .v12-dot{width:9px;height:9px;border-radius:50%;flex:none;box-shadow:0 0 12px currentColor}
+ .v12-folder-name{min-width:0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;font-weight:650}
+ .v12-count{font-size:11px;color:#91a4bb;background:#1b2733;border:1px solid #2b3b4b;border-radius:999px;padding:2px 7px;min-width:12px;text-align:center}
+ .v12-menu{border:0;background:transparent;color:#6f849a;font-size:17px;width:24px;height:28px;border-radius:7px;cursor:pointer;opacity:.25}.v12-folder:hover .v12-menu{opacity:1}.v12-menu:hover{background:#223140;color:#dbe8f7}
+ #v12-empty{padding:11px 8px;color:#667a90;font-size:12px;line-height:1.45}
+ #v12-hint{margin:8px 6px 0;padding:9px 10px;border:1px dashed #2b3d50;border-radius:10px;color:#71859b;font-size:10px;line-height:1.45}
+ #v12-modal{position:fixed;inset:0;z-index:99999;background:rgba(4,8,12,.66);backdrop-filter:blur(8px);display:grid;place-items:center;padding:20px}
+ #v12-dialog{width:min(420px,94vw);background:#151f2a;border:1px solid #314355;border-radius:18px;box-shadow:0 28px 80px rgba(0,0,0,.55);padding:20px}
+ #v12-dialog h3{margin:0 0 5px;font-size:18px}.v12-sub{margin:0 0 18px;color:#8296ad;font-size:12px}
+ .v12-field{margin-bottom:14px}.v12-field label{display:block;color:#8ea2b9;font-size:11px;font-weight:700;margin-bottom:6px}.v12-field input{width:100%;box-sizing:border-box;background:#101821;border:1px solid #304153;border-radius:10px;padding:11px 12px;color:#edf4ff;outline:0}.v12-field input:focus{border-color:#3f8cff;box-shadow:0 0 0 3px rgba(63,140,255,.12)}
+ #v12-colors{display:flex;gap:8px;flex-wrap:wrap}.v12-color{width:27px;height:27px;border-radius:50%;border:2px solid transparent;cursor:pointer;box-shadow:0 0 0 1px rgba(255,255,255,.12)}.v12-color.sel{border-color:#fff;box-shadow:0 0 0 2px #3f8cff}
+ .v12-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}.v12-btn{border:1px solid #304153;background:#111a23;color:#dbe8f7;border-radius:10px;padding:9px 13px;font-weight:700;cursor:pointer}.v12-btn.primary{background:#3f8cff;border-color:#3f8cff;color:#07111e}.v12-btn.danger{color:#ff9292;border-color:#5a3035}
+ #v12-menu-pop{position:fixed;z-index:100001;min-width:150px;background:#151f2a;border:1px solid #304153;border-radius:11px;box-shadow:0 16px 45px rgba(0,0,0,.45);padding:5px;display:none}.v12-pop-btn{display:block;width:100%;text-align:left;border:0;background:transparent;color:#dbe8f7;padding:9px 10px;border-radius:8px;cursor:pointer;font-size:12px}.v12-pop-btn:hover{background:#213142}.v12-pop-btn.danger{color:#ff8e8e}
+ @media(max-width:768px){#sidebar{width:274px!important}#main{margin-left:0!important}.nav-group{padding-bottom:28px!important}}
+ `;d.head.appendChild(style);
+ buildFolders(d);
+}
+function buildFolders(d){
+ const nav=d.querySelector('.nav-group');if(!nav||d.getElementById('v12-folder-panel'))return;
+ const panel=d.createElement('section');panel.id='v12-folder-panel';
+ panel.innerHTML='<div id="v12-folder-head"><span id="v12-folder-title">PASTAS</span><button id="v12-add-folder" title="Nova pasta">+</button></div><div id="v12-folder-list"></div><div id="v12-hint">Crie suas próprias pastas, escolha a cor e arraste para organizar a ordem.</div>';
+ nav.appendChild(panel);
+ const modal=d.createElement('div');modal.id='v12-modal';modal.style.display='none';modal.innerHTML='<div id="v12-dialog"><h3 id="v12-dialog-title">Nova pasta</h3><p class="v12-sub">Organize sua Agenda do seu jeito.</p><div class="v12-field"><label>NOME DA PASTA</label><input id="v12-name" maxlength="32" placeholder="Ex.: Projetos 2027"></div><div class="v12-field"><label>COR</label><div id="v12-colors"></div></div><div class="v12-actions"><button class="v12-btn" id="v12-cancel">Cancelar</button><button class="v12-btn primary" id="v12-save">Salvar pasta</button></div></div>';
+ d.body.appendChild(modal);
+ const pop=d.createElement('div');pop.id='v12-menu-pop';pop.innerHTML='<button class="v12-pop-btn" data-act="rename">✎ Renomear</button><button class="v12-pop-btn" data-act="moveUp">↑ Mover para cima</button><button class="v12-pop-btn" data-act="moveDown">↓ Mover para baixo</button><button class="v12-pop-btn danger" data-act="delete">Excluir pasta</button>';d.body.appendChild(pop);
+ let folders=JSON.parse(localStorage.getItem('agenda_v12_folders')||'null')||[
+  {id:'trabalho',name:'Trabalho',color:'#3f8cff',count:5},{id:'igreja',name:'Igreja',color:'#8b5cf6',count:15},{id:'pessoal',name:'Pessoal',color:'#22c55e',count:7},{id:'projetos',name:'Projetos',color:'#f59e0b',count:3}
+ ];let selected=localStorage.getItem('agenda_v12_selected')||'';let editing=null;let menuId=null;
+ const colors=['#3f8cff','#8b5cf6','#22c55e','#f59e0b','#ef4444','#14b8a6','#ec4899'];
+ const colorBox=d.getElementById('v12-colors');colors.forEach(c=>{const b=d.createElement('button');b.className='v12-color';b.style.background=c;b.dataset.color=c;b.addEventListener('click',()=>{colorBox.querySelectorAll('.v12-color').forEach(x=>x.classList.remove('sel'));b.classList.add('sel')});colorBox.appendChild(b)});
+ function save(){localStorage.setItem('agenda_v12_folders',JSON.stringify(folders));localStorage.setItem('agenda_v12_selected',selected);render()}
+ function render(){const list=d.getElementById('v12-folder-list');list.innerHTML='';if(!folders.length){list.innerHTML='<div id="v12-empty">Nenhuma pasta criada ainda.<br>Clique em <b>+</b> para começar.</div>';return}folders.forEach((f,i)=>{const row=d.createElement('div');row.className='v12-folder'+(selected===f.id?' active':'');row.draggable=true;row.dataset.id=f.id;row.innerHTML='<span class="v12-dot" style="color:'+f.color+';background:'+f.color+'"></span><span class="v12-folder-name"></span><span class="v12-count">'+(f.count||0)+'</span><button class="v12-menu" title="Opções">⋯</button>';row.querySelector('.v12-folder-name').textContent=f.name;row.addEventListener('click',e=>{if(e.target.closest('.v12-menu'))return;selected=f.id;save();toast('Pasta “'+f.name+'” selecionada')});row.querySelector('.v12-menu').addEventListener('click',e=>{e.stopPropagation();menuId=f.id;const r=e.currentTarget.getBoundingClientRect();pop.style.left=Math.max(8,r.right-155)+'px';pop.style.top=Math.min(innerHeight-170,r.bottom+6)+'px';pop.style.display='block'});row.addEventListener('dragstart',e=>{e.dataTransfer.setData('text/plain',f.id);row.classList.add('dragging')});row.addEventListener('dragend',()=>row.classList.remove('dragging'));row.addEventListener('dragover',e=>{e.preventDefault();row.classList.add('drop-target')});row.addEventListener('dragleave',()=>row.classList.remove('drop-target'));row.addEventListener('drop',e=>{e.preventDefault();row.classList.remove('drop-target');const from=folders.findIndex(x=>x.id===e.dataTransfer.getData('text/plain'));const to=folders.findIndex(x=>x.id===f.id);if(from<0||to<0||from===to)return;const [m]=folders.splice(from,1);folders.splice(to,0,m);save();toast('Ordem das pastas atualizada')});list.appendChild(row)})}
+ function openModal(id){editing=id||null;d.getElementById('v12-dialog-title').textContent=id?'Editar pasta':'Nova pasta';d.getElementById('v12-save').textContent=id?'Salvar alterações':'Salvar pasta';const f=id&&folders.find(x=>x.id===id);d.getElementById('v12-name').value=f?f.name:'';colorBox.querySelectorAll('.v12-color').forEach((b,i)=>b.classList.toggle('sel',b.dataset.color===(f?f.color:colors[0])));modal.style.display='grid';setTimeout(()=>d.getElementById('v12-name').focus(),30)}
+ d.getElementById('v12-add-folder').addEventListener('click',()=>openModal());d.getElementById('v12-cancel').addEventListener('click',()=>modal.style.display='none');modal.addEventListener('click',e=>{if(e.target===modal)modal.style.display='none'});d.getElementById('v12-save').addEventListener('click',()=>{const name=d.getElementById('v12-name').value.trim();if(!name)return;const color=(colorBox.querySelector('.sel')||colorBox.firstChild).dataset.color;if(editing){const f=folders.find(x=>x.id===editing);if(f){f.name=name;f.color=color}}else{folders.push({id:'f'+Date.now(),name,color,count:0});selected=folders.at(-1).id}save();modal.style.display='none';toast(editing?'Pasta atualizada':'Pasta criada')});
+ pop.querySelectorAll('.v12-pop-btn').forEach(btn=>btn.addEventListener('click',()=>{const idx=folders.findIndex(x=>x.id===menuId);if(idx<0)return;const act=btn.dataset.act;if(act==='rename')openModal(menuId);if(act==='delete'){if(confirm('Excluir a pasta “'+folders[idx].name+'”?')){folders.splice(idx,1);if(selected===menuId)selected='';save();toast('Pasta excluída')}}if(act==='moveUp'&&idx>0){[folders[idx-1],folders[idx]]=[folders[idx],folders[idx-1]];save();toast('Pasta movida para cima')}if(act==='moveDown'&&idx<folders.length-1){[folders[idx+1],folders[idx]]=[folders[idx],folders[idx+1]];save();toast('Pasta movida para baixo')}pop.style.display='none'}));d.addEventListener('click',e=>{if(!e.target.closest('#v12-menu-pop')&&!e.target.closest('.v12-menu'))pop.style.display='none'});render();
+}
+iframe.addEventListener('load',()=>{try{inject()}catch(e){console.error(e)}});
+</script>
+</body>
+</html>
