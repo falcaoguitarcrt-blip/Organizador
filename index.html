@@ -2513,39 +2513,14 @@
     }
 
     // Navegação de Pastas
-    function setArea(id) {
-      currentArea = id;
+    function setArea(id) { 
+      currentArea = id; 
       currentDashboardFilter = null;
-
-      // Abrir uma pasta também entra explicitamente na view de tarefas.
-      if (id && id !== 'all') {
-        if (typeof switchView === 'function') {
-          switchView('tasks');
-        } else if (typeof setView === 'function') {
-          setView('tasks');
-        }
+      renderWithScrollPreserved(); 
+      if(window.innerWidth <= 768) {
+        document.getElementById('sidebar').classList.remove('open');
       }
-
-      renderWithScrollPreserved();
     }
-
-    // Clique no corpo da pasta: abre a pasta sem interferir nos controles internos.
-    if (!window.__agendaFolderClickBound) {
-      document.addEventListener('click', function agendaFolderClickHandler(event) {
-        const target = event.target.closest('[data-folder-click="true"]');
-        if (!target) return;
-        if (event.target.closest('button, a, input, select, textarea, [data-action]')) return;
-
-        const folderId = target.dataset.areaId;
-        if (!folderId) return;
-
-        event.preventDefault();
-        event.stopPropagation();
-        setArea(folderId);
-      }, true);
-      window.__agendaFolderClickBound = true;
-    }
-
 
     function getFormState() {
       const chkRows = document.querySelectorAll('#checklist-container .checklist-row');
