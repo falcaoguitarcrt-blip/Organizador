@@ -731,7 +731,64 @@
       .mobile-bottom-nav button { font-size:.62rem; }
     }
 
-    /* =========================\n       FASE 3 — CALENDÁRIO / ALERTAS / PWA\n       ========================= */\n    .phase3-calendar-shell {\n      border:1px solid var(--border);\n      border-radius:14px;\n      background:rgba(255,255,255,.018);\n      overflow:hidden;\n    }\n    .phase3-calendar-toolbar {\n      display:flex; justify-content:space-between; align-items:center; gap:10px;\n      padding:10px 12px; border-bottom:1px solid var(--border); background:var(--card);\n      position:sticky; top:0; z-index:12;\n    }\n    .phase3-calendar-scroll { overflow:auto; max-height:72vh; }\n    .phase3-week-grid {\n      display:grid; grid-template-columns:64px repeat(7,minmax(150px,1fr));\n      min-width:1120px; position:relative;\n    }\n    .phase3-time-head { background:var(--card); border-right:1px solid var(--border); position:sticky; left:0; z-index:11; }\n    .phase3-day-head {\n      background:var(--card); border-right:1px solid var(--border); border-bottom:1px solid var(--border);\n      padding:9px 8px; text-align:center; position:sticky; top:0; z-index:10;\n    }\n    .phase3-day-head.today { color:var(--accent); box-shadow:inset 0 -2px 0 var(--accent); }\n    .phase3-day-name { font-size:.7rem; color:var(--muted); font-weight:800; text-transform:uppercase; letter-spacing:.4px; }\n    .phase3-day-date { font-size:.95rem; font-weight:800; margin-top:2px; }\n    .phase3-time-col { position:relative; background:var(--card); border-right:1px solid var(--border); }\n    .phase3-time-label { height:40px; border-bottom:1px solid rgba(255,255,255,.04); padding:2px 6px; text-align:right; color:var(--muted); font-size:.68rem; }\n    .phase3-day-col { position:relative; background:rgba(255,255,255,.012); border-right:1px solid var(--border); }\n    .phase3-day-col.weekend { background:rgba(255,255,255,.018); }\n    .phase3-slot { height:40px; border-bottom:1px solid rgba(255,255,255,.04); cursor:pointer; position:relative; }\n    .phase3-slot:hover { background:rgba(45,212,191,.055); }\n    .phase3-event {\n      position:absolute; box-sizing:border-box; overflow:hidden; cursor:grab; z-index:4;\n      background:var(--card); border:1px solid rgba(45,212,191,.45); border-left:4px solid var(--accent);\n      border-radius:7px; padding:5px 6px; box-shadow:0 5px 12px rgba(0,0,0,.2);\n    }\n    .phase3-event.dragging { opacity:.5; }\n    .phase3-event-time { font-size:.66rem; color:var(--muted); font-variant-numeric:tabular-nums; }\n    .phase3-event-title { font-size:.72rem; font-weight:750; line-height:1.2; margin-top:2px; }\n    .phase3-event-meta { font-size:.62rem; color:var(--muted); margin-top:2px; }\n    .phase3-now-line { position:absolute; left:0; right:0; height:2px; background:var(--danger); z-index:6; pointer-events:none; }\n    .phase3-now-dot { width:7px; height:7px; border-radius:50%; background:var(--danger); position:absolute; left:-3px; top:-2.5px; }\n    .phase3-drop-indicator { position:absolute; left:0; right:0; height:3px; background:var(--accent); z-index:7; pointer-events:none; display:none; }\n    .phase3-calendar-hint { padding:9px 12px; color:var(--muted); font-size:.72rem; border-top:1px solid var(--border); background:rgba(0,0,0,.08); }\n    .phase3-alert-status { margin-top:10px; padding:9px 10px; border-radius:8px; background:rgba(45,212,191,.06); border:1px solid rgba(45,212,191,.25); color:var(--muted); font-size:.75rem; line-height:1.35; }\n    .phase3-install-ready { border-color:var(--accent)!important; color:var(--accent)!important; display:inline-flex!important; }\n    .phase3-pwa-pill { display:inline-flex; align-items:center; gap:5px; padding:3px 8px; border-radius:999px; border:1px solid var(--border); color:var(--muted); font-size:.65rem; }\n    @media(max-width:768px){\n      .phase3-calendar-toolbar { position:sticky; top:0; }\n      .phase3-calendar-scroll { max-height:68vh; }\n      .phase3-week-grid { grid-template-columns:52px repeat(7,minmax(130px,1fr)); min-width:962px; }\n      .phase3-day-head { padding:8px 5px; }\n      .phase3-event-title { font-size:.68rem; }\n      .phase3-alert-status { font-size:.7rem; }\n    }\n  
+    /* =========================
+       FASE 3 — CALENDÁRIO / ALERTAS / PWA
+       ========================= */
+    .phase3-calendar-shell {
+      border:1px solid var(--border);
+      border-radius:14px;
+      background:rgba(255,255,255,.018);
+      overflow:hidden;
+    }
+    .phase3-calendar-toolbar {
+      display:flex; justify-content:space-between; align-items:center; gap:10px;
+      padding:10px 12px; border-bottom:1px solid var(--border); background:var(--card);
+      position:sticky; top:0; z-index:12;
+    }
+    .phase3-calendar-scroll { overflow:auto; max-height:72vh; }
+    .phase3-week-grid {
+      display:grid; grid-template-columns:64px repeat(7,minmax(150px,1fr));
+      min-width:1120px; position:relative;
+    }
+    .phase3-time-head { background:var(--card); border-right:1px solid var(--border); position:sticky; left:0; z-index:11; }
+    .phase3-day-head {
+      background:var(--card); border-right:1px solid var(--border); border-bottom:1px solid var(--border);
+      padding:9px 8px; text-align:center; position:sticky; top:0; z-index:10;
+    }
+    .phase3-day-head.today { color:var(--accent); box-shadow:inset 0 -2px 0 var(--accent); }
+    .phase3-day-name { font-size:.7rem; color:var(--muted); font-weight:800; text-transform:uppercase; letter-spacing:.4px; }
+    .phase3-day-date { font-size:.95rem; font-weight:800; margin-top:2px; }
+    .phase3-time-col { position:relative; background:var(--card); border-right:1px solid var(--border); }
+    .phase3-time-label { height:40px; border-bottom:1px solid rgba(255,255,255,.04); padding:2px 6px; text-align:right; color:var(--muted); font-size:.68rem; }
+    .phase3-day-col { position:relative; background:rgba(255,255,255,.012); border-right:1px solid var(--border); }
+    .phase3-day-col.weekend { background:rgba(255,255,255,.018); }
+    .phase3-slot { height:40px; border-bottom:1px solid rgba(255,255,255,.04); cursor:pointer; position:relative; }
+    .phase3-slot:hover { background:rgba(45,212,191,.055); }
+    .phase3-event {
+      position:absolute; box-sizing:border-box; overflow:hidden; cursor:grab; z-index:4;
+      background:var(--card); border:1px solid rgba(45,212,191,.45); border-left:4px solid var(--accent);
+      border-radius:7px; padding:5px 6px; box-shadow:0 5px 12px rgba(0,0,0,.2);
+    }
+    .phase3-event.dragging { opacity:.5; }
+    .phase3-event-time { font-size:.66rem; color:var(--muted); font-variant-numeric:tabular-nums; }
+    .phase3-event-title { font-size:.72rem; font-weight:750; line-height:1.2; margin-top:2px; }
+    .phase3-event-meta { font-size:.62rem; color:var(--muted); margin-top:2px; }
+    .phase3-now-line { position:absolute; left:0; right:0; height:2px; background:var(--danger); z-index:6; pointer-events:none; }
+    .phase3-now-dot { width:7px; height:7px; border-radius:50%; background:var(--danger); position:absolute; left:-3px; top:-2.5px; }
+    .phase3-drop-indicator { position:absolute; left:0; right:0; height:3px; background:var(--accent); z-index:7; pointer-events:none; display:none; }
+    .phase3-calendar-hint { padding:9px 12px; color:var(--muted); font-size:.72rem; border-top:1px solid var(--border); background:rgba(0,0,0,.08); }
+    .phase3-alert-status { margin-top:10px; padding:9px 10px; border-radius:8px; background:rgba(45,212,191,.06); border:1px solid rgba(45,212,191,.25); color:var(--muted); font-size:.75rem; line-height:1.35; }
+    .phase3-install-ready { border-color:var(--accent)!important; color:var(--accent)!important; display:inline-flex!important; }
+    .phase3-pwa-pill { display:inline-flex; align-items:center; gap:5px; padding:3px 8px; border-radius:999px; border:1px solid var(--border); color:var(--muted); font-size:.65rem; }
+    @media(max-width:768px){
+      .phase3-calendar-toolbar { position:sticky; top:0; }
+      .phase3-calendar-scroll { max-height:68vh; }
+      .phase3-week-grid { grid-template-columns:52px repeat(7,minmax(130px,1fr)); min-width:962px; }
+      .phase3-day-head { padding:8px 5px; }
+      .phase3-event-title { font-size:.68rem; }
+      .phase3-alert-status { font-size:.7rem; }
+    }
+  
     /* =========================
        M3 — NAVEGAÇÃO MOBILE COMO APP
        Camada exclusiva de apresentação/interação mobile.
