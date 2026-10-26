@@ -1282,6 +1282,157 @@ button:hover,.btn:hover{transform:translateY(-1px);}
 :focus-visible{outline:2px solid rgba(128,180,255,.85);outline-offset:2px;}
 </style>
 
+
+<style id="v14-reference-parity">
+/* Alinhamento do aplicativo com a composição visual do HTML de referência. */
+html:not([data-theme="light"]) body{background:#060E19!important;color:#EAF2FD}
+#v14-reference-header{
+  position:relative!important;inset:auto!important;display:block;height:102px;min-height:102px;
+  padding:12px clamp(16px,2vw,28px) 10px!important;border:0!important;
+  background:transparent!important;backdrop-filter:none!important;z-index:4;
+}
+.v14-reference-header-inner{max-width:1740px;gap:clamp(12px,1.5vw,24px);align-items:center}
+.v14-brand-copy{min-width:270px}
+.v14-feature-list{flex:1;gap:clamp(12px,1.6vw,26px)}
+.v14-auth-chip{
+  display:flex;align-items:center;gap:10px;flex:0 0 auto;min-width:190px;max-width:255px;
+  padding:6px 11px 6px 6px;border:1px solid rgba(105,157,218,.22);border-radius:999px;
+  background:linear-gradient(135deg,rgba(13,29,48,.96),rgba(8,18,30,.97));
+  box-shadow:0 8px 22px rgba(0,0,0,.17);
+}
+.v14-auth-avatar{
+  position:relative;display:grid;place-items:center;overflow:hidden;flex:0 0 36px;
+  width:36px;height:36px;border-radius:50%;font-size:11px;font-weight:850;color:#fff;
+  background:linear-gradient(140deg,#3898FF,#145FC9);box-shadow:0 3px 12px rgba(22,133,255,.18);
+}
+.v14-auth-avatar img{width:100%;height:100%;object-fit:cover}
+.v14-auth-avatar img[hidden],.v14-auth-avatar span[hidden]{display:none!important}
+.v14-auth-copy{display:flex;flex-direction:column;gap:3px;min-width:0;flex:1}
+.v14-auth-copy strong{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#F3F7FF;font-size:11px;font-weight:800;line-height:1.3}
+.v14-auth-copy span{display:flex;align-items:center;gap:5px;color:#91A9C6;font-size:9px;white-space:nowrap}
+.v14-auth-status-dot{display:inline-block;flex:0 0 6px;width:6px;height:6px;border-radius:50%;background:#F5B942}
+.v14-auth-chip.is-connected .v14-auth-status-dot{background:#20CDBD;box-shadow:0 0 0 3px rgba(32,205,189,.10)}
+#v14-auth-action{
+  flex:0 0 auto;border:1px solid rgba(56,151,255,.28);border-radius:999px;padding:6px 10px;
+  background:rgba(22,133,255,.16);color:#87C4FF;font-size:10px;font-weight:800;cursor:pointer;
+}
+#v14-auth-action:hover{background:rgba(22,133,255,.26);border-color:rgba(56,151,255,.5)}
+.v14-shell-outline{
+  position:fixed;top:103px;left:21px;right:21px;bottom:14px;z-index:0;pointer-events:none;
+  border:1px solid rgba(105,157,218,.17);border-radius:21px;
+  background:linear-gradient(180deg,rgba(10,23,38,.18),rgba(6,13,22,.08));
+}
+#sidebar{
+  position:fixed!important;left:22px!important;top:112px!important;bottom:18px!important;
+  width:205px!important;flex-basis:205px!important;height:auto!important;max-height:none!important;
+  box-sizing:border-box;border:1px solid rgba(79,133,196,.20)!important;border-radius:20px!important;
+  background:linear-gradient(180deg,#0A1727 0%,#091421 58%,#08111C 100%)!important;
+  box-shadow:0 18px 44px rgba(0,0,0,.30),0 0 22px rgba(22,133,255,.035)!important;
+  z-index:3!important;
+}
+#sidebar .user-profile{display:none!important}
+#sidebar .v14-sidebar-brand{display:flex;min-height:61px}
+#sidebar .sidebar-workspace{padding:4px 8px 8px}
+#sidebar .sidebar-footer{padding:10px 9px 12px;background:linear-gradient(180deg,rgba(8,17,28,0),rgba(8,17,28,.94))}
+#main{
+  position:relative;z-index:2;min-width:0;
+  margin:0 0 0 240px!important;width:calc(100% - 240px)!important;max-width:none!important;
+  height:calc(100vh - 116px)!important;min-height:0;box-sizing:border-box;
+  padding:16px 24px 20px 14px!important;overflow-y:auto!important;
+  background:transparent!important;
+}
+body.sidebar-is-collapsed #sidebar{left:22px!important;width:76px!important;flex-basis:76px!important}
+body.sidebar-is-collapsed #main{margin-left:112px!important;width:calc(100% - 112px)!important}
+#main .top-bar{margin-bottom:12px}
+#main .phase2-search-wrap{border-radius:12px}
+#main .quick-capture{
+  gap:8px;padding:6px;border:1px solid rgba(105,157,218,.17);border-radius:13px;
+  background:linear-gradient(110deg,rgba(13,27,43,.9),rgba(8,18,29,.88));
+}
+#main .quick-capture input{border:0!important;background:transparent!important;padding:10px 12px}
+#main .quick-capture .btn{border-radius:9px;white-space:nowrap}
+#header-container .myday-v2{gap:13px}
+#header-container .myday-hero-v2{border-radius:19px}
+#header-container .myday-section,#header-container .myday-next-card{border-radius:14px}
+#header-container .myday-section-head{gap:10px}
+#header-container .myday-timeline-head-actions{display:flex;align-items:center;justify-content:flex-end;gap:7px;flex:0 0 auto}
+#header-container .v14-pomodoro{
+  display:flex;align-items:center;gap:5px;padding:4px 5px;border:1px solid rgba(55,145,255,.24);
+  border-radius:9px;background:rgba(4,19,36,.86);white-space:nowrap;
+}
+#header-container .v14-pomodoro-icon{color:#58B5FF;font-size:14px;line-height:1}
+#header-container .v14-pomodoro-time{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10px;font-weight:850;letter-spacing:.02em;color:#F1F7FF;font-variant-numeric:tabular-nums}
+#header-container .v14-pomodoro button{
+  display:grid;place-items:center;min-width:23px;height:23px;padding:0 5px;border:0;border-radius:6px;
+  background:#1765C8;color:white;font-size:10px;font-weight:850;cursor:pointer;
+}
+#header-container .v14-pomodoro button+button{background:rgba(110,133,161,.16);color:#B9C9DD}
+#header-container .v14-pomodoro button:hover{filter:brightness(1.15)}
+#header-container .myday-timeline-head-actions .myday-count-pill{min-width:22px}
+#header-container .phase3-dashboard-metrics{gap:10px}
+#header-container .phase3-primary-stat,#header-container .phase3-primary-progress{border-radius:15px}
+#header-container .myday-dashboard-grid{gap:12px}
+@media(max-width:1280px){
+  .v14-brand-copy{min-width:250px}
+  .v14-feature-list{gap:12px}
+  .v14-feature svg{width:22px;height:22px;flex-basis:22px}
+  .v14-feature span{font-size:9px}
+  .v14-auth-chip{min-width:170px;max-width:200px;gap:8px}
+  .v14-auth-copy strong{max-width:105px}
+}
+@media(max-width:1050px){
+  .v14-feature-list .v14-feature:nth-child(n+3){display:none}
+  .v14-feature-list{gap:18px}
+  .v14-brand-copy{min-width:220px}
+  .v14-auth-chip{min-width:165px}
+}
+@media(max-width:768px){
+  #v14-reference-header{height:76px;min-height:76px;padding:9px 13px!important}
+  .v14-reference-header-inner{justify-content:space-between;gap:10px}
+  .v14-brand-copy{min-width:0;max-width:56%}
+  .v14-brand-title{font-size:clamp(20px,5.5vw,25px)}
+  .v14-brand-copy p{font-size:10px;margin-top:4px;white-space:nowrap}
+  .v14-feature-list{display:none!important}
+  .v14-auth-chip{min-width:0;max-width:45%;gap:7px;padding:4px 7px 4px 4px}
+  .v14-auth-avatar{width:30px;height:30px;flex-basis:30px;font-size:10px}
+  .v14-auth-copy strong{max-width:76px;font-size:10px}
+  .v14-auth-copy span{display:none}
+  #v14-auth-action{padding:5px 7px;font-size:9px}
+  .v14-shell-outline{display:none}
+  #sidebar{
+    left:0!important;top:0!important;bottom:0!important;width:min(88vw,320px)!important;
+    height:100vh!important;max-height:100vh!important;border-radius:0!important;
+    border-left:0!important;border-top:0!important;border-bottom:0!important;z-index:800!important;
+  }
+  #sidebar .v14-sidebar-brand{display:none!important}
+  #sidebar .mobile-drawer-header{display:flex!important}
+  #main{
+    margin:0!important;width:100%!important;max-width:none!important;
+    height:calc(100vh - 76px)!important;min-height:0;
+    padding:12px 12px 86px!important;overflow-y:auto!important;
+  }
+  body.sidebar-is-collapsed #main{margin-left:0!important;width:100%!important}
+  body.sidebar-is-collapsed #sidebar{width:min(88vw,320px)!important}
+  #header-container .myday-hero-v2{min-height:135px;padding:17px!important}
+  #header-container .myday-hero-v2>div:first-child{max-width:100%!important}
+  #header-container .myday-quote{right:15px!important;bottom:10px!important;font-size:11px!important}
+  #header-container .myday-mountain-svg{width:76%!important;opacity:.6!important}
+  #header-container .myday-timeline-head-actions{gap:5px}
+  #header-container .v14-pomodoro{gap:4px;padding:3px}
+  #header-container .v14-pomodoro-time{font-size:9px}
+}
+@media(max-width:420px){
+  .v14-brand-copy p{max-width:155px;overflow:hidden;text-overflow:ellipsis}
+  .v14-auth-copy{display:none}
+  .v14-auth-chip{padding:4px}
+  #v14-auth-action{max-width:50px}
+  #header-container .myday-timeline-head-actions .myday-count-pill{display:none}
+}
+@media(prefers-reduced-motion:reduce){
+  #header-container .v14-pomodoro button{transition:none!important}
+}
+</style>
+
 </head>
 <body>
 
@@ -1326,8 +1477,20 @@ button:hover,.btn:hover{transform:translateY(-1px);}
           <div><strong>Experiência fluida</strong><span>Perfeito no computador<br>e no celular</span></div>
         </div>
       </div>
+      <div class="v14-auth-chip" id="v14-auth-chip" aria-label="Perfil e sincronização">
+        <div class="v14-auth-avatar">
+          <span id="v14-auth-avatar-fallback" aria-hidden="true">MP</span>
+          <img id="v14-auth-avatar-img" alt="" hidden>
+        </div>
+        <div class="v14-auth-copy">
+          <strong id="v14-auth-name">Verificando...</strong>
+          <span id="v14-auth-status"><i class="v14-auth-status-dot"></i> Verificando conexão</span>
+        </div>
+        <button type="button" id="v14-auth-action" onclick="v14ReferenceAuthAction()">Entrar</button>
+      </div>
     </div>
   </header>
+  <div class="v14-shell-outline" aria-hidden="true"></div>
 
   <!-- Sidebar -->
   <div id="sidebar">
@@ -3406,7 +3569,100 @@ button:hover,.btn:hover{transform:translateY(-1px);}
       }
     } catch (_) {}
 
+    // Perfil do cabeçalho e temporizador Pomodoro do painel inicial.
+    let v14PomoSeconds = 25 * 60;
+    let v14PomoIsRunning = false;
+    let v14PomoInterval = null;
+
+    function updateV14HeaderProfile() {
+      const nameEl = document.getElementById('v14-auth-name');
+      const statusEl = document.getElementById('v14-auth-status');
+      const actionEl = document.getElementById('v14-auth-action');
+      const avatarEl = document.getElementById('v14-auth-avatar-img');
+      const fallbackEl = document.getElementById('v14-auth-avatar-fallback');
+      const chip = document.getElementById('v14-auth-chip');
+      if (!chip) return;
+      const user = (typeof auth !== 'undefined' && auth) ? auth.currentUser : null;
+      const displayName = user?.displayName || user?.email?.split('@')[0] || 'Visitante';
+      if (nameEl) nameEl.textContent = displayName;
+      if (statusEl) statusEl.innerHTML = '<i class="v14-auth-status-dot"></i> ' + (user ? 'Conta conectada' : 'Entre para sincronizar');
+      if (actionEl) {
+        actionEl.textContent = user ? 'Sair' : 'Entrar';
+        actionEl.setAttribute('aria-label', user ? 'Sair da conta' : 'Entrar com Google');
+        actionEl.title = user ? 'Sair da conta' : 'Entrar com Google';
+      }
+      if (fallbackEl) {
+        const parts = String(displayName).trim().split(/\s+/).filter(Boolean);
+        fallbackEl.textContent = (parts.length > 1 ? parts[0][0] + parts[parts.length - 1][0] : (parts[0] || 'MP').slice(0,2)).toUpperCase();
+      }
+      if (avatarEl) {
+        const photo = user?.photoURL || '';
+        avatarEl.onerror = function() { avatarEl.hidden = true; if (fallbackEl) fallbackEl.hidden = false; };
+        if (photo) {
+          if (avatarEl.src !== photo) avatarEl.src = photo;
+          avatarEl.hidden = false;
+          if (fallbackEl) fallbackEl.hidden = true;
+        } else {
+          avatarEl.removeAttribute('src');
+          avatarEl.hidden = true;
+          if (fallbackEl) fallbackEl.hidden = false;
+        }
+      }
+      chip.classList.toggle('is-connected', !!user);
+    }
+
+    function v14ReferenceAuthAction() {
+      if (typeof auth !== 'undefined' && auth && auth.currentUser) logout();
+      else loginGoogle();
+    }
+
+    function updateV14PomodoroDisplay() {
+      const timerEl = document.getElementById('v14-pomo-time');
+      const toggleEl = document.getElementById('v14-pomo-toggle');
+      const mins = Math.floor(v14PomoSeconds / 60).toString().padStart(2, '0');
+      const secs = (v14PomoSeconds % 60).toString().padStart(2, '0');
+      if (timerEl) timerEl.textContent = mins + ':' + secs;
+      if (toggleEl) {
+        toggleEl.textContent = v14PomoIsRunning ? 'Ⅱ' : '▶';
+        toggleEl.setAttribute('aria-label', v14PomoIsRunning ? 'Pausar Pomodoro' : 'Iniciar Pomodoro');
+        toggleEl.title = v14PomoIsRunning ? 'Pausar Pomodoro' : 'Iniciar Pomodoro';
+      }
+    }
+
+    function togglePomodoro() {
+      if (v14PomoIsRunning) {
+        clearInterval(v14PomoInterval);
+        v14PomoInterval = null;
+        v14PomoIsRunning = false;
+        updateV14PomodoroDisplay();
+        return;
+      }
+      if (v14PomoSeconds <= 0) v14PomoSeconds = 25 * 60;
+      v14PomoIsRunning = true;
+      updateV14PomodoroDisplay();
+      v14PomoInterval = setInterval(function() {
+        if (v14PomoSeconds > 0) v14PomoSeconds--;
+        updateV14PomodoroDisplay();
+        if (v14PomoSeconds <= 0) {
+          clearInterval(v14PomoInterval);
+          v14PomoInterval = null;
+          v14PomoIsRunning = false;
+          updateV14PomodoroDisplay();
+          if (typeof showToast === 'function') showToast('Pomodoro concluído! Faça uma pausa curta.');
+        }
+      }, 1000);
+    }
+
+    function resetPomodoro() {
+      if (v14PomoInterval) clearInterval(v14PomoInterval);
+      v14PomoInterval = null;
+      v14PomoIsRunning = false;
+      v14PomoSeconds = 25 * 60;
+      updateV14PomodoroDisplay();
+    }
+
     function renderSidebar() {
+      updateV14HeaderProfile();
       const pinnedContainer = document.getElementById('pinned-folder-tree');
       const mainContainer = document.getElementById('folder-tree');
       pinnedContainer.innerHTML = '';
@@ -6310,7 +6566,7 @@ button:hover,.btn:hover{transform:translateY(-1px);}
       const activeFilter = currentDashboardFilter;
       const focusHtml = data.focus.length ? `<section class="myday-section myday-focus-card"><div class="myday-section-head"><div><div class="myday-section-kicker">PRIORIDADE</div><div class="myday-section-title">Foco sugerido</div></div><span class="myday-section-icon" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><circle cx="12" cy="12" r="8.5"></circle><circle cx="12" cy="12" r="4.5"></circle><circle cx="12" cy="12" r="1"></circle></svg></span></div><div class="myday-focus-list">${data.focus.map((i,idx)=>`<button class="myday-focus-item" onclick="openItemModal(S.items.find(x=>x.id==='${i.id}'))"><span class="myday-focus-index">${idx+1}</span><span class="myday-focus-copy"><strong>${escapeHtml(i.title)}</strong><small>${i.date && i.date < data.today ? '⚠ Atrasada' : (i.time ? 'Hoje às '+escapeHtml(i.time) : 'Hoje')} ${buildPhase2PriorityHtml(i)}</small></span><span class="myday-arrow">›</span></button>`).join('')}</div></section>` : `<section class="myday-section"><div class="myday-empty-title">🎯 Nenhum foco crítico identificado</div><div class="muted text-sm">Sua agenda está livre de itens de alta prioridade, atrasados ou marcados com estrela.</div></section>`;
       const nextHtml = data.next ? `<section class="myday-next-card"><div><div class="myday-section-kicker">A SEGUIR</div><div class="myday-next-title">${escapeHtml(data.next.title)}</div><div class="myday-next-meta">${data.next.date === data.today ? 'Hoje' : escapeHtml(formatBR(data.next.date,''))}${data.next.time ? ' · '+escapeHtml(data.next.time) : ''}${data.next.area ? ' · '+escapeHtml(getHierarchy(data.next.area).text) : ''}</div></div><button class="btn-sm" onclick="openItemModal(S.items.find(x=>x.id==='${data.next.id}'))">Abrir</button></section>` : '';
-      const timelineHtml = `<section class="myday-section timeline-panel"><div class="myday-section-head"><div><div class="myday-section-kicker">AGENDA</div><div class="myday-section-title">Linha do tempo de hoje</div></div><span class="myday-count-pill">${scheduledToday}</span></div>${data.timedToday.length ? `<div class="timeline-list">${data.timedToday.slice(0,4).map(i=>`<button class="timeline-row" onclick="openItemModal(S.items.find(x=>x.id==='${i.id}'))"><span class="timeline-time">${escapeHtml(i.time)}</span><span class="timeline-dot"></span><span class="timeline-copy"><strong>${escapeHtml(i.title)}</strong><small>${i.priority ? priorityLabel(i.priority) : 'Sem prioridade'} ${i.area ? '• '+escapeHtml(getHierarchy(i.area).text) : ''}</small></span></button>`).join('')}</div>${data.timedToday.length>4 ? '<div class="timeline-more"><button type="button" onclick="filterDashboard(\'today\');setViewMode(\'list\')">Ver todos os compromissos →</button></div>' : ''}` : '<div class="myday-empty-state">Nenhum compromisso com horário definido hoje.</div>'}${data.noTimeToday.length ? `<div class="untimed-note">+ ${data.noTimeToday.length} item(ns) de hoje sem horário definido.</div>` : ''}</section>`;
+      const timelineHtml = `<section class="myday-section timeline-panel"><div class="myday-section-head"><div><div class="myday-section-kicker">AGENDA</div><div class="myday-section-title">Linha do tempo de hoje</div></div><div class="myday-timeline-head-actions"><span class="myday-count-pill">${scheduledToday}</span><div class="v14-pomodoro" aria-label="Temporizador Pomodoro"><span class="v14-pomodoro-icon" aria-hidden="true">◷</span><span id="v14-pomo-time" class="v14-pomodoro-time">25:00</span><button type="button" id="v14-pomo-toggle" onclick="togglePomodoro()" aria-label="Iniciar Pomodoro" title="Iniciar Pomodoro">▶</button><button type="button" onclick="resetPomodoro()" aria-label="Reiniciar Pomodoro" title="Reiniciar Pomodoro">↻</button></div></div></div>${data.timedToday.length ? `<div class="timeline-list">${data.timedToday.slice(0,4).map(i=>`<button class="timeline-row" onclick="openItemModal(S.items.find(x=>x.id==='${i.id}'))"><span class="timeline-time">${escapeHtml(i.time)}</span><span class="timeline-dot"></span><span class="timeline-copy"><strong>${escapeHtml(i.title)}</strong><small>${i.priority ? priorityLabel(i.priority) : 'Sem prioridade'} ${i.area ? '• '+escapeHtml(getHierarchy(i.area).text) : ''}</small></span></button>`).join('')}</div>${data.timedToday.length>4 ? '<div class="timeline-more"><button type="button" onclick="filterDashboard(\'today\');setViewMode(\'list\')">Ver todos os compromissos →</button></div>' : ''}` : '<div class="myday-empty-state">Nenhum compromisso com horário definido hoje.</div>'}${data.noTimeToday.length ? `<div class="untimed-note">+ ${data.noTimeToday.length} item(ns) de hoje sem horário definido.</div>` : ''}</section>`;
       const distributionItems = (currentArea === 'all' && prefs.viewMode === 'calendar')
         ? S.items.filter(i => weeklyFolderIsVisible(i))
         : S.items;
@@ -6357,6 +6613,8 @@ button:hover,.btn:hover{transform:translateY(-1px);}
         <div class="myday-grid myday-dashboard-grid"><div>${focusHtml}${nextHtml}</div><div>${timelineHtml}</div><div>${distributionHtml}</div></div>
         <div class="myday-bottom"><div class="view-selector"><button class="view-btn ${prefs.viewMode==='list'?'active':''}" onclick="setViewMode('list')">📋 Lista</button><button class="view-btn ${prefs.viewMode==='cards'?'active':''}" onclick="setViewMode('cards')">🔲 Cards</button><button class="view-btn ${prefs.viewMode==='kanban'?'active':''}" onclick="setViewMode('kanban')">📊 Kanban</button><button class="view-btn ${prefs.viewMode==='calendar'?'active':''}" onclick="setViewMode('calendar')">📅 Semana</button><button class="view-btn ${prefs.viewMode==='month'?'active':''}" onclick="setViewMode('month')">🗓️ Mês</button></div>${prefs.viewMode==='list'?`<div class="view-selector"><button class="view-btn ${prefs.generalGroupBy==='period'?'active':''}" onclick="setGeneralGroupBy('period')">Período</button><button class="view-btn ${prefs.generalGroupBy==='folder'?'active':''}" onclick="setGeneralGroupBy('folder')">Pasta</button></div>`:''}</div>
       </div>`;
+      updateV14HeaderProfile();
+      updateV14PomodoroDisplay();
       phase2RefreshHeaderControls();
     };
 
@@ -6967,7 +7225,7 @@ button:hover,.btn:hover{transform:translateY(-1px);}
         return;
       }
       try{
-        phase3ServiceWorkerRegistration=await navigator.serviceWorker.register('./service-worker.js?v=8',{scope:'./'});
+        phase3ServiceWorkerRegistration=await navigator.serviceWorker.register('./service-worker.js?v=9',{scope:'./'});
         await navigator.serviceWorker.ready;
         phase3SetAlertStatus('PWA ativa. Notificações em segundo plano via push ficam preparadas; lembretes agendados ainda dependem do backend de envio.','');
         const installBtn=document.getElementById('phase3-install-btn');
