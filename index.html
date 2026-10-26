@@ -974,6 +974,20 @@
       .item-card, .task-card, .kanban-item, .calendar-item, .week-item, .month-item { -webkit-touch-callout: none; }
     }
 
+
+    /* V77 — casca visual moderna, sem alterar a lógica de dados */
+    .modern-sidebar-brand{display:flex;align-items:center;gap:12px;padding:24px 18px 20px;border-bottom:1px solid rgba(255,255,255,.06)}
+    .modern-brand-mark{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:#2563eb;color:#fff;font-size:20px;box-shadow:0 8px 20px rgba(37,99,235,.28)}
+    .modern-brand-name{font-size:18px;font-weight:800;letter-spacing:-.3px;color:#f8fafc}.modern-brand-name span{color:#3b82f6}.modern-sidebar-brand .mobile-drawer-close{display:none;margin-left:auto}
+    .modern-primary-nav{padding:18px 12px 10px;display:flex;flex-direction:column;gap:5px}
+    .modern-nav-item{width:100%;border:0;background:transparent;color:#aab7c9;border-radius:10px;min-height:44px;padding:10px 13px;display:flex;align-items:center;gap:12px;font:inherit;font-weight:650;text-align:left;cursor:pointer;transition:.16s ease}
+    .modern-nav-item:hover{background:rgba(59,130,246,.09);color:#e8eef8}.modern-nav-item.active{background:#2563eb;color:#fff;box-shadow:0 7px 18px rgba(37,99,235,.24)}
+    .modern-nav-icon{width:20px;text-align:center;font-size:19px;line-height:1}.modern-folder-section{padding:8px 12px 0}.modern-section-heading{display:flex;align-items:center;justify-content:space-between;padding:10px 8px 7px;color:#7f8da3;font-size:11px;font-weight:800;letter-spacing:.08em}.modern-collapse-all{border:0;background:transparent;color:#718097;font-size:10px;cursor:pointer;padding:3px 5px}.modern-collapse-all:hover{color:#dbe7f5}
+    .modern-sidebar-actions{padding:8px 12px 4px;display:grid;gap:5px}.modern-side-action{border:1px solid transparent;background:transparent;color:#8fa0b6;text-align:left;border-radius:8px;min-height:34px;padding:7px 10px;cursor:pointer;font:inherit;font-size:12px}.modern-side-action:hover{background:rgba(255,255,255,.035);color:#dbe7f5;border-color:rgba(255,255,255,.06)}
+    .modern-sidebar-user{margin-top:auto;padding:14px 14px 16px;border-top:1px solid rgba(255,255,255,.06);display:flex;align-items:center;gap:9px}.modern-sidebar-user .user-avatar{width:34px;height:34px;border-radius:50%;flex:0 0 34px}.modern-user-copy{min-width:0;flex:1}.modern-user-copy .user-name{font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.modern-user-copy .sync-status{display:flex!important;margin:2px 0 0!important;font-size:9px!important;white-space:nowrap}.modern-logout{border:0;background:transparent;color:#718097;font-size:11px;cursor:pointer;padding:5px}.modern-logout:hover{color:#fff}
+    #sidebar{background:#101923;border-right:1px solid #253246;box-shadow:8px 0 30px rgba(0,0,0,.08)}
+    #folder-tree .nav-item,#pinned-folder-tree .nav-item{border-radius:8px;min-height:38px;padding:8px 8px;color:#93a4b8;font-size:13px}.modern-folder-section .nav-item:hover{background:rgba(59,130,246,.06);color:#dce7f5}.modern-folder-section .nav-item.active{background:rgba(37,99,235,.12);color:#e7efff;border-left:2px solid #3b82f6}.modern-folder-section .color-dot{width:9px;height:9px;border-radius:3px;box-shadow:0 0 0 2px rgba(255,255,255,.03)}.modern-folder-section .folder-badge{background:#243244;color:#cbd5e1;border-radius:999px;padding:2px 6px;font-size:10px}
+    @media(max-width:768px){.modern-sidebar-brand .mobile-drawer-close{display:block}.modern-sidebar-brand{padding:16px 14px}.modern-primary-nav{padding-top:10px}}
 </style>
   <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-storage-compat.js"></script>
 
@@ -1056,40 +1070,45 @@
   <!-- Toast Container -->
   <div id="toast-container"></div>
 
-  <!-- Sidebar -->
+  <!-- Sidebar moderna: mantém os mesmos IDs e ações existentes -->
   <div id="sidebar">
-    <div class="mobile-drawer-header"><strong>Minha Agenda Pro</strong><button type="button" class="mobile-drawer-close" onclick="toggleSidebar()" aria-label="Fechar menu">✕</button></div>
-    <div class="user-profile">
-      <img id="u-avatar" class="user-avatar" src="" alt="Avatar">
-      <div class="user-info">
-        <div id="u-name" class="user-name">Carregando...</div>
-        <button class="btn-logout" onclick="logout()">Sair</button>
-      </div>
+    <div class="modern-sidebar-brand">
+      <div class="modern-brand-mark">⌂</div>
+      <div class="modern-brand-name">Minha Agenda <span>Pro</span></div>
+      <button type="button" class="mobile-drawer-close" onclick="toggleSidebar()" aria-label="Fechar menu">✕</button>
     </div>
-    
-    <div class="nav-group" id="sidebar-nav-group">
-      <div class="nav-item" id="nav-all" onclick="setArea('all')">
-        <span>📋 Agenda geral</span>
-      </div>
-      
-      <div id="pinned-folders-section">
-        <div class="nav-section-title">📌 FIXADAS</div>
-        <div id="pinned-folder-tree"></div>
-      </div>
 
-      <div>
-        <div class="nav-section-title">
-          <span>PASTAS</span>
-          <button class="btn-sm" style="padding: 2px 6px; font-size: 0.7rem; min-height: auto;" onclick="toggleAllFoldersCollapse(event)" id="btn-toggle-all-folders">Recolher todas</button>
-        </div>
-        <div id="folder-tree"></div>
-      </div>
+    <div class="modern-primary-nav" id="sidebar-nav-group">
+      <button type="button" class="modern-nav-item active" id="nav-all" onclick="setArea('all')"><span class="modern-nav-icon">⌂</span><span>Início</span></button>
+      <button type="button" class="modern-nav-item" id="nav-tasks" onclick="setArea('all')"><span class="modern-nav-icon">✓</span><span>Tarefas</span></button>
+      <button type="button" class="modern-nav-item" id="nav-folders" onclick="document.getElementById('folder-tree')?.scrollIntoView({behavior:'smooth',block:'start'})"><span class="modern-nav-icon">⊞</span><span>Pastas</span></button>
+      <button type="button" class="modern-nav-item" id="nav-reports" onclick="setArea('all'); document.getElementById('header-container')?.scrollIntoView({behavior:'smooth',block:'start'})"><span class="modern-nav-icon">▥</span><span>Relatórios</span></button>
+    </div>
 
-      <button class="btn-sm" style="margin: 16px 8px 8px; width: calc(100% - 16px); justify-content: center;" onclick="openFolderModal()">+ Nova Pasta</button>
-      <button class="btn-sm" style="margin: 4px 8px; width: calc(100% - 16px); justify-content: center;" onclick="openAlertsModal()">🔔 Alertas</button>
-      <button class="btn-sm" style="margin: 4px 8px; width: calc(100% - 16px); justify-content: center;" onclick="openManageTemplatesModal()">⚙ Gerenciar Modelos</button>
-      <div id="sync-status" class="sync-status" title="Estado da sincronização"><span class="sync-dot"></span><span id="sync-status-text">Aguardando conexão...</span></div>
-      <button class="btn-sm" style="margin: 4px 8px; width: calc(100% - 16px); justify-content: center;" onclick="openDataModal()">💾 Backup e Dados</button>
+    <div id="pinned-folders-section" class="modern-folder-section">
+      <div class="modern-section-heading"><span>FIXADAS</span></div>
+      <div id="pinned-folder-tree"></div>
+    </div>
+
+    <div class="modern-folder-section">
+      <div class="modern-section-heading">
+        <span>PASTAS</span>
+        <button class="modern-collapse-all" type="button" onclick="toggleAllFoldersCollapse(event)" id="btn-toggle-all-folders">Recolher</button>
+      </div>
+      <div id="folder-tree"></div>
+    </div>
+
+    <div class="modern-sidebar-actions">
+      <button class="modern-side-action" type="button" onclick="openFolderModal()"><span>＋</span> Nova pasta</button>
+      <button class="modern-side-action" type="button" onclick="openAlertsModal()"><span>◔</span> Alertas</button>
+      <button class="modern-side-action" type="button" onclick="openManageTemplatesModal()"><span>⚙</span> Modelos</button>
+      <button class="modern-side-action" type="button" onclick="openDataModal()"><span>↕</span> Backup e dados</button>
+    </div>
+
+    <div class="modern-sidebar-user">
+      <img id="u-avatar" class="user-avatar" src="" alt="Avatar">
+      <div class="modern-user-copy"><div id="u-name" class="user-name">Carregando...</div><span id="sync-status" class="sync-status"><span class="sync-dot"></span><span id="sync-status-text">Aguardando conexão...</span></span></div>
+      <button class="modern-logout" type="button" onclick="logout()">Sair</button>
     </div>
   </div>
 
