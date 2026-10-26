@@ -697,6 +697,11 @@
                         <button id="btnNewTaskInFolder" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-[11px] font-semibold">+ Nova tarefa</button>
                     </div>
                 </div>
+                <div class="mb-3 flex items-center justify-between gap-2">
+                    <div><p class="text-[11px] font-semibold text-slate-400">Subpastas</p><p class="text-[10px] text-slate-600">Organize áreas menores dentro desta pasta.</p></div>
+                    <button type="button" id="btnNewSubfolder" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-[11px] font-semibold">+ Nova subpasta</button>
+                </div>
+                <div id="folderSubfolders" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 mb-3"></div>
                 <div class="glass-card p-2 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
                     <div class="flex flex-wrap gap-1.5 items-center">
                         <span class="text-[10px] font-semibold text-slate-500 mr-1">Período</span>
@@ -734,6 +739,7 @@
             <form id="folderForm" class="p-4 space-y-4">
                 <input type="hidden" id="folderId">
                 <div><label class="block text-[11px] font-semibold text-slate-400 mb-1">Nome *</label><input id="folderName" required maxlength="60" class="w-full bg-slate-950 border border-slate-800 text-slate-100 rounded-lg p-2.5 text-xs outline-none focus:border-blue-500" placeholder="Ex: Ministério"></div>
+                <div><label class="block text-[11px] font-semibold text-slate-400 mb-1">Pasta pai <span class="text-slate-600">(opcional)</span></label><select id="folderParentId" class="w-full bg-slate-950 border border-slate-800 text-slate-100 rounded-lg p-2.5 text-xs outline-none focus:border-blue-500"><option value="">Sem pasta pai</option></select><p class="text-[10px] text-slate-600 mt-1">Escolha uma pasta para criar esta como subpasta.</p></div>
                 <div><label class="block text-[11px] font-semibold text-slate-400 mb-2">Ícone da pasta</label><div id="folderIconPicker" class="grid grid-cols-8 gap-2">
                     <button type="button" data-folder-icon="folder" title="Pasta" class="folder-icon-option active p-2 rounded-lg bg-blue-600/20 border border-blue-500/60 text-blue-300"><i data-lucide="folder" class="w-4 h-4 mx-auto"></i></button>
                     <button type="button" data-folder-icon="briefcase" title="Trabalho" class="folder-icon-option p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-400"><i data-lucide="briefcase" class="w-4 h-4 mx-auto"></i></button>
@@ -1298,11 +1304,20 @@
             document.getElementById('folderId').value = '';
             document.getElementById('folderModalTitle').textContent = 'Nova Pasta';
             selectedFolderIcon = 'folder';
+            const parentSelect = document.getElementById('folderParentId');
+            if (parentSelect) {
+                parentSelect.innerHTML = '<option value="">Sem pasta pai</option>' + folders
+                    .filter(f => f.id !== folderId)
+                    .sort((a,b) => String(a.name||'').localeCompare(String(b.name||''), 'pt-BR', { sensitivity:'base' }))
+                    .map(f => `<option value="${escapeHtml(f.id)}">${escapeHtml(f.name || 'Sem nome')}</option>`)
+                    .join('');
+            }
             if (folderId) {
                 const folder = folders.find(f => f.id === folderId);
                 if (!folder) return;
                 document.getElementById('folderId').value = folder.id;
                 document.getElementById('folderName').value = folder.name || '';
+                if (parentSelect) parentSelect.value = folder.parentId || '';
                 selectedFolderIcon = folder.icon || 'folder';
                 document.getElementById('folderModalTitle').textContent = 'Editar Pasta';
             }
@@ -1333,10 +1348,29 @@
             const name = document.getElementById('folderName').value.trim();
             if (!name) return;
             const existing = folders.find(f => f.id === id);
+            const parentId = document.getElementById('folderParentId')?.value || '';
+            if (parentId === id) {
+                alert('Uma pasta não pode ser subpasta dela mesma.');
+                return;
+            }
+            const wouldCreateCycle = (candidateId) => {
+                let cursor = candidateId;
+                const seen = new Set();
+                while (cursor && !seen.has(cursor)) {
+                    if (cursor === id) return true;
+                    seen.add(cursor);
+                    cursor = folders.find(f => f.id === cursor)?.parentId || '';
+                }
+                return false;
+            };
+            if (parentId && wouldCreateCycle(parentId)) {
+                alert('Essa pasta não pode ser movida para dentro de uma subpasta dela mesma.');
+                return;
+            }
             const nextOrder = existing && Number.isFinite(Number(existing.order))
                 ? Number(existing.order)
                 : (folders.reduce((max, f) => Math.max(max, Number.isFinite(Number(f.order)) ? Number(f.order) : -1), -1) + 1);
-            const payload = { name, icon: selectedFolderIcon, order: nextOrder, updatedAt: firebase.firestore.FieldValue.serverTimestamp(), createdAt: existing?.createdAt || firebase.firestore.FieldValue.serverTimestamp() };
+            const payload = { name, icon: selectedFolderIcon, parentId: parentId || null, order: nextOrder, updatedAt: firebase.firestore.FieldValue.serverTimestamp(), createdAt: existing?.createdAt || firebase.firestore.FieldValue.serverTimestamp() };
             try {
                 await db.collection('users').doc(currentUserState.uid).collection('folders').doc(id).set(payload, { merge: true });
                 closeFolderModal();
@@ -1455,6 +1489,43 @@
         let currentTaskViewMode = 'cards';
         let taskCalendarDate = new Date();
 
+        function getChildFolders(parentId) {
+            const wanted = parentId || null;
+            return folders.filter(f => (f.parentId || null) === wanted)
+                .sort((a,b) => {
+                    const ao = Number.isFinite(Number(a.order)) ? Number(a.order) : Number.MAX_SAFE_INTEGER;
+                    const bo = Number.isFinite(Number(b.order)) ? Number(b.order) : Number.MAX_SAFE_INTEGER;
+                    return ao !== bo ? ao - bo : String(a.name||'').localeCompare(String(b.name||''), 'pt-BR', {sensitivity:'base'});
+                });
+        }
+
+        function folderDepth(folderId) {
+            let depth = 0, cursor = folders.find(f => f.id === folderId)?.parentId || '';
+            const seen = new Set();
+            while (cursor && !seen.has(cursor) && depth < 8) {
+                seen.add(cursor);
+                depth++;
+                cursor = folders.find(f => f.id === cursor)?.parentId || '';
+            }
+            return depth;
+        }
+
+        function renderSidebarFolderBranch(parentId = null, depth = 0) {
+            return getChildFolders(parentId).map(f => `
+                <div class="folder-sidebar-item group flex items-center gap-1 rounded-lg" data-folder-id="${escapeHtml(f.id)}" draggable="true"
+                     ondragstart="handleFolderDragStart(event, '${f.id}')" ondragover="handleFolderDragOver(event, '${f.id}')"
+                     ondragleave="handleFolderDragLeave(event)" ondrop="handleFolderDrop(event, '${f.id}')" ondragend="handleFolderDragEnd(event)"
+                     style="margin-left:${Math.min(depth, 4) * 14}px">
+                    <span class="folder-drag-handle shrink-0 p-1 text-slate-600 group-hover:text-slate-400" title="Arraste para reordenar" aria-label="Arrastar pasta"><i data-lucide="grip-vertical" class="w-3 h-3"></i></span>
+                    <button type="button" onclick="openFolderFromSidebar('${f.id}')" data-action="open-folder" data-folder-id="${escapeHtml(f.id)}"
+                            class="min-w-0 flex-1 flex items-center gap-2 px-1.5 py-2 text-[11px] ${activeFolderId===f.id?'text-white bg-blue-600/15':''} text-slate-400 hover:text-white hover:bg-slate-800/60 rounded-lg truncate text-left" title="${escapeHtml(f.name||'Sem nome')}">
+                        <span class="text-blue-400 shrink-0">${folderIconHtml(f.icon, 'w-3.5 h-3.5')}</span><span class="truncate">${escapeHtml(f.name||'Sem nome')}</span>
+                    </button>
+                </div>
+                ${renderSidebarFolderBranch(f.id, depth + 1)}
+            `).join('');
+        }
+
         function renderSidebarFolders() {
             const el = document.getElementById('sidebarFolders');
             if (!el) return;
@@ -1467,29 +1538,7 @@
                 return;
             }
 
-            el.innerHTML = folders.map(f => `
-                <div class="folder-sidebar-item group flex items-center gap-1 rounded-lg"
-                     data-folder-id="${escapeHtml(f.id)}"
-                     draggable="true"
-                     ondragstart="handleFolderDragStart(event, '${f.id}')"
-                     ondragover="handleFolderDragOver(event, '${f.id}')"
-                     ondragleave="handleFolderDragLeave(event)"
-                     ondrop="handleFolderDrop(event, '${f.id}')"
-                     ondragend="handleFolderDragEnd(event)">
-                    <span class="folder-drag-handle shrink-0 p-1 text-slate-600 group-hover:text-slate-400" title="Arraste para reordenar" aria-label="Arrastar pasta">
-                        <i data-lucide="grip-vertical" class="w-3 h-3"></i>
-                    </span>
-                    <button type="button"
-                            onclick="openFolderFromSidebar('${f.id}')"
-                            data-action="open-folder"
-                            data-folder-id="${escapeHtml(f.id)}"
-                            class="min-w-0 flex-1 flex items-center gap-2 px-1.5 py-2 text-[11px] text-slate-400 hover:text-white hover:bg-slate-800/60 rounded-lg truncate text-left"
-                            title="${escapeHtml(f.name || 'Sem nome')}">
-                        <span class="text-blue-400 shrink-0">${folderIconHtml(f.icon, 'w-3.5 h-3.5')}</span>
-                        <span class="truncate">${escapeHtml(f.name || 'Sem nome')}</span>
-                    </button>
-                </div>
-            `).join('');
+            el.innerHTML = renderSidebarFolderBranch(null);
 
             refreshIcons();
         }
@@ -1674,6 +1723,14 @@
         function renderFolderTasks() {
             const panel=document.getElementById('folderTasksPanel'); if(!panel)return; const folder=folders.find(f=>f.id===activeFolderId); if(!folder){panel.classList.add('hidden');return;} panel.classList.remove('hidden');
             document.getElementById('folderTasksTitle').textContent=folder.name||'Pasta'; document.getElementById('folderTasksIcon').innerHTML=folderIconHtml(folder.icon,'w-4 h-4');
+            const childFolders = getChildFolders(folder.id);
+            const subfolderHost = document.getElementById('folderSubfolders');
+            if (subfolderHost) {
+                subfolderHost.innerHTML = childFolders.length ? childFolders.map(child => {
+                    const childCount = getTasksForFolder(child).length;
+                    return `<button type="button" class="glass-card rounded-xl p-3 text-left border border-slate-800 hover:border-blue-500/50 transition" onclick="openFolderFromSidebar('${child.id}')"><div class="flex items-center gap-2"><span class="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-400 grid place-items-center">${folderIconHtml(child.icon,'w-4 h-4')}</span><span class="min-w-0 flex-1"><span class="block text-xs font-semibold text-slate-200 truncate">${escapeHtml(child.name||'Sem nome')}</span><span class="block text-[10px] text-slate-500">${childCount} tarefa${childCount===1?'':'s'}</span></span><i data-lucide="chevron-right" class="w-4 h-4 text-slate-600"></i></div></button>`;
+                }).join('') : '<p class="text-[10px] text-slate-600 py-2">Nenhuma subpasta. Crie uma usando &quot;Nova subpasta&quot;.</p>';
+            }
             const allFolderTasks=getTasksForFolder(folder), periodTasks=agendaSortTasks(getFolderPeriodTasks(allFolderTasks)); document.getElementById('folderTasksCount').textContent=`${periodTasks.length} de ${allFolderTasks.length} tarefa${allFolderTasks.length===1?'':'s'}`;
             const list=document.getElementById('folderTasksList'), nav=document.getElementById('folderCalendarNav');
             if(activeFolderViewMode==='week'){nav.classList.remove('hidden');nav.classList.add('flex');list.innerHTML=renderAgendaWeek(periodTasks,folderCalendarDate,document.getElementById('folderCalendarTitle'));}
@@ -1699,6 +1756,18 @@
             btnNewTaskInFolder.addEventListener('click', () => {
                 if (!activeFolderId) return;
                 openModal();
+            });
+        }
+
+        const btnNewSubfolder = document.getElementById('btnNewSubfolder');
+        if (btnNewSubfolder) {
+            btnNewSubfolder.addEventListener('click', () => {
+                if (!activeFolderId) return;
+                openFolderModal();
+                requestAnimationFrame(() => {
+                    const parent = document.getElementById('folderParentId');
+                    if (parent) parent.value = activeFolderId;
+                });
             });
         }
 
