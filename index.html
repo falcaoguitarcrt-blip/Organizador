@@ -6277,15 +6277,42 @@ button:hover,.btn:hover{transform:translateY(-1px);}
       const focusHtml = data.focus.length ? `<section class="myday-section myday-focus-card"><div class="myday-section-head"><div><div class="myday-section-kicker">PRIORIDADE</div><div class="myday-section-title">Foco sugerido</div></div><span class="myday-section-icon" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><circle cx="12" cy="12" r="8.5"></circle><circle cx="12" cy="12" r="4.5"></circle><circle cx="12" cy="12" r="1"></circle></svg></span></div><div class="myday-focus-list">${data.focus.map((i,idx)=>`<button class="myday-focus-item" onclick="openItemModal(S.items.find(x=>x.id==='${i.id}'))"><span class="myday-focus-index">${idx+1}</span><span class="myday-focus-copy"><strong>${escapeHtml(i.title)}</strong><small>${i.date && i.date < data.today ? '⚠ Atrasada' : (i.time ? 'Hoje às '+escapeHtml(i.time) : 'Hoje')} ${buildPhase2PriorityHtml(i)}</small></span><span class="myday-arrow">›</span></button>`).join('')}</div></section>` : `<section class="myday-section"><div class="myday-empty-title">🎯 Nenhum foco crítico identificado</div><div class="muted text-sm">Sua agenda está livre de itens de alta prioridade, atrasados ou marcados com estrela.</div></section>`;
       const nextHtml = data.next ? `<section class="myday-next-card"><div><div class="myday-section-kicker">A SEGUIR</div><div class="myday-next-title">${escapeHtml(data.next.title)}</div><div class="myday-next-meta">${data.next.date === data.today ? 'Hoje' : escapeHtml(formatBR(data.next.date,''))}${data.next.time ? ' · '+escapeHtml(data.next.time) : ''}${data.next.area ? ' · '+escapeHtml(getHierarchy(data.next.area).text) : ''}</div></div><button class="btn-sm" onclick="openItemModal(S.items.find(x=>x.id==='${data.next.id}'))">Abrir</button></section>` : '';
       const timelineHtml = `<section class="myday-section timeline-panel"><div class="myday-section-head"><div><div class="myday-section-kicker">AGENDA</div><div class="myday-section-title">Linha do tempo de hoje</div></div><span class="myday-count-pill">${scheduledToday}</span></div>${data.timedToday.length ? `<div class="timeline-list">${data.timedToday.slice(0,4).map(i=>`<button class="timeline-row" onclick="openItemModal(S.items.find(x=>x.id==='${i.id}'))"><span class="timeline-time">${escapeHtml(i.time)}</span><span class="timeline-dot"></span><span class="timeline-copy"><strong>${escapeHtml(i.title)}</strong><small>${i.priority ? priorityLabel(i.priority) : 'Sem prioridade'} ${i.area ? '• '+escapeHtml(getHierarchy(i.area).text) : ''}</small></span></button>`).join('')}</div>${data.timedToday.length>4 ? '<div class="timeline-more"><button type="button" onclick="filterDashboard(\'today\');setViewMode(\'list\')">Ver todos os compromissos →</button></div>' : ''}` : '<div class="myday-empty-state">Nenhum compromisso com horário definido hoje.</div>'}${data.noTimeToday.length ? `<div class="untimed-note">+ ${data.noTimeToday.length} item(ns) de hoje sem horário definido.</div>` : ''}</section>`;
+      const distributionItems = (currentArea === 'all' && prefs.viewMode === 'calendar')
+        ? S.items.filter(i => weeklyFolderIsVisible(i))
+        : S.items;
+      const distributionMap = new Map();
+      distributionItems.forEach(item => {
+        const label = item.area ? (getHierarchy(item.area)?.text || getFolderConfig(item.area)?.name || 'Sem pasta') : 'Sem pasta';
+        distributionMap.set(label, (distributionMap.get(label) || 0) + 1);
+      });
+      const sortedDistribution = [...distributionMap.entries()].sort((a,b) => b[1] - a[1]);
+      const categoryRows = sortedDistribution.slice(0,4).map(row => row);
+      const remainingCount = sortedDistribution.slice(4).reduce((sum,row) => sum + row[1],0);
+      if (remainingCount) categoryRows.push(['Outras', remainingCount]);
+      const categoryPalette = ['#1685FF','#20CDBD','#B17AFF','#F5B942','#7186A6'];
+      const chartEntries = categoryRows.map(([label,count],index) => ({label,count,color:categoryPalette[index] || categoryPalette[4]}));
+      const chartTotal = chartEntries.reduce((sum,entry) => sum + entry.count,0);
+      let chartCursor = 0;
+      const chartStops = chartEntries.map(entry => {
+        const start = chartCursor;
+        chartCursor += chartTotal ? entry.count / chartTotal * 100 : 0;
+        return entry.color + ' ' + start.toFixed(2) + '% ' + chartCursor.toFixed(2) + '%';
+      }).join(', ');
+      const chartBackground = chartTotal ? 'conic-gradient(' + chartStops + ')' : 'conic-gradient(#26364A 0% 100%)';
+      const distributionLegend = chartEntries.length ? chartEntries.map(entry =>
+        '<div class="myday-distribution-row"><span class="myday-distribution-swatch" style="background:' + entry.color + '"></span><span class="myday-distribution-name" title="' + escapeHtml(entry.label) + '">' + escapeHtml(entry.label) + '</span><strong>' + entry.count + '</strong></div>'
+      ).join('') : '<div class="myday-empty-state">Ainda não há tarefas para distribuir por categoria.</div>';
+      const distributionHtml = '<section class="myday-section myday-distribution-card"><div class="myday-section-head"><div><div class="myday-section-kicker">VISÃO GERAL</div><div class="myday-section-title">Distribuição de tarefas</div><div class="myday-distribution-subtitle">Por pasta e categoria</div></div><span class="myday-count-pill">' + chartTotal + '</span></div><div class="myday-distribution-layout"><div class="myday-donut" style="background:' + chartBackground + '" role="img" aria-label="Distribuição de ' + chartTotal + ' tarefas por categoria"><div class="myday-donut-center"><strong>' + chartTotal + '</strong><span>total</span></div></div><div class="myday-distribution-legend">' + distributionLegend + '</div></div></section>';
       c.innerHTML = `<div class="myday-v2">
         <div class="myday-hero-v2"><div><div class="myday-eyebrow">CENTRO DE COMANDO</div><div class="myday-title">${greeting}, ${escapeHtml(name)}</div><div class="myday-subtitle">${dateExt.charAt(0).toUpperCase()+dateExt.slice(1)} · organize o que realmente importa hoje.</div></div><div class="myday-header-actions"><button class="btn myday-primary-action" onclick="openItemModal()">＋ Nova tarefa</button><select class="form-control phase2-mobile-view" onchange="setViewMode(this.value)"><option value="list" ${prefs.viewMode==='list'?'selected':''}>📋 Lista</option><option value="cards" ${prefs.viewMode==='cards'?'selected':''}>🔲 Cards</option><option value="kanban" ${prefs.viewMode==='kanban'?'selected':''}>📊 Kanban</option><option value="calendar" ${prefs.viewMode==='calendar'?'selected':''}>📅 Semana</option><option value="month" ${prefs.viewMode==='month'?'selected':''}>🗓️ Mês</option></select></div></div>
         <div class="myday-stats phase3-dashboard-metrics">
           <button class="myday-stat phase3-primary-stat ${activeFilter==='overdue'?'active':''}" onclick="filterDashboard('overdue')"><span class="myday-stat-icon danger"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 10 18H2L12 3Z"></path><path d="M12 9v5m0 3h.01"></path></svg></span><span class="phase3-stat-copy"><strong>${overdueCount}</strong><small>Atrasados</small></span><span class="phase3-stat-note">${overdueCount ? 'Precisam de atenção' : 'Nenhuma tarefa atrasada'}</span></button>
           <button class="myday-stat phase3-primary-stat ${activeFilter==='today'?'active':''}" onclick="filterDashboard('today')"><span class="myday-stat-icon warning"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M16 3v4M8 3v4M3 10h18"></path></svg></span><span class="phase3-stat-copy"><strong>${todayCount}</strong><small>Hoje</small></span><span class="phase3-stat-note">Tarefas e compromissos</span></button>
+          <button class="myday-stat phase3-primary-stat phase3-completed-stat ${activeFilter==='done_today'?'active':''}" onclick="filterDashboard('done_today')"><span class="myday-stat-icon success"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path><circle cx="12" cy="12" r="9"></circle></svg></span><span class="phase3-stat-copy"><strong>${doneToday}</strong><small>Concluídos</small></span><span class="phase3-stat-note">Finalizados hoje</span></button>
           <div class="myday-progress phase3-primary-progress"><div class="myday-progress-head"><span>PROGRESSO DO DIA</span><strong>${completionPct}%</strong></div><div class="myday-progress-track"><span style="width:${completionPct}%"></span></div><small>${doneToday} concluído(s) de ${completionBase || 0} tarefa(s) consideradas</small><div class="phase3-progress-foot"><span>Próximos 7 dias</span><button type="button" onclick="filterDashboard('next7')" class="${activeFilter==='next7'?'active':''}">${next7Count} tarefa(s) <span aria-hidden="true">→</span></button><span class="phase3-progress-divider"></span><span>Concluídos hoje</span><button type="button" onclick="filterDashboard('done_today')" class="${activeFilter==='done_today'?'active':''}">${doneToday} <span aria-hidden="true">✓</span></button></div></div>
         </div>
         ${activeFilter ? `<div class="myday-filter-bar"><span>Filtro ativo</span><button class="chip active" onclick="filterDashboard(null)">${activeFilter==='overdue'?'Atrasados':activeFilter==='today'?'Hoje':activeFilter==='next7'?'Próximos 7 dias':'Concluídos hoje'} ×</button></div>` : ''}
-        <div class="myday-grid"><div>${focusHtml}${nextHtml}</div><div>${timelineHtml}</div></div>
+        <div class="myday-grid myday-dashboard-grid"><div>${focusHtml}${nextHtml}</div><div>${timelineHtml}</div><div>${distributionHtml}</div></div>
         <div class="myday-bottom"><div class="view-selector"><button class="view-btn ${prefs.viewMode==='list'?'active':''}" onclick="setViewMode('list')">📋 Lista</button><button class="view-btn ${prefs.viewMode==='cards'?'active':''}" onclick="setViewMode('cards')">🔲 Cards</button><button class="view-btn ${prefs.viewMode==='kanban'?'active':''}" onclick="setViewMode('kanban')">📊 Kanban</button><button class="view-btn ${prefs.viewMode==='calendar'?'active':''}" onclick="setViewMode('calendar')">📅 Semana</button><button class="view-btn ${prefs.viewMode==='month'?'active':''}" onclick="setViewMode('month')">🗓️ Mês</button></div>${prefs.viewMode==='list'?`<div class="view-selector"><button class="view-btn ${prefs.generalGroupBy==='period'?'active':''}" onclick="setGeneralGroupBy('period')">Período</button><button class="view-btn ${prefs.generalGroupBy==='folder'?'active':''}" onclick="setGeneralGroupBy('folder')">Pasta</button></div>`:''}</div>
       </div>`;
       phase2RefreshHeaderControls();
@@ -6898,7 +6925,7 @@ button:hover,.btn:hover{transform:translateY(-1px);}
         return;
       }
       try{
-        phase3ServiceWorkerRegistration=await navigator.serviceWorker.register('./service-worker.js?v=6',{scope:'./'});
+        phase3ServiceWorkerRegistration=await navigator.serviceWorker.register('./service-worker.js?v=7',{scope:'./'});
         await navigator.serviceWorker.ready;
         phase3SetAlertStatus('PWA ativa. Notificações em segundo plano via push ficam preparadas; lembretes agendados ainda dependem do backend de envio.','');
         const installBtn=document.getElementById('phase3-install-btn');
@@ -9507,6 +9534,106 @@ html:not([data-theme="light"]) :where(button,a[href],input,select,textarea):focu
   html:not([data-theme="light"]) *::before,
   html:not([data-theme="light"]) *::after{transition:none!important;animation:none!important;scroll-behavior:auto!important}
 }
+
+/* V14 dashboard composition: three live metrics plus real category distribution */
+html:not([data-theme="light"]) #header-container .phase3-dashboard-metrics{
+  grid-template-columns:repeat(3,minmax(128px,.82fr)) minmax(250px,1.65fr)!important;
+  align-items:stretch;
+}
+html:not([data-theme="light"]) #header-container .phase3-completed-stat{
+  background:linear-gradient(145deg,rgba(19,73,75,.34),rgba(17,27,40,.98) 80%)!important;
+  border-color:rgba(32,205,189,.22)!important;
+}
+html:not([data-theme="light"]) #header-container .phase3-completed-stat .myday-stat-icon{
+  color:#20CDBD!important;background:rgba(32,205,189,.13)!important;
+}
+html:not([data-theme="light"]) #header-container .myday-dashboard-grid{
+  grid-template-columns:minmax(0,.94fr) minmax(0,1.06fr) minmax(220px,.82fr)!important;
+  align-items:stretch;
+}
+html:not([data-theme="light"]) #header-container .myday-dashboard-grid>div{min-width:0}
+html:not([data-theme="light"]) #header-container .myday-distribution-card{
+  min-width:0;
+  border-left:2px solid rgba(22,133,255,.8)!important;
+}
+html:not([data-theme="light"]) #header-container .myday-distribution-subtitle{
+  margin-top:4px;color:#8FA6C1;font-size:11px;line-height:1.35;
+}
+html:not([data-theme="light"]) #header-container .myday-distribution-layout{
+  display:grid;grid-template-columns:minmax(88px,.85fr) minmax(0,1fr);
+  align-items:center;gap:12px;min-width:0;
+}
+html:not([data-theme="light"]) #header-container .myday-donut{
+  position:relative;display:grid;place-items:center;width:100%;max-width:148px;
+  aspect-ratio:1;border-radius:50%;margin:4px auto;
+  box-shadow:0 8px 24px rgba(0,0,0,.16),0 0 22px rgba(22,133,255,.055);
+}
+html:not([data-theme="light"]) #header-container .myday-donut::before{
+  content:"";position:absolute;inset:17%;border-radius:50%;
+  background:#111B29;border:1px solid rgba(148,169,194,.12);
+  box-shadow:inset 0 2px 10px rgba(0,0,0,.20);
+}
+html:not([data-theme="light"]) #header-container .myday-donut-center{
+  position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:2px;text-align:center;
+}
+html:not([data-theme="light"]) #header-container .myday-donut-center strong{
+  font-size:clamp(20px,2vw,27px);line-height:1;font-weight:800;letter-spacing:-.04em;color:#F3F8FF;
+  font-variant-numeric:tabular-nums;
+}
+html:not([data-theme="light"]) #header-container .myday-donut-center span{
+  color:#8FA6C1;font-size:10px;letter-spacing:.04em;
+}
+html:not([data-theme="light"]) #header-container .myday-distribution-legend{
+  display:flex;flex-direction:column;gap:9px;min-width:0;
+}
+html:not([data-theme="light"]) #header-container .myday-distribution-row{
+  display:grid;grid-template-columns:8px minmax(0,1fr) auto;align-items:center;gap:7px;min-width:0;
+  color:#B8C9DD;font-size:11px;line-height:1.3;
+}
+html:not([data-theme="light"]) #header-container .myday-distribution-swatch{
+  width:7px;height:7px;border-radius:3px;box-shadow:0 0 8px currentColor;
+}
+html:not([data-theme="light"]) #header-container .myday-distribution-name{
+  overflow:hidden;white-space:nowrap;text-overflow:ellipsis;
+}
+html:not([data-theme="light"]) #header-container .myday-distribution-row strong{
+  color:#E7F1FF;font-size:11px;font-weight:750;font-variant-numeric:tabular-nums;
+}
+@media(max-width:1200px){
+  html:not([data-theme="light"]) #header-container .phase3-dashboard-metrics{
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  }
+  html:not([data-theme="light"]) #header-container .phase3-primary-progress{grid-column:1/-1}
+  html:not([data-theme="light"]) #header-container .myday-dashboard-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  }
+  html:not([data-theme="light"]) #header-container .myday-distribution-card{grid-column:1/-1}
+  html:not([data-theme="light"]) #header-container .myday-distribution-layout{
+    grid-template-columns:minmax(110px,160px) minmax(0,1fr);
+  }
+}
+@media(max-width:768px){
+  html:not([data-theme="light"]) #header-container .phase3-dashboard-metrics{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  }
+  html:not([data-theme="light"]) #header-container .phase3-primary-progress{grid-column:1/-1}
+  html:not([data-theme="light"]) #header-container .myday-dashboard-grid{
+    grid-template-columns:minmax(0,1fr)!important;
+  }
+  html:not([data-theme="light"]) #header-container .myday-distribution-card{grid-column:auto}
+  html:not([data-theme="light"]) #header-container .myday-distribution-layout{
+    grid-template-columns:minmax(100px,145px) minmax(0,1fr);gap:14px;
+  }
+}
+@media(max-width:420px){
+  html:not([data-theme="light"]) #header-container .myday-distribution-layout{grid-template-columns:1fr}
+  html:not([data-theme="light"]) #header-container .myday-donut{width:136px}
+  html:not([data-theme="light"]) #header-container .myday-distribution-legend{
+    width:100%;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;
+  }
+}
+
 </style>
 
 </body>
