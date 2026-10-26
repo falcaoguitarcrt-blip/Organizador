@@ -367,8 +367,8 @@
                     </button>
                 </div>
 
-                <!-- Alert Banner -->
-                <div class="bg-gradient-to-r from-red-950/90 to-red-900/70 border border-red-500/50 rounded-xl p-3.5 px-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-lg shadow-red-950/40">
+                <!-- Alert Banner: exibido somente quando existem tarefas realmente atrasadas -->
+                <div id="lateAlertBanner" class="bg-gradient-to-r from-red-950/90 to-red-900/70 border border-red-500/50 rounded-xl p-3.5 px-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-lg shadow-red-950/40 hidden">
                     <div class="flex items-center gap-3">
                         <div class="w-9 h-9 rounded-lg bg-red-500/20 border border-red-500/30 grid place-items-center text-red-400 text-lg">
                             <i data-lucide="alert-triangle" class="w-5 h-5"></i>
@@ -399,6 +399,12 @@
                     </button>
                 </form>
 
+                <!-- Views Container -->
+                <div class="flex-1 space-y-4">
+
+                    <!-- 1. DASHBOARD / VISÃO GERAL -->
+                    <section id="view-dashboard" class="view-content space-y-4">
+
                 <!-- Hero Centro de Comando Card -->
                 <section class="relative bg-[#081628] border border-blue-500/40 rounded-2xl p-6 overflow-hidden flex flex-col md:flex-row items-start md:items-center justify-between gap-4 min-h-[120px] shadow-inner">
                     <!-- Mountain Vector Silhouette Background Overlay -->
@@ -427,11 +433,6 @@
                     </div>
                 </section>
 
-                <!-- Views Container -->
-                <div class="flex-1 space-y-4">
-
-                    <!-- 1. DASHBOARD / VISÃO GERAL -->
-                    <section id="view-dashboard" class="view-content space-y-4">
                         
                         <!-- KPI Metrics Grid -->
                         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
@@ -2763,8 +2764,19 @@
             document.getElementById('doneCountSub').textContent = `${completed} ✓`;
             document.getElementById('progressBar').style.width = `${rate}%`;
 
+            const lateAlertBanner = document.getElementById('lateAlertBanner');
             const lateAlertText = document.getElementById('lateAlertText');
-            if (lateAlertText) lateAlertText.textContent = `${pending} tarefa(s) pendente(s) ou atrasada(s)`;
+
+            if (lateAlertBanner) {
+                // O alerta só ocupa espaço quando há tarefas efetivamente atrasadas.
+                lateAlertBanner.classList.toggle('hidden', pending === 0);
+            }
+
+            if (lateAlertText) {
+                lateAlertText.textContent = pending === 1
+                    ? '1 tarefa atrasada'
+                    : `${pending} tarefas atrasadas`;
+            }
 
             const focusContainer = document.getElementById('dashboardFocusContainer');
             const focusItems = tasks.filter(t => t.status !== 'done').slice(0, 3);
