@@ -1,4 +1,4 @@
-const CACHE_NAME='minha-agenda-pro-v18-modern-layout';
+const CACHE_NAME='minha-agenda-pro-v19-reference-polish';
 const APP_SHELL=['./','./index.html','./manifest.webmanifest','./icon-192.svg','./icon-512.svg'];
 
 /* Mantém a vinculação Semana/Mês com as mesmas tarefas/áreas, sem alterar dados. */
