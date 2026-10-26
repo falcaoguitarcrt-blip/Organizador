@@ -13,6 +13,7 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
 
   <style>
     :root { 
@@ -276,7 +277,7 @@
     #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 10000; display: flex; flex-direction: column; gap: 10px; max-width: 340px; width: 90%; }
     .toast { background: var(--card); border: 1px solid var(--accent); border-radius: 12px; padding: 14px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); display: flex; flex-direction: column; gap: 8px; animation: slideIn 0.3s ease; }
     @keyframes slideIn { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-  </style>
+  #folders-nav-panel{padding:0 0 6px;}#folders-nav-panel[hidden]{display:none!important;}#nav-folders.active,#nav-today.active,#nav-tasks.active,#nav-kanban.active,#nav-reports.active{background:rgba(45,212,191,.15);color:var(--accent);font-weight:600;}</style>
 </head>
 <body>
 
@@ -306,30 +307,20 @@
     </div>
     
     <div class="nav-group" id="sidebar-nav-group">
-      <div class="nav-item" id="nav-all" onclick="setArea('all')">
-        <span>📋 Agenda geral</span>
+      <div class="nav-item" id="nav-today" data-view="today"><span>🏠 Hoje</span></div>
+      <div class="nav-item" id="nav-tasks" data-view="tasks"><span>✓ Tarefas</span></div>
+      <div class="nav-item" id="nav-kanban" data-view="kanban"><span>▦ Kanban</span></div>
+      <div class="nav-item" id="nav-reports" data-view="reports"><span>▤ Relatórios</span></div>
+      <div class="nav-item" id="nav-folders" data-action="toggle-folders"><span>📁 Pastas</span><span id="folders-nav-chevron">▸</span></div>
+      <div id="folders-nav-panel" hidden>
+        <div class="nav-section-title"><span>PASTAS</span><button class="btn-sm" id="btn-toggle-all-folders">Recolher</button></div>
+        <div id="pinned-folder-tree"></div><div id="folder-tree"></div>
+        <button class="btn-sm" id="btn-new-folder" style="margin:12px 8px 8px;width:calc(100% - 16px);justify-content:center;">+ Nova Pasta</button>
       </div>
-      
-      <div id="pinned-folders-section">
-        <div class="nav-section-title">📌 FIXADAS</div>
-        <div id="pinned-folder-tree"></div>
-      </div>
-
-      <div>
-        <div class="nav-section-title">
-          <span>PASTAS</span>
-          <button class="btn-sm" style="padding: 2px 6px; font-size: 0.7rem; min-height: auto;" onclick="toggleAllFoldersCollapse(event)" id="btn-toggle-all-folders">Recolher todas</button>
-        </div>
-        <div id="folder-tree"></div>
-      </div>
-
-      <button class="btn-sm" style="margin: 16px 8px 8px; width: calc(100% - 16px); justify-content: center;" onclick="openFolderModal()">+ Nova Pasta</button>
-      <button class="btn-sm" style="margin: 4px 8px; width: calc(100% - 16px); justify-content: center;" onclick="openAlertsModal()">🔔 Alertas</button>
-      <button class="btn-sm" style="margin: 4px 8px; width: calc(100% - 16px); justify-content: center;" onclick="openManageTemplatesModal()">⚙ Gerenciar Modelos</button>
-      <button class="btn-sm" style="margin: 4px 8px; width: calc(100% - 16px); justify-content: center;" onclick="exportAgendaBackup()">⬇️ Exportar Backup</button>
-      <button class="btn-sm" style="margin: 4px 8px; width: calc(100% - 16px); justify-content: center;" onclick="document.getElementById('agenda-import-input').click()">⬆️ Importar Backup</button>
-      <input id="agenda-import-input" type="file" accept=".json,application/json" style="display:none" onchange="importAgendaBackup(event)">
-
+      <div id="sync-status" class="sync-status" title="Estado da sincronização"><span class="sync-dot"></span><span id="sync-status-text">Aguardando conexão...</span></div>
+      <button class="btn-sm" id="btn-open-alerts" style="margin:4px 8px;width:calc(100% - 16px);justify-content:center;">🔔 Alertas</button>
+      <button class="btn-sm" id="btn-open-templates" style="margin:4px 8px;width:calc(100% - 16px);justify-content:center;">⚙ Gerenciar Modelos</button>
+      <button class="btn-sm" id="btn-open-data" style="margin:4px 8px;width:calc(100% - 16px);justify-content:center;">💾 Backup e Dados</button>
     </div>
   </div>
 
@@ -571,6 +562,7 @@
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     const auth = firebase.auth();
+    const storage = firebase.storage();
     db.enablePersistence().catch(err => console.log("Offline persistence:", err));
 
     // Estado da Aplicação
@@ -587,6 +579,14 @@
     let blockNextClick = false;
     let blockClickTimer = null;
     let unsubscribeFirestore = null;
+    let firestoreListeners = [];
+    let firestoreCache = {
+      items: new Map(),
+      areas: new Map(),
+      templates: new Map()
+    };
+    let firestoreSyncReady = false;
+    let firestoreWriteQueue = Promise.resolve();
     let pendingAttachments = []; 
     let currentDashboardFilter = null; 
 
@@ -692,13 +692,20 @@
       // Ctrl+K abre a busca rápida; N foca a captura rápida.
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
-        const spotlight = document.getElementById('spotlightModal');
-        if (typeof openSpotlight === 'function') {
-          openSpotlight();
-        } else if (spotlight) {
-          spotlight.classList.remove('hidden');
-          const search = spotlight.querySelector('input, textarea');
-          if (search) setTimeout(() => search.focus(), 0);
+
+        // A busca real da Agenda usa .search-input.
+        const searchInput = document.querySelector('.search-input');
+        if (searchInput) {
+          searchInput.focus();
+          searchInput.select?.();
+          return;
+        }
+
+        // Fallback seguro caso o campo não esteja presente na view atual.
+        const fallbackSearch = document.querySelector('input[type="search"], input[placeholder*="buscar" i], input[placeholder*="pesquisar" i]');
+        if (fallbackSearch) {
+          fallbackSearch.focus();
+          fallbackSearch.select?.();
         }
         return;
       }
@@ -752,45 +759,116 @@
     });
 
     function loginGoogle() { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
-    function logout() { 
-      if (unsubscribeFirestore) {
-        unsubscribeFirestore();
-        unsubscribeFirestore = null;
-      }
-      auth.signOut(); 
+    function logout() {
+      stopFirestoreListeners();
+      S = { areas: [], items: [], templates: [] };
+      firestoreCache = {
+        items: new Map(),
+        areas: new Map(),
+        templates: new Map()
+      };
+      firestoreSyncReady = false;
+      currentArea = 'all';
+      auth.signOut();
+    }
+
+    function getAgendaRootRef() {
+      const user = auth.currentUser;
+      if (!user || !user.uid) throw new Error('Usuário não autenticado.');
+      return db.collection('users').doc(user.uid);
+    }
+
+    function getAgendaCollectionRef(name) {
+      return getAgendaRootRef().collection(name);
+    }
+
+    function stopFirestoreListeners() {
+      firestoreListeners.forEach(unsub => {
+        try { unsub(); } catch (e) {}
+      });
+      firestoreListeners = [];
+      unsubscribeFirestore = null;
+    }
+
+    function cloneForFirestore(value) {
+      return JSON.parse(JSON.stringify(value));
+    }
+
+    function comparableFirestoreValue(value) {
+      const copy = cloneForFirestore(value || {});
+      delete copy.updatedAt;
+      delete copy._firestorePending;
+      return copy;
+    }
+
+    function rebuildStateFromFirestore() {
+      S.items = Array.from(firestoreCache.items.values()).map(cloneForFirestore);
+      S.areas = Array.from(firestoreCache.areas.values()).map(cloneForFirestore);
+      S.templates = Array.from(firestoreCache.templates.values()).map(cloneForFirestore);
+
+      S.items.forEach(i => {
+        if (!i.status || i.status === 'UNDEFINED') i.status = 'todo';
+        if (!i.attachments) i.attachments = [];
+      });
+
+      // Importante: a hidratação é somente em memória.
+      // O snapshot nunca dispara saveData(), evitando loops e sobrescrita
+      // de dados do servidor por um snapshot vindo do cache/offline.
+      hydrateRecurringOccurrences();
+
+      render();
+      updateTabTitleAndAlerts();
+    }
+
+    function listenAgendaCollection(name, cacheKey) {
+      const unsubscribe = getAgendaCollectionRef(name).onSnapshot(
+        snapshot => {
+          const next = new Map();
+          snapshot.forEach(doc => {
+            next.set(doc.id, { id: doc.id, ...doc.data() });
+          });
+          firestoreCache[cacheKey] = next;
+          firestoreSyncReady = true;
+          rebuildStateFromFirestore();
+        },
+        error => {
+          console.error(`Erro ao carregar ${name}:`, error);
+          showToast(`Não foi possível carregar ${name}. ${error.message || ''}`.trim());
+        }
+      );
+      firestoreListeners.push(unsubscribe);
+      return unsubscribe;
     }
 
     function loadData() {
-      if (unsubscribeFirestore) {
-        unsubscribeFirestore();
-        unsubscribeFirestore = null;
-      }
+      stopFirestoreListeners();
+      firestoreCache = {
+        items: new Map(),
+        areas: new Map(),
+        templates: new Map()
+      };
+      firestoreSyncReady = false;
 
-      unsubscribeFirestore = db.collection('shared').doc('agenda-vida').onSnapshot(doc => {
-        if (doc.exists) {
-          const raw = doc.data();
-          if (raw.json) { try { S = JSON.parse(raw.json); } catch (e) { S = raw; } } else { S = raw; }
-        }
-        if (!S.items) S.items = [];
-        if (!S.areas) S.areas = [];
-        if (!S.templates) S.templates = [];
+      const user = auth.currentUser;
+      if (!user) return;
 
-        S.items.forEach(i => {
-          if (!i.status || i.status === 'UNDEFINED') i.status = 'todo';
-          if (!i.attachments) i.attachments = [];
-        });
-
-        // Gera apenas as ocorrências futuras que estiverem faltando.
-        // Se nada foi criado, não grava nada e não dispara novo snapshot.
-        if (hydrateRecurringOccurrences()) {
-          saveData();
-        }
-
-        render();
-        updateTabTitleAndAlerts();
-      });
+      // Dados separados por usuário. Não existe mais um documento
+      // compartilhado entre contas.
+      listenAgendaCollection('items', 'items');
+      listenAgendaCollection('areas', 'areas');
+      listenAgendaCollection('templates', 'templates');
+      unsubscribeFirestore = () => stopFirestoreListeners();
     }
 
+
+
+    /*
+      V69 MIGRAÇÃO:
+      O documento compartilhado shared/agenda-vida não é mais lido nem escrito.
+      Para preservar dados antigos, use Exportar Backup na versão anterior e
+      importe o JSON após entrar na conta nesta versão. A importação grava
+      somente em users/{uid}/items, users/{uid}/areas e users/{uid}/templates.
+    */
 
     const AGENDA_BACKUP_SCHEMA_VERSION = 1;
 
@@ -966,10 +1044,89 @@
       );
     }
 
-    function saveData() {
-      db.collection('shared').doc('agenda-vida').set({ ...S, json: JSON.stringify(S), t: Date.now() });
-      updateTabTitleAndAlerts();
+    async function commitAgendaCollection(collectionName, cacheKey, values) {
+      const current = new Map();
+
+      values.forEach(value => {
+        if (!value || !value.id) return;
+
+        // Ocorrências futuras geradas automaticamente ficam somente em memória
+        // enquanto não forem tocadas pelo usuário.
+        if (cacheKey === 'items' && value.ephemeral && isCopyUntouched(value)) {
+          return;
+        }
+
+        const clean = cloneForFirestore(value);
+        delete clean.ephemeral;
+        current.set(clean.id, clean);
+      });
+
+      const previous = firestoreCache[cacheKey] || new Map();
+      const operations = [];
+
+      current.forEach((value, id) => {
+        const old = previous.get(id);
+        if (!old || JSON.stringify(comparableFirestoreValue(old)) !== JSON.stringify(comparableFirestoreValue(value))) {
+          operations.push({ type: 'set', id, value });
+        }
+      });
+
+      previous.forEach((_value, id) => {
+        if (!current.has(id)) operations.push({ type: 'delete', id });
+      });
+
+      for (let start = 0; start < operations.length; start += 450) {
+        const batch = db.batch();
+        const slice = operations.slice(start, start + 450);
+        slice.forEach(op => {
+          const ref = getAgendaCollectionRef(collectionName).doc(op.id);
+          if (op.type === 'delete') {
+            batch.delete(ref);
+          } else {
+            batch.set(ref, {
+              ...op.value,
+              updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            }, { merge: true });
+          }
+        });
+        await batch.commit();
+      }
+
+      // Atualização otimista do cache local para evitar regravações
+      // enquanto o snapshot do servidor ainda não chegou.
+      firestoreCache[cacheKey] = current;
     }
+
+    function saveData() {
+      const user = auth.currentUser;
+      if (!user) {
+        showToast('Faça login para salvar sua agenda.');
+        return Promise.resolve(false);
+      }
+
+      const payload = {
+        items: Array.isArray(S.items) ? S.items : [],
+        areas: Array.isArray(S.areas) ? S.areas : [],
+        templates: Array.isArray(S.templates) ? S.templates : []
+      };
+
+      firestoreWriteQueue = firestoreWriteQueue
+        .then(async () => {
+          await commitAgendaCollection('items', 'items', payload.items);
+          await commitAgendaCollection('areas', 'areas', payload.areas);
+          await commitAgendaCollection('templates', 'templates', payload.templates);
+          updateTabTitleAndAlerts();
+          return true;
+        })
+        .catch(error => {
+          console.error('Erro ao salvar agenda:', error);
+          showToast(`Não foi possível salvar a agenda. ${error.message || 'Tente novamente.'}`);
+          return false;
+        });
+
+      return firestoreWriteQueue;
+    }
+
 
     function getFolderConfig(id) { return S.areas.find(a => a.id === id); }
 
@@ -1038,10 +1195,10 @@
       let starred = false;
 
       // Horários: aceita início/fim da frase, espaço, "às", "as", "h", "h30", ":".
-      const timeRegex = /(?:\b(?:as|às)\s*)?\b([01]?\d|2[0-3])(?:[:h]([0-5]\d))?\b/iu;
+      const timeRegex = /(?:\b(?:as|às)\s*)?\b([01]?\d|2[0-3])(?:h([0-5]\d)?|:([0-5]\d))\b/iu;
       const timeMatch = text.match(timeRegex);
       if (timeMatch) {
-        time = String(timeMatch[1]).padStart(2, '0') + ':' + String(timeMatch[2] || '00').padStart(2, '0');
+        time = String(timeMatch[1]).padStart(2, '0') + ':' + String(timeMatch[2] || timeMatch[3] || '00').padStart(2, '0');
         title = title.replace(timeMatch[0], ' ');
       }
 
@@ -1293,98 +1450,26 @@
     }
 
     function renderSidebar() {
-      const pinnedContainer = document.getElementById('pinned-folder-tree');
-      const mainContainer = document.getElementById('folder-tree');
-      pinnedContainer.innerHTML = '';
-      mainContainer.innerHTML = '';
-      
-      const navAll = document.getElementById('nav-all');
-      if (currentArea === 'all') navAll.classList.add('active');
-      else navAll.classList.remove('active');
+      const pinnedContainer=document.getElementById('pinned-folder-tree'), mainContainer=document.getElementById('folder-tree');
+      if(!pinnedContainer||!mainContainer)return;
+      pinnedContainer.innerHTML='';mainContainer.innerHTML='';
+      const panel=document.getElementById('folders-nav-panel'), folderNav=document.getElementById('nav-folders'), chevron=document.getElementById('folders-nav-chevron');
+      const inFolder=currentArea!=='all', expanded=panel?.dataset.userExpanded==='1'||inFolder;
+      if(panel)panel.hidden=!expanded;if(folderNav)folderNav.classList.toggle('active',inFolder);if(chevron)chevron.textContent=expanded?'▾':'▸';
+      ['nav-today','nav-tasks','nav-kanban','nav-reports'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
+      if(currentArea==='all')document.getElementById(prefs.viewMode==='kanban'?'nav-kanban':'nav-tasks')?.classList.add('active');
 
-      const allMain = S.areas.filter(a => !a.parentId);
-      allMain.sort((a, b) => (a.order || 0) - (b.order || 0));
-
-      const pinned = allMain.filter(a => a.pinned);
-      const unpinned = allMain.filter(a => !a.pinned);
-
-      document.getElementById('pinned-folders-section').style.display = pinned.length > 0 ? 'block' : 'none';
-
-      const renderFolderItem = (area, container) => {
-        const isSelected = currentArea === area.id;
-        const subs = S.areas.filter(sub => sub.parentId === area.id);
-        subs.sort((a, b) => (a.order || 0) - (b.order || 0));
-        
-        const hasSubs = subs.length > 0;
-        const isCollapsed = !!prefs.collapsedFolders[area.id];
-        const pendingCount = countPendingItemsInFolder(area.id);
-
-        if (isSelected && hasSubs && isCollapsed) {
-          prefs.collapsedFolders[area.id] = false;
-          savePrefs();
-        }
-
-        const el = document.createElement('div');
-        el.className = `nav-item ${isSelected ? 'active' : ''}`;
-        el.setAttribute('data-folder-id', area.id);
-        el.onclick = () => setArea(area.id);
-        el.ondblclick = () => { if (hasSubs) toggleFolderCollapse(area.id); };
-
-        el.ondragover = (e) => { e.preventDefault(); el.classList.add('drag-over-folder'); };
-        el.ondragleave = () => el.classList.remove('drag-over-folder');
-        el.ondrop = (e) => handleFolderDrop(e, area.id);
-
-        let chevronHtml = hasSubs 
-          ? `<button class="chevron-btn" onclick="toggleFolderCollapse('${area.id}'); event.stopPropagation();">${isCollapsed ? '▸' : '▾'}</button>` 
-          : `<span style="width:28px;"></span>`;
-
-        el.innerHTML = `
-          ${chevronHtml}
-          <span style="display:flex; align-items:center; gap:8px; flex:1; overflow:hidden;">
-            <span class="color-dot" style="background:${escapeHtml(area.color||'#ccc')}"></span> 
-            <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(area.name)}</span>
-          </span>
-          ${pendingCount > 0 ? `<span class="folder-badge">${pendingCount}</span>` : ''}
-          <button class="folder-menu-btn" onclick="toggleFolderMenu('${area.id}', event)">⋮</button>
-          <div id="f-menu-${area.id}" class="dropdown">
-            <button class="dropdown-item" onclick="togglePinFolder('${area.id}'); event.stopPropagation();">${area.pinned ? '📌 Desafixar' : '📌 Fixar no topo'}</button>
-            <button class="dropdown-item" onclick="moveFolderOrder('${area.id}', -1); event.stopPropagation();">⬆ Mover para cima</button>
-            <button class="dropdown-item" onclick="moveFolderOrder('${area.id}', 1); event.stopPropagation();">⬇ Mover para baixo</button>
-            <button class="dropdown-item" onclick="openFolderModal('${area.id}'); event.stopPropagation();">+ Subpasta</button>
-            <button class="dropdown-item" onclick="editFolder('${area.id}'); event.stopPropagation();">Editar / Mover</button>
-            <button class="dropdown-item danger" onclick="deleteFolder('${area.id}'); event.stopPropagation();">Excluir</button>
-          </div>
-        `;
+      const allMain=S.areas.filter(a=>!a.parentId).sort((a,b)=>(a.order||0)-(b.order||0));
+      const renderFolderItem=(area,container)=>{
+        const selected=currentArea===area.id, subs=S.areas.filter(x=>x.parentId===area.id).sort((a,b)=>(a.order||0)-(b.order||0)), collapsed=!!prefs.collapsedFolders[area.id], pending=countPendingItemsInFolder(area.id);
+        const el=document.createElement('div');el.className=`nav-item ${selected?'active':''}`;el.dataset.folderId=area.id;
+        el.addEventListener('click',ev=>{if(!ev.target.closest('button'))setArea(area.id);});
+        el.addEventListener('dblclick',()=>{if(subs.length)toggleFolderCollapse(area.id);});
+        el.innerHTML=`${subs.length?`<button class="chevron-btn" data-action="toggle-folder" data-id="${escapeHtml(area.id)}">${collapsed?'▸':'▾'}</button>`:'<span style="width:28px;"></span>'}<span style="display:flex;align-items:center;gap:8px;flex:1;overflow:hidden;"><span class="color-dot" style="background:${escapeHtml(area.color||'#ccc')}"></span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(area.name)}</span></span>${pending?`<span class="folder-badge">${pending}</span>`:''}<button class="folder-menu-btn" data-action="folder-menu" data-id="${escapeHtml(area.id)}">⋮</button>`;
         container.appendChild(el);
-
-        if (hasSubs && !isCollapsed) {
-          subs.forEach(sub => {
-            const isSubSelected = currentArea === sub.id;
-            const subPending = countPendingItemsInFolder(sub.id);
-            const subEl = document.createElement('div');
-            subEl.className = `nav-item sub ${isSubSelected ? 'active' : ''}`;
-            subEl.onclick = () => setArea(sub.id);
-            subEl.innerHTML = `
-              <span style="display:flex; align-items:center; gap:6px; flex:1; overflow:hidden;">
-                <span class="color-dot" style="background:${escapeHtml(sub.color||'#ccc')}; width:7px; height:7px;"></span> 
-                <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(sub.name)}</span>
-              </span>
-              ${subPending > 0 ? `<span class="folder-badge">${subPending}</span>` : ''}
-              <button class="folder-menu-btn" onclick="toggleFolderMenu('${sub.id}', event)">⋮</button>
-              <div id="f-menu-${sub.id}" class="dropdown">
-                <button class="dropdown-item" onclick="moveFolderOrder('${sub.id}', -1); event.stopPropagation();">⬆ Mover para cima</button>
-                <button class="dropdown-item" onclick="moveFolderOrder('${sub.id}', 1); event.stopPropagation();">⬇ Mover para baixo</button>
-                <button class="dropdown-item" onclick="editFolder('${sub.id}'); event.stopPropagation();">Editar / Mover</button>
-                <button class="dropdown-item danger" onclick="deleteFolder('${sub.id}'); event.stopPropagation();">Excluir</button>
-              </div>
-            `;
-            container.appendChild(subEl);
-          });
-        }
+        if(subs.length&&!collapsed)subs.forEach(sub=>{const se=document.createElement('div');se.className=`nav-item sub ${currentArea===sub.id?'active':''}`;se.dataset.folderId=sub.id;se.addEventListener('click',ev=>{if(!ev.target.closest('button'))setArea(sub.id);});se.innerHTML=`<span style="display:flex;align-items:center;gap:6px;flex:1;overflow:hidden;"><span class="color-dot" style="background:${escapeHtml(sub.color||'#ccc')};width:7px;height:7px;"></span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(sub.name)}</span></span>${countPendingItemsInFolder(sub.id)?`<span class="folder-badge">${countPendingItemsInFolder(sub.id)}</span>`:''}<button class="folder-menu-btn" data-action="folder-menu" data-id="${escapeHtml(sub.id)}">⋮</button>`;container.appendChild(se);});
       };
-
-      pinned.forEach(a => renderFolderItem(a, pinnedContainer));
-      unpinned.forEach(a => renderFolderItem(a, mainContainer));
+      allMain.filter(a=>a.pinned).forEach(a=>renderFolderItem(a,pinnedContainer));allMain.filter(a=>!a.pinned).forEach(a=>renderFolderItem(a,mainContainer));
     }
 
     function toggleFolderCollapse(id) {
@@ -2115,7 +2200,17 @@
         title: item.title || '',
         date: item.date || '',
         desc: item.desc || '',
-        checklist: (item.checklist || []).map(c => ({ text: c.text, done: !!c.done }))
+        area: item.area || '',
+        time: item.time || '',
+        rep: item.rep || 'none',
+        repDay: item.repDay || null,
+        reminder: item.reminder || 'none',
+        starred: !!item.starred,
+        status: item.status || 'todo',
+        checklist: (item.checklist || []).map(c => ({ text: c.text, done: !!c.done })),
+        attachments: (item.attachments || []).map(a => ({
+          id: a.id, name: a.name, size: a.size, type: a.type, addedAt: a.addedAt
+        }))
       };
     }
 
@@ -2126,6 +2221,20 @@
       if ((copyItem.title || '') !== snap.title) return false;
       if ((copyItem.date || '') !== snap.date) return false;
       if ((copyItem.desc || '') !== snap.desc) return false;
+      if ((copyItem.area || '') !== snap.area) return false;
+      if ((copyItem.time || '') !== snap.time) return false;
+      if ((copyItem.rep || 'none') !== snap.rep) return false;
+      if ((copyItem.repDay || null) !== snap.repDay) return false;
+      if ((copyItem.reminder || 'none') !== snap.reminder) return false;
+      if (!!copyItem.starred !== !!snap.starred) return false;
+      if ((copyItem.status || 'todo') !== snap.status) return false;
+
+      const curAtt = copyItem.attachments || [];
+      const snapAtt = snap.attachments || [];
+      if (curAtt.length !== snapAtt.length) return false;
+      for (let i = 0; i < curAtt.length; i++) {
+        if (curAtt[i].id !== snapAtt[i].id) return false;
+      }
 
       const curChk = copyItem.checklist || [];
       const snapChk = snap.checklist || [];
@@ -2226,7 +2335,8 @@
             repDay: latest.repDay || Number(nextDate.split('-')[2]),
             checklist: (latest.checklist || []).map(c => ({ ...c, done: false })),
             attachments: [],
-            repSourceId: seriesKey
+            repSourceId: seriesKey,
+            ephemeral: true
           };
 
           newItem.repSnapshot = makeRepSnapshot(newItem);
@@ -2285,7 +2395,8 @@
         repDay: originalRepDay,
         checklist: (item.checklist || []).map(c => ({ ...c, done: false })),
         attachments: [], // Cópias NÃO herdam anexos
-        repSourceId: item.id
+        repSourceId: item.id,
+        ephemeral: true
       };
 
       newItem.repSnapshot = makeRepSnapshot(newItem);
@@ -2309,6 +2420,7 @@
 
       const wasDone = item.status === 'done';
       item.status = newStatus;
+      if (item.ephemeral) delete item.ephemeral;
 
       if (newStatus === 'done' && !wasDone) {
         addNextOccurrence(item);
@@ -2464,12 +2576,22 @@
 
     function toggleStar(id) {
       const item = S.items.find(i => i.id === id);
-      if (item) { item.starred = !item.starred; saveData(); renderWithScrollPreserved(); }
+      if (item) {
+        item.starred = !item.starred;
+        if (item.ephemeral) delete item.ephemeral;
+        saveData();
+        renderWithScrollPreserved();
+      }
     }
 
     function moveItemToArea(id, areaId) {
       const item = S.items.find(i => i.id === id);
-      if (item) { item.area = areaId; saveData(); renderWithScrollPreserved(); }
+      if (item) {
+        item.area = areaId;
+        if (item.ephemeral) delete item.ephemeral;
+        saveData();
+        renderWithScrollPreserved();
+      }
     }
 
     function duplicateItem(id) {
@@ -2490,17 +2612,7 @@
       }
     }
 
-    function deleteItemAttachments(item) {
-      if (item && item.attachments && item.attachments.length > 0) {
-        item.attachments.forEach(att => {
-          db.collection('shared').doc('agenda-vida').collection('anexos').doc(att.id).collection('chunks').get().then(snap => {
-            const batch = db.batch();
-            snap.docs.forEach(d => batch.delete(d.ref));
-            batch.commit();
-          });
-        });
-      }
-    }
+    async function deleteItemAttachments(item){if(!item?.attachments?.length)return;for(const att of item.attachments){try{if(att.storagePath)await storage.ref(att.storagePath).delete();await getAgendaCollectionRef('attachments').doc(att.id).delete().catch(()=>{});}catch(error){console.warn('Falha ao excluir anexo:',error);}}}
 
     function deleteItemDirect(id) {
       if(confirm('Tem certeza que deseja excluir esta tarefa?')) {
@@ -2512,15 +2624,55 @@
       }
     }
 
-    // Navegação de Pastas
-    function setArea(id) { 
-      currentArea = id; 
-      currentDashboardFilter = null;
-      renderWithScrollPreserved(); 
-      if(window.innerWidth <= 768) {
-        document.getElementById('sidebar').classList.remove('open');
-      }
+    if (!window.__agendaV70SidebarBound) {
+      window.__agendaV70SidebarBound=true;
+      document.addEventListener('click',e=>{
+        const view=e.target.closest('[data-view]');
+        if(view){
+          const v=view.dataset.view;
+          if(v==='today'){currentArea='all';currentDashboardFilter='today';prefs.viewMode='list';renderWithScrollPreserved();}
+          else if(v==='tasks'){currentArea='all';currentDashboardFilter=null;prefs.viewMode='list';renderWithScrollPreserved();}
+          else if(v==='kanban'){currentArea='all';currentDashboardFilter=null;prefs.viewMode='kanban';renderWithScrollPreserved();}
+          else if(v==='reports'){if(typeof openReportsView==='function')openReportsView();else showToast('Relatórios disponíveis pela área de relatórios.');}
+          return;
+        }
+        const action=e.target.closest('[data-action]');if(!action)return;
+        const a=action.dataset.action,id=action.dataset.id;
+        if(a==='toggle-folders'){const p=document.getElementById('folders-nav-panel');if(p){p.hidden=!p.hidden;p.dataset.userExpanded=p.hidden?'0':'1';document.getElementById('folders-nav-chevron').textContent=p.hidden?'▸':'▾';}}
+        else if(a==='toggle-folder'&&id){e.stopPropagation();toggleFolderCollapse(id);}
+        else if(a==='folder-menu'&&id){e.stopPropagation();toggleFolderMenu(id,e);}
+      });
+      document.getElementById('btn-new-folder')?.addEventListener('click',()=>openFolderModal());
+      document.getElementById('btn-open-alerts')?.addEventListener('click',()=>openAlertsModal());
+      document.getElementById('btn-open-templates')?.addEventListener('click',()=>openManageTemplatesModal());
+      document.getElementById('btn-open-data')?.addEventListener('click',()=>openDataModal());
+      document.getElementById('btn-toggle-all-folders')?.addEventListener('click',e=>toggleAllFoldersCollapse(e));
     }
+
+    // Navegação de Pastas
+    function setArea(id){
+      currentArea=id;currentDashboardFilter=null;
+      if(id&&id!=='all'){const p=document.getElementById('folders-nav-panel');if(p){p.hidden=false;p.dataset.userExpanded='1';const c=document.getElementById('folders-nav-chevron');if(c)c.textContent='▾';}if(typeof switchView==='function')switchView('tasks');else if(typeof setView==='function')setView('tasks');}
+      renderWithScrollPreserved();
+    }
+
+    // Clique no corpo da pasta: abre a pasta sem interferir nos controles internos.
+    if (!window.__agendaFolderClickBound) {
+      document.addEventListener('click', function agendaFolderClickHandler(event) {
+        const target = event.target.closest('[data-folder-click="true"]');
+        if (!target) return;
+        if (event.target.closest('button, a, input, select, textarea, [data-action]')) return;
+
+        const folderId = target.dataset.areaId;
+        if (!folderId) return;
+
+        event.preventDefault();
+        event.stopPropagation();
+        setArea(folderId);
+      }, true);
+      window.__agendaFolderClickBound = true;
+    }
+
 
     function getFormState() {
       const chkRows = document.querySelectorAll('#checklist-container .checklist-row');
@@ -2731,67 +2883,26 @@
           const existingCount = editingOriginalItem?.attachments?.length || 0;
           pendingAttachments.splice(idx - existingCount, 1);
         } else {
-          const att = editingOriginalItem.attachments[idx];
-          db.collection('shared').doc('agenda-vida').collection('anexos').doc(att.id).collection('chunks').get().then(snap => {
-            const batch = db.batch();
-            snap.docs.forEach(d => batch.delete(d.ref));
-            batch.commit();
-          });
-          editingOriginalItem.attachments.splice(idx, 1);
+          const att=editingOriginalItem.attachments[idx];
+          if(att?.storagePath)storage.ref(att.storagePath).delete().catch(()=>{});
+          getAgendaCollectionRef('attachments').doc(att.id).delete().catch(()=>{});
+          editingOriginalItem.attachments.splice(idx,1);
         }
         renderModalAttachments();
       }
     }
 
-    async function saveAttachmentToFirestore(att) {
-      const base64Data = att.dataUrl.split(',')[1];
-      const chunkSize = 700 * 1024; // 700 KB
-      const chunks = [];
-      for (let i = 0; i < base64Data.length; i += chunkSize) {
-        chunks.push(base64Data.substring(i, i + chunkSize));
-      }
-
-      const attRef = db.collection('shared').doc('agenda-vida').collection('anexos').doc(att.id);
-      for (let n = 0; n < chunks.length; n++) {
-        await attRef.collection('chunks').doc(String(n)).set({ chunk: chunks[n] });
-      }
-
-      return {
-        id: att.id,
-        name: att.name,
-        size: att.size,
-        type: att.type,
-        addedAt: att.addedAt
-      };
+    async function saveAttachmentToFirestore(att){
+      const user=auth.currentUser;if(!user)throw new Error('Usuário não autenticado.');if(!att?.dataUrl)throw new Error('Anexo sem conteúdo.');
+      const safeName=(att.name||'arquivo').replace(/[^a-zA-Z0-9._-]/g,'_');
+      const storagePath=`users/${user.uid}/attachments/${att.id}_${safeName}`;
+      await storage.ref(storagePath).putString(att.dataUrl,'data_url',{contentType:att.type||'application/octet-stream'});
+      const meta={id:att.id,name:att.name,size:att.size,type:att.type,addedAt:att.addedAt,storagePath};
+      await getAgendaCollectionRef('attachments').doc(att.id).set(meta,{merge:true});return meta;
     }
 
-    async function downloadAttachment(attId, fileName, fileType) {
-      try {
-        showToast('Baixando anexo...');
-        const snap = await db.collection('shared').doc('agenda-vida').collection('anexos').doc(attId).collection('chunks').get();
-        const chunks = [];
-        snap.docs.forEach(d => {
-          chunks[parseInt(d.id, 10)] = d.data().chunk;
-        });
-
-        const fullBase64 = chunks.join('');
-        const byteCharacters = atob(fullBase64);
-        const byteNumbers = new Array(byteCharacters.length);
-        for (let i = 0; i < byteCharacters.length; i++) {
-          byteNumbers[i] = byteCharacters.charCodeAt(i);
-        }
-        const byteArray = new Uint8Array(byteNumbers);
-        const blob = new Blob([byteArray], { type: fileType });
-        const url = URL.createObjectURL(blob);
-
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = fileName;
-        a.click();
-        URL.revokeObjectURL(url);
-      } catch (err) {
-        alert('Erro ao abrir anexo: ' + err.message);
-      }
+    async function downloadAttachment(attId,fileName,fileType){
+      try{showToast('Baixando anexo...');const snap=await getAgendaCollectionRef('attachments').doc(attId).get();const meta=snap.exists?snap.data():null;if(!meta?.storagePath)throw new Error('Metadados do anexo não encontrados.');const url=await storage.ref(meta.storagePath).getDownloadURL();const a=document.createElement('a');a.href=url;a.download=fileName||meta.name||'arquivo';a.target='_blank';a.rel='noopener';a.click();showToast('Download iniciado.');}catch(e){console.error(e);showToast('Erro ao baixar anexo.');}
     }
 
     function removeLegacyLink() {
@@ -3056,6 +3167,7 @@
 
       if (currentEditItemId && editingOriginalItem) {
         const updatedItem = { ...editingOriginalItem, ...editedFields };
+        delete updatedItem.ephemeral;
         const idx = S.items.findIndex(x => x.id === currentEditItemId);
         if (idx > -1) {
           S.items[idx] = updatedItem;
