@@ -1569,9 +1569,6 @@
             folderCalendarDate = new Date();
             switchView('folders');
             renderFolders();
-            requestAnimationFrame(() => {
-                document.getElementById('folderTasksPanel')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            });
         }
 
         function renderFolders() {
