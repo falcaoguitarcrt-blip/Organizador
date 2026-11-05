@@ -1678,7 +1678,7 @@
         function renderFolderTasks() {
             const panel=document.getElementById('folderTasksPanel'); if(!panel)return; const folder=folders.find(f=>f.id===activeFolderId); if(!folder){panel.classList.add('hidden');return;} panel.classList.remove('hidden');
             document.getElementById('folderTasksTitle').textContent=folder.name||'Pasta'; document.getElementById('folderTasksIcon').innerHTML=folderIconHtml(folder.icon,'w-4 h-4');
-            const allFolderTasks=getTasksForFolder(folder), periodTasks=agendaSortTasks(getFolderPeriodTasks(allFolderTasks)); document.getElementById('folderTasksCount').textContent=`${periodTasks.length} de ${allFolderTasks.length} tarefa${allFolderTasks.length===1?'':'s'}`;
+            const allFolderTasks=getTasksForFolder(folder).filter(t => !['done','completed','concluida','concluído','concluido'].includes(String(t.status||'').toLowerCase())), periodTasks=agendaSortTasks(getFolderPeriodTasks(allFolderTasks)); document.getElementById('folderTasksCount').textContent=`${periodTasks.length} tarefa${periodTasks.length===1?'':'s'} ativa${periodTasks.length===1?'':'s'}`;
             const list=document.getElementById('folderTasksList'), nav=document.getElementById('folderCalendarNav');
             if(activeFolderViewMode==='week'){nav.classList.remove('hidden');nav.classList.add('flex');list.innerHTML=renderAgendaWeek(periodTasks,folderCalendarDate,document.getElementById('folderCalendarTitle'));}
             else if(activeFolderViewMode==='month'){nav.classList.remove('hidden');nav.classList.add('flex');list.innerHTML=renderAgendaMonth(periodTasks,folderCalendarDate,document.getElementById('folderCalendarTitle'));}
