@@ -1163,13 +1163,13 @@
                 seedKey: `igreja_culto_quinta_${date}`,
                 title: 'Culto de Quinta-feira', description: 'Compromisso semanal da Igreja.',
                 dueDate: date, dueTime: '20:00', category: 'Igreja', priority: 'Média', status: 'todo',
-                folderName: 'Igreja', folderIcon: 'church', recurrenceRule: 'weekly_thursday'
+                folderName: 'Cultos', folderIcon: 'church', recurrenceRule: 'weekly_thursday'
             }));
             churchSundays.forEach(date => definitions.push({
                 seedKey: `igreja_culto_domingo_${date}`,
                 title: 'Culto de Domingo', description: 'Compromisso semanal da Igreja.',
                 dueDate: date, dueTime: '19:00', category: 'Igreja', priority: 'Média', status: 'todo',
-                folderName: 'Igreja', folderIcon: 'church', recurrenceRule: 'weekly_sunday'
+                folderName: 'Cultos', folderIcon: 'church', recurrenceRule: 'weekly_sunday'
             }));
 
             // Registros da Jornada de Conhecimento apresentados na programação enviada.
@@ -1204,6 +1204,28 @@
                 { seedKey:'area_lazer_2026-10-25_retirar_chaves', title:'Retirar chaves da Área de Lazer', description:'Retirada das chaves após a utilização.', dueDate:'2026-10-25', dueTime:'18:30', category:'Outros', priority:'Média', status:'todo', folderName:'Área de Lazer', folderIcon:'home' }
             );
 
+            // Compromissos de novembro de 2026 registrados na conversa.
+            // Cada seedKey estável evita duplicar a tarefa em novas sincronizações.
+            definitions.push(
+                { seedKey:'jornada_2026-11-05_captacao_apelo', title:'Jornada de Conhecimento - Captação Apelo', description:'Captação do apelo na programação da Jornada.', dueDate:'2026-11-05', dueTime:'19:00', category:'Igreja', priority:'Média', status:'todo', folderName:'Jornada de Conhecimento', folderIcon:'book-open' },
+                { seedKey:'supervisao_2026-11-06_lideres_anfitrioes', title:'Reunião de Líderes e Anfitriões', description:'Reunião com os pastores.', dueDate:'2026-11-06', dueTime:'20:00', category:'Igreja', priority:'Alta', status:'todo', folderName:'Supervisão GE', folderIcon:'users' },
+                { seedKey:'jornada_2026-11-08_recados_placas', title:'Jornada de Conhecimento - Recados e placas', description:'Recados, relatório e colocar/retirar placas.', dueDate:'2026-11-08', dueTime:'07:30', category:'Igreja', priority:'Média', status:'todo', folderName:'Jornada de Conhecimento', folderIcon:'book-open' },
+                { seedKey:'cultos_2026-11-08_domingo_08h', title:'Culto de Domingo - 08h', description:'Apelo/visitantes e programação do culto.', dueDate:'2026-11-08', dueTime:'08:00', category:'Igreja', priority:'Média', status:'todo', folderName:'Cultos', folderIcon:'church' },
+                { seedKey:'cultos_2026-11-08_domingo_1030', title:'Culto de Domingo - 10h30', description:'Apelo/visitantes e programação do culto.', dueDate:'2026-11-08', dueTime:'10:30', category:'Igreja', priority:'Média', status:'todo', folderName:'Cultos', folderIcon:'church' },
+                { seedKey:'supervisao_2026-11-09_toca_leoes', title:'Toca dos Leões', description:'Evento dos homens na igreja.', dueDate:'2026-11-09', dueTime:'20:00', category:'Igreja', priority:'Alta', status:'todo', folderName:'Supervisão GE', folderIcon:'users' },
+                { seedKey:'jornada_2026-11-12_apelo_visitantes', title:'Jornada - Apelo/Visitantes', description:'Preparação e atendimento de apelo/visitantes.', dueDate:'2026-11-12', dueTime:'19:00', category:'Igreja', priority:'Média', status:'todo', folderName:'Jornada de Conhecimento', folderIcon:'book-open' },
+                { seedKey:'supervisao_2026-11-16_aviso_confraternizacoes', title:'Avisar líderes sobre confraternizações dos GEs', description:'Comunicar os líderes com pelo menos uma semana de antecedência.', dueDate:'2026-11-16', dueTime:'09:00', category:'Igreja', priority:'Alta', status:'todo', folderName:'Supervisão GE', folderIcon:'users' },
+                { seedKey:'pessoal_2026-11-20_dunamis_con', title:'Dunamis Con - viagem para São Paulo', description:'Evento de 20 a 22/11. Ajustar logística da viagem.', dueDate:'2026-11-20', category:'Pessoal', priority:'Alta', status:'todo', folderName:'Pessoal', folderIcon:'plane' },
+                { seedKey:'inventario_2026-11-20_advogada', title:'Pagamento mensal da advogada - inventário', description:'R$ 1.000: R$ 500 da sua parte (reserva) e R$ 500 da Dudinha a solicitar/receber.', dueDate:'2026-11-20', category:'Inventário', priority:'Alta', status:'todo', folderName:'Inventário', folderIcon:'file-text' },
+                { seedKey:'financeiro_2026-11-20_fatura_cartao', title:'Vencimento da fatura do cartão', description:'Fatura de novembro: R$ 316,76.', dueDate:'2026-11-20', category:'Financeiro', priority:'Alta', status:'todo', folderName:'Financeiro', folderIcon:'wallet' },
+                { seedKey:'area_lazer_2026-11-22_wesley_daracy', title:'Reserva da área de lazer - Wesley Daracy', description:'Total R$ 500 | sinal R$ 150 | restante R$ 350. Reserva confirmada.', dueDate:'2026-11-22', category:'Área de Lazer', priority:'Alta', status:'todo', folderName:'Área de Lazer', folderIcon:'home' },
+                { seedKey:'supervisao_2026-11-23_ultima_semana_ge', title:'Última semana dos GEs', description:'Semana final de encontros dos Grupos de Encorajamento.', dueDate:'2026-11-23', category:'Igreja', priority:'Média', status:'todo', folderName:'Supervisão GE', folderIcon:'users' },
+                { seedKey:'jornada_2026-11-26_apelo_visitantes', title:'Jornada - Apelo/Visitantes', description:'Preparação e atendimento de apelo/visitantes.', dueDate:'2026-11-26', dueTime:'19:00', category:'Igreja', priority:'Média', status:'todo', folderName:'Jornada de Conhecimento', folderIcon:'book-open' },
+                { seedKey:'supervisao_2026-11-27_ultimo_ge', title:'Último GE do ano', description:'Último encontro dos Grupos de Encorajamento.', dueDate:'2026-11-27', dueTime:'19:30', category:'Igreja', priority:'Alta', status:'todo', folderName:'Supervisão GE', folderIcon:'users' },
+                { seedKey:'supervisao_2026-11-30_ceia_ge', title:'Ceia dos GEs', description:'Data registrada; horário estimado, confirmar com a liderança.', dueDate:'2026-11-30', dueTime:'20:00', category:'Igreja', priority:'Alta', status:'todo', folderName:'Supervisão GE', folderIcon:'users' },
+                { seedKey:'igreja_dia_da_biblia_mobilizacao_2026', title:'Mobilização - Dia da Bíblia', description:'Cada GE deve enviar um representante para uma leitura. Mobilização em 100 pontos da cidade. Anunciar no próximo GE e solicitar voluntários.', dueDate:'', category:'Igreja', priority:'Alta', status:'todo', folderName:'Supervisão GE', folderIcon:'users' }
+            );
+
             return definitions;
         }
 
@@ -1213,8 +1235,9 @@
             try {
                 const folderCache = {};
                 const folderSpecs = [
-                    ['Igreja','church',[]], ['Jornada de Conhecimento','book-open',['Jornada de Conhecime...']],
-                    ['Supervisão GE','users',[]], ['Professor','graduation-cap',[]], ['Inventário','file-text',[]], ['Área de Lazer','home',[]]
+                    ['Igreja','church',[]], ['Cultos','church',[]], ['Jornada de Conhecimento','book-open',['Jornada de Conhecime...']],
+                    ['Supervisão GE','users',[]], ['Professor','graduation-cap',[]], ['Inventário','file-text',[]],
+                    ['Área de Lazer','home',[]], ['Pessoal','briefcase',[]], ['Financeiro','wallet',[]]
                 ];
                 for (const [name, icon, aliases] of folderSpecs) folderCache[name] = await ensureAgendaFolder(name, icon, aliases);
 
