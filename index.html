@@ -689,7 +689,7 @@
             <div id="folderTasksPanel" class="hidden glass-card rounded-xl p-4">
                 <div class="flex items-center justify-between gap-3 mb-3">
                     <div class="flex items-center gap-2">
-                        <span id="folderTasksIcon" class="w-8 h-8 rounded-lg grid place-items-center bg-blue-500/10 text-blue-400"><i data-lucide="folder" class="w-4 h-4"></i></span>
+                        <span id="folderTasksIcon" class="w-8 h-8 rounded-lg grid place-items-center"><i data-lucide="folder" class="w-4 h-4"></i></span>
                         <div><h3 id="folderTasksTitle" class="text-sm font-bold text-white"></h3><p id="folderTasksCount" class="text-[11px] text-slate-500"></p></div>
                     </div>
                     <div class="flex items-center gap-2">
@@ -1664,7 +1664,7 @@
                 grid.innerHTML = rootFolders.map(f => {
                     const count = getActiveTasksForFolder(f).length;
                     return `<div class="glass-card rounded-xl p-4 border border-slate-800 hover:border-blue-500/50 transition cursor-pointer" onclick="selectFolder('${f.id}')">
-                        <div class="flex items-start justify-between gap-3"><div class="flex items-center gap-3 min-w-0"><span class="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-400 grid place-items-center shrink-0">${folderIconHtml(f.icon,'w-5 h-5',f.color)}</span><div class="min-w-0"><h3 class="text-sm font-bold text-white truncate">${escapeHtml(f.name || 'Sem nome')}</h3><p class="text-[11px] text-slate-500">${count} tarefa${count === 1 ? '' : 's'}</p></div></div><div class="flex gap-1"><button type="button" onclick="event.stopPropagation(); openFolderModal('${f.id}')" class="p-1.5 text-slate-500 hover:text-white hover:bg-slate-800 rounded-lg"><i data-lucide="pencil" class="w-3.5 h-3.5"></i></button><button type="button" onclick="event.stopPropagation(); deleteFolder('${f.id}')" class="p-1.5 text-slate-500 hover:text-red-400 hover:bg-slate-800 rounded-lg"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button></div></div>
+                        <div class="flex items-start justify-between gap-3"><div class="flex items-center gap-3 min-w-0"><span class="w-10 h-10 rounded-xl grid place-items-center shrink-0" style="color:${getFolderColor(f)};background:${getFolderColor(f)}22">${folderIconHtml(f.icon,'w-5 h-5',f.color)}</span><div class="min-w-0"><h3 class="text-sm font-bold text-white truncate">${escapeHtml(f.name || 'Sem nome')}</h3><p class="text-[11px] text-slate-500">${count} tarefa${count === 1 ? '' : 's'}</p></div></div><div class="flex gap-1"><button type="button" onclick="event.stopPropagation(); openFolderModal('${f.id}')" class="p-1.5 text-slate-500 hover:text-white hover:bg-slate-800 rounded-lg"><i data-lucide="pencil" class="w-3.5 h-3.5"></i></button><button type="button" onclick="event.stopPropagation(); deleteFolder('${f.id}')" class="p-1.5 text-slate-500 hover:text-red-400 hover:bg-slate-800 rounded-lg"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button></div></div>
                     </div>`;
                 }).join('');
                 if (folders.length) grid.classList.remove('hidden'); else grid.classList.add('hidden');
@@ -1747,7 +1747,7 @@
         function updateFolderAgendaControls(){ document.querySelectorAll('.folder-period-btn').forEach(btn=>{const a=btn.dataset.folderPeriod===activeFolderPeriod;btn.classList.toggle('bg-blue-600',a);btn.classList.toggle('text-white',a);btn.classList.toggle('text-slate-400',!a);}); document.querySelectorAll('.folder-view-btn').forEach(btn=>{const a=btn.dataset.folderView===activeFolderViewMode;btn.classList.toggle('bg-blue-600',a);btn.classList.toggle('text-white',a);btn.classList.toggle('text-slate-400',!a);}); }
         function renderFolderTasks() {
             const panel=document.getElementById('folderTasksPanel'); if(!panel)return; const folder=folders.find(f=>f.id===activeFolderId); if(!folder){panel.classList.add('hidden');return;} panel.classList.remove('hidden');
-            document.getElementById('folderTasksTitle').textContent=folder.name||'Pasta'; document.getElementById('folderTasksIcon').innerHTML=folderIconHtml(folder.icon,'w-4 h-4',folder.color);
+            document.getElementById('folderTasksTitle').textContent=folder.name||'Pasta'; document.getElementById('folderTasksIcon').innerHTML=folderIconHtml(folder.icon,'w-4 h-4',folder.color); document.getElementById('folderTasksIcon').style.color=getFolderColor(folder); document.getElementById('folderTasksIcon').style.background=getFolderColor(folder)+'22';
             const subNav=document.getElementById('churchSubfolderNav');
             const churchChildren=folders.filter(f=>f.parentId===folder.id);
             const isChurch=String(folder.name||'').trim().toLowerCase()==='igreja';
@@ -2980,7 +2980,7 @@
             const ordered = agendaSortTasks(getActiveTasks(filtered));
             container.innerHTML = ordered.length ? ordered.map(t => {
                 const folder = folders.find(f => f.id === getTaskFolderId(t)); const done = t.status === 'done';
-                const folderBadge = folder ? `<span class="text-[10px] px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-300 font-medium flex items-center gap-1">${folderIconHtml(folder.icon,'w-3 h-3',folder.color)} ${escapeHtml(folder.name||'Pasta')}</span>` : '<span class="text-[10px] px-2 py-0.5 rounded-md bg-slate-800 text-slate-500 font-medium">Sem pasta</span>';
+                const folderBadge = folder ? `<span class="text-[10px] px-2 py-0.5 rounded-md font-medium flex items-center gap-1" style="color:${getFolderColor(folder)};background:${getFolderColor(folder)}22">${folderIconHtml(folder.icon,'w-3 h-3',folder.color)} ${escapeHtml(folder.name||'Pasta')}</span>` : '<span class="text-[10px] px-2 py-0.5 rounded-md bg-slate-800 text-slate-500 font-medium">Sem pasta</span>';
                 return `<div class="bg-slate-900/80 border border-slate-800 rounded-xl p-3 flex flex-col md:flex-row md:items-center justify-between gap-3 transition hover:border-slate-700">
                     <div class="flex items-start gap-3"><button onclick="toggleTaskComplete('${t.id}')" class="mt-0.5 ${done?'text-emerald-400':'text-slate-500 hover:text-slate-300'} transition"><i data-lucide="${done?'check-circle':'circle'}" class="w-5 h-5"></i></button>
                     <div><h3 class="font-semibold text-xs text-slate-100 ${done?'line-through text-slate-500':''}">${escapeHtml(t.title)}</h3>${t.description?`<p class="text-[11px] text-slate-400 mt-0.5 line-clamp-2">${escapeHtml(t.description)}</p>`:''}<div class="flex flex-wrap items-center gap-2 mt-1.5">${folderBadge}${getPriorityBadge(t.priority)}${t.dueDate?`<span class="text-[10px] text-slate-400 flex items-center gap-1"><i data-lucide="calendar" class="w-3 h-3"></i>${escapeHtml(t.dueDate)}${t.dueTime?' · '+escapeHtml(t.dueTime):''}</span>`:'<span class="text-[10px] text-slate-500 italic">Sem data</span>'}${t.recurrenceRule?'<span class="text-[10px] text-cyan-300 flex items-center gap-1"><i data-lucide="repeat" class="w-3 h-3"></i>Recorrente</span>':''}</div></div></div>
@@ -3063,7 +3063,7 @@
                     </div>
                     ${t.description ? `<p class="text-[11px] text-slate-400 line-clamp-2">${escapeHtml(t.description)}</p>` : ''}
                     <div class="flex justify-between items-center text-[10px] text-slate-400 pt-1.5 border-t border-slate-900">
-                        ${(() => { const f=folders.find(x=>x.id===getTaskFolderId(t)); return f ? `<span class=\"bg-blue-500/10 px-1.5 py-0.5 rounded text-[10px] text-blue-300 flex items-center gap-1\">${folderIconHtml(f.icon,'w-3 h-3',f.color)}${escapeHtml(f.name)}</span>` : '<span class=\"text-[10px] text-slate-600\">Sem pasta</span>'; })()}
+                        ${(() => { const f=folders.find(x=>x.id===getTaskFolderId(t)); return f ? `<span class=\"px-1.5 py-0.5 rounded text-[10px] flex items-center gap-1\" style=\"color:${getFolderColor(f)};background:${getFolderColor(f)}22\">${folderIconHtml(f.icon,'w-3 h-3',f.color)}${escapeHtml(f.name)}</span>` : '<span class=\"text-[10px] text-slate-600\">Sem pasta</span>'; })()}
                         ${t.dueDate ? `<span>${escapeHtml(t.dueDate)}</span>` : '<span class="italic text-slate-600">Sem data</span>'}
                     </div>
                 `;
