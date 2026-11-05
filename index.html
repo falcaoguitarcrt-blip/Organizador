@@ -1787,7 +1787,7 @@
             const list=document.getElementById('folderTasksList'), nav=document.getElementById('folderCalendarNav');
             if(activeFolderViewMode==='week'){nav.classList.remove('hidden');nav.classList.add('flex');list.innerHTML=renderAgendaWeek(periodTasks,folderCalendarDate,document.getElementById('folderCalendarTitle'));}
             else if(activeFolderViewMode==='month'){nav.classList.remove('hidden');nav.classList.add('flex');list.innerHTML=renderAgendaMonth(periodTasks,folderCalendarDate,document.getElementById('folderCalendarTitle'));}
-            else{nav.classList.add('hidden');nav.classList.remove('flex');list.innerHTML=periodTasks.length?periodTasks.map(t=>`<div class="flex items-center justify-between gap-3 p-3 rounded-xl bg-slate-950/60 border border-slate-800 hover:border-slate-700"><div class="min-w-0"><p class="text-xs font-semibold text-slate-200 ${t.status==='done'?'line-through text-slate-500':''}">${escapeHtml(t.title)}</p><p class="text-[10px] text-slate-500">${escapeHtml(t.priority||'Média')}${t.dueDate?' · '+escapeHtml(t.dueDate):''}${t.dueTime?' · '+escapeHtml(t.dueTime):''}</p></div><button type="button" onclick="openModal('${t.id}')" class="p-1.5 text-slate-500 hover:text-white hover:bg-slate-800 rounded-lg"><i data-lucide="pencil" class="w-3.5 h-3.5"></i></button></div>`).join(''):'<div class="text-center py-10"><i data-lucide="calendar-x-2" class="w-8 h-8 text-slate-600 mx-auto mb-2"></i><p class="text-xs text-slate-400">Nenhuma tarefa neste período.</p><p class="text-[10px] text-slate-600 mt-1">As tarefas continuam vinculadas à pasta e aparecem também na aba Tarefas.</p></div>'; updateFolderAgendaControls(); refreshIcons();
+            else{nav.classList.add('hidden');nav.classList.remove('flex');list.innerHTML=periodTasks.length?periodTasks.map(t=>`<div class='flex items-center justify-between gap-3 p-3 rounded-xl bg-slate-950/60 border border-slate-800 hover:border-slate-700 transition'><div class='flex items-start gap-2 min-w-0 flex-1'><button type='button' aria-label='Concluir tarefa: ${escapeHtml(t.title)}' title='Concluir tarefa' onclick='toggleTaskComplete("${t.id}")' class='mt-0.5 min-w-8 min-h-8 grid place-items-center text-slate-500 hover:text-emerald-400 transition'><i data-lucide='circle' class='w-5 h-5'></i></button><div class='min-w-0'><p class='text-xs font-semibold text-slate-200'>${escapeHtml(t.title)}</p><p class='text-[10px] text-slate-500'>${escapeHtml(t.priority||'Média')}${t.dueDate?' · '+escapeHtml(t.dueDate):''}${t.dueTime?' · '+escapeHtml(t.dueTime):''}</p></div></div><div class='flex items-center gap-1 shrink-0'><label class='relative min-w-8 min-h-8 grid place-items-center p-1.5 text-slate-400 hover:text-blue-300 hover:bg-slate-800 rounded-lg transition cursor-pointer' title='Reagendar tarefa'><i data-lucide='calendar' class='w-4 h-4 pointer-events-none'></i><input type='date' aria-label='Escolher nova data para ${escapeHtml(t.title)}' value='${escapeHtml(t.dueDate||'')}' onchange='updateTaskDueDate("${t.id}",this.value)' class='absolute inset-0 w-full h-full opacity-0 cursor-pointer'></label><button type='button' aria-label='Editar tarefa: ${escapeHtml(t.title)}' title='Editar tarefa' onclick='openModal("${t.id}")' class='min-w-8 min-h-8 grid place-items-center p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition'><i data-lucide='pencil' class='w-4 h-4'></i></button><button type='button' aria-label='Excluir tarefa: ${escapeHtml(t.title)}' title='Excluir tarefa' onclick='deleteTask("${t.id}")' class='min-w-8 min-h-8 grid place-items-center p-1.5 text-slate-400 hover:text-rose-400 hover:bg-slate-800 rounded-lg transition'><i data-lucide='trash-2' class='w-4 h-4'></i></button></div></div>`).join(''):'<div class="text-center py-10"><i data-lucide="calendar-x-2" class="w-8 h-8 text-slate-600 mx-auto mb-2"></i><p class="text-xs text-slate-400">Nenhuma tarefa neste período.</p><p class="text-[10px] text-slate-600 mt-1">As tarefas continuam vinculadas à pasta e aparecem também na aba Tarefas.</p></div>'; updateFolderAgendaControls(); refreshIcons();
         }
         }
 
@@ -2931,6 +2931,32 @@
                     // O feedback e a liberação do botão são tratados em saveTaskToFirestore.
                     // Mantém o modal aberto para que o usuário possa tentar novamente.
                 }
+            });
+        }
+
+        function updateTaskDueDate(taskId, newDate) {
+            if (!newDate) return;
+            const targetTask = tasks.find(t => t.id === taskId);
+            if (!targetTask) return;
+            const previousDate = targetTask.dueDate || '';
+
+            tasks = tasks.map(t => t.id === taskId ? { ...t, dueDate: newDate } : t);
+            render();
+
+            if (!currentUserState || !db) {
+                saveTasksToLocalCacheOnly(tasks);
+                return;
+            }
+
+            const uid = currentUserState.uid;
+            db.collection('users').doc(uid).collection('items').doc(taskId).update({
+                dueDate: newDate,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            }).catch(err => {
+                console.error("Erro ao reagendar tarefa no Firestore. Revertendo data...", err);
+                tasks = tasks.map(t => t.id === taskId ? { ...t, dueDate: previousDate } : t);
+                render();
+                alert("Não foi possível atualizar a data da tarefa. A data anterior foi restaurada.");
             });
         }
 
