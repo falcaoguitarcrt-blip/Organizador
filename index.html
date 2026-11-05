@@ -167,67 +167,83 @@
             display: inline-block;
             animation: pulseDot 2s infinite;
         }
+
+        /* Compact account and synchronization controls */
+        .auth-status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            max-width: 230px;
+            padding: 7px 11px;
+            border: 1px solid rgba(34, 197, 94, 0.22);
+            border-radius: 999px;
+            background: rgba(34, 197, 94, 0.08);
+            color: #4ade80;
+            font-size: 10px;
+            font-weight: 600;
+            line-height: 1;
+            white-space: nowrap;
+        }
+        .auth-status-pill.is-warning {
+            border-color: rgba(245, 158, 11, 0.25);
+            background: rgba(245, 158, 11, 0.08);
+            color: #fbbf24;
+        }
+        .auth-status-pill.is-muted {
+            border-color: rgba(100, 116, 139, 0.25);
+            background: rgba(15, 23, 42, 0.65);
+            color: #94a3b8;
+        }
+        .auth-status-pill .status-label-text {
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        @media (max-width: 640px) {
+            .auth-status-pill {
+                max-width: 145px;
+                padding: 7px 9px;
+            }
+        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col p-3 md:p-6 antialiased selection:bg-blue-600 selection:text-white">
 
     <div class="max-w-[1740px] w-full mx-auto flex-1 flex flex-col">
         
-        <!-- Brand Header Bar -->
-        <header class="flex flex-col lg:flex-row lg:items-center justify-between pb-6 px-2 gap-4">
-            <div>
-                <h1 class="text-3xl lg:text-4xl font-black tracking-tight leading-none text-white">
+        <!-- Brand Header Bar: clean, compact and responsive -->
+        <header class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-1 pb-4 mb-1 border-b border-slate-800/70">
+            <div class="min-w-0">
+                <h1 class="text-2xl sm:text-3xl font-black tracking-tight leading-none text-white">
                     Minha Agenda <span class="text-blue-500">Pro</span>
                 </h1>
-                <p class="text-slate-400 text-sm mt-1.5 font-normal">Mais foco. Mais resultado. Todos os dias.</p>
-            </div>
-            
-            <div class="hidden xl:flex items-center gap-8">
-                <div class="flex items-center gap-3">
-                    <div class="text-blue-400 text-xl"><i data-lucide="monitor"></i></div>
-                    <div>
-                        <b class="block text-xs font-bold text-white">Visual moderno</b>
-                        <small class="block text-slate-400 text-[11px] leading-snug">Interface profissional<br>e elegante</small>
-                    </div>
-                </div>
-                <div class="flex items-center gap-3">
-                    <div class="text-blue-400 text-xl"><i data-lucide="zap"></i></div>
-                    <div>
-                        <b class="block text-xs font-bold text-white">Mais produtividade</b>
-                        <small class="block text-slate-400 text-[11px] leading-snug">Tudo o que importa<br>em um só lugar</small>
-                    </div>
-                </div>
-                <div class="flex items-center gap-3">
-                    <div class="text-blue-400 text-xl"><i data-lucide="bar-chart-3"></i></div>
-                    <div>
-                        <b class="block text-xs font-bold text-white">Visão clara</b>
-                        <small class="block text-slate-400 text-[11px] leading-snug">Informações organizadas<br>de forma inteligente</small>
-                    </div>
-                </div>
-                <div class="flex items-center gap-3">
-                    <div class="text-blue-400 text-xl"><i data-lucide="smartphone"></i></div>
-                    <div>
-                        <b class="block text-xs font-bold text-white">Experiência fluida</b>
-                        <small class="block text-slate-400 text-[11px] leading-snug">Perfeito no computador<br>e no celular</small>
-                    </div>
-                </div>
+                <p class="text-slate-400 text-xs sm:text-sm mt-1.5 font-normal">Organize. Priorize. Conclua.</p>
             </div>
 
-            <!-- Profile & Live Status Badge (Interactive Auth Component) -->
-            <div class="flex items-center gap-3 bg-slate-900/90 border border-slate-700/60 rounded-full p-1.5 pr-4 self-start lg:self-auto shadow-md">
-                <div id="authAvatar" class="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 grid place-items-center font-bold text-xs text-white shadow-md overflow-hidden shrink-0">
-                    <i data-lucide="user" class="w-4 h-4"></i>
+            <div class="flex items-center gap-2 sm:gap-3 self-start sm:self-auto max-w-full">
+                <div id="authStatusLabel" class="auth-status-pill is-muted" role="status" aria-live="polite">
+                    <span class="status-pulse-amber"></span><span class="status-label-text">Verificando sincronização...</span>
                 </div>
-                <div class="text-xs">
-                    <b id="authName" class="block leading-tight text-white font-semibold">Verificando...</b>
-                    <small id="authStatusLabel" class="text-slate-400 text-[10px] font-medium flex items-center gap-1.5 mt-0.5">
-                        Aguardando Firebase...
-                    </small>
-                </div>
-                <div id="authActions" class="ml-2 border-l border-slate-800 pl-2">
-                    <button type="button" id="btnAuthAction" onclick="handleAuthButtonClick()" class="px-3 py-1 bg-blue-600 hover:bg-blue-500 text-white rounded-full font-bold text-[11px] transition flex items-center gap-1.5 shadow-sm">
-                        <span>Entrar</span>
+
+                <div class="account-menu relative shrink-0">
+                    <button type="button" id="accountMenuTrigger" aria-expanded="false" aria-controls="accountMenuPanel"
+                        onclick="toggleAccountMenu()"
+                        class="flex items-center gap-2 sm:gap-2.5 rounded-xl border border-slate-800/80 bg-slate-900/60 hover:bg-slate-900 px-2 py-1.5 sm:px-2.5 transition max-w-[190px] sm:max-w-[250px]">
+                        <div id="authAvatar" class="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 grid place-items-center font-bold text-xs text-white shadow-md overflow-hidden shrink-0">
+                            <i data-lucide="user" class="w-4 h-4"></i>
+                        </div>
+                        <span class="min-w-0 text-left">
+                            <b id="authName" class="block leading-tight text-white text-xs font-semibold truncate">Verificando...</b>
+                            <small class="block leading-tight text-slate-500 text-[10px] mt-0.5">Minha conta</small>
+                        </span>
+                        <i data-lucide="chevron-down" class="w-4 h-4 text-slate-500 shrink-0"></i>
                     </button>
+
+                    <div id="accountMenuPanel" class="hidden absolute right-0 top-full mt-2 min-w-[170px] p-1.5 rounded-xl border border-slate-700/80 bg-[#0a182e] shadow-2xl z-50">
+                        <button type="button" id="btnAuthAction" onclick="handleAuthButtonClick()"
+                            class="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold text-slate-200 hover:bg-slate-800 transition">
+                            <i data-lucide="log-in" class="w-4 h-4 text-blue-400"></i><span>Entrar com Google</span>
+                        </button>
+                    </div>
                 </div>
             </div>
         </header>
@@ -1058,7 +1074,8 @@
             const footerStatusText = document.getElementById('footerStatusText');
 
             if (authStatusLabel) {
-                authStatusLabel.innerHTML = '<span class="status-pulse-amber"></span> Conectando ao Firestore...';
+                authStatusLabel.className = 'auth-status-pill is-warning';
+                authStatusLabel.innerHTML = '<span class="status-pulse-amber"></span><span class="status-label-text">Conectando ao Firestore...</span>';
             }
 
             firestoreUnsubscribe = db.collection('users').doc(uid).collection('items')
@@ -1086,8 +1103,8 @@
                     scheduleAgendaCommitmentsSeed();
 
                     if (authStatusLabel) {
-                        authStatusLabel.className = 'text-emerald-400 text-[10px] font-medium flex items-center gap-1.5 mt-0.5';
-                        authStatusLabel.innerHTML = `<span class="status-pulse"></span> Sincronizado (${tasks.length} tarefas)`;
+                        authStatusLabel.className = 'auth-status-pill';
+                        authStatusLabel.innerHTML = `<span class="status-pulse"></span><span class="status-label-text">Sincronizado (${tasks.length} tarefas)</span>`;
                     }
 
                     if (footerStatusText) {
@@ -1096,8 +1113,8 @@
                 }, (error) => {
                     console.error("[Firestore Sync Error]", error);
                     if (authStatusLabel) {
-                        authStatusLabel.className = 'text-amber-400 text-[10px] font-medium flex items-center gap-1.5 mt-0.5';
-                        authStatusLabel.innerHTML = '<span class="status-pulse-amber"></span> Erro de Sincronização';
+                        authStatusLabel.className = 'auth-status-pill is-warning';
+                        authStatusLabel.innerHTML = '<span class="status-pulse-amber"></span><span class="status-label-text">Erro de sincronização</span>';
                     }
                 });
         }
@@ -1909,14 +1926,14 @@
 
             if (state === 'LOADING') {
                 if (authName) authName.textContent = 'Carregando...';
-                if (authStatusLabel) authStatusLabel.innerHTML = 'Verificando sessão...';
+                if (authStatusLabel) { authStatusLabel.className = 'auth-status-pill is-muted'; authStatusLabel.innerHTML = '<span class="status-pulse-amber"></span><span class="status-label-text">Verificando sessão...</span>'; }
                 if (btnAuthAction) btnAuthAction.innerHTML = '<span>Aguarde</span>';
             } else if (state === 'AUTHENTICATED' && currentUserState) {
                 const firstName = currentUserState.displayName.split(' ')[0];
                 if (authName) authName.textContent = currentUserState.displayName;
                 if (authStatusLabel) {
-                    authStatusLabel.className = 'text-emerald-400 text-[10px] font-medium flex items-center gap-1.5 mt-0.5';
-                    authStatusLabel.innerHTML = '<span class="status-pulse"></span> Conectado com Google';
+                    authStatusLabel.className = 'auth-status-pill is-muted';
+                    authStatusLabel.innerHTML = '<span class="status-pulse"></span><span class="status-label-text">Conta conectada</span>';
                 }
                 if (heroGreetingTitle) heroGreetingTitle.textContent = `Boa tarde, ${escapeHtml(firstName)}`;
                 if (footerStatusText) footerStatusText.innerHTML = `<span class="status-pulse"></span> Conectado (UID: ${escapeHtml(currentUserState.uid.substring(0, 6))}...)`;
@@ -1930,14 +1947,14 @@
                 }
 
                 if (btnAuthAction) {
-                    btnAuthAction.className = "px-3 py-1 bg-slate-800 hover:bg-rose-600/80 text-slate-300 hover:text-white rounded-full font-bold text-[11px] transition flex items-center gap-1.5 border border-slate-700/60";
-                    btnAuthAction.innerHTML = `<span>Sair</span>`;
+                    btnAuthAction.className = "w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold text-rose-300 hover:bg-rose-500/10 transition";
+                    btnAuthAction.innerHTML = '<i data-lucide="log-out" class="w-4 h-4"></i><span>Sair da conta</span>';
                 }
             } else {
                 if (authName) authName.textContent = 'Visitante / Local';
                 if (authStatusLabel) {
-                    authStatusLabel.className = 'text-slate-400 text-[10px] font-medium flex items-center gap-1.5 mt-0.5';
-                    authStatusLabel.innerHTML = '● Não autenticado';
+                    authStatusLabel.className = 'auth-status-pill is-muted';
+                    authStatusLabel.innerHTML = '<span class="status-pulse-amber"></span><span class="status-label-text">Modo local</span>';
                 }
                 if (heroGreetingTitle) heroGreetingTitle.textContent = 'Boa tarde, Visitante';
                 if (footerStatusText) footerStatusText.innerHTML = `<span class="status-pulse"></span> Armazenamento Local Ativo`;
@@ -1947,14 +1964,31 @@
                 }
 
                 if (btnAuthAction) {
-                    btnAuthAction.className = "px-3 py-1 bg-blue-600 hover:bg-blue-500 text-white rounded-full font-bold text-[11px] transition flex items-center gap-1.5 shadow-sm";
-                    btnAuthAction.innerHTML = `<span>Entrar com Google</span>`;
+                    btnAuthAction.className = "w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold text-slate-200 hover:bg-slate-800 transition";
+                    btnAuthAction.innerHTML = '<i data-lucide="log-in" class="w-4 h-4 text-blue-400"></i><span>Entrar com Google</span>';
                 }
             }
             refreshIcons();
         }
 
+        function toggleAccountMenu(force) {
+            const panel = document.getElementById('accountMenuPanel');
+            const trigger = document.getElementById('accountMenuTrigger');
+            if (!panel || !trigger) return;
+            const open = typeof force === 'boolean' ? force : panel.classList.contains('hidden');
+            panel.classList.toggle('hidden', !open);
+            trigger.setAttribute('aria-expanded', String(open));
+        }
+
+        document.addEventListener('click', (event) => {
+            if (!event.target.closest('.account-menu')) toggleAccountMenu(false);
+        });
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') toggleAccountMenu(false);
+        });
+
         function handleAuthButtonClick() {
+            toggleAccountMenu(false);
             if (currentUserState) executeLogout();
             else executeGoogleLogin();
         }
