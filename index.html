@@ -759,6 +759,13 @@
                     <button type="button" data-folder-icon="dumbbell" title="Saúde e treino" class="folder-icon-option p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-400"><i data-lucide="dumbbell" class="w-4 h-4 mx-auto"></i></button>
                     <button type="button" data-folder-icon="coffee" title="Rotina" class="folder-icon-option p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-400"><i data-lucide="coffee" class="w-4 h-4 mx-auto"></i></button>
                 </div></div>
+                <div class="pt-3 border-t border-slate-800">
+                    <label for="folderColor" class="block text-[11px] font-semibold text-slate-400 mb-2">Cor da pasta</label>
+                    <div class="flex items-center gap-3">
+                        <input type="color" id="folderColor" value="#3b82f6" class="w-12 h-10 bg-slate-950 border border-slate-700 rounded-lg cursor-pointer p-1" aria-label="Escolher cor da pasta">
+                        <div class="min-w-0"><p class="text-xs text-slate-200 font-medium">Escolha sua cor</p><p class="text-[10px] text-slate-500">Aplicada ao ícone e às etiquetas desta pasta.</p></div>
+                    </div>
+                </div>
                 <div class="pt-3 border-t border-slate-800 flex justify-end gap-2"><button type="button" id="btnCancelFolderModal" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs">Cancelar</button><button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-semibold">Salvar pasta</button></div>
             </form>
         </div>
@@ -971,6 +978,7 @@
         let folderUnsubscribe = null;
         let activeFolderId = null;
         let selectedFolderIcon = 'folder';
+        let selectedFolderColor = '#3b82f6';
         let agendaSeedTimer = null;
         let agendaSeedRunning = false;
         
@@ -1317,10 +1325,16 @@
                 });
         }
 
-        function folderIconHtml(icon, cls='w-4 h-4') {
+        function getFolderColor(folderOrColor) {
+            const value = typeof folderOrColor === 'string' ? folderOrColor : (folderOrColor?.color || '#3b82f6');
+            return /^#[0-9a-fA-F]{6}$/.test(value) ? value : '#3b82f6';
+        }
+
+        function folderIconHtml(icon, cls='w-4 h-4', color='#3b82f6') {
             const allowed = ['folder','briefcase','home','heart','book-open','church','star','target','graduation-cap','users','calendar-days','clipboard-list','wrench','file-text','music','shopping-bag','car','plane','wallet','dumbbell','coffee'];
             const safeIcon = allowed.includes(icon) ? icon : 'folder';
-            return `<i data-lucide="${safeIcon}" class="${cls}"></i>`;
+            const safeColor = getFolderColor(color);
+            return '<i data-lucide="' + safeIcon + '" class="' + cls + '" style="color:' + safeColor + '"></i>';
         }
 
         function openFolderModal(folderId = null) {
@@ -1331,6 +1345,9 @@
             document.getElementById('folderId').value = '';
             document.getElementById('folderModalTitle').textContent = 'Nova Pasta';
             selectedFolderIcon = 'folder';
+            selectedFolderColor = '#3b82f6';
+            const folderColorInput = document.getElementById('folderColor');
+            if (folderColorInput) folderColorInput.value = selectedFolderColor;
             const parentSelect = document.getElementById('folderParent');
             if (parentSelect) {
                 parentSelect.innerHTML = '<option value="">Nenhuma (pasta principal)</option>' + folders.filter(f => f.id !== folderId && !f.parentId).map(f => '<option value="'+escapeHtml(f.id)+'">'+escapeHtml(f.name)+'</option>').join('');
@@ -1342,6 +1359,8 @@
                 document.getElementById('folderId').value = folder.id;
                 document.getElementById('folderName').value = folder.name || '';
                 selectedFolderIcon = folder.icon || 'folder';
+                selectedFolderColor = getFolderColor(folder);
+                if (folderColorInput) folderColorInput.value = selectedFolderColor;
                 if (parentSelect) parentSelect.value = folder.parentId || '';
                 document.getElementById('folderModalTitle').textContent = 'Editar Pasta';
             }
@@ -1377,7 +1396,8 @@
                 : (folders.reduce((max, f) => Math.max(max, Number.isFinite(Number(f.order)) ? Number(f.order) : -1), -1) + 1);
             const parentId = document.getElementById('folderParent')?.value || '';
             if (parentId === id) { alert('Uma pasta não pode ser pai dela mesma.'); return; }
-            const payload = { name, icon: selectedFolderIcon, parentId, order: nextOrder, updatedAt: firebase.firestore.FieldValue.serverTimestamp(), createdAt: existing?.createdAt || firebase.firestore.FieldValue.serverTimestamp() };
+            const color = getFolderColor(document.getElementById('folderColor')?.value || selectedFolderColor);
+            const payload = { name, icon: selectedFolderIcon, color, parentId, order: nextOrder, updatedAt: firebase.firestore.FieldValue.serverTimestamp(), createdAt: existing?.createdAt || firebase.firestore.FieldValue.serverTimestamp() };
             try {
                 await db.collection('users').doc(currentUserState.uid).collection('folders').doc(id).set(payload, { merge: true });
                 closeFolderModal();
@@ -1533,12 +1553,12 @@
                     <span class="folder-drag-handle shrink-0 p-1 text-slate-600 group-hover:text-slate-400" title="Arraste para reordenar"><i data-lucide="grip-vertical" class="w-3 h-3"></i></span>
                     ${children.length ? `<button type="button" class="p-1 text-slate-500 hover:text-white" aria-label="Expandir subpastas" onclick="toggleSidebarFolder('${f.id}')"><i data-lucide="${expanded?'chevron-down':'chevron-right'}" class="w-3 h-3"></i></button>` : '<span class="w-5 shrink-0"></span>'}
                     <button type="button" onclick="openFolderFromSidebar('${f.id}')" class="min-w-0 flex-1 flex items-center gap-2 px-1.5 py-2 text-[11px] text-slate-400 hover:text-white hover:bg-slate-800/60 rounded-lg truncate text-left" title="${escapeHtml(f.name||'Sem nome')}">
-                      <span class="text-blue-400 shrink-0">${folderIconHtml(f.icon,'w-3.5 h-3.5')}</span><span class="truncate">${escapeHtml(f.name||'Sem nome')}</span>
+                      <span class="text-blue-400 shrink-0">${folderIconHtml(f.icon,'w-3.5 h-3.5',f.color)}</span><span class="truncate">${escapeHtml(f.name||'Sem nome')}</span>
                     </button>
                   </div>
                   ${children.length && expanded ? `<div class="ml-6 border-l border-slate-800 pl-1">${children.map(c=>`
                     <div class="folder-sidebar-item group flex items-center gap-1 rounded-lg" data-folder-id="${escapeHtml(c.id)}">
-                      <span class="w-4 shrink-0"></span><button type="button" onclick="openFolderFromSidebar('${c.id}')" class="min-w-0 flex-1 flex items-center gap-2 px-1.5 py-2 text-[11px] text-slate-400 hover:text-white hover:bg-slate-800/60 rounded-lg truncate text-left" title="${escapeHtml(c.name||'Sem nome')}"><span class="text-blue-400 shrink-0">${folderIconHtml(c.icon,'w-3.5 h-3.5')}</span><span class="truncate">${escapeHtml(c.name||'Sem nome')}</span></button>
+                      <span class="w-4 shrink-0"></span><button type="button" onclick="openFolderFromSidebar('${c.id}')" class="min-w-0 flex-1 flex items-center gap-2 px-1.5 py-2 text-[11px] text-slate-400 hover:text-white hover:bg-slate-800/60 rounded-lg truncate text-left" title="${escapeHtml(c.name||'Sem nome')}"><span class="text-blue-400 shrink-0">${folderIconHtml(c.icon,'w-3.5 h-3.5',c.color)}</span><span class="truncate">${escapeHtml(c.name||'Sem nome')}</span></button>
                     </div>`).join('')}</div>` : ''}
                 </div>`;
             }).join('');
@@ -1644,7 +1664,7 @@
                 grid.innerHTML = rootFolders.map(f => {
                     const count = getActiveTasksForFolder(f).length;
                     return `<div class="glass-card rounded-xl p-4 border border-slate-800 hover:border-blue-500/50 transition cursor-pointer" onclick="selectFolder('${f.id}')">
-                        <div class="flex items-start justify-between gap-3"><div class="flex items-center gap-3 min-w-0"><span class="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-400 grid place-items-center shrink-0">${folderIconHtml(f.icon,'w-5 h-5')}</span><div class="min-w-0"><h3 class="text-sm font-bold text-white truncate">${escapeHtml(f.name || 'Sem nome')}</h3><p class="text-[11px] text-slate-500">${count} tarefa${count === 1 ? '' : 's'}</p></div></div><div class="flex gap-1"><button type="button" onclick="event.stopPropagation(); openFolderModal('${f.id}')" class="p-1.5 text-slate-500 hover:text-white hover:bg-slate-800 rounded-lg"><i data-lucide="pencil" class="w-3.5 h-3.5"></i></button><button type="button" onclick="event.stopPropagation(); deleteFolder('${f.id}')" class="p-1.5 text-slate-500 hover:text-red-400 hover:bg-slate-800 rounded-lg"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button></div></div>
+                        <div class="flex items-start justify-between gap-3"><div class="flex items-center gap-3 min-w-0"><span class="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-400 grid place-items-center shrink-0">${folderIconHtml(f.icon,'w-5 h-5',f.color)}</span><div class="min-w-0"><h3 class="text-sm font-bold text-white truncate">${escapeHtml(f.name || 'Sem nome')}</h3><p class="text-[11px] text-slate-500">${count} tarefa${count === 1 ? '' : 's'}</p></div></div><div class="flex gap-1"><button type="button" onclick="event.stopPropagation(); openFolderModal('${f.id}')" class="p-1.5 text-slate-500 hover:text-white hover:bg-slate-800 rounded-lg"><i data-lucide="pencil" class="w-3.5 h-3.5"></i></button><button type="button" onclick="event.stopPropagation(); deleteFolder('${f.id}')" class="p-1.5 text-slate-500 hover:text-red-400 hover:bg-slate-800 rounded-lg"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button></div></div>
                     </div>`;
                 }).join('');
                 if (folders.length) grid.classList.remove('hidden'); else grid.classList.add('hidden');
@@ -1727,7 +1747,7 @@
         function updateFolderAgendaControls(){ document.querySelectorAll('.folder-period-btn').forEach(btn=>{const a=btn.dataset.folderPeriod===activeFolderPeriod;btn.classList.toggle('bg-blue-600',a);btn.classList.toggle('text-white',a);btn.classList.toggle('text-slate-400',!a);}); document.querySelectorAll('.folder-view-btn').forEach(btn=>{const a=btn.dataset.folderView===activeFolderViewMode;btn.classList.toggle('bg-blue-600',a);btn.classList.toggle('text-white',a);btn.classList.toggle('text-slate-400',!a);}); }
         function renderFolderTasks() {
             const panel=document.getElementById('folderTasksPanel'); if(!panel)return; const folder=folders.find(f=>f.id===activeFolderId); if(!folder){panel.classList.add('hidden');return;} panel.classList.remove('hidden');
-            document.getElementById('folderTasksTitle').textContent=folder.name||'Pasta'; document.getElementById('folderTasksIcon').innerHTML=folderIconHtml(folder.icon,'w-4 h-4');
+            document.getElementById('folderTasksTitle').textContent=folder.name||'Pasta'; document.getElementById('folderTasksIcon').innerHTML=folderIconHtml(folder.icon,'w-4 h-4',folder.color);
             const subNav=document.getElementById('churchSubfolderNav');
             const churchChildren=folders.filter(f=>f.parentId===folder.id);
             const isChurch=String(folder.name||'').trim().toLowerCase()==='igreja';
@@ -2960,7 +2980,7 @@
             const ordered = agendaSortTasks(getActiveTasks(filtered));
             container.innerHTML = ordered.length ? ordered.map(t => {
                 const folder = folders.find(f => f.id === getTaskFolderId(t)); const done = t.status === 'done';
-                const folderBadge = folder ? `<span class="text-[10px] px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-300 font-medium flex items-center gap-1">${folderIconHtml(folder.icon,'w-3 h-3')} ${escapeHtml(folder.name||'Pasta')}</span>` : '<span class="text-[10px] px-2 py-0.5 rounded-md bg-slate-800 text-slate-500 font-medium">Sem pasta</span>';
+                const folderBadge = folder ? `<span class="text-[10px] px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-300 font-medium flex items-center gap-1">${folderIconHtml(folder.icon,'w-3 h-3',folder.color)} ${escapeHtml(folder.name||'Pasta')}</span>` : '<span class="text-[10px] px-2 py-0.5 rounded-md bg-slate-800 text-slate-500 font-medium">Sem pasta</span>';
                 return `<div class="bg-slate-900/80 border border-slate-800 rounded-xl p-3 flex flex-col md:flex-row md:items-center justify-between gap-3 transition hover:border-slate-700">
                     <div class="flex items-start gap-3"><button onclick="toggleTaskComplete('${t.id}')" class="mt-0.5 ${done?'text-emerald-400':'text-slate-500 hover:text-slate-300'} transition"><i data-lucide="${done?'check-circle':'circle'}" class="w-5 h-5"></i></button>
                     <div><h3 class="font-semibold text-xs text-slate-100 ${done?'line-through text-slate-500':''}">${escapeHtml(t.title)}</h3>${t.description?`<p class="text-[11px] text-slate-400 mt-0.5 line-clamp-2">${escapeHtml(t.description)}</p>`:''}<div class="flex flex-wrap items-center gap-2 mt-1.5">${folderBadge}${getPriorityBadge(t.priority)}${t.dueDate?`<span class="text-[10px] text-slate-400 flex items-center gap-1"><i data-lucide="calendar" class="w-3 h-3"></i>${escapeHtml(t.dueDate)}${t.dueTime?' · '+escapeHtml(t.dueTime):''}</span>`:'<span class="text-[10px] text-slate-500 italic">Sem data</span>'}${t.recurrenceRule?'<span class="text-[10px] text-cyan-300 flex items-center gap-1"><i data-lucide="repeat" class="w-3 h-3"></i>Recorrente</span>':''}</div></div></div>
@@ -3043,7 +3063,7 @@
                     </div>
                     ${t.description ? `<p class="text-[11px] text-slate-400 line-clamp-2">${escapeHtml(t.description)}</p>` : ''}
                     <div class="flex justify-between items-center text-[10px] text-slate-400 pt-1.5 border-t border-slate-900">
-                        ${(() => { const f=folders.find(x=>x.id===getTaskFolderId(t)); return f ? `<span class=\"bg-blue-500/10 px-1.5 py-0.5 rounded text-[10px] text-blue-300 flex items-center gap-1\">${folderIconHtml(f.icon,'w-3 h-3')}${escapeHtml(f.name)}</span>` : '<span class=\"text-[10px] text-slate-600\">Sem pasta</span>'; })()}
+                        ${(() => { const f=folders.find(x=>x.id===getTaskFolderId(t)); return f ? `<span class=\"bg-blue-500/10 px-1.5 py-0.5 rounded text-[10px] text-blue-300 flex items-center gap-1\">${folderIconHtml(f.icon,'w-3 h-3',f.color)}${escapeHtml(f.name)}</span>` : '<span class=\"text-[10px] text-slate-600\">Sem pasta</span>'; })()}
                         ${t.dueDate ? `<span>${escapeHtml(t.dueDate)}</span>` : '<span class="italic text-slate-600">Sem data</span>'}
                     </div>
                 `;
@@ -3171,6 +3191,7 @@
         document.getElementById('btnCancelFolderModal')?.addEventListener('click', closeFolderModal);
         document.getElementById('folderForm')?.addEventListener('submit', async (e) => { e.preventDefault(); await saveFolder(); });
         document.getElementById('btnNewTaskInFolder')?.addEventListener('click', () => { openModal(); document.getElementById('taskFolder').value = activeFolderId || ''; });
+        document.getElementById('folderColor')?.addEventListener('input', e => { selectedFolderColor = getFolderColor(e.target.value); });
         document.querySelectorAll('.folder-icon-option').forEach(btn => btn.addEventListener('click', () => {
             selectedFolderIcon = btn.dataset.folderIcon || 'folder';
             document.querySelectorAll('.folder-icon-option').forEach(b => {
