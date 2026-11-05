@@ -735,6 +735,7 @@
             <form id="folderForm" class="p-4 space-y-4">
                 <input type="hidden" id="folderId">
                 <div><label class="block text-[11px] font-semibold text-slate-400 mb-1">Nome *</label><input id="folderName" required maxlength="60" class="w-full bg-slate-950 border border-slate-800 text-slate-100 rounded-lg p-2.5 text-xs outline-none focus:border-blue-500" placeholder="Ex: Ministério"></div>
+                <div><label class="block text-[11px] font-semibold text-slate-400 mb-1">Pasta principal (opcional)</label><select id="folderParent" class="w-full bg-slate-950 border border-slate-800 text-slate-100 rounded-lg p-2.5 text-xs outline-none focus:border-blue-500"><option value="">Nenhuma (pasta principal)</option></select><p class="text-[10px] text-slate-500 mt-1">Escolha Igreja para colocar esta pasta dentro dela.</p></div>
                 <div><label class="block text-[11px] font-semibold text-slate-400 mb-2">Ícone da pasta</label><div id="folderIconPicker" class="grid grid-cols-8 gap-2">
                     <button type="button" data-folder-icon="folder" title="Pasta" class="folder-icon-option active p-2 rounded-lg bg-blue-600/20 border border-blue-500/60 text-blue-300"><i data-lucide="folder" class="w-4 h-4 mx-auto"></i></button>
                     <button type="button" data-folder-icon="briefcase" title="Trabalho" class="folder-icon-option p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-400"><i data-lucide="briefcase" class="w-4 h-4 mx-auto"></i></button>
@@ -1299,12 +1300,18 @@
             document.getElementById('folderId').value = '';
             document.getElementById('folderModalTitle').textContent = 'Nova Pasta';
             selectedFolderIcon = 'folder';
+            const parentSelect = document.getElementById('folderParent');
+            if (parentSelect) {
+                parentSelect.innerHTML = '<option value="">Nenhuma (pasta principal)</option>' + folders.filter(f => f.id !== folderId && !f.parentId).map(f => '<option value="'+escapeHtml(f.id)+'">'+escapeHtml(f.name)+'</option>').join('');
+                parentSelect.value = '';
+            }
             if (folderId) {
                 const folder = folders.find(f => f.id === folderId);
                 if (!folder) return;
                 document.getElementById('folderId').value = folder.id;
                 document.getElementById('folderName').value = folder.name || '';
                 selectedFolderIcon = folder.icon || 'folder';
+                if (parentSelect) parentSelect.value = folder.parentId || '';
                 document.getElementById('folderModalTitle').textContent = 'Editar Pasta';
             }
             document.querySelectorAll('.folder-icon-option').forEach(btn => {
@@ -1337,7 +1344,9 @@
             const nextOrder = existing && Number.isFinite(Number(existing.order))
                 ? Number(existing.order)
                 : (folders.reduce((max, f) => Math.max(max, Number.isFinite(Number(f.order)) ? Number(f.order) : -1), -1) + 1);
-            const payload = { name, icon: selectedFolderIcon, order: nextOrder, updatedAt: firebase.firestore.FieldValue.serverTimestamp(), createdAt: existing?.createdAt || firebase.firestore.FieldValue.serverTimestamp() };
+            const parentId = document.getElementById('folderParent')?.value || '';
+            if (parentId === id) { alert('Uma pasta não pode ser pai dela mesma.'); return; }
+            const payload = { name, icon: selectedFolderIcon, parentId, order: nextOrder, updatedAt: firebase.firestore.FieldValue.serverTimestamp(), createdAt: existing?.createdAt || firebase.firestore.FieldValue.serverTimestamp() };
             try {
                 await db.collection('users').doc(currentUserState.uid).collection('folders').doc(id).set(payload, { merge: true });
                 closeFolderModal();
