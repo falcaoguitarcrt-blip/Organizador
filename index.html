@@ -698,6 +698,7 @@
                         <button id="btnNewTaskInFolder" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-[11px] font-semibold">+ Nova tarefa</button>
                     </div>
                 </div>
+                <div id="churchSubfolderNav" class="hidden flex flex-wrap gap-2 mb-3"></div>
                 <div class="glass-card p-2 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
                     <div class="flex flex-wrap gap-1.5 items-center">
                         <span class="text-[10px] font-semibold text-slate-500 mr-1">Período</span>
@@ -1566,10 +1567,13 @@
             }
         }
 
+        let activeChurchSubfolderId = '';
+        function openChurchSubfolder(id){activeChurchSubfolderId=id||'';renderFolderTasks();}
         function openFolderFromSidebar(folderId) {
             const folder = folders.find(f => f.id === folderId);
             if (!folder) return;
             activeFolderId = folderId;
+            activeChurchSubfolderId = '';
             activeFolderPeriod = 'all';
             activeFolderViewMode = 'cards';
             folderCalendarDate = new Date();
@@ -1678,7 +1682,13 @@
         function renderFolderTasks() {
             const panel=document.getElementById('folderTasksPanel'); if(!panel)return; const folder=folders.find(f=>f.id===activeFolderId); if(!folder){panel.classList.add('hidden');return;} panel.classList.remove('hidden');
             document.getElementById('folderTasksTitle').textContent=folder.name||'Pasta'; document.getElementById('folderTasksIcon').innerHTML=folderIconHtml(folder.icon,'w-4 h-4');
-            const allFolderTasks=getTasksForFolder(folder).filter(t => !['done','completed','concluida','concluído','concluido'].includes(String(t.status||'').toLowerCase())), periodTasks=agendaSortTasks(getFolderPeriodTasks(allFolderTasks)); document.getElementById('folderTasksCount').textContent=`${periodTasks.length} tarefa${periodTasks.length===1?'':'s'} ativa${periodTasks.length===1?'':'s'}`;
+            const subNav=document.getElementById('churchSubfolderNav');
+            const churchChildren=folders.filter(f=>f.parentId===folder.id);
+            const isChurch=String(folder.name||'').trim().toLowerCase()==='igreja';
+            let sourceFolderTasks=isChurch?tasks.filter(t=>churchChildren.some(child=>taskBelongsToFolder(t,child))):getTasksForFolder(folder);
+            sourceFolderTasks=sourceFolderTasks.filter(t=>!['done','completed','concluida','concluído','concluido'].includes(String(t.status||'').toLowerCase()));
+            if(subNav){subNav.classList.toggle('hidden',!isChurch||!churchChildren.length);subNav.innerHTML=isChurch?'<span class="text-[10px] text-slate-500 self-center mr-1">Subpastas:</span>'+churchChildren.map(child=>'<button type="button" onclick="openChurchSubfolder(\''+child.id+'\')" class="px-3 py-1.5 rounded-lg text-[11px] bg-slate-800 hover:bg-blue-600 text-slate-300">'+escapeHtml(child.name)+'</button>').join('')+(activeChurchSubfolderId?'<button type="button" onclick="openChurchSubfolder(\'\')" class="px-3 py-1.5 rounded-lg text-[11px] bg-blue-600 text-white">Todas</button>':'') :'';}
+            const allFolderTasks=activeChurchSubfolderId&&isChurch?getTasksForFolder(folders.find(f=>f.id===activeChurchSubfolderId)||folder).filter(t=>!['done','completed','concluida','concluído','concluido'].includes(String(t.status||'').toLowerCase())):sourceFolderTasks, periodTasks=agendaSortTasks(getFolderPeriodTasks(allFolderTasks)); document.getElementById('folderTasksCount').textContent=`${periodTasks.length} tarefa${periodTasks.length===1?'':'s'} ativa${periodTasks.length===1?'':'s'}`;
             const list=document.getElementById('folderTasksList'), nav=document.getElementById('folderCalendarNav');
             if(activeFolderViewMode==='week'){nav.classList.remove('hidden');nav.classList.add('flex');list.innerHTML=renderAgendaWeek(periodTasks,folderCalendarDate,document.getElementById('folderCalendarTitle'));}
             else if(activeFolderViewMode==='month'){nav.classList.remove('hidden');nav.classList.add('flex');list.innerHTML=renderAgendaMonth(periodTasks,folderCalendarDate,document.getElementById('folderCalendarTitle'));}
