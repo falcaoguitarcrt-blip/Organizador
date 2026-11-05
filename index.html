@@ -1465,9 +1465,8 @@
         // Tarefas concluídas permanecem no Firestore como histórico/arquivo,
         // mas não entram nas listas operacionais de pastas e tarefas.
         function isTaskCompleted(task) {
-            const status = String(task?.status || '').trim().toLowerCase()
-                .normalize('NFD').replace(/[\\u0300-\\u036f]/g, '');
-            return ['done','completed','complete','concluido','concluida','finalizado','finalizada','archived','arquivado','arquivada'].includes(status)
+            const status = String(task?.status || '').trim().toLowerCase();
+            return ['done','completed','complete','concluido','concluida','concluído','concluída','finalizado','finalizada','archived','arquivado','arquivada'].includes(status)
                 || task?.completed === true || task?.isCompleted === true;
         }
 
