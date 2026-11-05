@@ -1251,7 +1251,9 @@
                     if (!folder) continue;
                     const existingSeed = existingBySeed.get(def.seedKey);
                     const fallback = tasks.find(t => {
-                        const titleMatch = normalizeAgendaText(t.title) === normalizeAgendaText(def.title);
+                        const normalizedTaskTitle = normalizeAgendaText(t.title);
+                        const titleMatch = normalizedTaskTitle === normalizeAgendaText(def.title) ||
+                            (!!def.recurrenceRule && normalizedTaskTitle.includes('culto'));
                         const dateMatch = String(t.dueDate || '') === String(def.dueDate || '');
                         const timeMatch = !def.dueTime || !t.dueTime || String(t.dueTime) === String(def.dueTime);
                         return titleMatch && dateMatch && timeMatch;
