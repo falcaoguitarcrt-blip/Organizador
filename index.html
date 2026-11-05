@@ -1465,11 +1465,17 @@
         // Tarefas concluídas permanecem no Firestore como histórico/arquivo,
         // mas não entram nas listas operacionais de pastas e tarefas.
         function isTaskCompleted(task) {
-            const status = String(task?.status || '').trim().toLowerCase();
-            return ['done','completed','complete','concluido','concluida','concluído','concluída','finalizado','finalizada','archived','arquivado','arquivada'].includes(status)
-                || task?.completed === true || task?.isCompleted === true;
+            if (!task || typeof task !== 'object') return false;
+            const normalizeStatus = value => String(value ?? '').trim().toLowerCase()
+                .normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '');
+            const status = normalizeStatus(task.status ?? task.situacao ?? task.state);
+            const completedStatuses = ['done','completed','complete','concluded','concluido','finalizado','finalizada','finished','archived','arquivado','arquivada'];
+            if (completedStatuses.includes(status)) return true;
+            const trueValues = value => value === true || value === 1 || ['true','1','yes','sim'].includes(normalizeStatus(value));
+            if (['completed','isCompleted','concluida','concluido','done','isDone','archived','isArchived'].some(key => trueValues(task[key]))) return true;
+            if (['completedAt','finishedAt','concludedAt','archivedAt','dataConclusao','dataConclusão'].some(key => !!task[key])) return true;
+            return false;
         }
-
         function getActiveTasks(list = tasks) {
             return list.filter(task => !isTaskCompleted(task));
         }
@@ -2362,7 +2368,8 @@
             resetFilterSelects();
             currentFilterMode = 'status';
             highlightShortcutButtons(null);
-            document.getElementById('filterStatus').value = status;
+            // Concluídas ficam no arquivo e não podem ser reabertas pela lista operacional.
+            document.getElementById('filterStatus').value = status === 'done' ? 'all' : status;
             switchView('tasks');
             renderTaskList();
         }
@@ -2948,7 +2955,9 @@
         }
 
         function renderTaskCards(filtered, container) {
-            const ordered = agendaSortTasks(filtered);
+            // Segunda barreira: a lista em cartões nunca apresenta tarefas arquivadas,
+            // mesmo que outra rotina envie uma coleção sem filtrar.
+            const ordered = agendaSortTasks(getActiveTasks(filtered));
             container.innerHTML = ordered.length ? ordered.map(t => {
                 const folder = folders.find(f => f.id === getTaskFolderId(t)); const done = t.status === 'done';
                 const folderBadge = folder ? `<span class="text-[10px] px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-300 font-medium flex items-center gap-1">${folderIconHtml(folder.icon,'w-3 h-3')} ${escapeHtml(folder.name||'Pasta')}</span>` : '<span class="text-[10px] px-2 py-0.5 rounded-md bg-slate-800 text-slate-500 font-medium">Sem pasta</span>';
@@ -2962,6 +2971,7 @@
         }
         function setTaskViewMode(mode){currentTaskViewMode=mode;if(mode==='week'||mode==='month'){currentFilterMode=mode;taskCalendarDate=new Date();}else if(currentFilterMode==='week'||currentFilterMode==='month'){currentFilterMode='all';}document.querySelectorAll('.task-view-btn').forEach(btn=>{const a=btn.dataset.taskView===mode;btn.classList.toggle('bg-blue-600',a);btn.classList.toggle('text-white',a);btn.classList.toggle('text-slate-400',!a);});document.querySelectorAll('.task-period-btn').forEach(btn=>{const a=btn.dataset.taskPeriod===currentFilterMode;btn.classList.toggle('bg-blue-600',a);btn.classList.toggle('text-white',a);btn.classList.toggle('text-slate-400',!a);});renderTaskList();}
         function getTaskCalendarFilteredTasks(baseFiltered) {
+            baseFiltered = getActiveTasks(baseFiltered);
             if (currentTaskViewMode === 'cards') return baseFiltered;
             const anchor = taskCalendarDate;
             if (currentTaskViewMode === 'week') {
