@@ -1213,7 +1213,7 @@
                 { seedKey:'cultos_2026-11-08_domingo_1030', title:'Culto de Domingo - 10h30', description:'Apelo/visitantes e programação do culto.', dueDate:'2026-11-08', dueTime:'10:30', category:'Igreja', priority:'Média', status:'todo', folderName:'Cultos', folderIcon:'church' },
                 { seedKey:'supervisao_2026-11-09_toca_leoes', title:'Toca dos Leões', description:'Evento dos homens na igreja.', dueDate:'2026-11-09', dueTime:'20:00', category:'Igreja', priority:'Alta', status:'todo', folderName:'Cultos', folderIcon:'church' },
                 { seedKey:'jornada_2026-11-12_apelo_visitantes', title:'Jornada - Apelo/Visitantes', description:'Preparação e atendimento de apelo/visitantes.', dueDate:'2026-11-12', dueTime:'19:00', category:'Igreja', priority:'Média', status:'todo', folderName:'Jornada de Conhecimento', folderIcon:'book-open' },
-                { seedKey:'supervisao_2026-11-16_aviso_confraternizacoes', title:'Avisar líderes sobre confraternizações dos GEs', description:'Comunicar os líderes com pelo menos uma semana de antecedência.', dueDate:'2026-11-16', dueTime:'09:00', category:'Igreja', priority:'Alta', status:'todo', folderName:'Supervisão GE', folderIcon:'users' },
+                { seedKey:'supervisao_2026-11-16_aviso_confraternizacoes', title:'Avisar líderes sobre confraternizações dos GEs', description:'Comunicar os líderes com pelo menos uma semana de antecedência.', dueDate:'2026-11-16', category:'Igreja', priority:'Alta', status:'todo', folderName:'Supervisão GE', folderIcon:'users' },
                 { seedKey:'pessoal_2026-11-20_dunamis_con', title:'Dunamis Con - viagem para São Paulo', description:'Evento de 20 a 22/11. Ajustar logística da viagem.', dueDate:'2026-11-20', category:'Pessoal', priority:'Alta', status:'todo', folderName:'Pessoal', folderIcon:'plane' },
                 { seedKey:'inventario_2026-11-20_advogada', title:'Pagamento mensal da advogada - inventário', description:'R$ 1.000: R$ 500 da sua parte (reserva) e R$ 500 da Dudinha a solicitar/receber.', dueDate:'2026-11-20', category:'Inventário', priority:'Alta', status:'todo', folderName:'Inventário', folderIcon:'file-text' },
                 { seedKey:'financeiro_2026-11-20_fatura_cartao', title:'Vencimento da fatura do cartão', description:'Fatura de novembro: R$ 316,76.', dueDate:'2026-11-20', category:'Financeiro', priority:'Alta', status:'todo', folderName:'Financeiro', folderIcon:'wallet' },
@@ -1613,13 +1613,14 @@
 
             // Ao entrar em uma pasta, mostrar somente o painel daquela pasta.
             // A grade de todas as pastas fica apenas na tela inicial de Pastas.
+            const rootFolders = folders.filter(f => !f.parentId || !folders.some(parent => parent.id === f.parentId));
             const hasActiveFolder = !!folders.find(f => f.id === activeFolderId);
             if (hasActiveFolder) {
                 grid.classList.add('hidden');
                 empty?.classList.add('hidden');
             } else {
-                empty?.classList.toggle('hidden', folders.length > 0);
-                grid.innerHTML = folders.map(f => {
+                empty?.classList.toggle('hidden', rootFolders.length > 0);
+                grid.innerHTML = rootFolders.map(f => {
                     const count = getTasksForFolder(f).length;
                     return `<div class="glass-card rounded-xl p-4 border border-slate-800 hover:border-blue-500/50 transition cursor-pointer" onclick="selectFolder('${f.id}')">
                         <div class="flex items-start justify-between gap-3"><div class="flex items-center gap-3 min-w-0"><span class="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-400 grid place-items-center shrink-0">${folderIconHtml(f.icon,'w-5 h-5')}</span><div class="min-w-0"><h3 class="text-sm font-bold text-white truncate">${escapeHtml(f.name || 'Sem nome')}</h3><p class="text-[11px] text-slate-500">${count} tarefa${count === 1 ? '' : 's'}</p></div></div><div class="flex gap-1"><button type="button" onclick="event.stopPropagation(); openFolderModal('${f.id}')" class="p-1.5 text-slate-500 hover:text-white hover:bg-slate-800 rounded-lg"><i data-lucide="pencil" class="w-3.5 h-3.5"></i></button><button type="button" onclick="event.stopPropagation(); deleteFolder('${f.id}')" class="p-1.5 text-slate-500 hover:text-red-400 hover:bg-slate-800 rounded-lg"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button></div></div>
@@ -2737,19 +2738,24 @@
 
             const now = new Date();
             const monthKey = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
-            const counts = folders.map(folder => {
-                const folderTasks = getTasksForFolder(folder);
+            const activeTasks = task => !['done','completed','concluida','concluído','concluido'].includes(String(task.status || '').toLowerCase());
+            const rootFolders = folders.filter(folder => !folder.parentId || !folders.some(parent => parent.id === folder.parentId));
+            const counts = rootFolders.map(folder => {
                 const isChurch = String(folder.name || '').trim().toLowerCase() === 'igreja';
-                return {
-                    folder,
-                    count: isChurch
-                        ? folderTasks.filter(task => String(task.dueDate || '').startsWith(monthKey)).length
-                        : folderTasks.length
-                };
+                let folderTasks;
+                if (isChurch) {
+                    const children = folders.filter(child => child.parentId === folder.id);
+                    folderTasks = tasks.filter(task =>
+                        (getTaskFolderId(task) === folder.id || children.some(child => taskBelongsToFolder(task, child))) &&
+                        activeTasks(task) && String(task.dueDate || '').startsWith(monthKey)
+                    );
+                } else {
+                    folderTasks = getTasksForFolder(folder).filter(activeTasks);
+                }
+                return { folder, count: folderTasks.length };
             }).filter(item => item.count > 0);
 
             const total = counts.reduce((sum, item) => sum + item.count, 0);
-
             if (!counts.length) {
                 el.innerHTML = `
                     <div class="h-48 flex flex-col items-center justify-center text-center text-slate-500">
@@ -2763,11 +2769,7 @@
             const maxVisible = 8;
             const visible = counts.slice(0, maxVisible);
             const remaining = counts.slice(maxVisible).reduce((sum, item) => sum + item.count, 0);
-
-            const colors = [
-                'bg-blue-500', 'bg-violet-500', 'bg-amber-400', 'bg-cyan-400',
-                'bg-emerald-400', 'bg-rose-400', 'bg-fuchsia-400', 'bg-indigo-400'
-            ];
+            const colors = ['bg-blue-500','bg-violet-500','bg-amber-400','bg-cyan-400','bg-emerald-400','bg-rose-400','bg-fuchsia-400','bg-indigo-400'];
 
             el.innerHTML = `
                 <div class="space-y-3">
@@ -2779,8 +2781,7 @@
                         ${visible.map((item, index) => {
                             const pct = total ? Math.round((item.count / total) * 100) : 0;
                             return `
-                                <button type="button"
-                                    class="w-full text-left group"
+                                <button type="button" class="w-full text-left group"
                                     onclick="openFolderFromSidebar('${item.folder.id}')"
                                     title="Abrir ${escapeHtml(item.folder.name || 'Pasta')}">
                                     <div class="flex items-center gap-2 mb-1">
@@ -2796,7 +2797,6 @@
                         ${remaining > 0 ? `<div class="text-[10px] text-slate-500 pt-1">+ ${remaining} tarefas em outras pastas</div>` : ''}
                     </div>
                 </div>`;
-
             refreshIcons();
         }
 
