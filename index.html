@@ -1689,7 +1689,13 @@
             sourceFolderTasks=sourceFolderTasks.filter(t=>!['done','completed','concluida','concluído','concluido'].includes(String(t.status||'').toLowerCase()));
             if(subNav){
                 subNav.classList.toggle('hidden',!isChurch||!churchChildren.length);
-                subNav.innerHTML=isChurch?'<span class="text-[10px] text-slate-500 self-center mr-1">Subpastas:</span>'+churchChildren.map(child=>'<button type="button" onclick="openChurchSubfolder(\\''+child.id+'\\')" class="px-3 py-1.5 rounded-lg text-[11px] '+(activeChurchSubfolderId===child.id?'bg-blue-600 text-white':'bg-slate-800 hover:bg-blue-600 text-slate-300')+'">'+escapeHtml(child.name)+'</button>').join('')+'<button type="button" onclick="openChurchSubfolder(\\'\\')" class="px-3 py-1.5 rounded-lg text-[11px] '+(!activeChurchSubfolderId?'bg-blue-600 text-white':'bg-slate-800 hover:bg-blue-600 text-slate-300')+'">Todas</button>' : '';
+                subNav.innerHTML = isChurch ? '<span class="text-[10px] text-slate-500 self-center mr-1">Subpastas:</span>' +
+                    churchChildren.map(child => {
+                        const selected = activeChurchSubfolderId === child.id;
+                        return '<button type="button" data-church-subfolder="' + escapeHtml(child.id) + '" class="px-3 py-1.5 rounded-lg text-[11px] ' + (selected ? 'bg-blue-600 text-white' : 'bg-slate-800 hover:bg-blue-600 text-slate-300') + '">' + escapeHtml(child.name) + '</button>';
+                    }).join('') +
+                    '<button type="button" data-church-subfolder="" class="px-3 py-1.5 rounded-lg text-[11px] ' + (!activeChurchSubfolderId ? 'bg-blue-600 text-white' : 'bg-slate-800 hover:bg-blue-600 text-slate-300') + '">Todas</button>' : '';
+                subNav.querySelectorAll('[data-church-subfolder]').forEach(button => button.addEventListener('click', () => openChurchSubfolder(button.dataset.churchSubfolder)));
             }
             const allFolderTasks=activeChurchSubfolderId&&isChurch?getTasksForFolder(folders.find(f=>f.id===activeChurchSubfolderId)||folder).filter(t=>!['done','completed','concluida','concluído','concluido'].includes(String(t.status||'').toLowerCase())):sourceFolderTasks, periodTasks=agendaSortTasks(getFolderPeriodTasks(allFolderTasks)); document.getElementById('folderTasksCount').textContent=`${periodTasks.length} tarefa${periodTasks.length===1?'':'s'} ativa${periodTasks.length===1?'':'s'}`;
             const list=document.getElementById('folderTasksList'), nav=document.getElementById('folderCalendarNav');
