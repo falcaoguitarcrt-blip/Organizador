@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Minha Agenda Pro • Dashboard de Produtividade</title>
+    <title>Minha Agenda Pro • Agenda pessoal e tarefas</title>
     
     <!-- Fonts & Tailwind CSS CDN -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com">
-<!-- V45: calendário inicia no mês atual; navegar permite consultar outro mês sem alterar os dados. --></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Calendário inicia no mês atual; navegar consulta outro mês sem alterar os dados. -->
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -96,7 +96,7 @@
         .agenda-day-cell { min-height:92px; background:rgba(2,6,23,.42); border:1px solid rgba(30,41,59,.9); border-radius:10px; padding:7px; }
         .agenda-day-cell.is-today { border-color:rgba(59,130,246,.75); box-shadow:0 0 0 1px rgba(59,130,246,.18) inset; }
         .agenda-day-cell.is-outside { opacity:.42; }
-        .agenda-task-chip { display:block; width:100%; text-align:left; padding:5px 6px; margin-top:5px; border-radius:7px; background:rgba(15,23,42,.9); border:1px solid rgba(51,65,85,.85); color:#cbd5e1; font-size:10px; line-height:1.25; cursor:pointer; overflow:hidden; }
+        .agenda-task-chip { display:block; width:100%; min-height:30px; text-align:left; padding:5px 6px; margin-top:5px; border-radius:7px; background:rgba(15,23,42,.9); border:1px solid rgba(51,65,85,.85); color:#cbd5e1; font-size:10px; line-height:1.25; cursor:pointer; overflow:hidden; }
         .agenda-task-chip:hover { border-color:rgba(59,130,246,.65); color:#fff; }
         .agenda-week-column { min-height:300px; background:rgba(2,6,23,.42); border:1px solid rgba(30,41,59,.9); border-radius:10px; padding:8px; }
         .agenda-scroll-x { overflow-x:auto; padding-bottom:4px; }
@@ -225,7 +225,7 @@
                     </small>
                 </div>
                 <div id="authActions" class="ml-2 border-l border-slate-800 pl-2">
-                    <button id="btnAuthAction" onclick="handleAuthButtonClick()" class="px-3 py-1 bg-blue-600 hover:bg-blue-500 text-white rounded-full font-bold text-[11px] transition flex items-center gap-1.5 shadow-sm">
+                    <button type="button" id="btnAuthAction" onclick="handleAuthButtonClick()" class="px-3 py-1 bg-blue-600 hover:bg-blue-500 text-white rounded-full font-bold text-[11px] transition flex items-center gap-1.5 shadow-sm">
                         <span>Entrar</span>
                     </button>
                 </div>
@@ -242,7 +242,7 @@
                     </div>
                     <span class="font-bold text-base text-white">Minha Agenda <span class="text-blue-500">Pro</span></span>
                 </div>
-                <button id="mobileMenuBtn" class="p-2 text-slate-300 hover:text-white rounded-lg hover:bg-slate-800">
+                <button type="button" id="mobileMenuBtn" aria-label="Abrir menu de navegação" class="p-2 text-slate-300 hover:text-white rounded-lg hover:bg-slate-800">
                     <i data-lucide="menu" class="w-6 h-6"></i>
                 </button>
             </div>
@@ -262,20 +262,24 @@
 
                 <!-- Navigation Links -->
                 <nav class="flex-1 px-3 space-y-1 py-2">
-                    <button data-view="dashboard" class="nav-btn active w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-semibold rounded-xl text-slate-300 hover:bg-slate-800/60 hover:text-white transition">
+                    <button type="button" data-view="dashboard" class="nav-btn active w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-semibold rounded-xl text-slate-300 hover:bg-slate-800/60 hover:text-white transition">
                         <i data-lucide="home" class="w-4 h-4"></i>
                         <span>Início</span>
                     </button>
-                    <button data-view="tasks" class="nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-semibold rounded-xl text-slate-300 hover:bg-slate-800/60 hover:text-white transition">
+                    <button type="button" data-view="tasks" class="nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-semibold rounded-xl text-slate-300 hover:bg-slate-800/60 hover:text-white transition">
                         <i data-lucide="check-circle-2" class="w-4 h-4"></i>
                         <span>Tarefas</span>
                     </button>
-                    <button data-view="dashboard" class="nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-semibold rounded-xl text-slate-300 hover:bg-slate-800/60 hover:text-white transition" onclick="showReportsPanel && showReportsPanel()">
+                    <button type="button" data-view="kanban" class="nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-semibold rounded-xl text-slate-300 hover:bg-slate-800/60 hover:text-white transition">
+                        <i data-lucide="columns-3" class="w-4 h-4"></i>
+                        <span>Quadro</span>
+                    </button>
+                    <button type="button" data-view="dashboard" class="nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-semibold rounded-xl text-slate-300 hover:bg-slate-800/60 hover:text-white transition" onclick="showReportsPanel && showReportsPanel()">
                         <i data-lucide="bar-chart-3" class="w-4 h-4"></i>
-                        <span>Relatórios</span>
+                        <span>Resumo</span>
                     </button>
                     <div class="flex items-center gap-1">
-                        <button data-view="folders" class="nav-btn flex-1 w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-semibold rounded-xl text-slate-300 hover:bg-slate-800/60 hover:text-white transition">
+                        <button type="button" data-view="folders" class="nav-btn flex-1 w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-semibold rounded-xl text-slate-300 hover:bg-slate-800/60 hover:text-white transition">
                             <i data-lucide="folder-plus" class="w-4 h-4"></i>
                             <span>Pastas</span>
                         </button>
@@ -290,18 +294,18 @@
                 <div class="p-3 border-t border-slate-800 space-y-2 mt-auto">
                     <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-1">Backup & Dados</span>
                     <div class="grid grid-cols-2 gap-1.5">
-                        <button id="btnExportJSON" class="flex items-center justify-center gap-1 py-1.5 px-2 bg-slate-900 hover:bg-slate-800 text-[11px] text-slate-300 font-medium rounded-lg border border-slate-700/60 transition">
+                        <button type="button" id="btnExportJSON" class="flex items-center justify-center gap-1 py-1.5 px-2 bg-slate-900 hover:bg-slate-800 text-[11px] text-slate-300 font-medium rounded-lg border border-slate-700/60 transition">
                             <i data-lucide="download" class="w-3 h-3 text-blue-400"></i>
                             <span>Exportar</span>
                         </button>
-                        <button id="btnImportJSON" class="flex items-center justify-center gap-1 py-1.5 px-2 bg-slate-900 hover:bg-slate-800 text-[11px] text-slate-300 font-medium rounded-lg border border-slate-700/60 transition">
+                        <button type="button" id="btnImportJSON" class="flex items-center justify-center gap-1 py-1.5 px-2 bg-slate-900 hover:bg-slate-800 text-[11px] text-slate-300 font-medium rounded-lg border border-slate-700/60 transition">
                             <i data-lucide="upload" class="w-3 h-3 text-emerald-400"></i>
                             <span>Importar</span>
                         </button>
                         <input type="file" id="fileInputJSON" accept=".json" class="hidden">
                     </div>
                     <!-- Audit Diagnostic Trigger Button -->
-                    <button id="btnEtapa3Diagnostic" onclick="runEtapa3Diagnostic()" class="hidden w-full py-1.5 px-2 bg-blue-950/80 hover:bg-blue-900 text-[11px] text-blue-300 font-semibold rounded-lg border border-blue-500/40 transition flex items-center justify-center gap-1.5 mt-1">
+                    <button type="button" id="btnEtapa3Diagnostic" onclick="runEtapa3Diagnostic()" class="hidden w-full py-1.5 px-2 bg-blue-950/80 hover:bg-blue-900 text-[11px] text-blue-300 font-semibold rounded-lg border border-blue-500/40 transition flex items-center justify-center gap-1.5 mt-1">
                         <i data-lucide="database" class="w-3.5 h-3.5 text-cyan-400"></i>
                         <span>Diagnóstico Etapa 3</span>
                     </button>
@@ -317,7 +321,7 @@
                         <i data-lucide="info" class="w-4 h-4 text-blue-400"></i>
                         <span>Encontramos dados de uma versão anterior do organizador neste navegador e migramos para o novo layout.</span>
                     </div>
-                    <button id="btnCloseBanner" class="text-blue-300 hover:text-white font-medium ml-4">Dispensar</button>
+                    <button type="button" id="btnCloseBanner" class="text-blue-300 hover:text-white font-medium ml-4">Dispensar</button>
                 </div>
 
                 <!-- Auth Error Alert (Friendly Notice) -->
@@ -326,23 +330,23 @@
                         <i data-lucide="alert-circle" class="w-4 h-4 text-rose-400 shrink-0"></i>
                         <span id="authErrorMessage">Erro ao realizar login no Firebase.</span>
                     </div>
-                    <button onclick="document.getElementById('authErrorAlert').classList.add('hidden')" class="text-rose-300 hover:text-white font-bold ml-4">Fechar</button>
+                    <button type="button" onclick="document.getElementById('authErrorAlert').classList.add('hidden')" class="text-rose-300 hover:text-white font-bold ml-4">Fechar</button>
                 </div>
 
                 <!-- Toolbar & Omnibox Trigger -->
                 <div class="grid grid-cols-1 md:grid-cols-[1fr_auto_auto_auto] gap-3 items-center">
                     <div onclick="toggleSpotlight(true)" class="bg-slate-900/90 border border-slate-800 hover:border-slate-700 rounded-xl h-10 px-3.5 flex items-center gap-2.5 text-slate-400 text-xs cursor-pointer transition">
                         <i data-lucide="search" class="w-4 h-4 text-slate-500"></i>
-                        <input type="text" id="filterSearch" placeholder="Buscar tarefas, projetos, pessoas... (Pressione Ctrl+K)" class="bg-transparent border-none outline-none text-slate-100 text-xs w-full placeholder:text-slate-500 pointer-events-none">
+                        <input type="text" id="filterSearch" placeholder="Buscar tarefas, projetos, pessoas... (Pressione Ctrl+K)" class="bg-transparent border-none outline-none text-slate-100 text-xs w-full placeholder:text-slate-500 pointer-events-none" aria-label="Buscar tarefas">
                         <span class="bg-slate-800/80 border border-slate-700/60 rounded px-1.5 py-0.5 text-[10px] text-slate-400 font-mono">Cmd / Ctrl + K</span>
                     </div>
-                    <button onclick="toggleNotifications()" id="btnNotify" class="h-10 px-4 rounded-xl bg-slate-900/90 border border-slate-800 text-xs font-semibold text-slate-200 hover:bg-slate-800 flex items-center gap-2">
+                    <button type="button" onclick="toggleNotifications()" id="btnNotify" class="h-10 px-4 rounded-xl bg-slate-900/90 border border-slate-800 text-xs font-semibold text-slate-200 hover:bg-slate-800 flex items-center gap-2">
                         <i data-lucide="bell" class="w-4 h-4 text-amber-400"></i> Notificações
                     </button>
-                    <button onclick="triggerAssistantAdvice()" id="btnSparkles" class="h-10 px-4 rounded-xl bg-slate-900/90 border border-slate-800 text-xs font-semibold text-slate-200 hover:bg-slate-800 flex items-center gap-2">
+                    <button type="button" onclick="triggerAssistantAdvice()" id="btnSparkles" class="h-10 px-4 rounded-xl bg-slate-900/90 border border-slate-800 text-xs font-semibold text-slate-200 hover:bg-slate-800 flex items-center gap-2">
                         <i data-lucide="sparkles" class="w-4 h-4 text-blue-400"></i> Assistente
                     </button>
-                    <button id="btnOpenNewTaskModal" class="h-10 px-5 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 border border-blue-400/30 text-xs font-bold text-white shadow-lg shadow-blue-600/30 hover:from-blue-500 hover:to-blue-400 flex items-center justify-center gap-2">
+                    <button type="button" aria-label="Criar nova tarefa" id="btnOpenNewTaskModal" class="h-10 px-5 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 border border-blue-400/30 text-xs font-bold text-white shadow-lg shadow-blue-600/30 hover:from-blue-500 hover:to-blue-400 flex items-center justify-center gap-2">
                         <i data-lucide="plus" class="w-4 h-4"></i> Novo item
                     </button>
                 </div>
@@ -350,19 +354,19 @@
                 <!-- Shortcuts Bar -->
                 <div class="flex items-center gap-2 text-xs text-slate-400 flex-wrap pt-1">
                     <span class="text-slate-500 font-medium">Atalhos:</span>
-                    <button id="btnShortcutToday" onclick="filterShortcutToday()" class="bg-slate-900/80 border border-slate-800 rounded-full px-3 py-1 text-[11px] font-semibold text-slate-300 hover:border-slate-700 flex items-center gap-1.5 transition">
+                    <button type="button" id="btnShortcutToday" onclick="filterShortcutToday()" class="bg-slate-900/80 border border-slate-800 rounded-full px-3 py-1 text-[11px] font-semibold text-slate-300 hover:border-slate-700 flex items-center gap-1.5 transition">
                         <i data-lucide="calendar" class="w-3 h-3 text-blue-400"></i> Hoje
                     </button>
-                    <button id="btnShortcutLate" onclick="filterShortcutLate()" class="bg-slate-900/80 border border-slate-800 rounded-full px-3 py-1 text-[11px] font-medium text-slate-300 hover:border-slate-700 flex items-center gap-1.5 transition">
+                    <button type="button" id="btnShortcutLate" onclick="filterShortcutLate()" class="bg-slate-900/80 border border-slate-800 rounded-full px-3 py-1 text-[11px] font-medium text-slate-300 hover:border-slate-700 flex items-center gap-1.5 transition">
                         <i data-lucide="alert-triangle" class="w-3 h-3 text-red-400"></i> Atrasadas
                     </button>
-                    <button onclick="filterShortcutPriority('Alta')" class="bg-slate-900/80 border border-slate-800 rounded-full px-3 py-1 text-[11px] font-medium text-slate-300 hover:border-slate-700 flex items-center gap-1.5">
+                    <button type="button" onclick="filterShortcutPriority('Alta')" class="bg-slate-900/80 border border-slate-800 rounded-full px-3 py-1 text-[11px] font-medium text-slate-300 hover:border-slate-700 flex items-center gap-1.5">
                         <i data-lucide="flame" class="w-3 h-3 text-amber-400"></i> Alta prioridade
                     </button>
-                    <button onclick="filterShortcutNoDate()" class="bg-slate-900/80 border border-slate-800 rounded-full px-3 py-1 text-[11px] font-medium text-slate-300 hover:border-slate-700 flex items-center gap-1.5">
+                    <button type="button" onclick="filterShortcutNoDate()" class="bg-slate-900/80 border border-slate-800 rounded-full px-3 py-1 text-[11px] font-medium text-slate-300 hover:border-slate-700 flex items-center gap-1.5">
                         <i data-lucide="calendar-x" class="w-3 h-3"></i> Sem data
                     </button>
-                    <button onclick="resetAllFilters()" class="bg-slate-900/80 border border-slate-800 rounded-full px-3 py-1 text-[11px] font-medium text-slate-400 hover:text-white flex items-center gap-1.5">
+                    <button type="button" onclick="resetAllFilters()" class="bg-slate-900/80 border border-slate-800 rounded-full px-3 py-1 text-[11px] font-medium text-slate-400 hover:text-white flex items-center gap-1.5">
                         <i data-lucide="x" class="w-3 h-3"></i> Limpar
                     </button>
                 </div>
@@ -379,10 +383,10 @@
                         </div>
                     </div>
                     <div class="flex gap-2 self-end sm:self-auto">
-                        <button onclick="filterShortcutLate()" class="px-3 py-1.5 rounded-lg bg-red-500/20 border border-red-400/40 text-[11px] font-bold text-red-200 hover:bg-red-500/30">
+                        <button type="button" onclick="filterShortcutLate()" class="px-3 py-1.5 rounded-lg bg-red-500/20 border border-red-400/40 text-[11px] font-bold text-red-200 hover:bg-red-500/30">
                             Ver Atrasadas
                         </button>
-                        <button onclick="postponeAllLateToToday()" class="px-3 py-1.5 rounded-lg bg-red-500/20 border border-red-400/40 text-[11px] font-bold text-red-200 hover:bg-red-500/30">
+                        <button type="button" onclick="postponeAllLateToToday()" class="px-3 py-1.5 rounded-lg bg-red-500/20 border border-red-400/40 text-[11px] font-bold text-red-200 hover:bg-red-500/30">
                             Adiar todas para hoje
                         </button>
                     </div>
@@ -393,7 +397,7 @@
                     <div class="flex items-center gap-2 text-cyan-400 font-bold text-xs shrink-0">
                         <i data-lucide="zap" class="w-4 h-4 fill-cyan-400"></i> Captura rápida
                     </div>
-                    <input type="text" id="quickInputTitle" placeholder="Ex: Reunião sexta às 14h #trabalho prioridade alta" class="bg-transparent border-none outline-none text-slate-200 text-xs w-full placeholder:text-slate-600">
+                    <input type="text" id="quickInputTitle" aria-label="Descrição da captura rápida" autocomplete="off" placeholder="Ex: Reunião sexta às 14h #trabalho prioridade alta" class="bg-transparent border-none outline-none text-slate-200 text-xs w-full placeholder:text-slate-600">
                     <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs px-4 py-2 rounded-lg shrink-0 transition">
                         Adicionar
                     </button>
@@ -517,8 +521,8 @@
                                     <div id="pomodoroDisplay" class="bg-blue-950/80 border border-blue-500/30 rounded-lg px-2.5 py-1 flex items-center gap-2">
                                         <i data-lucide="timer" class="w-3.5 h-3.5 text-cyan-400"></i>
                                         <span id="pomoTimerText" class="text-xs font-mono font-bold text-white">25:00</span>
-                                        <button onclick="togglePomodoro()" id="btnPomoStart" class="text-[10px] bg-blue-600 hover:bg-blue-500 text-white font-bold px-1.5 py-0.5 rounded">▶</button>
-                                        <button onclick="resetPomodoro()" class="text-[10px] bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold px-1.5 py-0.5 rounded">↺</button>
+                                        <button type="button" onclick="togglePomodoro()" id="btnPomoStart" class="text-[10px] bg-blue-600 hover:bg-blue-500 text-white font-bold px-1.5 py-0.5 rounded">▶</button>
+                                        <button type="button" onclick="resetPomodoro()" class="text-[10px] bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold px-1.5 py-0.5 rounded">↺</button>
                                     </div>
                                 </div>
                                 <div id="dashboardRecentList" class="space-y-2 flex-1">
@@ -568,9 +572,9 @@
                                 <button type="button" data-task-view="month" class="task-view-btn px-3 py-1.5 rounded-lg text-[11px] font-semibold text-slate-400 hover:text-white hover:bg-slate-800">Mês</button>
                             </div>
                             <div id="taskCalendarNav" class="hidden items-center gap-1">
-                                <button type="button" id="taskCalendarPrev" class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800" title="Período anterior"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
+                                <button type="button" aria-label="Período anterior" id="taskCalendarPrev" class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800" title="Período anterior"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
                                 <span id="taskCalendarTitle" class="text-[11px] font-semibold text-slate-300 min-w-[150px] text-center"></span>
-                                <button type="button" id="taskCalendarNext" class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800" title="Próximo período"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
+                                <button type="button" aria-label="Próximo período" id="taskCalendarNext" class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800" title="Próximo período"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
                             </div>
                         </div>
 
@@ -580,20 +584,20 @@
                             <span>As pastas são a organização principal da agenda. Prioridade e status continuam disponíveis como filtros.</span>
                         </div>
                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 glass-card p-3 rounded-xl">
-<select id="filterPriority" class="bg-slate-950 border border-slate-800 text-slate-200 text-xs rounded-lg px-3 py-2 outline-none focus:border-blue-500">
+<select id="filterPriority" class="bg-slate-950 border border-slate-800 text-slate-200 text-xs rounded-lg px-3 py-2 outline-none focus:border-blue-500" aria-label="Filtrar por prioridade">
                                 <option value="all">Todas as Prioridades</option>
                                 <option value="Baixa">Baixa</option>
                                 <option value="Média">Média</option>
                                 <option value="Alta">Alta</option>
                             </select>
 
-                            <select id="filterStatus" class="bg-slate-950 border border-slate-800 text-slate-200 text-xs rounded-lg px-3 py-2 outline-none focus:border-blue-500">
+                            <select id="filterStatus" class="bg-slate-950 border border-slate-800 text-slate-200 text-xs rounded-lg px-3 py-2 outline-none focus:border-blue-500" aria-label="Filtrar por status">
                                 <option value="all">Todos os Status</option>
                                 <option value="todo">A Fazer</option>
                                 <option value="in_progress">Em Andamento</option>
                                 <option value="no_date">Sem Data Definida</option>
                             </select>
-                            <select id="filterFolder" class="bg-slate-950 border border-slate-800 text-slate-200 text-xs rounded-lg px-3 py-2 outline-none focus:border-blue-500">
+                            <select id="filterFolder" class="bg-slate-950 border border-slate-800 text-slate-200 text-xs rounded-lg px-3 py-2 outline-none focus:border-blue-500" aria-label="Filtrar por pasta">
                                 <option value="all">Todas as Pastas</option>
                             </select>
                         </div>
@@ -676,7 +680,7 @@
                     <h2 class="text-xl font-bold text-white tracking-tight">Pastas</h2>
                     <p class="text-slate-400 text-xs">Organize suas tarefas em espaços personalizados.</p>
                 </div>
-                <button id="btnNewFolder" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-semibold flex items-center gap-2">
+                <button type="button" id="btnNewFolder" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-semibold flex items-center gap-2">
                     <i data-lucide="folder-plus" class="w-4 h-4"></i> Nova pasta
                 </button>
             </div>
@@ -694,7 +698,7 @@
                     </div>
                     <div class="flex items-center gap-2">
                         <button type="button" id="btnBackToFolders" class="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-[11px] font-semibold">Pastas</button>
-                        <button id="btnNewTaskInFolder" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-[11px] font-semibold">+ Nova tarefa</button>
+                        <button type="button" id="btnNewTaskInFolder" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-[11px] font-semibold">+ Nova tarefa</button>
                     </div>
                 </div>
                 <div id="churchSubfolderNav" class="hidden flex flex-wrap gap-2 mb-3"></div>
@@ -730,12 +734,12 @@
         <div class="bg-[#0a182e] border border-blue-500/40 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl">
             <div class="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-900/50">
                 <h3 id="folderModalTitle" class="text-sm font-bold text-white">Nova Pasta</h3>
-                <button id="btnCloseFolderModal" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800"><i data-lucide="x" class="w-4 h-4"></i></button>
+                <button type="button" id="btnCloseFolderModal" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800"><i data-lucide="x" class="w-4 h-4"></i></button>
             </div>
             <form id="folderForm" class="p-4 space-y-4">
                 <input type="hidden" id="folderId">
-                <div><label class="block text-[11px] font-semibold text-slate-400 mb-1">Nome *</label><input id="folderName" required maxlength="60" class="w-full bg-slate-950 border border-slate-800 text-slate-100 rounded-lg p-2.5 text-xs outline-none focus:border-blue-500" placeholder="Ex: Ministério"></div>
-                <div><label class="block text-[11px] font-semibold text-slate-400 mb-1">Pasta principal (opcional)</label><select id="folderParent" class="w-full bg-slate-950 border border-slate-800 text-slate-100 rounded-lg p-2.5 text-xs outline-none focus:border-blue-500"><option value="">Nenhuma (pasta principal)</option></select><p class="text-[10px] text-slate-500 mt-1">Escolha Igreja para colocar esta pasta dentro dela.</p></div>
+                <div><label class="block text-[11px] font-semibold text-slate-400 mb-1">Nome *</label><input id="folderName" required maxlength="60" class="w-full bg-slate-950 border border-slate-800 text-slate-100 rounded-lg p-2.5 text-xs outline-none focus:border-blue-500" placeholder="Ex: Ministério" aria-label="Nome da pasta"></div>
+                <div><label class="block text-[11px] font-semibold text-slate-400 mb-1">Pasta principal (opcional)</label><select id="folderParent" class="w-full bg-slate-950 border border-slate-800 text-slate-100 rounded-lg p-2.5 text-xs outline-none focus:border-blue-500" aria-label="Pasta principal"><option value="">Nenhuma (pasta principal)</option></select><p class="text-[10px] text-slate-500 mt-1">Escolha Igreja para colocar esta pasta dentro dela.</p></div>
                 <div><label class="block text-[11px] font-semibold text-slate-400 mb-2">Ícone da pasta</label><div id="folderIconPicker" class="grid grid-cols-8 gap-2">
                     <button type="button" data-folder-icon="folder" title="Pasta" class="folder-icon-option active p-2 rounded-lg bg-blue-600/20 border border-blue-500/60 text-blue-300"><i data-lucide="folder" class="w-4 h-4 mx-auto"></i></button>
                     <button type="button" data-folder-icon="briefcase" title="Trabalho" class="folder-icon-option p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-400"><i data-lucide="briefcase" class="w-4 h-4 mx-auto"></i></button>
@@ -776,7 +780,7 @@
         <div class="bg-[#0a182e] border border-blue-500/50 rounded-2xl w-full max-w-xl overflow-hidden shadow-2xl">
             <div class="p-3.5 border-b border-slate-800 flex items-center gap-3">
                 <i data-lucide="search" class="w-5 h-5 text-blue-400"></i>
-                <input type="text" id="spotlightInput" placeholder="O que você precisa fazer agora? (digite para filtrar)..." class="bg-transparent border-none outline-none text-slate-100 text-sm w-full placeholder:text-slate-500">
+                <input type="text" id="spotlightInput" placeholder="O que você precisa fazer agora? (digite para filtrar)..." class="bg-transparent border-none outline-none text-slate-100 text-sm w-full placeholder:text-slate-500" aria-label="Buscar na agenda">
                 <span class="text-[10px] bg-slate-800 border border-slate-700/60 rounded px-2 py-1 text-slate-400 font-mono">ESC</span>
             </div>
             <div id="spotlightResults" class="p-2 max-h-80 overflow-y-auto space-y-1">
@@ -803,7 +807,7 @@
                         <p class="text-[10px] text-slate-400">Análise segura entre localStorage local e Firestore remoto (Sem alterações destrutivas)</p>
                     </div>
                 </div>
-                <button onclick="document.getElementById('etapa3AuditModal').classList.add('hidden')" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800">
+                <button type="button" onclick="document.getElementById('etapa3AuditModal').classList.add('hidden')" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800">
                     <i data-lucide="x" class="w-4 h-4"></i>
                 </button>
             </div>
@@ -849,7 +853,7 @@
 
             <!-- Footer -->
             <div class="p-3 border-t border-slate-800 bg-slate-900/60 flex justify-end gap-2">
-                <button onclick="document.getElementById('etapa3AuditModal').classList.add('hidden')" class="px-4 py-1.5 text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg">Fechar</button>
+                <button type="button" onclick="document.getElementById('etapa3AuditModal').classList.add('hidden')" class="px-4 py-1.5 text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg">Fechar</button>
             </div>
         </div>
     </div>
@@ -877,7 +881,7 @@
             <!-- Modal Header -->
             <div class="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-900/50">
                 <h3 id="modalTitle" class="text-sm font-bold text-white">Nova Tarefa</h3>
-                <button id="btnCloseModal" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800">
+                <button type="button" id="btnCloseModal" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800">
                     <i data-lucide="x" class="w-4 h-4"></i>
                 </button>
             </div>
@@ -889,30 +893,30 @@
                 <!-- Title -->
                 <div>
                     <label class="block text-[11px] font-semibold text-slate-400 mb-1">Título *</label>
-                    <input type="text" id="taskTitle" required placeholder="Ex: Finalizar relatório financeiro" class="w-full bg-slate-950 border border-slate-800 text-slate-100 rounded-lg p-2 text-xs outline-none focus:border-blue-500">
+                    <input type="text" id="taskTitle" required placeholder="Ex: Finalizar relatório financeiro" class="w-full bg-slate-950 border border-slate-800 text-slate-100 rounded-lg p-2 text-xs outline-none focus:border-blue-500" aria-label="Título da tarefa">
                 </div>
 
                 <!-- Description -->
                 <div>
                     <label class="block text-[11px] font-semibold text-slate-400 mb-1">Descrição</label>
-                    <textarea id="taskDescription" rows="2" placeholder="Adicione detalhes ou observações..." class="w-full bg-slate-950 border border-slate-800 text-slate-100 rounded-lg p-2 text-xs outline-none focus:border-blue-500 resize-none"></textarea>
+                    <textarea id="taskDescription" rows="2" placeholder="Adicione detalhes ou observações..." class="w-full bg-slate-950 border border-slate-800 text-slate-100 rounded-lg p-2 text-xs outline-none focus:border-blue-500 resize-none" aria-label="Descrição da tarefa"></textarea>
                 </div>
                 <!-- Row 1: Due Date & Time -->
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-[11px] font-semibold text-slate-400 mb-1">Data</label>
-                        <input type="date" id="taskDueDate" class="w-full bg-slate-950 border border-slate-800 text-slate-100 rounded-lg p-2 text-xs outline-none focus:border-blue-500">
+                        <input type="date" id="taskDueDate" class="w-full bg-slate-950 border border-slate-800 text-slate-100 rounded-lg p-2 text-xs outline-none focus:border-blue-500" aria-label="Data da tarefa">
                     </div>
                     <div>
                         <label class="block text-[11px] font-semibold text-slate-400 mb-1">Horário</label>
-                        <input type="time" id="taskDueTime" class="w-full bg-slate-950 border border-slate-800 text-slate-100 rounded-lg p-2 text-xs outline-none focus:border-blue-500">
+                        <input type="time" id="taskDueTime" class="w-full bg-slate-950 border border-slate-800 text-slate-100 rounded-lg p-2 text-xs outline-none focus:border-blue-500" aria-label="Horário da tarefa">
                     </div>
                 </div>
 
                 <!-- Folder -->
                 <div>
                     <label class="block text-[11px] font-semibold text-slate-400 mb-1">Pasta</label>
-                    <select id="taskFolder" class="w-full bg-slate-950 border border-slate-800 text-slate-100 rounded-lg p-2 text-xs outline-none focus:border-blue-500">
+                    <select id="taskFolder" class="w-full bg-slate-950 border border-slate-800 text-slate-100 rounded-lg p-2 text-xs outline-none focus:border-blue-500" aria-label="Pasta da tarefa">
                         <option value="">Sem pasta</option>
                     </select>
                 </div>
@@ -920,7 +924,7 @@
                 <!-- Recurrence -->
                 <div>
                     <label class="block text-[11px] font-semibold text-slate-400 mb-1">Recorrência</label>
-                    <select id="taskRecurrence" class="w-full bg-slate-950 border border-slate-800 text-slate-100 rounded-lg p-2 text-xs outline-none focus:border-blue-500">
+                    <select id="taskRecurrence" class="w-full bg-slate-950 border border-slate-800 text-slate-100 rounded-lg p-2 text-xs outline-none focus:border-blue-500" aria-label="Recorrência da tarefa">
                         <option value="none">Não repetir</option>
                         <option value="weekly">Toda semana</option>
                         <option value="monthly">Todo mês</option>
@@ -932,7 +936,7 @@
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-[11px] font-semibold text-slate-400 mb-1">Prioridade</label>
-                        <select id="taskPriority" class="w-full bg-slate-950 border border-slate-800 text-slate-100 rounded-lg p-2 text-xs outline-none focus:border-blue-500">
+                        <select id="taskPriority" class="w-full bg-slate-950 border border-slate-800 text-slate-100 rounded-lg p-2 text-xs outline-none focus:border-blue-500" aria-label="Prioridade da tarefa">
                             <option value="Baixa">Baixa</option>
                             <option value="Média" selected>Média</option>
                             <option value="Alta">Alta</option>
@@ -940,7 +944,7 @@
                     </div>
                     <div>
                         <label class="block text-[11px] font-semibold text-slate-400 mb-1">Status</label>
-                        <select id="taskStatus" class="w-full bg-slate-950 border border-slate-800 text-slate-100 rounded-lg p-2 text-xs outline-none focus:border-blue-500">
+                        <select id="taskStatus" class="w-full bg-slate-950 border border-slate-800 text-slate-100 rounded-lg p-2 text-xs outline-none focus:border-blue-500" aria-label="Status da tarefa">
                             <option value="todo">A Fazer</option>
                             <option value="in_progress">Em Andamento</option>
                             <option value="done">Concluído</option>
@@ -993,8 +997,7 @@
         };
 
         try {
-            if (!firebase.apps.length) {
-                firebase.initializeApp(firebaseConfig);
+            if (!firebase.apps.length) {                firebase.initializeApp(firebaseConfig);
             }
             auth = firebase.auth();
             googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -1521,7 +1524,7 @@
             toggle.setAttribute('aria-expanded', String(expanded));
             toggle.title = expanded ? 'Recolher pastas' : 'Expandir pastas';
             toggle.innerHTML = `<i data-lucide="${expanded ? 'chevron-up' : 'chevron-down'}" class="w-4 h-4"></i>`;
-            try { localStorage.setItem('agenda_sidebar_folders_expanded', expanded ? '1' : '0'); } catch (e) {}
+            try { safeStorageSet('agenda_sidebar_folders_expanded', expanded ? '1' : '0'); } catch (e) {}
             refreshIcons();
         }
 
@@ -1698,7 +1701,7 @@
         function agendaEndOfWeek(date) { const d=agendaStartOfWeek(date); d.setDate(d.getDate()+6); return d; }
         function agendaTaskDate(task) { return String(task.dueDate||'').trim(); }
         function agendaSortTasks(list) { return [...list].sort((a,b)=>{ const ad=agendaTaskDate(a)||'9999-12-31', bd=agendaTaskDate(b)||'9999-12-31'; if(ad!==bd)return ad.localeCompare(bd); return String(a.dueTime||'99:99').localeCompare(String(b.dueTime||'99:99'))||String(a.title||'').localeCompare(String(b.title||''),'pt-BR'); }); }
-        function renderAgendaTaskChip(task) { const time=task.dueTime?`<span class="text-blue-300 mr-1">${escapeHtml(task.dueTime)}</span>`:''; return `<button type="button" class="agenda-task-chip ${task.status==='done'?'opacity-55 line-through':''}" onclick="openModal('${task.id}')" title="Editar tarefa">${time}<span>${escapeHtml(task.title||'Sem título')}</span></button>`; }
+        function renderAgendaTaskChip(task) { const time=task.dueTime?`<span class="text-blue-300 mr-1">${escapeHtml(task.dueTime)}</span>`:''; return `<button type="button" class="agenda-task-chip ${task.status==='done'?'opacity-55 line-through':''}" onclick="openModal('${task.id}')" title="Editar tarefa" aria-label="Editar tarefa: ${escapeHtml(task.title||'Sem título')}">${time}<span>${escapeHtml(task.title||'Sem título')}</span></button>`; }
         function renderAgendaWeek(tasks, anchorDate, titleEl) {
             const start = agendaStartOfWeek(anchorDate), names = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'], today = getLocalDateString();
             let html = '<div class="agenda-scroll-x"><div class="agenda-calendar-grid agenda-week-calendar-grid">';
@@ -1993,8 +1996,7 @@
             const errorAlert = document.getElementById('authErrorAlert');
             const errorMessage = document.getElementById('authErrorMessage');
             if (errorAlert && errorMessage) {
-                errorMessage.textContent = msg;
-                errorAlert.classList.remove('hidden');
+                errorMessage.textContent = msg;                errorAlert.classList.remove('hidden');
             }
         }
 
@@ -2019,6 +2021,24 @@
             return baseKey;
         }
 
+        // Persistência resiliente: a agenda continua utilizável quando o navegador bloqueia
+        // armazenamento (modo privado, política corporativa ou quota excedida).
+        function safeStorageGet(key) {
+            try { return window.localStorage.getItem(key); } catch (error) {
+                console.warn('[Agenda] Não foi possível ler o armazenamento local.', error);
+                return null;
+            }
+        }
+        function safeStorageSet(key, value) {
+            try { window.localStorage.setItem(key, value); return true; } catch (error) {
+                console.warn('[Agenda] Não foi possível salvar no armazenamento local.', error);
+                return false;
+            }
+        }
+        function safeStorageRemove(key) {
+            try { window.localStorage.removeItem(key); } catch (error) { /* sem ação */ }
+        }
+
         const PRIMARY_STORAGE_KEY = 'agenda_pro_tasks';
         const LEGACY_STORAGE_KEYS = ['organizador_tasks', 'tasks', 'organizador_tarefas'];
 
@@ -2026,7 +2046,7 @@
 
         function loadInitialTasks() {
             const key = getUserStorageKey(PRIMARY_STORAGE_KEY);
-            let stored = localStorage.getItem(key);
+            let stored = safeStorageGet(key);
             if (stored) {
                 try { 
                     const parsed = JSON.parse(stored);
@@ -2039,8 +2059,8 @@
                 // Dados globais antigos só podem ser usados antes da autenticação.
                 // Após o login, somente o cache explicitamente associado ao UID é elegível.
                 const legacyData = (currentUserState && currentUserState.uid)
-                    ? localStorage.getItem(userOldKey)
-                    : localStorage.getItem(userOldKey) || localStorage.getItem(oldKey);
+                    ? safeStorageGet(userOldKey)
+                    : safeStorageGet(userOldKey) || safeStorageGet(oldKey);
                 if (legacyData) {
                     try {
                         const parsed = JSON.parse(legacyData);
@@ -2071,9 +2091,9 @@
         function saveTasksToLocalCacheOnly(taskArray) {
             const jsonData = JSON.stringify(taskArray);
             const userKey = getUserStorageKey(PRIMARY_STORAGE_KEY);
-            localStorage.setItem(userKey, jsonData);
+            safeStorageSet(userKey, jsonData);
             LEGACY_STORAGE_KEYS.forEach(key => {
-                localStorage.setItem(getUserStorageKey(key), jsonData);
+                safeStorageSet(getUserStorageKey(key), jsonData);
             });
         }
 
@@ -2485,7 +2505,7 @@
         function renderSpotlightResults(query) {
             if (!spotlightResults) return;
             const q = query.toLowerCase().trim();
-            const filtered = tasks.filter(t => t.title.toLowerCase().includes(q) || (t.category && t.category.toLowerCase().includes(q)));
+            const filtered = tasks.filter(t => String(t.title || '').toLowerCase().includes(q) || String(t.description || '').toLowerCase().includes(q) || String(t.category || '').toLowerCase().includes(q));
 
             if (filtered.length === 0) {
                 spotlightResults.innerHTML = `<p class="text-xs text-slate-500 py-4 text-center">Nenhuma tarefa encontrada.</p>`;
@@ -2586,38 +2606,114 @@
             });
         }
 
+        // Captura rápida: entende hoje, amanhã, depois de amanhã, dias da semana,
+        // datas dd/mm e horários como 14h ou 14:30 sem exigir abertura do modal.
+        function parseQuickAddInput(rawValue) {
+            const raw = String(rawValue || '').trim();
+            const normalized = normalizeAgendaText(raw);
+            const result = { title: raw, dueDate: getLocalDateString(), dueTime: '', category: 'Trabalho', priority: 'Média', error: '' };
+            if (!raw) return result;
+
+            // Horário: aceita 14h, 14h30, 14:30 e também "às 14h".
+            const timeMatch = normalized.match(/(?:\b(?:as|a)\s*)?\b(\d{1,2})(?::(\d{2})|h(\d{2})?)\b/);
+            if (timeMatch) {
+                const hour = Number(timeMatch[1]);
+                const minute = Number(timeMatch[2] ?? timeMatch[3] ?? 0);
+                if (hour < 0 || hour > 23 || minute < 0 || minute > 59) {
+                    result.error = 'Horário inválido. Use um horário entre 00:00 e 23:59.';
+                    return result;
+                }
+                result.dueTime = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+            }
+
+            // Data explícita dd/mm ou dd/mm/aaaa. A data é validada antes de salvar.
+            const explicitDate = normalized.match(/\b(\d{1,2})[\/\-](\d{1,2})(?:[\/\-](\d{2,4}))?\b/);
+            if (explicitDate) {
+                const day = Number(explicitDate[1]);
+                const month = Number(explicitDate[2]);
+                const year = explicitDate[3]
+                    ? Number(explicitDate[3].length === 2 ? `20${explicitDate[3]}` : explicitDate[3])
+                    : new Date().getFullYear();
+                const candidate = new Date(year, month - 1, day);
+                if (!Number.isInteger(year) || year < 1900 || year > 2100 ||
+                    candidate.getFullYear() !== year || candidate.getMonth() !== month - 1 || candidate.getDate() !== day) {
+                    result.error = 'Data inválida. Confira o dia, o mês e o ano informados.';
+                    return result;
+                }
+                result.dueDate = getDateFromParts(year, month, day);
+            } else {
+                const weekdayNames = ['domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado'];
+                const weekdayMatch = normalized.match(/\b(domingo|segunda(?:-feira)?|terca(?:-feira)?|quarta(?:-feira)?|quinta(?:-feira)?|sexta(?:-feira)?|sabado(?:-feira)?)\b/);
+                if (weekdayMatch) {
+                    const targetWeekday = weekdayNames.findIndex(day => weekdayMatch[1].startsWith(day));
+                    const now = new Date();
+                    let delta = (targetWeekday - now.getDay() + 7) % 7;
+                    const explicitNextWeek = /\b(proxima|proximo)\s+(domingo|segunda|terca|quarta|quinta|sexta|sabado)/.test(normalized);
+                    const requestedTimeIsPast = result.dueTime &&
+                        (Number(result.dueTime.slice(0, 2)) * 60 + Number(result.dueTime.slice(3, 5))) <
+                        (now.getHours() * 60 + now.getMinutes());
+                    if (explicitNextWeek || (delta === 0 && requestedTimeIsPast)) delta = 7;
+                    const date = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                    date.setDate(date.getDate() + delta);
+                    result.dueDate = getLocalDateString(date);
+                } else if (/\bdepois de amanha\b/.test(normalized)) {
+                    result.dueDate = addDaysToDateString(result.dueDate, 2);
+                } else if (/\bamanha\b/.test(normalized)) {
+                    result.dueDate = addDaysToDateString(result.dueDate, 1);
+                }
+            }
+
+            const categoryMatch = normalized.match(/#(pessoal|estudos|projetos|trabalho|igreja)\b/);
+            if (categoryMatch) {
+                const categories = { pessoal: 'Pessoal', estudos: 'Estudos', projetos: 'Projetos', trabalho: 'Trabalho', igreja: 'Igreja' };
+                result.category = categories[categoryMatch[1]];
+            }
+
+            const priorityMatch = normalized.match(/\bprioridade\s+(alta|baixa)\b/) || normalized.match(/\b(alta|baixa)\s+prioridade\b/);
+            if (priorityMatch) result.priority = priorityMatch[1] === 'alta' || priorityMatch[1] === 'baixa' ? (priorityMatch[1] === 'alta' ? 'Alta' : 'Baixa') : 'Média';
+
+            // Remove do título os metadados já interpretados, inclusive horários sem "às".
+            result.title = raw
+                .replace(/#\w+/g, '')
+                .replace(/\b(?:prioridade\s+(?:alta|baixa|media|m[eé]dia)|(?:alta|baixa)\s+prioridade)\b/ig, '')
+                // Limites Unicode:  não reconhece corretamente palavras iniciadas por "às" ou terminadas em "amanhã".
+                .replace(/(?<![\p{L}\p{N}])(?:próxima|próximo|proxima|proximo)(?=\s+(?:domingo|segunda|terca|quarta|quinta|sexta|sabado))(?![\p{L}\p{N}])/giu, '')
+                .replace(/(?<![\p{L}\p{N}])(?:depois de amanhã|depois de amanha|amanhã|amanha|hoje|domingo|segunda(?:-feira)?|terça(?:-feira)?|terca(?:-feira)?|quarta(?:-feira)?|quinta(?:-feira)?|sexta(?:-feira)?|sábado(?:-feira)?|sabado(?:-feira)?)(?![\p{L}\p{N}])/giu, '')
+                .replace(/(?<![\p{L}\p{N}])(?:às|as)\s*\d{1,2}(?:h\d{0,2}|:\d{2})(?![\p{L}\p{N}])/giu, '')
+                .replace(/(?<![\p{L}\p{N}])\d{1,2}(?:h\d{0,2}|:\d{2})(?![\p{L}\p{N}])/giu, '')
+                .replace(/\b\d{1,2}[\/-]\d{1,2}(?:[\/-]\d{2,4})?\b/g, '')
+                .replace(/\s{2,}/g, ' ')
+                .replace(/^[\s,;:-]+|[\s,;:-]+$/g, '')
+                .trim();
+
+            if (!result.title) result.error = 'Digite uma descrição para a tarefa.';
+            return result;
+        }
+
         // Quick Add Handler
         const quickAddForm = document.getElementById('quickAddForm');
         if (quickAddForm) {
             quickAddForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const input = document.getElementById('quickInputTitle');
-                const val = input.value.trim();
-                if (!val) return;
-
-                let cat = 'Trabalho';
-                if (val.toLowerCase().includes('#pessoal')) cat = 'Pessoal';
-                if (val.toLowerCase().includes('#estudos')) cat = 'Estudos';
-                if (val.toLowerCase().includes('#projetos')) cat = 'Projetos';
-
+                if (!input) return;
+                const parsed = parseQuickAddInput(input.value);
+                if (parsed.error) { alert(parsed.error); input.focus(); return; }
+                if (!parsed.title) return;
                 const newTask = {
-                    id: Date.now().toString(),
-                    title: val.replace(/#\w+/g, '').trim(),
+                    id: `${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+                    title: parsed.title,
                     description: '',
-                    dueDate: getLocalDateString(),
-                    category: cat,
-                    priority: val.toLowerCase().includes('alta') ? 'Alta' : 'Média',
+                    dueDate: parsed.dueDate,
+                    dueTime: parsed.dueTime,
+                    category: parsed.category,
+                    priority: parsed.priority,
                     status: 'todo',
                     folderId: activeFolderId || '',
                     createdAt: new Date().toISOString()
                 };
-
-                try {
-                    await saveTaskToFirestore(newTask);
-                    input.value = '';
-                } catch (err) {
-                    console.error("[Quick Add Error]", err);
-                }
+                try { await saveTaskToFirestore(newTask); input.value = ''; input.focus(); }
+                catch (err) { console.error('[Quick Add Error]', err); }
             });
         }
 
@@ -2900,7 +2996,6 @@
                 .filter(t => t.status !== 'done')
                 .sort((a, b) => (a.dueDate || '9999') > (b.dueDate || '9999') ? 1 : -1)
                 .slice(0, 4);
-
             if (dashboardRecentList) {
                 if (recent.length === 0) {
                     dashboardRecentList.innerHTML = `<p class="text-xs text-slate-500 py-2">Nenhuma tarefa marcada para hoje.</p>`;
@@ -2908,7 +3003,7 @@
                     dashboardRecentList.innerHTML = recent.map(t => `
                         <div class="flex items-center justify-between p-2 bg-slate-950/60 rounded-lg border border-slate-800 hover:border-slate-700 transition">
                             <div class="flex items-center gap-2.5">
-                                <button onclick="toggleTaskComplete('${t.id}')" class="text-blue-400 hover:text-emerald-400 transition">
+                                <button type="button" onclick="toggleTaskComplete('${t.id}')" class="text-blue-400 hover:text-emerald-400 transition">
                                     <i data-lucide="play" class="w-3.5 h-3.5 fill-blue-400"></i>
                                 </button>
                                 <div>
@@ -2982,9 +3077,9 @@
                 const folder = folders.find(f => f.id === getTaskFolderId(t)); const done = t.status === 'done';
                 const folderBadge = folder ? `<span class="text-[10px] px-2 py-0.5 rounded-md font-medium flex items-center gap-1" style="color:${getFolderColor(folder)};background:${getFolderColor(folder)}22">${folderIconHtml(folder.icon,'w-3 h-3',folder.color)} ${escapeHtml(folder.name||'Pasta')}</span>` : '<span class="text-[10px] px-2 py-0.5 rounded-md bg-slate-800 text-slate-500 font-medium">Sem pasta</span>';
                 return `<div class="bg-slate-900/80 border border-slate-800 rounded-xl p-3 flex flex-col md:flex-row md:items-center justify-between gap-3 transition hover:border-slate-700">
-                    <div class="flex items-start gap-3"><button onclick="toggleTaskComplete('${t.id}')" class="mt-0.5 ${done?'text-emerald-400':'text-slate-500 hover:text-slate-300'} transition"><i data-lucide="${done?'check-circle':'circle'}" class="w-5 h-5"></i></button>
+                    <div class="flex items-start gap-3"><button type="button" aria-label="${done?'Reabrir':'Concluir'} tarefa: ${escapeHtml(t.title)}" title="${done?'Reabrir tarefa':'Concluir tarefa'}" onclick="toggleTaskComplete('${t.id}')" class="mt-0.5 min-w-8 min-h-8 grid place-items-center ${done?'text-emerald-400':'text-slate-500 hover:text-slate-300'} transition"><i data-lucide="${done?'check-circle':'circle'}" class="w-5 h-5"></i></button>
                     <div><h3 class="font-semibold text-xs text-slate-100 ${done?'line-through text-slate-500':''}">${escapeHtml(t.title)}</h3>${t.description?`<p class="text-[11px] text-slate-400 mt-0.5 line-clamp-2">${escapeHtml(t.description)}</p>`:''}<div class="flex flex-wrap items-center gap-2 mt-1.5">${folderBadge}${getPriorityBadge(t.priority)}${t.dueDate?`<span class="text-[10px] text-slate-400 flex items-center gap-1"><i data-lucide="calendar" class="w-3 h-3"></i>${escapeHtml(t.dueDate)}${t.dueTime?' · '+escapeHtml(t.dueTime):''}</span>`:'<span class="text-[10px] text-slate-500 italic">Sem data</span>'}${t.recurrenceRule?'<span class="text-[10px] text-cyan-300 flex items-center gap-1"><i data-lucide="repeat" class="w-3 h-3"></i>Recorrente</span>':''}</div></div></div>
-                    <div class="flex items-center gap-1.5 self-end md:self-center border-t md:border-t-0 pt-2 md:pt-0 border-slate-800 w-full md:w-auto justify-end"><button onclick="openModal('${t.id}')" class="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition"><i data-lucide="edit-3" class="w-4 h-4"></i></button><button onclick="deleteTask('${t.id}')" class="p-1.5 text-slate-400 hover:text-rose-400 rounded-lg transition"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div>
+                    <div class="flex items-center gap-1.5 self-end md:self-center border-t md:border-t-0 pt-2 md:pt-0 border-slate-800 w-full md:w-auto justify-end"><button type="button" aria-label="Editar tarefa: ${escapeHtml(t.title)}" title="Editar tarefa" onclick="openModal('${t.id}')" class="min-w-8 min-h-8 grid place-items-center p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition"><i data-lucide="edit-3" class="w-4 h-4"></i></button><button type="button" aria-label="Excluir tarefa: ${escapeHtml(t.title)}" title="Excluir tarefa" onclick="deleteTask('${t.id}')" class="min-w-8 min-h-8 grid place-items-center p-1.5 text-slate-400 hover:text-rose-400 rounded-lg transition"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div>
                 </div>`;
             }).join('') : '<div class="text-center py-10 bg-slate-900/60 border border-slate-800 rounded-xl"><i data-lucide="inbox" class="w-8 h-8 mx-auto text-slate-600 mb-2"></i><p class="text-slate-400 text-xs font-medium">Nenhuma tarefa encontrada com os filtros selecionados.</p></div>';
             refreshIcons();
@@ -3203,7 +3298,7 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             try {
-                const savedExpanded = localStorage.getItem('agenda_sidebar_folders_expanded');
+                const savedExpanded = safeStorageGet('agenda_sidebar_folders_expanded');
                 setSidebarFoldersExpanded(savedExpanded !== '0');
             } catch (e) {
                 setSidebarFoldersExpanded(true);
