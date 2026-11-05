@@ -1,0 +1,192 @@
+[
+  {
+    "title": "Jornada de Conhecimento - Captação Apelo",
+    "description": "Captação do apelo na programação da Jornada.",
+    "dueDate": "2026-11-05",
+    "dueTime": "19:00",
+    "category": "Igreja",
+    "priority": "Média",
+    "status": "todo",
+    "folderName": "Igreja"
+  },
+  {
+    "title": "Culto de Quinta-feira",
+    "description": "Culto semanal.",
+    "dueDate": "2026-11-05",
+    "dueTime": "20:00",
+    "category": "Igreja",
+    "priority": "Média",
+    "status": "todo",
+    "folderName": "Igreja"
+  },
+  {
+    "title": "Reunião de Líderes e Anfitriões",
+    "description": "Reunião com os pastores.",
+    "dueDate": "2026-11-06",
+    "dueTime": "20:00",
+    "category": "Igreja",
+    "priority": "Alta",
+    "status": "todo",
+    "folderName": "Igreja"
+  },
+  {
+    "title": "Jornada de Conhecimento - Recados e placas",
+    "description": "Recados, relatório e colocar/retirar placas.",
+    "dueDate": "2026-11-08",
+    "dueTime": "07:30",
+    "category": "Igreja",
+    "priority": "Média",
+    "status": "todo",
+    "folderName": "Igreja"
+  },
+  {
+    "title": "Culto de Domingo - 08h",
+    "description": "Apelo/visitantes e programação do culto.",
+    "dueDate": "2026-11-08",
+    "dueTime": "08:00",
+    "category": "Igreja",
+    "priority": "Média",
+    "status": "todo",
+    "folderName": "Igreja"
+  },
+  {
+    "title": "Culto de Domingo - 10h30",
+    "description": "Apelo/visitantes e programação do culto.",
+    "dueDate": "2026-11-08",
+    "dueTime": "10:30",
+    "category": "Igreja",
+    "priority": "Média",
+    "status": "todo",
+    "folderName": "Igreja"
+  },
+  {
+    "title": "Culto de Domingo - noite",
+    "description": "Culto semanal.",
+    "dueDate": "2026-11-08",
+    "dueTime": "19:00",
+    "category": "Igreja",
+    "priority": "Média",
+    "status": "todo",
+    "folderName": "Igreja"
+  },
+  {
+    "title": "Toca dos Leões",
+    "description": "Evento dos homens na igreja.",
+    "dueDate": "2026-11-09",
+    "dueTime": "20:00",
+    "category": "Igreja",
+    "priority": "Alta",
+    "status": "todo",
+    "folderName": "Igreja"
+  },
+  {
+    "title": "Jornada - Apelo/Visitantes",
+    "description": "Preparação e atendimento de apelo/visitantes.",
+    "dueDate": "2026-11-12",
+    "dueTime": "19:00",
+    "category": "Igreja",
+    "priority": "Média",
+    "status": "todo",
+    "folderName": "Igreja"
+  },
+  {
+    "title": "Culto de Quinta-feira",
+    "description": "Culto semanal.",
+    "dueDate": "2026-11-12",
+    "dueTime": "20:00",
+    "category": "Igreja",
+    "priority": "Média",
+    "status": "todo",
+    "folderName": "Igreja"
+  },
+  {
+    "title": "Avisar líderes sobre confraternizações dos GEs",
+    "description": "Comunicar os líderes com pelo menos uma semana de antecedência.",
+    "dueDate": "2026-11-16",
+    "dueTime": "09:00",
+    "category": "GE",
+    "priority": "Alta",
+    "status": "todo",
+    "folderName": "GE"
+  },
+  {
+    "title": "Dunamis Con - viagem para São Paulo",
+    "description": "Evento de 20 a 22/11. Ajustar logística com a reserva da área de lazer.",
+    "dueDate": "2026-11-20",
+    "dueTime": "09:00",
+    "category": "Pessoal",
+    "priority": "Alta",
+    "status": "todo",
+    "folderName": "Pessoal"
+  },
+  {
+    "title": "Pagamento mensal da advogada - inventário",
+    "description": "R$ 1.000: R$ 500 da sua parte (reserva) e R$ 500 da Dudinha a solicitar/receber.",
+    "dueDate": "2026-11-20",
+    "dueTime": "09:00",
+    "category": "Inventário",
+    "priority": "Alta",
+    "status": "todo",
+    "folderName": "Inventário"
+  },
+  {
+    "title": "Reserva da área de lazer - Wesley Daracy",
+    "description": "Total R$ 500 | sinal R$ 150 | restante R$ 350. Confirmada.",
+    "dueDate": "2026-11-22",
+    "dueTime": "09:00",
+    "category": "Área de lazer",
+    "priority": "Alta",
+    "status": "todo",
+    "folderName": "Área de lazer"
+  },
+  {
+    "title": "Última semana dos GEs",
+    "description": "Semana final de encontros dos Grupos de Encorajamento.",
+    "dueDate": "2026-11-23",
+    "dueTime": "09:00",
+    "category": "GE",
+    "priority": "Média",
+    "status": "todo",
+    "folderName": "GE"
+  },
+  {
+    "title": "Jornada - Apelo/Visitantes",
+    "description": "Preparação e atendimento de apelo/visitantes.",
+    "dueDate": "2026-11-26",
+    "dueTime": "19:00",
+    "category": "Igreja",
+    "priority": "Média",
+    "status": "todo",
+    "folderName": "Igreja"
+  },
+  {
+    "title": "Culto de Quinta-feira",
+    "description": "Culto semanal.",
+    "dueDate": "2026-11-26",
+    "dueTime": "20:00",
+    "category": "Igreja",
+    "priority": "Média",
+    "status": "todo",
+    "folderName": "Igreja"
+  },
+  {
+    "title": "Último GE do ano",
+    "description": "Último encontro dos Grupos de Encorajamento.",
+    "dueDate": "2026-11-27",
+    "dueTime": "19:30",
+    "category": "GE",
+    "priority": "Alta",
+    "status": "todo",
+    "folderName": "GE"
+  },
+  {
+    "title": "Ceia dos GEs",
+    "description": "Data registrada; horário estimado, confirmar com a liderança.",
+    "dueDate": "2026-11-30",
+    "dueTime": "20:00",
+    "category": "GE",
+    "priority": "Alta",
+    "status": "todo",
+    "folderName": "GE"
+  }
+]
