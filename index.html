@@ -966,9 +966,12 @@
                 </div>
 
                 <!-- Modal Actions -->
-                <div class="pt-3 border-t border-slate-800 flex justify-end gap-2">
-                    <button type="button" id="btnCancelModal" class="px-3 py-1.5 text-xs font-medium text-slate-400 hover:text-white rounded-lg hover:bg-slate-800">Cancelar</button>
-                    <button type="submit" id="btnSubmitTask" class="px-4 py-1.5 text-xs font-bold bg-blue-600 hover:bg-blue-500 text-white rounded-lg shadow-lg shadow-blue-600/20">Salvar Tarefa</button>
+                <div class="pt-3 border-t border-slate-800 flex flex-col sm:flex-row sm:items-center gap-2">
+                    <p id="taskSaveStatus" class="text-[11px] text-slate-500 flex-1" role="status" aria-live="polite"></p>
+                    <div class="flex justify-end gap-2 shrink-0">
+                        <button type="button" id="btnCancelModal" class="px-3 py-1.5 text-xs font-medium text-slate-400 hover:text-white rounded-lg hover:bg-slate-800">Cancelar</button>
+                        <button type="submit" id="btnSubmitTask" class="px-4 py-1.5 text-xs font-bold bg-blue-600 hover:bg-blue-500 text-white rounded-lg shadow-lg shadow-blue-600/20">Salvar Tarefa</button>
+                    </div>
                 </div>
             </form>
         </div>
@@ -2129,12 +2132,36 @@
         }
 
         // ETAPA 4/5: FIRESTORE CRUD ACTIONS
+        const FIRESTORE_TASK_SAVE_TIMEOUT_MS = 20000;
+
+        function setTaskSaveFeedback(message, tone = 'muted') {
+            const feedback = document.getElementById('taskSaveStatus');
+            if (!feedback) return;
+            feedback.textContent = message || '';
+            const toneClass = tone === 'error'
+                ? 'text-rose-300'
+                : tone === 'warning'
+                    ? 'text-amber-300'
+                    : tone === 'success'
+                        ? 'text-emerald-300'
+                        : 'text-slate-500';
+            feedback.className = 'text-[11px] flex-1 ' + toneClass;
+        }
+
+        function resetTaskSubmitButton() {
+            const submitBtn = document.getElementById('btnSubmitTask');
+            if (!submitBtn) return;
+            submitBtn.disabled = false;
+            submitBtn.innerText = 'Salvar Tarefa';
+        }
+
         function saveTaskToFirestore(taskObj) {
             const submitBtn = document.getElementById('btnSubmitTask');
             if (submitBtn) {
                 submitBtn.disabled = true;
                 submitBtn.innerText = 'Salvando...';
             }
+            setTaskSaveFeedback('Enviando tarefa...', 'muted');
 
             if (!currentUserState || !db) {
                 const existingIdx = tasks.findIndex(t => t.id === taskObj.id);
@@ -2142,10 +2169,8 @@
                 else tasks.push(taskObj);
                 saveTasksToLocalCacheOnly(tasks);
                 render();
-                if (submitBtn) {
-                    submitBtn.disabled = false;
-                    submitBtn.innerText = 'Salvar Tarefa';
-                }
+                resetTaskSubmitButton();
+                setTaskSaveFeedback('', 'muted');
                 return Promise.resolve();
             }
 
@@ -2156,22 +2181,45 @@
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             };
 
-            return taskRef.set(payload, { merge: true })
+            let timeoutId;
+            const writePromise = taskRef.set(payload, { merge: true });
+            const timeoutPromise = new Promise((resolve, reject) => {
+                timeoutId = setTimeout(() => {
+                    const timeoutError = new Error('O Firestore não confirmou a gravação dentro do tempo esperado.');
+                    timeoutError.code = 'app/firestore-save-timeout';
+                    reject(timeoutError);
+                }, FIRESTORE_TASK_SAVE_TIMEOUT_MS);
+            });
+
+            return Promise.race([writePromise, timeoutPromise])
                 .then(() => {
-                    if (submitBtn) {
-                        submitBtn.disabled = false;
-                        submitBtn.innerText = 'Salvar Tarefa';
-                    }
+                    resetTaskSubmitButton();
+                    setTaskSaveFeedback('', 'muted');
                 })
                 .catch(err => {
                     console.error("Erro ao salvar tarefa no Firestore:", err);
-                    alert("Ocorreu um erro ao salvar a tarefa na nuvem.");
-                    if (submitBtn) {
-                        submitBtn.disabled = false;
-                        submitBtn.innerText = 'Salvar Tarefa';
+                    resetTaskSubmitButton();
+
+                    if (err.code === 'app/firestore-save-timeout') {
+                        const online = typeof navigator !== 'undefined' ? navigator.onLine : true;
+                        setTaskSaveFeedback(
+                            online
+                                ? 'O Firebase ainda não confirmou o salvamento. Seus dados continuam preenchidos. Você pode tentar novamente sem criar uma tarefa duplicada.'
+                                : 'Você está sem conexão. Seus dados continuam preenchidos. Reconecte-se e tente salvar novamente.',
+                            'warning'
+                        );
+                    } else {
+                        setTaskSaveFeedback(
+                            err.code === 'permission-denied'
+                                ? 'O Firebase recusou a gravação por falta de permissão. Verifique o acesso à sua conta.'
+                                : 'Não foi possível salvar a tarefa. Seus dados continuam preenchidos. Tente novamente.',
+                            'error'
+                        );
+                        alert("Ocorreu um erro ao salvar a tarefa na nuvem. Confira a mensagem exibida no formulário.");
                     }
                     throw err;
-                });
+                })
+                .finally(() => clearTimeout(timeoutId));
         }
 
         async function materializeRecurringOccurrences(taskObj) {
@@ -2803,6 +2851,8 @@
 
         function openModal(taskId = null) {
             taskForm.reset();
+            resetTaskSubmitButton();
+            setTaskSaveFeedback('', 'muted');
             document.getElementById('taskId').value = '';
             document.getElementById('modalTitle').textContent = 'Nova Tarefa';
             populateTaskFolderSelect();
@@ -2841,7 +2891,10 @@
         if (taskForm) {
             taskForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
-                const id = document.getElementById('taskId').value || Date.now().toString();
+                const taskIdField = document.getElementById('taskId');
+                // Mantém o mesmo ID após uma espera/timeout, evitando duplicidade se o Firestore confirmar depois.
+                const id = taskIdField.value || `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+                taskIdField.value = id;
                 const title = document.getElementById('taskTitle').value.trim();
                 const description = document.getElementById('taskDescription').value.trim();
                 const dueDate = document.getElementById('taskDueDate').value;
@@ -2874,6 +2927,8 @@
                     closeModal();
                 } catch (err) {
                     console.error("[Task Save Error]", err);
+                    // O feedback e a liberação do botão são tratados em saveTaskToFirestore.
+                    // Mantém o modal aberto para que o usuário possa tentar novamente.
                 }
             });
         }
