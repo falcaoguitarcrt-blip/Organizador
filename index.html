@@ -1274,6 +1274,13 @@
             folderUnsubscribe = db.collection('users').doc(uid).collection('folders')
                 .onSnapshot((snap) => {
                     folders = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    // Move pastas ministeriais para dentro de Igreja automaticamente.
+                    const church = folders.find(f => String(f.name||'').trim().toLowerCase() === 'igreja');
+                    if (church) {
+                        const names = ['cultos','jornada de conhecimento','professor','supervisão ge'];
+                        const children = names.map(n => folders.find(f => String(f.name||'').trim().toLowerCase() === n && !f.parentId)).filter(Boolean);
+                        children.forEach(f => { f.parentId = church.id; db.collection('users').doc(uid).collection('folders').doc(f.id).set({parentId:church.id},{merge:true}).catch(console.error); });
+                    }
                     sortFoldersForDisplay();
                     renderFolders();
                     populateTaskFolderSelect();
