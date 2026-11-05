@@ -2692,10 +2692,18 @@
             const el = document.getElementById('folderDistributionChart');
             if (!el) return;
 
-            const counts = folders.map(folder => ({
-                folder,
-                count: getTasksForFolder(folder).length
-            })).filter(item => item.count > 0);
+            const now = new Date();
+            const monthKey = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+            const counts = folders.map(folder => {
+                const folderTasks = getTasksForFolder(folder);
+                const isChurch = String(folder.name || '').trim().toLowerCase() === 'igreja';
+                return {
+                    folder,
+                    count: isChurch
+                        ? folderTasks.filter(task => String(task.dueDate || '').startsWith(monthKey)).length
+                        : folderTasks.length
+                };
+            }).filter(item => item.count > 0);
 
             const total = counts.reduce((sum, item) => sum + item.count, 0);
 
