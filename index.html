@@ -2498,10 +2498,10 @@
             const raw = String(value || '').trim();
             if (!raw) return '';
             let year, month, day;
-            let match = raw.match(/^(\\d{4})-(\\d{1,2})-(\\d{1,2})$/);
+            let match = raw.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
             if (match) { year = Number(match[1]); month = Number(match[2]); day = Number(match[3]); }
             else {
-                match = raw.match(/^(\\d{1,2})[\\/. -](\\d{1,2})[\\/. -](\\d{2,4})$/);
+                match = raw.match(/^(\d{1,2})[\/. -](\d{1,2})[\/. -](\d{2,4})$/);
                 if (!match) throw new Error('Data inválida: ' + raw + '. Use AAAA-MM-DD ou DD/MM/AAAA.');
                 day = Number(match[1]); month = Number(match[2]); year = Number(match[3].length === 2 ? '20' + match[3] : match[3]);
             }
@@ -2515,8 +2515,8 @@
         function normalizeChatImportTime(value) {
             const raw = String(value || '').trim().toLowerCase();
             if (!raw) return '';
-            let match = raw.match(/^(\\d{1,2}):(\\d{2})$/);
-            if (!match) match = raw.match(/^(\\d{1,2})h(\\d{2})?$/);
+            let match = raw.match(/^(\d{1,2}):(\d{2})$/);
+            if (!match) match = raw.match(/^(\d{1,2})h(\d{2})?$/);
             if (!match) throw new Error('Horário inválido: ' + raw + '. Use HH:MM, por exemplo 09:30.');
             const hour = Number(match[1]), minute = Number(match[2] || 0);
             if (hour > 23 || minute > 59) throw new Error('Horário fora do intervalo válido: ' + raw + '.');
@@ -2526,8 +2526,8 @@
         function parseChatAgendaPayload(rawValue) {
             let raw = String(rawValue || '').trim();
             if (!raw) throw new Error('Cole a resposta do ChatGPT antes de interpretar.');
-            raw = raw.replace(/^\\s*AGENDA_JSON\\s*/i, '');
-            raw = raw.replace(/^\\s*```(?:json)?\\s*/i, '').replace(/\\s*```\\s*$/, '').trim();
+            raw = raw.replace(/^\s*AGENDA_JSON\s*/i, '');
+            raw = raw.replace(/^\s*```(?:json)?\s*/i, '').replace(/\s*```\s*$/, '').trim();
             const firstObject = raw.indexOf('{'), firstArray = raw.indexOf('[');
             const starts = [firstObject, firstArray].filter(index => index >= 0);
             if (!starts.length) throw new Error('Não encontrei um JSON. Peça ao ChatGPT para responder no formato AGENDA_JSON.');
