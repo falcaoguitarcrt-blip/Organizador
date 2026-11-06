@@ -977,6 +977,37 @@
         </div>
     </div>
 
+    <!-- ChatGPT Agenda Import Modal -->
+    <div id="chatImportModal" class="fixed inset-0 z-[60] bg-slate-950/85 backdrop-blur-sm hidden items-center justify-center p-4">
+        <div class="bg-[#0a182e] border border-blue-500/40 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
+            <div class="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-900/50">
+                <div>
+                    <h3 class="text-sm font-bold text-white flex items-center gap-2"><i data-lucide="sparkles" class="w-4 h-4 text-blue-400"></i> Assistente de Agenda</h3>
+                    <p class="text-[10px] text-slate-400 mt-1">Importe tarefas preparadas pelo ChatGPT, revise e confirme.</p>
+                </div>
+                <button type="button" id="btnCloseChatImport" class="text-slate-400 hover:text-white p-2 rounded-lg hover:bg-slate-800" aria-label="Fechar assistente"><i data-lucide="x" class="w-4 h-4"></i></button>
+            </div>
+            <div class="p-4 space-y-3">
+                <div class="rounded-xl border border-slate-700 bg-slate-950/70 p-3">
+                    <p class="text-[11px] font-semibold text-slate-200 mb-1">Como usar</p>
+                    <p class="text-[10px] leading-relaxed text-slate-400">Peça ao ChatGPT para entregar os dados no formato JSON abaixo. Copie o bloco e cole no campo. É possível importar uma ou várias tarefas.</p>
+                    <pre class="mt-2 whitespace-pre-wrap break-words text-[10px] leading-relaxed text-blue-200">{"tasks":[{"title":"Pagar conta de luz","description":"Realizar o pagamento","dueDate":"2026-11-07","dueTime":"09:00","priority":"Alta","folder":"Pessoal","status":"todo"}]}</pre>
+                </div>
+                <label for="chatImportInput" class="block text-[11px] font-semibold text-slate-300">Cole aqui a resposta do ChatGPT</label>
+                <textarea id="chatImportInput" rows="7" class="w-full bg-slate-950 border border-slate-800 text-slate-100 rounded-xl p-3 text-xs font-mono outline-none focus:border-blue-500 resize-y" placeholder='{"tasks":[{"title":"...","dueDate":"AAAA-MM-DD","dueTime":"HH:MM","priority":"Média","folder":"Nome da pasta"}]}'></textarea>
+                <p id="chatImportFeedback" class="text-[11px] text-slate-400" role="status" aria-live="polite">A tarefa só será gravada depois da sua confirmação.</p>
+                <div id="chatImportPreview" class="hidden space-y-2"></div>
+                <div class="flex flex-col-reverse sm:flex-row sm:justify-between gap-2 pt-2 border-t border-slate-800">
+                    <button type="button" id="btnCancelChatImport" class="px-3 py-2 text-xs font-medium text-slate-400 hover:text-white rounded-lg hover:bg-slate-800">Fechar</button>
+                    <div class="flex flex-col sm:flex-row gap-2">
+                        <button type="button" id="btnParseChatImport" class="px-4 py-2 text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-100 rounded-lg border border-slate-700">Interpretar e revisar</button>
+                        <button type="button" id="btnSaveChatImport" disabled class="px-4 py-2 text-xs font-bold bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-lg shadow-lg shadow-blue-600/20">Adicionar à agenda</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Application Engine & Firebase Authentication / Firestore CRUD Logic -->
     <script>
         // --- 1. FIREBASE CONFIGURATION & INITIALIZATION ---
@@ -2422,9 +2453,223 @@
             }
         }
 
-        function triggerAssistantAdvice() {
-            alert("✦ Assistente Virtual: Suas tarefas do dia estão otimizadas! Foque nas pendências do card de Foco Sugerido.");
+        // --- IMPORTAÇÃO ESTRUTURADA DO CHATGPT (sem API externa) ---
+        let pendingChatImportTasks = [];
+
+        function setChatImportFeedback(message, type = 'muted') {
+            const el = document.getElementById('chatImportFeedback');
+            if (!el) return;
+            const colors = {
+                muted: 'text-slate-400',
+                success: 'text-emerald-400',
+                warning: 'text-amber-300',
+                error: 'text-rose-400'
+            };
+            el.className = 'text-[11px] ' + (colors[type] || colors.muted);
+            el.textContent = message;
         }
+
+        function openChatImportModal() {
+            const modal = document.getElementById('chatImportModal');
+            if (!modal) return;
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            setChatImportFeedback(currentUserState && db
+                ? 'Cole a resposta estruturada do ChatGPT e clique em “Interpretar e revisar”.'
+                : 'Entre na sua conta para importar tarefas para o Firestore.', currentUserState && db ? 'muted' : 'warning');
+            if (typeof refreshIcons === 'function') refreshIcons();
+            document.getElementById('chatImportInput')?.focus();
+        }
+
+        function closeChatImportModal() {
+            const modal = document.getElementById('chatImportModal');
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+            pendingChatImportTasks = [];
+            const preview = document.getElementById('chatImportPreview');
+            if (preview) { preview.innerHTML = ''; preview.classList.add('hidden'); }
+            const saveButton = document.getElementById('btnSaveChatImport');
+            if (saveButton) { saveButton.disabled = true; saveButton.textContent = 'Adicionar à agenda'; }
+        }
+
+        function normalizeChatImportDate(value) {
+            const raw = String(value || '').trim();
+            if (!raw) return '';
+            let year, month, day;
+            let match = raw.match(/^(\\d{4})-(\\d{1,2})-(\\d{1,2})$/);
+            if (match) { year = Number(match[1]); month = Number(match[2]); day = Number(match[3]); }
+            else {
+                match = raw.match(/^(\\d{1,2})[\\/. -](\\d{1,2})[\\/. -](\\d{2,4})$/);
+                if (!match) throw new Error('Data inválida: ' + raw + '. Use AAAA-MM-DD ou DD/MM/AAAA.');
+                day = Number(match[1]); month = Number(match[2]); year = Number(match[3].length === 2 ? '20' + match[3] : match[3]);
+            }
+            const date = new Date(year, month - 1, day);
+            if (year < 1900 || year > 2100 || date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) {
+                throw new Error('Data inválida: ' + raw + '. Confira o dia, mês e ano.');
+            }
+            return getDateFromParts(year, month, day);
+        }
+
+        function normalizeChatImportTime(value) {
+            const raw = String(value || '').trim().toLowerCase();
+            if (!raw) return '';
+            let match = raw.match(/^(\\d{1,2}):(\\d{2})$/);
+            if (!match) match = raw.match(/^(\\d{1,2})h(\\d{2})?$/);
+            if (!match) throw new Error('Horário inválido: ' + raw + '. Use HH:MM, por exemplo 09:30.');
+            const hour = Number(match[1]), minute = Number(match[2] || 0);
+            if (hour > 23 || minute > 59) throw new Error('Horário fora do intervalo válido: ' + raw + '.');
+            return String(hour).padStart(2, '0') + ':' + String(minute).padStart(2, '0');
+        }
+
+        function parseChatAgendaPayload(rawValue) {
+            let raw = String(rawValue || '').trim();
+            if (!raw) throw new Error('Cole a resposta do ChatGPT antes de interpretar.');
+            raw = raw.replace(/^\\s*AGENDA_JSON\\s*/i, '');
+            raw = raw.replace(/^\\s*```(?:json)?\\s*/i, '').replace(/\\s*```\\s*$/, '').trim();
+            const firstObject = raw.indexOf('{'), firstArray = raw.indexOf('[');
+            const starts = [firstObject, firstArray].filter(index => index >= 0);
+            if (!starts.length) throw new Error('Não encontrei um JSON. Peça ao ChatGPT para responder no formato AGENDA_JSON.');
+            const start = Math.min(...starts);
+            const end = Math.max(raw.lastIndexOf('}'), raw.lastIndexOf(']')) + 1;
+            if (end <= start) throw new Error('O JSON parece incompleto. Copie o bloco inteiro.');
+            let parsed;
+            try { parsed = JSON.parse(raw.slice(start, end)); }
+            catch (err) { throw new Error('Não consegui ler o JSON. Confira se copiou o bloco completo e sem alterações.'); }
+
+            const sourceTasks = Array.isArray(parsed) ? parsed : (Array.isArray(parsed.tasks) ? parsed.tasks : [parsed]);
+            if (!sourceTasks.length) throw new Error('O JSON não contém tarefas para importar.');
+            if (sourceTasks.length > 30) throw new Error('Importe no máximo 30 tarefas por vez.');
+
+            return sourceTasks.map((source, index) => {
+                if (!source || typeof source !== 'object' || Array.isArray(source)) throw new Error('O item ' + (index + 1) + ' não é um objeto de tarefa.');
+                const title = String(source.title ?? source.titulo ?? '').trim();
+                if (!title) throw new Error('A tarefa ' + (index + 1) + ' está sem título.');
+                const folderName = String(source.folderName ?? source.folder ?? source.pasta ?? '').trim();
+                let folderId = '';
+                if (folderName) {
+                    const folder = folders.find(item => normalizeAgendaText(item.name || '') === normalizeAgendaText(folderName));
+                    if (!folder) throw new Error('Não encontrei a pasta “' + folderName + '”. Confira o nome no site e tente novamente.');
+                    folderId = folder.id;
+                }
+                const priorityRaw = normalizeAgendaText(source.priority ?? source.prioridade ?? 'media');
+                const priority = priorityRaw === 'alta' ? 'Alta' : (priorityRaw === 'baixa' ? 'Baixa' : (priorityRaw === 'media' ? 'Média' : null));
+                if (!priority) throw new Error('Prioridade inválida na tarefa “' + title + '”. Use Alta, Média ou Baixa.');
+                const statusRaw = normalizeAgendaText(source.status ?? 'a fazer');
+                const statusMap = { 'a fazer': 'todo', 'todo': 'todo', 'pendente': 'todo', 'em andamento': 'in_progress', 'in progress': 'in_progress', 'in_progress': 'in_progress', 'concluido': 'done', 'done': 'done' };
+                const status = statusMap[statusRaw];
+                if (!status) throw new Error('Status inválido na tarefa “' + title + '”. Use A Fazer, Em Andamento ou Concluído.');
+                const recurrenceRaw = normalizeAgendaText(source.recurrenceRule ?? source.recurrence ?? 'none');
+                const recurrenceMap = { 'none': 'none', 'nao repetir': 'none', 'semanal': 'weekly', 'weekly': 'weekly', 'mensal': 'monthly', 'monthly': 'monthly' };
+                const recurrenceRule = recurrenceMap[recurrenceRaw];
+                if (!recurrenceRule) throw new Error('Recorrência inválida na tarefa “' + title + '”. Use não repetir, semanal ou mensal.');
+                const task = {
+                    id: 'chat_' + Date.now() + '_' + index + '_' + Math.random().toString(36).slice(2, 8),
+                    title,
+                    description: String(source.description ?? source.descricao ?? '').trim(),
+                    dueDate: normalizeChatImportDate(source.dueDate ?? source.date ?? source.data ?? ''),
+                    dueTime: normalizeChatImportTime(source.dueTime ?? source.time ?? source.horario ?? ''),
+                    category: String(source.category ?? source.categoria ?? 'Outros').trim() || 'Outros',
+                    priority,
+                    status,
+                    folderId,
+                    createdAt: new Date().toISOString()
+                };
+                if (recurrenceRule !== 'none') task.recurrenceRule = recurrenceRule;
+                if (Array.isArray(source.checklist)) {
+                    task.checklist = source.checklist.map(item => typeof item === 'string'
+                        ? { text: item, done: false }
+                        : { text: String(item.text ?? item.title ?? ''), done: Boolean(item.done) }).filter(item => item.text);
+                }
+                if (typeof source.area === 'string' && source.area.trim()) task.area = source.area.trim();
+                return task;
+            });
+        }
+
+        function renderChatImportPreview(items) {
+            const preview = document.getElementById('chatImportPreview');
+            const saveButton = document.getElementById('btnSaveChatImport');
+            if (!preview || !saveButton) return;
+            preview.innerHTML = '<p class="text-[11px] font-bold text-slate-200">' + items.length + (items.length === 1 ? ' tarefa pronta para confirmação' : ' tarefas prontas para confirmação') + '</p>' +
+                items.map((item, index) => {
+                    const folder = folders.find(f => f.id === item.folderId);
+                    const dateLabel = item.dueDate ? item.dueDate.split('-').reverse().join('/') : 'Sem data';
+                    return '<div class="rounded-xl border border-slate-700 bg-slate-950/70 p-3 space-y-1">' +
+                        '<p class="text-xs font-bold text-white">' + (index + 1) + '. ' + escapeHtml(item.title) + '</p>' +
+                        (item.description ? '<p class="text-[10px] text-slate-400">' + escapeHtml(item.description) + '</p>' : '') +
+                        '<div class="flex flex-wrap gap-2 text-[10px] text-slate-300">' +
+                        '<span class="rounded bg-slate-800 px-2 py-1">' + escapeHtml(dateLabel) + (item.dueTime ? ' · ' + escapeHtml(item.dueTime) : '') + '</span>' +
+                        '<span class="rounded bg-slate-800 px-2 py-1">' + escapeHtml(item.priority) + '</span>' +
+                        '<span class="rounded bg-slate-800 px-2 py-1">' + escapeHtml(folder ? folder.name : 'Sem pasta') + '</span>' +
+                        '</div></div>';
+                }).join('');
+            preview.classList.remove('hidden');
+            saveButton.disabled = !(currentUserState && db);
+            saveButton.textContent = 'Adicionar ' + items.length + (items.length === 1 ? ' tarefa' : ' tarefas');
+            if (!currentUserState || !db) setChatImportFeedback('Entre na sua conta para gravar no Firestore. A prévia não foi salva.', 'warning');
+            else setChatImportFeedback('Confira os dados acima. Nada foi gravado ainda.', 'success');
+        }
+
+        function triggerAssistantAdvice() {
+            openChatImportModal();
+        }
+
+        const btnCloseChatImport = document.getElementById('btnCloseChatImport');
+        const btnCancelChatImport = document.getElementById('btnCancelChatImport');
+        const btnParseChatImport = document.getElementById('btnParseChatImport');
+        const btnSaveChatImport = document.getElementById('btnSaveChatImport');
+        if (btnCloseChatImport) btnCloseChatImport.addEventListener('click', closeChatImportModal);
+        if (btnCancelChatImport) btnCancelChatImport.addEventListener('click', closeChatImportModal);
+        if (btnParseChatImport) btnParseChatImport.addEventListener('click', () => {
+            try {
+                pendingChatImportTasks = parseChatAgendaPayload(document.getElementById('chatImportInput')?.value || '');
+                renderChatImportPreview(pendingChatImportTasks);
+            } catch (err) {
+                pendingChatImportTasks = [];
+                const preview = document.getElementById('chatImportPreview');
+                if (preview) { preview.innerHTML = ''; preview.classList.add('hidden'); }
+                if (btnSaveChatImport) btnSaveChatImport.disabled = true;
+                setChatImportFeedback(err.message || 'Não foi possível interpretar os dados.', 'error');
+            }
+        });
+        if (btnSaveChatImport) btnSaveChatImport.addEventListener('click', async () => {
+            if (!currentUserState || !db) {
+                setChatImportFeedback('Entre na sua conta para gravar as tarefas na nuvem.', 'warning');
+                return;
+            }
+            if (!pendingChatImportTasks.length) {
+                setChatImportFeedback('Interprete os dados e revise a prévia antes de salvar.', 'warning');
+                return;
+            }
+            btnSaveChatImport.disabled = true;
+            btnSaveChatImport.textContent = 'Salvando...';
+            let saved = 0;
+            try {
+                for (const task of pendingChatImportTasks) {
+                    await saveTaskToFirestore(task);
+                    if (task.recurrenceRule && task.recurrenceRule !== 'none') await materializeRecurringOccurrences(task);
+                    saved++;
+                }
+                render();
+                setChatImportFeedback(saved + (saved === 1 ? ' tarefa adicionada' : ' tarefas adicionadas') + ' à sua agenda!', 'success');
+                const input = document.getElementById('chatImportInput');
+                if (input) input.value = '';
+                pendingChatImportTasks = [];
+                const preview = document.getElementById('chatImportPreview');
+                if (preview) { preview.innerHTML = ''; preview.classList.add('hidden'); }
+                btnSaveChatImport.textContent = 'Concluído';
+                window.setTimeout(() => closeChatImportModal(), 1200);
+            } catch (err) {
+                console.error('[ChatGPT Agenda Import Error]', err);
+                btnSaveChatImport.disabled = false;
+                btnSaveChatImport.textContent = 'Tentar novamente';
+                setChatImportFeedback(saved
+                    ? saved + ' tarefa(s) foram salvas antes de ocorrer um erro. Confira a agenda antes de repetir a importação.'
+                    : 'Não foi possível salvar. Verifique sua conexão e tente novamente.', 'error');
+            }
+        });
+        
 
         // --- FILTERS & SHORTCUT HANDLERS (ETAPA 8 FIXES) ---
         let currentFilterMode = 'all'; // Mode tracker: 'all', 'today', 'late', 'priority', 'no_date', 'status'
