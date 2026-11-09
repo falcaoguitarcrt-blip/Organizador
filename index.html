@@ -1199,7 +1199,7 @@
                         fromCache: Boolean(metadata.fromCache),
                         hasPendingWrites: Boolean(metadata.hasPendingWrites)
                     };
-                    firestoreItemsServerReady = !firestoreLastSnapshotState.fromCache;
+                    firestoreItemsServerReady = !firestoreLastSnapshotState.fromCache && !firestoreLastSnapshotState.hasPendingWrites;
                     firestoreSyncError = false;
                     if (!firestoreLastSnapshotState.fromCache && !firestoreLastSnapshotState.hasPendingWrites) {
                         firestoreLastServerSyncAt = new Date();
@@ -1213,6 +1213,7 @@
                     }
                 }, (error) => {
                     console.error("[Firestore Sync Error]", error);
+                    firestoreItemsServerReady = false;
                     firestoreSyncError = true;
                     updateFirestoreSyncStatus();
                 });
@@ -1452,7 +1453,7 @@
             folderUnsubscribe = db.collection('users').doc(uid).collection('folders')
                 .onSnapshot({ includeMetadataChanges: true }, (snap) => {
                     folders = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    firestoreFoldersServerReady = !Boolean(snap.metadata?.fromCache);
+                    firestoreFoldersServerReady = !Boolean(snap.metadata?.fromCache) && !Boolean(snap.metadata?.hasPendingWrites);
 
                     // Só reorganizar pastas depois da confirmação do servidor.
                     // Evita enfileirar gravações usando um snapshot parcial do cache offline.
