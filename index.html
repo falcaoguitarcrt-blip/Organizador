@@ -1028,6 +1028,8 @@
         let firestoreLastSnapshotState = { count: 0, fromCache: true, hasPendingWrites: false };
         let firestoreLastServerSyncAt = null;
         let firestoreSyncError = false;
+        let firestoreItemsServerReady = false;
+        let firestoreFoldersServerReady = false;
         let folders = [];
         let folderUnsubscribe = null;
         let activeFolderId = null;
@@ -1084,6 +1086,8 @@
                         folderUnsubscribe = null;
                     }
                     folders = [];
+                    firestoreItemsServerReady = false;
+                    firestoreFoldersServerReady = false;
                     activeFolderId = null;
                     currentUserState = null;
                     firestoreInspectionState = { itemsCount: 0, foldersCount: 0, templatesCount: 0, hasSettings: false, remoteItems: [], checked: false, error: null };
@@ -1162,6 +1166,7 @@
             }
 
             firestoreSyncError = false;
+            firestoreItemsServerReady = false;
             firestoreLastSnapshotState = { count: 0, fromCache: true, hasPendingWrites: false };
             updateFirestoreSyncStatus();
 
@@ -1194,15 +1199,18 @@
                         fromCache: Boolean(metadata.fromCache),
                         hasPendingWrites: Boolean(metadata.hasPendingWrites)
                     };
+                    firestoreItemsServerReady = !firestoreLastSnapshotState.fromCache;
                     firestoreSyncError = false;
                     if (!firestoreLastSnapshotState.fromCache && !firestoreLastSnapshotState.hasPendingWrites) {
                         firestoreLastServerSyncAt = new Date();
                     }
                     updateFirestoreSyncStatus();
 
-                    // O seed só cria registros ausentes ou completa metadados ausentes.
-                    // Não regrava tarefas existentes, evitando que o próprio listener gere um ciclo.
-                    scheduleAgendaCommitmentsSeed();
+                    // Só iniciar o seed após itens E pastas terem sido confirmados pelo servidor.
+                    // Isso evita criar cópias quando o primeiro snapshot contém apenas cache local.
+                    if (firestoreItemsServerReady && firestoreFoldersServerReady) {
+                        scheduleAgendaCommitmentsSeed();
+                    }
                 }, (error) => {
                     console.error("[Firestore Sync Error]", error);
                     firestoreSyncError = true;
@@ -1344,7 +1352,8 @@
         }
 
         async function seedAgendaCommitments() {
-            if (agendaSeedRunning || !currentUserState || !db || !folders.length) return;
+            if (agendaSeedRunning || !currentUserState || !db || !folders.length ||
+                !firestoreItemsServerReady || !firestoreFoldersServerReady) return;
             agendaSeedRunning = true;
             try {
                 const folderCache = {};
@@ -1439,22 +1448,36 @@
         function setupFoldersRealtimeListener(uid) {
             if (!db || !uid) return;
             if (folderUnsubscribe) folderUnsubscribe();
+            firestoreFoldersServerReady = false;
             folderUnsubscribe = db.collection('users').doc(uid).collection('folders')
-                .onSnapshot((snap) => {
+                .onSnapshot({ includeMetadataChanges: true }, (snap) => {
                     folders = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    // Move pastas ministeriais para dentro de Igreja automaticamente.
-                    const church = folders.find(f => String(f.name||'').trim().toLowerCase() === 'igreja');
-                    if (church) {
-                        const names = ['cultos','jornada de conhecimento','professor','supervisão ge'];
-                        const children = names.map(n => folders.find(f => String(f.name||'').trim().toLowerCase() === n && !f.parentId)).filter(Boolean);
-                        children.forEach(f => { f.parentId = church.id; db.collection('users').doc(uid).collection('folders').doc(f.id).set({parentId:church.id},{merge:true}).catch(console.error); });
+                    firestoreFoldersServerReady = !Boolean(snap.metadata?.fromCache);
+
+                    // Só reorganizar pastas depois da confirmação do servidor.
+                    // Evita enfileirar gravações usando um snapshot parcial do cache offline.
+                    if (firestoreFoldersServerReady) {
+                        const church = folders.find(f => String(f.name||'').trim().toLowerCase() === 'igreja');
+                        if (church) {
+                            const names = ['cultos','jornada de conhecimento','professor','supervisão ge'];
+                            const children = names.map(n => folders.find(f => String(f.name||'').trim().toLowerCase() === n && !f.parentId)).filter(Boolean);
+                            children.forEach(f => {
+                                f.parentId = church.id;
+                                db.collection('users').doc(uid).collection('folders').doc(f.id)
+                                    .set({ parentId: church.id }, { merge: true }).catch(console.error);
+                            });
+                        }
                     }
+
                     sortFoldersForDisplay();
                     renderFolders();
                     populateTaskFolderSelect();
-                    scheduleAgendaCommitmentsSeed();
+                    if (firestoreItemsServerReady && firestoreFoldersServerReady) {
+                        scheduleAgendaCommitmentsSeed();
+                    }
                 }, (err) => {
                     console.error('[Folders Sync Error]', err);
+                    firestoreFoldersServerReady = false;
                     folders = [];
                     renderFolders();
                     populateTaskFolderSelect();
