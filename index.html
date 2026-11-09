@@ -1108,8 +1108,6 @@
         function updateFirestoreSyncStatus() {
             const authStatusLabel = document.getElementById('authStatusLabel');
             const footerStatusText = document.getElementById('footerStatusText');
-            const count = firestoreLastSnapshotState.count;
-            const countLabel = `${count} itens`;
             const timeLabel = firestoreLastServerSyncAt
                 ? firestoreLastServerSyncAt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
                 : '';
@@ -1117,33 +1115,33 @@
             let tone = 'is-muted';
             let dot = 'status-pulse-amber';
             let label = 'Aguardando Firestore...';
-            let footer = `Aguardando dados do Firestore (${countLabel})`;
+            let footer = 'Aguardando dados do Firestore';
 
             if (typeof navigator !== 'undefined' && !navigator.onLine) {
                 tone = 'is-warning';
                 label = 'Sem conexão';
-                footer = `Sem conexão • último snapshot: ${countLabel}`;
+                footer = 'Sem conexão • tentando reconectar';
             } else if (firestoreSyncError) {
                 tone = 'is-warning';
                 label = 'Erro de sincronização';
-                footer = `Erro de sincronização • último snapshot: ${countLabel}`;
+                footer = 'Erro de sincronização • verifique sua conexão';
             } else if (firestoreReconnecting) {
                 tone = 'is-warning';
                 label = 'Reconectando...';
-                footer = `Conexão restaurada • aguardando nova confirmação do Firestore (${countLabel})`;
+                footer = 'Conexão restaurada • aguardando confirmação do Firestore';
             } else if (firestoreLastSnapshotState.fromCache) {
                 tone = 'is-warning';
                 label = 'Aguardando servidor';
-                footer = `Cache local • ${countLabel} • aguardando confirmação do servidor`;
+                footer = 'Dados locais • aguardando confirmação do servidor';
             } else if (firestoreLastSnapshotState.hasPendingWrites) {
                 tone = 'is-warning';
                 label = 'Enviando alterações...';
-                footer = `Alterações pendentes de confirmação • ${countLabel}`;
+                footer = 'Enviando alterações ao Firestore...';
             } else {
                 tone = '';
                 dot = 'status-pulse';
                 label = 'Sincronizado';
-                footer = `Firestore atualizado às ${timeLabel || 'agora'} (${countLabel})`;
+                footer = `Sincronizado às ${timeLabel || 'agora'}`;
             }
 
             if (authStatusLabel) {
