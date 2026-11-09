@@ -1025,6 +1025,9 @@
         let db = null; // Firestore Reference
         let currentUserState = null; // Store authenticated user state
         let firestoreUnsubscribe = null; // Realtime Firestore Unsubscribe listener
+        let firestoreLastSnapshotState = { count: 0, fromCache: true, hasPendingWrites: false };
+        let firestoreLastServerSyncAt = null;
+        let firestoreSyncError = false;
         let folders = [];
         let folderUnsubscribe = null;
         let activeFolderId = null;
@@ -1097,23 +1100,73 @@
         }
 
         // --- 2.1 FIRESTORE REALTIME SYNC ---
+        function updateFirestoreSyncStatus() {
+            const authStatusLabel = document.getElementById('authStatusLabel');
+            const footerStatusText = document.getElementById('footerStatusText');
+            const count = firestoreLastSnapshotState.count;
+            const countLabel = `${count} itens`;
+            const timeLabel = firestoreLastServerSyncAt
+                ? firestoreLastServerSyncAt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+                : '';
+
+            let tone = 'is-muted';
+            let dot = 'status-pulse-amber';
+            let label = 'Aguardando Firestore...';
+            let footer = `Aguardando dados do Firestore (${countLabel})`;
+
+            if (typeof navigator !== 'undefined' && !navigator.onLine) {
+                tone = 'is-warning';
+                label = 'Sem conexão';
+                footer = `Sem conexão • último snapshot: ${countLabel}`;
+            } else if (firestoreSyncError) {
+                tone = 'is-warning';
+                label = 'Erro de sincronização';
+                footer = `Erro de sincronização • último snapshot: ${countLabel}`;
+            } else if (firestoreLastSnapshotState.fromCache) {
+                tone = 'is-warning';
+                label = 'Aguardando servidor';
+                footer = `Cache local • ${countLabel} • aguardando confirmação do servidor`;
+            } else if (firestoreLastSnapshotState.hasPendingWrites) {
+                tone = 'is-warning';
+                label = 'Enviando alterações...';
+                footer = `Alterações pendentes de confirmação • ${countLabel}`;
+            } else {
+                tone = '';
+                dot = 'status-pulse';
+                label = 'Sincronizado';
+                footer = `Firestore atualizado às ${timeLabel || 'agora'} (${countLabel})`;
+            }
+
+            if (authStatusLabel) {
+                authStatusLabel.className = tone ? `auth-status-pill ${tone}` : 'auth-status-pill';
+                authStatusLabel.innerHTML = `<span class="${dot}"></span><span class="status-label-text">${label}</span>`;
+            }
+            if (footerStatusText) {
+                const footerDot = tone ? 'status-pulse-amber' : 'status-pulse';
+                footerStatusText.innerHTML = `<span class="${footerDot}"></span> ${footer}`;
+            }
+        }
+
+        window.addEventListener('online', () => {
+            firestoreSyncError = false;
+            updateFirestoreSyncStatus();
+        });
+        window.addEventListener('offline', updateFirestoreSyncStatus);
+
         function setupFirestoreRealtimeListener(uid) {
             if (!db || !uid) return;
 
             if (firestoreUnsubscribe) {
                 firestoreUnsubscribe();
+                firestoreUnsubscribe = null;
             }
 
-            const authStatusLabel = document.getElementById('authStatusLabel');
-            const footerStatusText = document.getElementById('footerStatusText');
-
-            if (authStatusLabel) {
-                authStatusLabel.className = 'auth-status-pill is-warning';
-                authStatusLabel.innerHTML = '<span class="status-pulse-amber"></span><span class="status-label-text">Conectando ao Firestore...</span>';
-            }
+            firestoreSyncError = false;
+            firestoreLastSnapshotState = { count: 0, fromCache: true, hasPendingWrites: false };
+            updateFirestoreSyncStatus();
 
             firestoreUnsubscribe = db.collection('users').doc(uid).collection('items')
-                .onSnapshot((snapshot) => {
+                .onSnapshot({ includeMetadataChanges: true }, (snapshot) => {
                     const loadedTasks = [];
                     snapshot.forEach(doc => {
                         const data = doc.data();
@@ -1134,22 +1187,26 @@
                     tasks = loadedTasks;
                     saveTasksToLocalCacheOnly(tasks);
                     render();
+
+                    const metadata = snapshot.metadata || {};
+                    firestoreLastSnapshotState = {
+                        count: tasks.length,
+                        fromCache: Boolean(metadata.fromCache),
+                        hasPendingWrites: Boolean(metadata.hasPendingWrites)
+                    };
+                    firestoreSyncError = false;
+                    if (!firestoreLastSnapshotState.fromCache && !firestoreLastSnapshotState.hasPendingWrites) {
+                        firestoreLastServerSyncAt = new Date();
+                    }
+                    updateFirestoreSyncStatus();
+
+                    // O seed só cria registros ausentes ou completa metadados ausentes.
+                    // Não regrava tarefas existentes, evitando que o próprio listener gere um ciclo.
                     scheduleAgendaCommitmentsSeed();
-
-                    if (authStatusLabel) {
-                        authStatusLabel.className = 'auth-status-pill';
-                        authStatusLabel.innerHTML = `<span class="status-pulse"></span><span class="status-label-text">Sincronizado (${tasks.length} tarefas)</span>`;
-                    }
-
-                    if (footerStatusText) {
-                        footerStatusText.innerHTML = `<span class="status-pulse"></span> Sincronizado Firestore (${tasks.length} itens em tempo real)`;
-                    }
                 }, (error) => {
                     console.error("[Firestore Sync Error]", error);
-                    if (authStatusLabel) {
-                        authStatusLabel.className = 'auth-status-pill is-warning';
-                        authStatusLabel.innerHTML = '<span class="status-pulse-amber"></span><span class="status-label-text">Erro de sincronização</span>';
-                    }
+                    firestoreSyncError = true;
+                    updateFirestoreSyncStatus();
                 });
         }
 
@@ -1296,18 +1353,22 @@
                     ['Supervisão GE','users',[]], ['Professor','graduation-cap',[]], ['Inventário','file-text',[]],
                     ['Área de Lazer','home',[]], ['Pessoal','briefcase',[]], ['Financeiro','wallet',[]]
                 ];
-                for (const [name, icon, aliases] of folderSpecs) folderCache[name] = await ensureAgendaFolder(name, icon, aliases);
+                for (const [name, icon, aliases] of folderSpecs) {
+                    folderCache[name] = await ensureAgendaFolder(name, icon, aliases);
+                }
 
                 const definitions = buildAgendaSeedDefinitions();
                 const batch = db.batch();
                 let writes = 0;
                 const existingBySeed = new Map(tasks.filter(t => t.agendaSeedKey).map(t => [t.agendaSeedKey, t]));
+                const itemsRef = db.collection('users').doc(currentUserState.uid).collection('items');
 
                 for (const def of definitions) {
                     const folder = folderCache[def.folderName] || findAgendaFolder(def.folderName);
                     if (!folder) continue;
+
                     const existingSeed = existingBySeed.get(def.seedKey);
-                    const fallback = tasks.find(t => {
+                    const fallback = existingSeed ? null : tasks.find(t => {
                         const normalizedTaskTitle = normalizeAgendaText(t.title);
                         const titleMatch = normalizedTaskTitle === normalizeAgendaText(def.title) ||
                             (!!def.recurrenceRule && normalizedTaskTitle.includes('culto'));
@@ -1316,29 +1377,53 @@
                         return titleMatch && dateMatch && timeMatch;
                     });
                     const existing = existingSeed || fallback;
-                    const id = existing?.id || `agenda_seed_${def.seedKey.replace(/[^a-zA-Z0-9_-]/g, '_')}`;
-                    const ref = db.collection('users').doc(currentUserState.uid).collection('items').doc(id);
+
+                    if (existing) {
+                        // Migração pontual: preservar título, data, horário, status e demais edições do usuário.
+                        // Só grava quando falta algum metadado, nunca em toda atualização do listener.
+                        if (existing.agendaSeedKey && existing.agendaSeedKey !== def.seedKey) continue;
+
+                        const migrationPatch = {};
+                        if (!existing.agendaSeedKey) migrationPatch.agendaSeedKey = def.seedKey;
+                        if (!existing.folderId && folder.id) migrationPatch.folderId = folder.id;
+                        if (!existing.description && def.description) migrationPatch.description = def.description;
+                        if (!existing.dueTime && def.dueTime) migrationPatch.dueTime = def.dueTime;
+                        if (!existing.category) migrationPatch.category = def.category;
+                        if (!existing.priority) migrationPatch.priority = def.priority;
+                        if (!existing.status) migrationPatch.status = def.status;
+
+                        if (Object.keys(migrationPatch).length) {
+                            migrationPatch.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
+                            batch.set(itemsRef.doc(existing.id), migrationPatch, { merge: true });
+                            writes++;
+                        }
+                        continue;
+                    }
+
+                    const id = `agenda_seed_${def.seedKey.replace(/[^a-zA-Z0-9_-]/g, '_')}`;
                     const payload = {
-                        ...(existing || {}),
                         id,
                         title: def.title,
-                        description: existing?.description || def.description || '',
-                        dueDate: def.dueDate,
+                        description: def.description || '',
+                        dueDate: def.dueDate || '',
                         ...(def.dueTime ? { dueTime: def.dueTime } : {}),
-                        category: existing?.category || def.category,
-                        priority: existing?.priority || def.priority,
-                        status: existing?.status || def.status,
+                        category: def.category || 'Outros',
+                        priority: def.priority || 'Média',
+                        status: def.status || 'todo',
                         folderId: folder.id,
                         agendaSeedKey: def.seedKey,
                         ...(def.recurrenceRule ? { recurrenceRule: def.recurrenceRule } : {}),
-                        createdAt: existing?.createdAt || new Date().toISOString(),
+                        createdAt: new Date().toISOString(),
                         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                     };
-                    batch.set(ref, payload, { merge: true });
+                    batch.set(itemsRef.doc(id), payload, { merge: true });
                     writes++;
                 }
-                if (writes) await batch.commit();
-                render();
+
+                if (writes) {
+                    await batch.commit();
+                    console.info(`[Agenda Seed] ${writes} registro(s) criado(s) ou completado(s); nenhum registro existente foi substituído.`);
+                }
             } catch (err) {
                 console.error('[Agenda Seed Error]', err);
             } finally {
