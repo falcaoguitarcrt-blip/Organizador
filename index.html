@@ -1028,6 +1028,7 @@
         let firestoreLastSnapshotState = { count: 0, fromCache: true, hasPendingWrites: false };
         let firestoreLastServerSyncAt = null;
         let firestoreSyncError = false;
+        let firestoreReconnecting = false;
         let firestoreItemsServerReady = false;
         let firestoreFoldersServerReady = false;
         let folders = [];
@@ -1126,6 +1127,10 @@
                 tone = 'is-warning';
                 label = 'Erro de sincronização';
                 footer = `Erro de sincronização • último snapshot: ${countLabel}`;
+            } else if (firestoreReconnecting) {
+                tone = 'is-warning';
+                label = 'Reconectando...';
+                footer = `Conexão restaurada • aguardando nova confirmação do Firestore (${countLabel})`;
             } else if (firestoreLastSnapshotState.fromCache) {
                 tone = 'is-warning';
                 label = 'Aguardando servidor';
@@ -1152,7 +1157,7 @@
         }
 
         window.addEventListener('online', () => {
-            firestoreSyncError = false;
+            firestoreReconnecting = true;
             updateFirestoreSyncStatus();
         });
         window.addEventListener('offline', updateFirestoreSyncStatus);
@@ -1166,6 +1171,7 @@
             }
 
             firestoreSyncError = false;
+            firestoreReconnecting = false;
             firestoreItemsServerReady = false;
             firestoreLastSnapshotState = { count: 0, fromCache: true, hasPendingWrites: false };
             updateFirestoreSyncStatus();
@@ -1203,6 +1209,7 @@
                     firestoreSyncError = false;
                     if (!firestoreLastSnapshotState.fromCache && !firestoreLastSnapshotState.hasPendingWrites) {
                         firestoreLastServerSyncAt = new Date();
+                        firestoreReconnecting = false;
                     }
                     updateFirestoreSyncStatus();
 
@@ -1214,6 +1221,7 @@
                 }, (error) => {
                     console.error("[Firestore Sync Error]", error);
                     firestoreItemsServerReady = false;
+                    firestoreReconnecting = false;
                     firestoreSyncError = true;
                     updateFirestoreSyncStatus();
                 });
