@@ -2678,11 +2678,11 @@
         function updateTaskStatusInFirestore(taskId, newStatus) {
             const targetTask = tasks.find(t => t.id === taskId);
             if (!targetTask) return;
-            const previousStatus = targetTask.status;
-            const previousBoardLane = targetTask.boardLane;
+            const previousTask = targetTask;
+            const activityLog = [...(Array.isArray(targetTask.activityLog) ? targetTask.activityLog : []), createTaskActivityEntry('Status alterado para ' + (newStatus === 'done' ? 'Concluído' : newStatus === 'in_progress' ? 'Em andamento' : 'A fazer') + '.')].slice(-100);
 
             // Alterar o status pelo fluxo clássico retira o item do Backlog.
-            tasks = tasks.map(t => t.id === taskId ? { ...t, status: newStatus, boardLane: null } : t);
+            tasks = tasks.map(t => t.id === taskId ? { ...t, status: newStatus, boardLane: null, activityLog } : t);
             render();
 
             if (!currentUserState || !db) {
@@ -2694,10 +2694,11 @@
             db.collection('users').doc(uid).collection('items').doc(taskId).update({
                 status: newStatus,
                 boardLane: firebase.firestore.FieldValue.delete(),
+                activityLog,
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             }).catch(err => {
                 console.error("Erro ao atualizar status no Firestore. Revertendo estado...", err);
-                tasks = tasks.map(t => t.id === taskId ? { ...t, status: previousStatus, boardLane: previousBoardLane } : t);
+                tasks = tasks.map(t => t.id === taskId ? previousTask : t);
                 render();
                 alert("Falha ao atualizar o status da tarefa no servidor.");
             });
@@ -3615,6 +3616,24 @@
                 const folderId = document.getElementById('taskFolder').value || '';
 
                 const existingTask = tasks.find(t => t.id === id);
+                const activityLog = Array.isArray(existingTask?.activityLog) ? [...existingTask.activityLog] : [];
+                if (!existingTask) {
+                    activityLog.push(createTaskActivityEntry('Compromisso criado.'));
+                } else {
+                    const changedFields = [
+                        ['title', title, 'Título atualizado.'],
+                        ['description', description, 'Descrição atualizada.'],
+                        ['dueDate', dueDate, 'Data alterada.'],
+                        ['dueTime', dueTime, 'Horário alterado.'],
+                        ['priority', priority, 'Prioridade alterada para ' + priority + '.'],
+                        ['status', status, 'Status alterado.'],
+                        ['folderId', folderId, 'Pasta alterada.']
+                    ];
+                    changedFields.forEach(([key, value, message]) => {
+                        if (String(existingTask[key] ?? '') !== String(value ?? '')) activityLog.push(createTaskActivityEntry(message));
+                    });
+                    if (activityLog.length > 100) activityLog.splice(0, activityLog.length - 100);
+                }
 
                 const taskObj = {
                     ...(existingTask || {}),
@@ -3629,6 +3648,10 @@
                     status,
                     folderId,
                     boardLane: status === 'todo' && (existingTask?.boardLane === 'backlog' || (!existingTask && workspaceCreateLane === 'backlog')) ? 'backlog' : null,
+                    activityLog,
+                    checklist: Array.isArray(existingTask?.checklist) ? existingTask.checklist : [],
+                    comments: Array.isArray(existingTask?.comments) ? existingTask.comments : [],
+                    attachments: Array.isArray(existingTask?.attachments) ? existingTask.attachments : [],
                     createdAt: existingTask ? (existingTask.createdAt || new Date().toISOString()) : new Date().toISOString()
                 };
 
@@ -3649,9 +3672,11 @@
             if (!newDate) return;
             const targetTask = tasks.find(t => t.id === taskId);
             if (!targetTask) return;
-            const previousDate = targetTask.dueDate || '';
+            const previousTask = targetTask;
+            if ((targetTask.dueDate || '') === newDate) return;
+            const activityLog = [...(Array.isArray(targetTask.activityLog) ? targetTask.activityLog : []), createTaskActivityEntry('Data alterada para ' + newDate.split('-').reverse().join('/') + '.')].slice(-100);
 
-            tasks = tasks.map(t => t.id === taskId ? { ...t, dueDate: newDate } : t);
+            tasks = tasks.map(t => t.id === taskId ? { ...t, dueDate: newDate, activityLog } : t);
             render();
 
             if (!currentUserState || !db) {
@@ -3662,10 +3687,11 @@
             const uid = currentUserState.uid;
             db.collection('users').doc(uid).collection('items').doc(taskId).update({
                 dueDate: newDate,
+                activityLog,
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             }).catch(err => {
                 console.error("Erro ao reagendar tarefa no Firestore. Revertendo data...", err);
-                tasks = tasks.map(t => t.id === taskId ? { ...t, dueDate: previousDate } : t);
+                tasks = tasks.map(t => t.id === taskId ? previousTask : t);
                 render();
                 alert("Não foi possível atualizar a data da tarefa. A data anterior foi restaurada.");
             });
@@ -4033,17 +4059,19 @@
             if (!WORKSPACE_LANES.some(item => item.id === lane)) return;
             const current = tasks.find(task => task.id === taskId);
             if (!current || getWorkspaceLane(current) === lane) return;
-            const previous = { ...current };
+            const previous = current;
+            const laneLabels = { backlog:'Backlog', todo:'A fazer', in_progress:'Em andamento', done:'Concluído' };
+            const activityLog = [...(Array.isArray(current.activityLog) ? current.activityLog : []), createTaskActivityEntry('Cartão movido para ' + laneLabels[lane] + '.')].slice(-100);
             const next = lane === 'backlog'
-                ? { ...current, status:'todo', boardLane:'backlog' }
-                : { ...current, status:lane, boardLane:null };
+                ? { ...current, status:'todo', boardLane:'backlog', activityLog }
+                : { ...current, status:lane, boardLane:null, activityLog };
 
             tasks = tasks.map(task => task.id === taskId ? next : task);
             saveTasksToLocalCacheOnly(tasks);
             render();
 
             if (!currentUserState || !db) return;
-            const updates = { status:next.status, updatedAt:firebase.firestore.FieldValue.serverTimestamp() };
+            const updates = { status:next.status, activityLog:next.activityLog, updatedAt:firebase.firestore.FieldValue.serverTimestamp() };
             updates.boardLane = lane === 'backlog' ? 'backlog' : firebase.firestore.FieldValue.delete();
             db.collection('users').doc(currentUserState.uid).collection('items').doc(taskId).update(updates).catch(err => {
                 console.error('Erro ao mover cartão no Firestore. Restaurando posição anterior...', err);
@@ -4057,15 +4085,18 @@
         function updatePlannerTaskSchedule(taskId, newDate, newTime) {
             const task = tasks.find(item => item.id === taskId);
             if (!task || !newDate) return;
-            const previous = { dueDate:task.dueDate || '', dueTime:task.dueTime || '' };
-            const next = { dueDate:newDate, dueTime:newTime === undefined ? previous.dueTime : newTime };
-            if (previous.dueDate === next.dueDate && previous.dueTime === next.dueTime) return;
-            tasks = tasks.map(item => item.id === taskId ? { ...item, ...next } : item);
+            const previous = task;
+            const next = { dueDate:newDate, dueTime:newTime === undefined ? (task.dueTime || '') : newTime };
+            if ((task.dueDate || '') === next.dueDate && (task.dueTime || '') === next.dueTime) return;
+            const scheduleText = 'Agenda alterada para ' + next.dueDate.split('-').reverse().join('/') + (next.dueTime ? ' às ' + next.dueTime : ' (sem horário)') + '.';
+            const activityLog = [...(Array.isArray(task.activityLog) ? task.activityLog : []), createTaskActivityEntry(scheduleText)].slice(-100);
+            tasks = tasks.map(item => item.id === taskId ? { ...item, ...next, activityLog } : item);
             saveTasksToLocalCacheOnly(tasks);
             render();
             if (!currentUserState || !db) return;
             const updates = {
                 dueDate: next.dueDate,
+                activityLog,
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             };
             updates.dueTime = next.dueTime
@@ -4073,7 +4104,7 @@
                 : firebase.firestore.FieldValue.delete();
             db.collection('users').doc(currentUserState.uid).collection('items').doc(taskId).update(updates).catch(err => {
                 console.error('Erro ao reagendar compromisso no Firestore. Restaurando horário anterior...', err);
-                tasks = tasks.map(item => item.id === taskId ? { ...item, ...previous } : item);
+                tasks = tasks.map(item => item.id === taskId ? previous : item);
                 saveTasksToLocalCacheOnly(tasks);
                 render();
                 alert('Não foi possível reagendar este compromisso. A data e o horário anteriores foram restaurados.');
