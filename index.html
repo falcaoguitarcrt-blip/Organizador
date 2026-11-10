@@ -2724,7 +2724,7 @@
             if (!currentUserState || !db) {
                 tasks = tasks.map(t => {
                     if (t.status !== 'done' && t.dueDate && t.dueDate < todayStr) {
-                        return { ...t, dueDate: todayStr };
+                        return { ...t, dueDate: todayStr, activityLog: [...(Array.isArray(t.activityLog) ? t.activityLog : []), createTaskActivityEntry('Data adiada para ' + todayStr.split('-').reverse().join('/') + '.')].slice(-100) };
                     }
                     return t;
                 });
@@ -2738,8 +2738,10 @@
 
             lateTasks.forEach(task => {
                 const ref = db.collection('users').doc(uid).collection('items').doc(task.id);
+                const activityLog = [...(Array.isArray(task.activityLog) ? task.activityLog : []), createTaskActivityEntry('Data adiada para ' + todayStr.split('-').reverse().join('/') + '.')].slice(-100);
                 batch.update(ref, {
                     dueDate: todayStr,
+                    activityLog,
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
             });
