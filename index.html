@@ -419,7 +419,7 @@
 .task-meta-entry{border:1px solid rgba(51,65,85,.58);border-radius:9px;background:rgba(15,23,42,.55);padding:9px}
 .task-meta-entry+.task-meta-entry{margin-top:7px}
 .task-meta-scroll{max-height:230px;overflow:auto}
-.task-detail-footer{flex-shrink:0;background:rgba(2,8,20,.97);border-top:1px solid rgba(51,65,85,.8);padding:12px 16px}
+.task-detail-footer{position:sticky;bottom:0;flex-shrink:0;background:rgba(2,8,20,.97);border-top:1px solid rgba(51,65,85,.8);padding:12px 16px}
 .task-detail-header{flex-shrink:0}
 @media(max-width:850px){.task-detail-shell{width:100%;max-width:none}.task-detail-grid{grid-template-columns:minmax(0,1fr);gap:12px}.task-detail-aside{display:grid;grid-template-columns:1fr;gap:10px}.task-detail-form{padding:14px!important}}
 @media(min-width:851px){.task-detail-aside{position:sticky;top:0}}
@@ -1125,7 +1125,7 @@
                 <!-- Title -->
                 <div>
                     <label class="block text-[11px] font-semibold text-slate-400 mb-1">Título *</label>
-                    <input type="text" id="taskTitle" required placeholder="Ex: Finalizar relatório financeiro" class="w-full bg-slate-950 border border-slate-800 text-slate-100 rounded-lg p-2 text-xs outline-none focus:border-blue-500" aria-label="Título da tarefa">
+                    <input type="text" id="taskTitle" required placeholder="Ex: Preparar reunião de equipe" class="w-full bg-slate-950 border border-slate-800 text-slate-100 rounded-lg p-2 text-xs outline-none focus:border-blue-500" aria-label="Título da tarefa">
                 </div>
 
                 <!-- Description -->
@@ -1204,6 +1204,11 @@
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2"><input id="taskAttachmentName" type="text" maxlength="100" class="task-detail-input" placeholder="Nome do link"><input id="taskAttachmentUrl" type="url" class="task-detail-input" placeholder="https://..." aria-label="Endereço do anexo"></div>
                         <div class="mt-2 flex items-center justify-between gap-2"><p class="task-detail-muted">Adicione links do Drive, OneDrive ou documentos online.</p><button type="button" id="btnAddTaskAttachment" class="task-detail-action shrink-0"><i data-lucide="link" class="h-3.5 w-3.5"></i> Adicionar link</button></div>
                         <p class="task-detail-muted mt-2">Upload direto de arquivos depende da configuração do Firebase Storage e das regras de acesso.</p>
+                    </section>
+                    <section class="task-detail-section">
+                        <div class="task-detail-section-head"><div class="task-detail-section-title"><i data-lucide="tag" class="h-4 w-4 text-cyan-300"></i> Etiquetas</div><span id="taskLabelsCount" class="text-[9px] text-slate-500">0</span></div>
+                        <div id="taskLabelsList" class="mb-3 flex flex-wrap gap-1.5"></div>
+                        <div class="flex gap-2"><input id="taskLabelInput" type="text" maxlength="40" class="task-detail-input min-w-0 flex-1" placeholder="Ex: importante, reunião..." aria-label="Nova etiqueta"><button type="button" id="btnAddTaskLabel" class="task-detail-action">Adicionar</button></div>
                     </section>
                     <section class="task-detail-section">
                         <div class="task-detail-section-head"><div class="task-detail-section-title"><i data-lucide="history" class="h-4 w-4 text-violet-300"></i> Histórico</div><span id="taskActivityCount" class="text-[9px] text-slate-500">0</span></div>
@@ -3502,7 +3507,7 @@
         function renderTaskDetailsPanel(taskId){
             const aside=document.getElementById('taskDetailAside');if(!aside)return;
             const task=taskId?tasks.find(item=>item.id===taskId):null;
-            ['taskChecklistInput','btnAddChecklistItem','taskCommentInput','btnAddTaskComment','taskAttachmentName','taskAttachmentUrl','btnAddTaskAttachment'].forEach(id=>{const el=document.getElementById(id);if(el)el.disabled=!task;});
+            ['taskChecklistInput','btnAddChecklistItem','taskCommentInput','btnAddTaskComment','taskAttachmentName','taskAttachmentUrl','btnAddTaskAttachment','taskLabelInput','btnAddTaskLabel'].forEach(id=>{const el=document.getElementById(id);if(el)el.disabled=!task;});
             const hint=document.getElementById('taskChecklistHint');
             if(!task){if(hint)hint.textContent='Salve o compromisso primeiro para habilitar checklist, comentários, links e histórico.';['taskChecklistItems','taskCommentsList','taskAttachmentsList','taskActivityList'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML='<div class="task-detail-muted">Disponível depois de salvar o compromisso.</div>';});['taskChecklistCount','taskCommentsCount','taskAttachmentsCount','taskActivityCount'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent='0';});const p=document.getElementById('taskChecklistProgress');if(p)p.style.width='0%';return;}
             const checklist=normalizeTaskChecklist(task.checklist),checked=checklist.filter(item=>item.done).length,pct=checklist.length?Math.round(checked/checklist.length*100):0;
@@ -3524,6 +3529,10 @@
             const attachmentList=document.getElementById('taskAttachmentsList');
             if(attachmentList)attachmentList.innerHTML=attachments.map((item,index)=>{let url='';try{const parsed=new URL(String(item.url||''));if(['http:','https:'].includes(parsed.protocol))url=parsed.href;}catch(e){}if(!url)return'';return'<div class="task-meta-entry flex items-center justify-between gap-2"><a href="'+escapeHtml(url)+'" target="_blank" rel="noopener noreferrer" class="flex min-w-0 items-center gap-2 text-[10px] font-semibold text-blue-300 hover:text-blue-200"><i data-lucide="external-link" class="h-3.5 w-3.5 shrink-0"></i><span class="truncate">'+escapeHtml(item.name||'Abrir link')+'</span></a><button type="button" data-task-attachment-remove="'+index+'" class="rounded-md p-1 text-slate-600 hover:bg-slate-800 hover:text-rose-300" aria-label="Remover link"><i data-lucide="trash-2" class="h-3.5 w-3.5"></i></button></div>';}).join('')||'<div class="task-detail-muted">Nenhum link anexado.</div>';
             attachmentList?.querySelectorAll('[data-task-attachment-remove]').forEach(button=>button.addEventListener('click',()=>{const live=tasks.find(item=>item.id===taskId);const next=Array.isArray(live?.attachments)?[...live.attachments]:[];const removed=next.splice(Number(button.dataset.taskAttachmentRemove),1)[0];if(removed)persistTaskDetailPatch(taskId,{attachments:next},'Link removido: '+(removed.name||removed.url));}));
+            const labels=Array.isArray(task.labels)?task.labels:[];
+            const labelsCount=document.getElementById('taskLabelsCount');if(labelsCount)labelsCount.textContent=labels.length;
+            const labelsList=document.getElementById('taskLabelsList');
+            if(labelsList){labelsList.innerHTML=labels.length?labels.map((label,index)=>'<span class="inline-flex items-center gap-1 rounded-md border border-cyan-500/20 bg-cyan-500/10 px-2 py-1 text-[9px] font-semibold text-cyan-200">'+escapeHtml(label)+'<button type="button" data-task-label-remove="'+index+'" class="ml-1 text-cyan-300/60 hover:text-rose-300" aria-label="Remover etiqueta"><i data-lucide="x" class="h-3 w-3"></i></button></span>').join(''):'<div class="task-detail-muted">Adicione etiquetas para classificar este compromisso.</div>';labelsList.querySelectorAll('[data-task-label-remove]').forEach(button=>button.addEventListener('click',()=>{const live=tasks.find(item=>item.id===taskId),next=Array.isArray(live?.labels)?[...live.labels]:[],removed=next.splice(Number(button.dataset.taskLabelRemove),1)[0];if(removed)persistTaskDetailPatch(taskId,{labels:next},'Etiqueta removida: '+removed);}));}
             const activity=Array.isArray(task.activityLog)?task.activityLog:[],activityCount=document.getElementById('taskActivityCount');
             if(activityCount)activityCount.textContent=activity.length;
             const activityList=document.getElementById('taskActivityList');
@@ -3547,6 +3556,16 @@
         function addTaskComment(){
             const id=document.getElementById('taskId')?.value,input=document.getElementById('taskCommentInput'),text=(input?.value||'').trim();if(!id||!text)return;
             const task=tasks.find(item=>item.id===id);if(!task)return;const comments=Array.isArray(task.comments)?[...task.comments]:[];comments.push({id:'comment_'+Date.now(),text,author:taskDetailActor(),createdAt:new Date().toISOString()});if(input)input.value='';persistTaskDetailPatch(id,{comments:comments.slice(-200)},'Comentário adicionado.');
+        }
+        function addTaskLabel(){
+            const id=document.getElementById('taskId')?.value,input=document.getElementById('taskLabelInput'),label=(input?.value||'').trim();
+            if(!id||!label)return;
+            const task=tasks.find(item=>item.id===id);if(!task)return;
+            const labels=Array.isArray(task.labels)?[...task.labels]:[];
+            if(labels.some(item=>String(item).toLowerCase()===label.toLowerCase())){if(input)input.value='';return;}
+            if(labels.length>=10){alert('Este compromisso já tem o limite de 10 etiquetas.');return;}
+            labels.push(label);if(input)input.value='';
+            persistTaskDetailPatch(id,{labels},'Etiqueta adicionada: '+label);
         }
         function addTaskAttachmentLink(){
             const id=document.getElementById('taskId')?.value,nameInput=document.getElementById('taskAttachmentName'),urlInput=document.getElementById('taskAttachmentUrl'),name=(nameInput?.value||'').trim(),raw=(urlInput?.value||'').trim();if(!id||!raw)return;
@@ -3598,6 +3617,8 @@
         document.getElementById('taskChecklistInput')?.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();addTaskChecklistItem();}});
         document.getElementById('btnAddTaskComment')?.addEventListener('click',addTaskComment);
         document.getElementById('btnAddTaskAttachment')?.addEventListener('click',addTaskAttachmentLink);
+        document.getElementById('btnAddTaskLabel')?.addEventListener('click',addTaskLabel);
+        document.getElementById('taskLabelInput')?.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();addTaskLabel();}});
 
         if (taskForm) {
             taskForm.addEventListener('submit', async (e) => {
@@ -3652,6 +3673,7 @@
                     checklist: Array.isArray(existingTask?.checklist) ? existingTask.checklist : [],
                     comments: Array.isArray(existingTask?.comments) ? existingTask.comments : [],
                     attachments: Array.isArray(existingTask?.attachments) ? existingTask.attachments : [],
+                    labels: Array.isArray(existingTask?.labels) ? existingTask.labels : [],
                     createdAt: existingTask ? (existingTask.createdAt || new Date().toISOString()) : new Date().toISOString()
                 };
 
