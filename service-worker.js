@@ -1,4 +1,4 @@
-const CACHE_NAME='minha-agenda-pro-v30-compact-toolbar';
+const CACHE_NAME='minha-agenda-pro-v31-workspace-list-actions';
 const APP_SHELL=['./','./index.html','./manifest.webmanifest','./icon-192.svg','./icon-512.svg','./app-icon.png'];
 
 /* Mantém a vinculação Semana/Mês com as mesmas tarefas/áreas, sem alterar dados. */
