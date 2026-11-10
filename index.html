@@ -330,6 +330,44 @@
         .workspace-board-filter { min-width:140px; flex:1 1 145px; }
         .workspace-lane-empty { border:1px dashed rgba(71,85,105,.55); border-radius:10px; padding:20px 10px; color:#718096; text-align:center; font-size:11px; }
         @media (max-width: 640px) { .workspace-kanban-grid { min-width:1000px; } .workspace-kanban-column { min-height:390px; } }
+
+        /* Etapa 2: Planner unificado */
+        .planner-toolbar { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px; }
+        .planner-view-switch { display:inline-flex; flex-wrap:wrap; gap:3px; padding:4px; border:1px solid rgba(51,65,85,.8); border-radius:12px; background:rgba(2,6,23,.62); }
+        .planner-view-btn { border-radius:8px; padding:8px 13px; font-size:11px; font-weight:700; color:#94a3b8; transition:all .15s ease; }
+        .planner-view-btn.active { color:#fff; background:rgba(37,99,235,.85); box-shadow:0 2px 8px rgba(37,99,235,.2); }
+        .planner-panel { border:1px solid rgba(51,65,85,.72); border-radius:16px; background:rgba(8,18,34,.72); overflow:hidden; }
+        .planner-day-list { display:flex; flex-direction:column; }
+        .planner-time-row { display:grid; grid-template-columns:70px minmax(0,1fr); min-height:72px; border-top:1px solid rgba(51,65,85,.55); }
+        .planner-time-label { padding:13px 12px; color:#8293aa; font-size:11px; font-variant-numeric:tabular-nums; border-right:1px solid rgba(51,65,85,.5); }
+        .planner-time-drop { padding:6px 10px; min-width:0; transition:background-color .15s ease; }
+        .planner-time-drop.is-drop-over, .planner-day-drop.is-drop-over { background:rgba(37,99,235,.14); outline:2px dashed rgba(96,165,250,.62); outline-offset:-3px; }
+        .planner-event-card { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; width:100%; border:1px solid rgba(71,85,105,.7); border-left:3px solid var(--planner-accent,#3b82f6); border-radius:10px; background:rgba(30,41,59,.78); padding:9px 10px; text-align:left; transition:border-color .15s ease,background-color .15s ease; }
+        .planner-event-card:hover { border-color:rgba(96,165,250,.75); background:rgba(30,45,68,.95); }
+        .planner-event-card.is-dragging { opacity:.45; }
+        .planner-week-grid { display:grid; grid-template-columns:repeat(7,minmax(150px,1fr)); gap:8px; min-width:1120px; align-items:stretch; }
+        .planner-week-column { min-height:330px; border:1px solid rgba(51,65,85,.7); border-radius:12px; background:rgba(2,6,23,.38); overflow:hidden; }
+        .planner-week-column.is-today { border-color:rgba(59,130,246,.7); box-shadow:inset 0 0 0 1px rgba(59,130,246,.16); }
+        .planner-week-head { padding:11px 10px; display:flex; align-items:center; justify-content:space-between; gap:6px; border-bottom:1px solid rgba(51,65,85,.65); }
+        .planner-day-drop { min-height:250px; padding:8px; display:flex; flex-direction:column; gap:7px; }
+        .planner-month-grid { display:grid; grid-template-columns:repeat(7,minmax(115px,1fr)); gap:6px; min-width:840px; }
+        .planner-month-cell { min-height:132px; padding:7px; border:1px solid rgba(51,65,85,.72); border-radius:10px; background:rgba(2,6,23,.35); display:flex; flex-direction:column; gap:5px; }
+        .planner-month-cell.outside { opacity:.45; }
+        .planner-month-cell.today { border-color:rgba(59,130,246,.75); background:rgba(30,64,175,.1); }
+        .planner-month-chip { width:100%; display:block; overflow:hidden; border-radius:6px; padding:4px 6px; background:rgba(30,64,175,.22); border-left:2px solid var(--planner-accent,#3b82f6); color:#dbeafe; font-size:9px; line-height:1.25; text-align:left; white-space:nowrap; text-overflow:ellipsis; }
+        .planner-month-chip:hover { background:rgba(37,99,235,.35); }
+        .planner-date-link { display:inline-flex; align-items:center; justify-content:center; min-width:28px; min-height:28px; border-radius:8px; color:#cbd5e1; font-size:11px; font-weight:800; }
+        .planner-date-link:hover { background:rgba(51,65,85,.65); color:#fff; }
+        .planner-empty { padding:18px 12px; text-align:center; color:#64748b; font-size:11px; border:1px dashed rgba(71,85,105,.5); border-radius:10px; }
+        .planner-unscheduled-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:8px; }
+        .planner-day-scroll { overflow:auto; max-height:calc(100vh - 340px); min-height:280px; }
+        @media (max-width: 760px) {
+            .planner-time-row { grid-template-columns:52px minmax(0,1fr); }
+            .planner-time-label { padding:10px 7px; font-size:10px; }
+            .planner-time-drop { padding:5px 6px; }
+            .planner-day-scroll { max-height:none; }
+            .planner-month-grid { min-width:840px; }
+        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col p-3 md:p-6 antialiased selection:bg-blue-600 selection:text-white">
@@ -411,6 +449,10 @@
                     <button type="button" data-view="tasks" class="nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-semibold rounded-xl text-slate-300 hover:bg-slate-800/60 hover:text-white transition">
                         <i data-lucide="check-circle-2" class="w-4 h-4"></i>
                         <span>Tarefas</span>
+                    </button>
+                    <button type="button" data-view="planner" class="nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-semibold rounded-xl text-slate-300 hover:bg-slate-800/60 hover:text-white transition">
+                        <i data-lucide="calendar-range" class="w-4 h-4"></i>
+                        <span>Planejador</span>
                     </button>
                     <button type="button" data-view="kanban" class="nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-semibold rounded-xl text-slate-300 hover:bg-slate-800/60 hover:text-white transition">
                         <i data-lucide="columns-3" class="w-4 h-4"></i>
@@ -651,6 +693,78 @@
                         </div>
                     </section>
 
+                    <!-- PLANEJADOR UNIFICADO -->
+                    <section id="view-planner" class="view-content hidden space-y-4"><div id="plannerRoot" class="space-y-4">
+                        <div class="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-3">
+                            <div>
+                                <div class="flex items-center gap-2 text-cyan-300 text-[10px] font-extrabold uppercase tracking-[.18em]"><i data-lucide="calendar-range" class="w-4 h-4"></i> Planejador integrado</div>
+                                <h2 class="mt-1 text-2xl font-extrabold tracking-tight text-white">Seus compromissos no tempo</h2>
+                                <p class="mt-1 text-xs text-slate-400">Dia, semana e mês mostram os mesmos registros do quadro e das pastas.</p>
+                            </div>
+                            <button type="button" id="plannerNewTaskBtn" class="inline-flex min-h-10 items-center justify-center gap-2 self-start rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white hover:bg-blue-500"><i data-lucide="plus" class="w-4 h-4"></i> Novo compromisso</button>
+                        </div>
+
+                        <div class="planner-panel p-3 md:p-4 space-y-3">
+                            <div class="planner-toolbar">
+                                <div class="planner-view-switch" role="group" aria-label="Modo de visualização do planejador">
+                                    <button type="button" class="planner-view-btn" data-planner-view="day">Dia</button>
+                                    <button type="button" class="planner-view-btn active" data-planner-view="week">Semana</button>
+                                    <button type="button" class="planner-view-btn" data-planner-view="month">Mês</button>
+                                </div>
+                                <div class="flex items-center gap-1.5">
+                                    <button type="button" id="plannerPrev" aria-label="Período anterior" class="rounded-lg border border-slate-700 p-2 text-slate-300 hover:bg-slate-800"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
+                                    <button type="button" id="plannerToday" class="rounded-lg border border-slate-700 px-3 py-2 text-[11px] font-bold text-slate-200 hover:bg-slate-800">Hoje</button>
+                                    <button type="button" id="plannerNext" aria-label="Próximo período" class="rounded-lg border border-slate-700 p-2 text-slate-300 hover:bg-slate-800"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
+                                    <span id="plannerDateLabel" class="min-w-[130px] text-center text-xs font-bold text-white"></span>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                                <select id="plannerFolderFilter" aria-label="Filtrar planejador por pasta" class="rounded-lg border border-slate-700 bg-slate-950/80 px-3 py-2.5 text-xs text-slate-200 outline-none focus:border-blue-500"><option value="all">Todas as pastas</option></select>
+                                <select id="plannerPriorityFilter" aria-label="Filtrar planejador por prioridade" class="rounded-lg border border-slate-700 bg-slate-950/80 px-3 py-2.5 text-xs text-slate-200 outline-none focus:border-blue-500"><option value="all">Todas as prioridades</option><option value="Alta">Alta prioridade</option><option value="Média">Média prioridade</option><option value="Baixa">Baixa prioridade</option></select>
+                                <select id="plannerStatusFilter" aria-label="Filtrar planejador por status" class="rounded-lg border border-slate-700 bg-slate-950/80 px-3 py-2.5 text-xs text-slate-200 outline-none focus:border-blue-500"><option value="active">Somente ativos</option><option value="all">Ativos e concluídos</option><option value="todo">A fazer</option><option value="in_progress">Em andamento</option><option value="done">Concluídos</option></select>
+                            </div>
+                            <div class="flex flex-wrap items-center justify-between gap-2 border-t border-slate-800 pt-3">
+                                <div id="plannerPeriodSummary" class="text-[10px] text-slate-400">Carregando compromissos...</div>
+                                <div class="flex flex-wrap items-center gap-3 text-[10px] text-slate-500">
+                                    <span class="inline-flex items-center gap-1.5"><i class="h-2 w-2 rounded-full bg-blue-400"></i> Com horário</span>
+                                    <span class="inline-flex items-center gap-1.5"><i class="h-2 w-2 rounded-full bg-violet-400"></i> Sem horário</span>
+                                    <span class="inline-flex items-center gap-1.5"><i class="h-2 w-2 rounded-full bg-emerald-400"></i> Concluído</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="plannerDayPanel" class="hidden space-y-3">
+                            <div class="planner-panel overflow-hidden">
+                                <div class="flex items-center justify-between gap-2 border-b border-slate-800 bg-slate-900/55 p-3">
+                                    <div><h3 class="text-xs font-bold text-white">Linha do tempo</h3><p class="text-[10px] text-slate-500">Arraste um compromisso para outro horário ou toque para editar.</p></div>
+                                    <button type="button" id="plannerAddDayTask" class="rounded-lg border border-slate-700 px-3 py-2 text-[10px] font-bold text-slate-200 hover:bg-slate-800"><i data-lucide="plus" class="mr-1 inline h-3 w-3"></i>Adicionar ao dia</button>
+                                </div>
+                                <div id="plannerDayTimed" class="planner-day-scroll planner-day-list"></div>
+                            </div>
+                            <div id="plannerDayUntimedWrap" class="planner-panel p-3 space-y-2">
+                                <div class="flex items-center justify-between gap-2"><h3 class="text-xs font-bold text-white">Este dia · sem horário definido</h3><span id="plannerDayUntimedCount" class="text-[10px] text-slate-500">0 itens</span></div>
+                                <div id="plannerDayUntimed" class="planner-unscheduled-grid"></div>
+                            </div>
+                        </div>
+
+                        <div id="plannerWeekPanel" class="planner-panel p-3 space-y-3">
+                            <div class="flex items-center justify-between gap-2"><div><h3 class="text-xs font-bold text-white">Visão semanal</h3><p class="text-[10px] text-slate-500">Sete dias lado a lado. Arraste cartões para trocar a data.</p></div><span class="text-[10px] text-slate-500">Domingo a sábado</span></div>
+                            <div class="overflow-x-auto pb-2"><div id="plannerWeekGrid" class="planner-week-grid"></div></div>
+                        </div>
+
+                        <div id="plannerMonthPanel" class="hidden planner-panel p-3 space-y-3">
+                            <div class="flex items-center justify-between gap-2"><div><h3 class="text-xs font-bold text-white">Visão mensal</h3><p class="text-[10px] text-slate-500">Selecione um dia para abrir os detalhes ou arraste um cartão para reagendar.</p></div><span class="text-[10px] text-slate-500">Calendário mensal</span></div>
+                            <div class="overflow-x-auto pb-2"><div class="grid grid-cols-7 gap-1.5 mb-1.5 min-w-[840px]">
+                                <div class="px-1 text-[9px] font-bold uppercase text-slate-500">Dom</div><div class="px-1 text-[9px] font-bold uppercase text-slate-500">Seg</div><div class="px-1 text-[9px] font-bold uppercase text-slate-500">Ter</div><div class="px-1 text-[9px] font-bold uppercase text-slate-500">Qua</div><div class="px-1 text-[9px] font-bold uppercase text-slate-500">Qui</div><div class="px-1 text-[9px] font-bold uppercase text-slate-500">Sex</div><div class="px-1 text-[9px] font-bold uppercase text-slate-500">Sáb</div>
+                            </div><div id="plannerMonthGrid" class="planner-month-grid"></div></div>
+                        </div>
+
+                        <div id="plannerUndatedWrap" class="planner-panel p-3 space-y-2">
+                            <div class="flex flex-wrap items-center justify-between gap-2"><div><h3 class="text-xs font-bold text-white">Sem data definida</h3><p class="text-[10px] text-slate-500">Itens que ainda não foram colocados no calendário.</p></div><span id="plannerUndatedCount" class="text-[10px] text-slate-500">0 itens</span></div>
+                            <div id="plannerUndatedGrid" class="planner-unscheduled-grid"></div>
+                        </div>
+                    </div></section>
+
                     <!-- 3. QUADRO KANBAN -->
                     <section id="view-kanban" class="view-content hidden space-y-4">
                         <div>
@@ -774,8 +888,8 @@
         <button type="button" data-view="dashboard" class="nav-btn bottom-nav-btn active" aria-label="Abrir início">
             <i data-lucide="home"></i><span>Início</span>
         </button>
-        <button type="button" data-view="tasks" class="nav-btn bottom-nav-btn" aria-label="Abrir tarefas">
-            <i data-lucide="check-circle-2"></i><span>Tarefas</span>
+        <button type="button" data-view="planner" class="nav-btn bottom-nav-btn" aria-label="Abrir planejador">
+            <i data-lucide="calendar-range"></i><span>Planejar</span>
         </button>
         <button type="button" id="bottomNavNewTask" onclick="openModal()" class="bottom-nav-btn bottom-nav-primary" aria-label="Criar nova tarefa">
             <i data-lucide="plus"></i><span class="sr-only">Nova tarefa</span>
@@ -2966,6 +3080,7 @@
                 if (view.id === `view-${viewName}`) view.classList.remove('hidden');
                 else view.classList.add('hidden');
             });
+            if (viewName === 'planner') renderPlanner();
         }
 
         // --- SPOTLIGHT OMNIBOX (Cmd + K) ---
@@ -3252,6 +3367,7 @@
                     }
                 });
                 document.body.classList.toggle('is-secondary-view', targetView !== 'dashboard');
+                if (targetView === 'planner') renderPlanner();
                 closeMobileSidebar();
             });
         });
@@ -3716,7 +3832,17 @@
         }
 
         function resetWorkspaceFilters() {
-            ['workspaceSearch','workspaceFolderFilter','workspaceStatusFilter','workspacePriorityFilter','workspaceDateFilter'].forEach(id => {
+            document.querySelectorAll('[data-planner-view]').forEach(btn=>btn.addEventListener('click',()=>plannerSetMode(btn.dataset.plannerView)));
+        document.getElementById('plannerPrev')?.addEventListener('click',()=>plannerNavigate(-1));
+        document.getElementById('plannerNext')?.addEventListener('click',()=>plannerNavigate(1));
+        document.getElementById('plannerToday')?.addEventListener('click',()=>{plannerAnchorDate=new Date();renderPlanner();});
+        document.getElementById('plannerNewTaskBtn')?.addEventListener('click',()=>plannerCreateTask(getAgendaDateString(plannerAnchorDate)));
+        document.getElementById('plannerAddDayTask')?.addEventListener('click',()=>plannerCreateTask(getAgendaDateString(plannerAnchorDate)));
+        ['plannerFolderFilter','plannerPriorityFilter','plannerStatusFilter'].forEach(id=>{
+            const field=document.getElementById(id);
+            if(field)field.addEventListener('change',renderPlanner);
+        });
+        ['workspaceSearch','workspaceFolderFilter','workspaceStatusFilter','workspacePriorityFilter','workspaceDateFilter'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.value = id === 'workspaceSearch' ? '' : 'all';
             });
@@ -3771,6 +3897,317 @@
                 render();
                 alert('Não foi possível mover este cartão. A posição anterior foi restaurada.');
             });
+        }
+
+        function updatePlannerTaskSchedule(taskId, newDate, newTime) {
+            const task = tasks.find(item => item.id === taskId);
+            if (!task || !newDate) return;
+            const previous = { dueDate:task.dueDate || '', dueTime:task.dueTime || '' };
+            const next = { dueDate:newDate, dueTime:newTime === undefined ? previous.dueTime : newTime };
+            if (previous.dueDate === next.dueDate && previous.dueTime === next.dueTime) return;
+            tasks = tasks.map(item => item.id === taskId ? { ...item, ...next } : item);
+            saveTasksToLocalCacheOnly(tasks);
+            render();
+            if (!currentUserState || !db) return;
+            const updates = {
+                dueDate: next.dueDate,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+            updates.dueTime = next.dueTime
+                ? next.dueTime
+                : firebase.firestore.FieldValue.delete();
+            db.collection('users').doc(currentUserState.uid).collection('items').doc(taskId).update(updates).catch(err => {
+                console.error('Erro ao reagendar compromisso no Firestore. Restaurando horário anterior...', err);
+                tasks = tasks.map(item => item.id === taskId ? { ...item, ...previous } : item);
+                saveTasksToLocalCacheOnly(tasks);
+                render();
+                alert('Não foi possível reagendar este compromisso. A data e o horário anteriores foram restaurados.');
+            });
+        }
+
+        let plannerViewMode = 'week';
+        let plannerAnchorDate = new Date();
+        let plannerDnDReady = false;
+
+        function plannerGetRange() {
+            const anchor = new Date(plannerAnchorDate);
+            if (plannerViewMode === 'day') {
+                const key = getAgendaDateString(anchor);
+                return { start:key, end:key };
+            }
+            if (plannerViewMode === 'week') {
+                const start = agendaStartOfWeek(anchor);
+                const end = agendaEndOfWeek(anchor);
+                return { start:getAgendaDateString(start), end:getAgendaDateString(end) };
+            }
+            return {
+                start:getAgendaDateString(new Date(anchor.getFullYear(), anchor.getMonth(), 1)),
+                end:getAgendaDateString(new Date(anchor.getFullYear(), anchor.getMonth()+1, 0))
+            };
+        }
+
+        function plannerDateTitle() {
+            if (plannerViewMode === 'day') return plannerAnchorDate.toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long',year:'numeric'}).replace(/^./,c=>c.toUpperCase());
+            if (plannerViewMode === 'week') {
+                const start=agendaStartOfWeek(plannerAnchorDate), end=agendaEndOfWeek(plannerAnchorDate);
+                return agendaDateLabel(start)+' – '+agendaDateLabel(end);
+            }
+            return agendaMonthLabel(plannerAnchorDate);
+        }
+
+        function plannerRefreshFolderFilter() {
+            const select=document.getElementById('plannerFolderFilter');
+            if(!select)return;
+            const current=select.value||'all';
+            const sorted=[...folders].sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'pt-BR',{sensitivity:'base'}));
+            select.innerHTML='<option value="all">Todas as pastas</option>'+sorted.map(folder=>{
+                const prefix=folder.parentId?'↳ ':'';
+                return '<option value="'+escapeHtml(folder.id)+'">'+prefix+escapeHtml(folder.name||'Pasta sem nome')+'</option>';
+            }).join('');
+            select.value=sorted.some(folder=>folder.id===current)?current:'all';
+        }
+
+        function plannerGetFilteredTasks() {
+            const selectedFolder=document.getElementById('plannerFolderFilter')?.value||'all';
+            const priority=document.getElementById('plannerPriorityFilter')?.value||'all';
+            const status=document.getElementById('plannerStatusFilter')?.value||'active';
+            let folderScope=null;
+            if(selectedFolder!=='all'){
+                folderScope=new Set([selectedFolder]);
+                let changed=true;
+                while(changed){
+                    changed=false;
+                    folders.forEach(folder=>{
+                        if(folder.parentId&&folderScope.has(folder.parentId)&&!folderScope.has(folder.id)){folderScope.add(folder.id);changed=true;}
+                    });
+                }
+            }
+            return tasks.filter(task=>{
+                const statusText=String(task.status||'').toLowerCase();
+                if(task.archived===true||task.isArchived===true||['archived','arquivado','arquivada'].includes(statusText))return false;
+                if(folderScope&&!folderScope.has(getTaskFolderId(task)))return false;
+                if(priority!=='all'&&(task.priority||'Média')!==priority)return false;
+                const done=isTaskCompleted(task);
+                if(status==='active'&&done)return false;
+                if(status==='done'&&!done)return false;
+                if(status==='todo'&&statusText!=='todo')return false;
+                if(status==='in_progress'&&statusText!=='in_progress')return false;
+                return true;
+            });
+        }
+
+        function plannerTaskCard(task, compact=false) {
+            const folder=folders.find(item=>item.id===getTaskFolderId(task));
+            const accent=folder?getFolderColor(folder):'#3b82f6';
+            const done=isTaskCompleted(task);
+            const time=task.dueTime?escapeHtml(task.dueTime):'Sem horário';
+            const folderLabel=folder?escapeHtml(folder.name||'Pasta'):'Sem pasta';
+            const dateLabel=task.dueDate?String(task.dueDate).split('-').reverse().join('/'):'Sem data';
+            const description=String(task.description||'').trim();
+            return '<article class="planner-event-card '+(done?'opacity-60':'')+'" style="--planner-accent:'+escapeHtml(accent)+'" draggable="true" data-planner-task="'+escapeHtml(task.id)+'">'+
+                '<div class="min-w-0 flex-1">'+
+                    '<button type="button" data-planner-open class="block w-full truncate text-left text-[11px] font-bold text-slate-100 hover:text-blue-200">'+(task.dueTime?'<span class="mr-1 text-blue-300">'+time+'</span>':'')+escapeHtml(task.title||'Sem título')+'</button>'+
+                    '<div class="mt-1 flex flex-wrap items-center gap-1.5"><span class="text-[9px] text-slate-400">'+folderLabel+'</span>'+getPriorityBadge(task.priority||'Média')+(compact?'':'<span class="text-[9px] text-slate-500">'+dateLabel+'</span>')+'</div>'+
+                    (!compact&&description?'<p class="mt-1 line-clamp-2 text-[10px] leading-relaxed text-slate-400">'+escapeHtml(description)+'</p>':'')+
+                '</div>'+
+                '<label class="relative grid h-8 w-8 shrink-0 place-items-center rounded-lg text-slate-500 hover:bg-slate-700 hover:text-blue-200" title="Reagendar este compromisso"><i data-lucide="calendar-clock" class="pointer-events-none h-4 w-4"></i><input type="date" data-planner-reschedule aria-label="Escolher nova data para '+escapeHtml(task.title||'compromisso')+'" value="'+escapeHtml(task.dueDate||'')+'" class="absolute inset-0 h-full w-full cursor-pointer opacity-0"></label>'+
+                '</article>';
+        }
+
+        function plannerAddDragHandlers(root) {
+            root.querySelectorAll('[data-planner-task]').forEach(card=>{
+                card.addEventListener('dragstart',event=>{
+                    const id=card.dataset.plannerTask;
+                    if(event.dataTransfer){event.dataTransfer.effectAllowed='move';event.dataTransfer.setData('text/plain',id);}
+                    card.classList.add('is-dragging');
+                });
+                card.addEventListener('dragend',()=>{
+                    card.classList.remove('is-dragging');
+                    root.querySelectorAll('.is-drop-over').forEach(zone=>zone.classList.remove('is-drop-over'));
+                });
+                card.querySelector('[data-planner-open]')?.addEventListener('click',()=>openModal(card.dataset.plannerTask));
+                card.querySelector('[data-planner-reschedule]')?.addEventListener('change',event=>{
+                    if(event.target.value)updatePlannerTaskSchedule(card.dataset.plannerTask,event.target.value);
+                });
+            });
+        }
+
+        function plannerInitDnD() {
+            if(plannerDnDReady)return;
+            const root=document.getElementById('plannerRoot');
+            if(!root)return;
+            root.addEventListener('dragover',event=>{
+                const zone=event.target.closest('[data-planner-drop-date]');
+                if(!zone)return;
+                event.preventDefault();
+                zone.classList.add('is-drop-over');
+            });
+            root.addEventListener('dragleave',event=>{
+                const zone=event.target.closest('[data-planner-drop-date]');
+                if(zone&&!zone.contains(event.relatedTarget))zone.classList.remove('is-drop-over');
+            });
+            root.addEventListener('drop',event=>{
+                const zone=event.target.closest('[data-planner-drop-date]');
+                if(!zone)return;
+                event.preventDefault();
+                zone.classList.remove('is-drop-over');
+                const taskId=event.dataTransfer?.getData('text/plain');
+                if(!taskId)return;
+                const date=zone.dataset.plannerDropDate;
+                const time=zone.dataset.plannerDropTime;
+                updatePlannerTaskSchedule(taskId,date,time||undefined);
+            });
+            plannerDnDReady=true;
+        }
+
+        function plannerCreateTask(dateKey, time='') {
+            openModal();
+            const dateField=document.getElementById('taskDueDate');
+            const timeField=document.getElementById('taskDueTime');
+            const folderField=document.getElementById('taskFolder');
+            if(dateField)dateField.value=dateKey||'';
+            if(timeField)timeField.value=time||'';
+            const selectedFolder=document.getElementById('plannerFolderFilter')?.value||'all';
+            if(folderField&&selectedFolder!=='all')folderField.value=selectedFolder;
+        }
+
+        function plannerRenderDay(filteredTasks) {
+            const key=getAgendaDateString(plannerAnchorDate);
+            const dayTasks=agendaSortTasks(filteredTasks.filter(task=>agendaTaskDate(task)===key));
+            const timed=dayTasks.filter(task=>task.dueTime);
+            const untimed=dayTasks.filter(task=>!task.dueTime);
+            const container=document.getElementById('plannerDayTimed');
+            const untimedWrap=document.getElementById('plannerDayUntimedWrap');
+            const untimedList=document.getElementById('plannerDayUntimed');
+            const untimedCount=document.getElementById('plannerDayUntimedCount');
+            const hours=Array.from({length:17},(_,i)=>i+6);
+            let markup='';
+            hours.forEach(hour=>{
+                const hourKey=String(hour).padStart(2,'0')+':00';
+                const group=timed.filter(task=>Number(String(task.dueTime).slice(0,2))===hour);
+                markup+='<div class="planner-time-row">'+
+                    '<div class="planner-time-label">'+hourKey+'</div>'+
+                    '<div class="planner-time-drop" data-planner-drop-date="'+key+'" data-planner-drop-time="'+hourKey+'">'+
+                        (group.length?group.map(task=>plannerTaskCard(task)).join(''):'<button type="button" data-planner-add-time="'+hourKey+'" class="w-full min-h-10 rounded-lg text-left text-[10px] text-slate-700 hover:bg-slate-800/60 hover:text-blue-300">+ Adicionar horário</button>')+
+                    '</div></div>';
+            });
+            const outside=timed.filter(task=>Number(String(task.dueTime).slice(0,2))<6||Number(String(task.dueTime).slice(0,2))>22);
+            if(outside.length)markup+='<div class="border-t border-slate-800 p-3"><div class="mb-2 text-[10px] font-bold text-slate-500">Outros horários</div><div class="space-y-2">'+outside.map(task=>plannerTaskCard(task)).join('')+'</div></div>';
+            container.innerHTML=markup;
+            container.querySelectorAll('[data-planner-add-time]').forEach(btn=>btn.addEventListener('click',()=>plannerCreateTask(key,btn.dataset.plannerAddTime)));
+            if(untimedWrap&&untimedList&&untimedCount){
+                untimedCount.textContent=untimed.length+' '+(untimed.length===1?'item':'itens');
+                untimedList.innerHTML=untimed.length?untimed.map(task=>plannerTaskCard(task)).join(''):'<div class="planner-empty">Nenhum compromisso sem horário neste dia.</div>';
+                untimedWrap.classList.remove('hidden');
+            }
+            plannerAddDragHandlers(container);
+            plannerAddDragHandlers(untimedList);
+        }
+
+        function plannerRenderWeek(filteredTasks) {
+            const start=agendaStartOfWeek(plannerAnchorDate);
+            const names=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+            const today=getLocalDateString();
+            const container=document.getElementById('plannerWeekGrid');
+            let markup='';
+            for(let i=0;i<7;i++){
+                const day=new Date(start);day.setDate(start.getDate()+i);
+                const key=getAgendaDateString(day);
+                const dayTasks=agendaSortTasks(filteredTasks.filter(task=>agendaTaskDate(task)===key));
+                markup+='<section class="planner-week-column '+(key===today?'is-today':'')+'">'+
+                    '<div class="planner-week-head"><div><div class="text-[9px] font-semibold text-slate-500">'+names[i]+'</div><div class="text-sm font-extrabold '+(key===today?'text-blue-300':'text-white')+'">'+day.getDate()+'</div></div><button type="button" data-planner-add-day="'+key+'" class="rounded-lg p-1.5 text-slate-500 hover:bg-slate-800 hover:text-white" aria-label="Adicionar compromisso em '+key+'"><i data-lucide="plus" class="h-3.5 w-3.5"></i></button></div>'+
+                    '<div class="planner-day-drop" data-planner-drop-date="'+key+'">'+
+                    (dayTasks.length?dayTasks.map(task=>plannerTaskCard(task,true)).join(''):'<div class="planner-empty">Dia livre</div>')+
+                    '</div></section>';
+            }
+            container.innerHTML=markup;
+            container.querySelectorAll('[data-planner-add-day]').forEach(btn=>btn.addEventListener('click',()=>plannerCreateTask(btn.dataset.plannerAddDay)));
+            plannerAddDragHandlers(container);
+        }
+
+        function plannerRenderMonth(filteredTasks) {
+            const year=plannerAnchorDate.getFullYear(),month=plannerAnchorDate.getMonth();
+            const first=new Date(year,month,1),start=agendaStartOfWeek(first),last=new Date(year,month+1,0),end=agendaEndOfWeek(last);
+            const today=getLocalDateString(),container=document.getElementById('plannerMonthGrid');
+            let markup='';
+            for(let day=new Date(start);day<=end;day.setDate(day.getDate()+1)){
+                const date=new Date(day),key=getAgendaDateString(date),inMonth=date.getMonth()===month;
+                const dayTasks=agendaSortTasks(filteredTasks.filter(task=>agendaTaskDate(task)===key));
+                const visible=dayTasks.slice(0,3);
+                markup+='<section class="planner-month-cell '+(inMonth?'':'outside')+' '+(key===today?'today':'')+'" data-planner-drop-date="'+key+'">'+
+                    '<div class="flex items-center justify-between gap-1"><button type="button" data-planner-open-day="'+key+'" class="planner-date-link">'+date.getDate()+'</button><button type="button" data-planner-add-day="'+key+'" class="rounded-md p-1 text-slate-600 hover:bg-slate-800 hover:text-blue-300" aria-label="Adicionar compromisso em '+key+'"><i data-lucide="plus" class="h-3 w-3"></i></button></div>'+
+                    visible.map(task=>{
+                        const folder=folders.find(item=>item.id===getTaskFolderId(task));
+                        const accent=folder?getFolderColor(folder):'#3b82f6';
+                        return '<button type="button" draggable="true" data-planner-month-task="'+escapeHtml(task.id)+'" class="planner-month-chip" style="--planner-accent:'+escapeHtml(accent)+'" title="'+escapeHtml(task.title||'Sem título')+'">'+(task.dueTime?escapeHtml(task.dueTime)+' ':'')+escapeHtml(task.title||'Sem título')+'</button>';
+                    }).join('')+
+                    (dayTasks.length>3?'<button type="button" data-planner-open-day="'+key+'" class="text-left text-[9px] font-bold text-blue-300 hover:text-white">+'+(dayTasks.length-3)+' mais</button>':'')+
+                    (dayTasks.length===0&&inMonth?'<span class="mt-auto pt-3 text-[9px] text-slate-700">Livre</span>':'')+
+                    '</section>';
+            }
+            container.innerHTML=markup;
+            container.querySelectorAll('[data-planner-add-day]').forEach(btn=>btn.addEventListener('click',()=>plannerCreateTask(btn.dataset.plannerAddDay)));
+            container.querySelectorAll('[data-planner-open-day]').forEach(btn=>btn.addEventListener('click',()=>openAgendaDayModal(btn.dataset.plannerOpenDay)));
+            container.querySelectorAll('[data-planner-month-task]').forEach(card=>{
+                const taskId=card.dataset.plannerMonthTask;
+                card.addEventListener('click',()=>openModal(taskId));
+                card.addEventListener('dragstart',event=>{
+                    if(event.dataTransfer){event.dataTransfer.effectAllowed='move';event.dataTransfer.setData('text/plain',taskId);}
+                });
+            });
+            plannerAddDragHandlers(container);
+        }
+
+        function plannerRenderUndated(filteredTasks) {
+            const list=document.getElementById('plannerUndatedGrid');
+            const wrap=document.getElementById('plannerUndatedWrap');
+            const count=document.getElementById('plannerUndatedCount');
+            if(!list||!wrap||!count)return;
+            const undated=agendaSortTasks(filteredTasks.filter(task=>!agendaTaskDate(task)));
+            count.textContent=undated.length+' '+(undated.length===1?'item':'itens');
+            list.innerHTML=undated.length?undated.map(task=>plannerTaskCard(task)).join(''):'<div class="planner-empty">Nenhum item sem data definida.</div>';
+            wrap.classList.toggle('hidden',undated.length===0);
+            plannerAddDragHandlers(list);
+        }
+
+        function renderPlanner() {
+            const root=document.getElementById('plannerRoot');
+            if(!root)return;
+            plannerInitDnD();
+            plannerRefreshFolderFilter();
+            const filtered=plannerGetFilteredTasks();
+            const {start,end}=plannerGetRange();
+            const inPeriod=filtered.filter(task=>agendaTaskDate(task)>=start&&agendaTaskDate(task)<=end);
+            const undated=filtered.filter(task=>!agendaTaskDate(task)).length;
+            const dated=filtered.filter(task=>!!agendaTaskDate(task)).length;
+            const summary=document.getElementById('plannerPeriodSummary');
+            if(summary)summary.textContent=dated+' compromisso(s) com data · '+undated+' sem data';
+            const title=document.getElementById('plannerDateLabel');
+            if(title)title.textContent=plannerDateTitle();
+            document.querySelectorAll('[data-planner-view]').forEach(btn=>btn.classList.toggle('active',btn.dataset.plannerView===plannerViewMode));
+            document.getElementById('plannerDayPanel')?.classList.toggle('hidden',plannerViewMode!=='day');
+            document.getElementById('plannerWeekPanel')?.classList.toggle('hidden',plannerViewMode!=='week');
+            document.getElementById('plannerMonthPanel')?.classList.toggle('hidden',plannerViewMode!=='month');
+            if(plannerViewMode==='day')plannerRenderDay(inPeriod);
+            if(plannerViewMode==='week')plannerRenderWeek(inPeriod);
+            if(plannerViewMode==='month')plannerRenderMonth(inPeriod);
+            plannerRenderUndated(filtered);
+            refreshIcons();
+        }
+
+        function plannerSetMode(mode) {
+            if(!['day','week','month'].includes(mode))return;
+            plannerViewMode=mode;
+            renderPlanner();
+        }
+
+        function plannerNavigate(direction) {
+            const date=new Date(plannerAnchorDate);
+            if(plannerViewMode==='day')date.setDate(date.getDate()+direction);
+            else if(plannerViewMode==='week')date.setDate(date.getDate()+direction*7);
+            else date.setMonth(date.getMonth()+direction);
+            plannerAnchorDate=date;
+            renderPlanner();
         }
 
         function renderWorkspaceBoard() {
@@ -3988,6 +4425,7 @@
         function render() {
             renderDashboard();
             renderWorkspaceBoard();
+            renderPlanner();
             renderFolders();
             refreshTaskFolderFilter();
             renderTaskList();
