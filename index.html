@@ -3494,6 +3494,65 @@
             openModal();
         }
 
+        function taskDetailActor(){return currentUserState?.displayName||'Você';}
+        function createTaskActivityEntry(text){return{id:'activity_'+Date.now()+'_'+Math.random().toString(36).slice(2,7),text:String(text||'').slice(0,240),author:taskDetailActor(),createdAt:new Date().toISOString()};}
+        function formatTaskDetailTimestamp(value){if(!value)return'Agora';const date=value instanceof Date?value:new Date(value);return Number.isNaN(date.getTime())?'':date.toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});}
+        function normalizeTaskChecklist(items){if(!Array.isArray(items))return[];return items.map((item,index)=>typeof item==='string'?{id:'check_'+index+'_'+Date.now(),text:item,done:false}:{id:String(item?.id||('check_'+index+'_'+Date.now())),text:String(item?.text??item?.title??'').trim(),done:Boolean(item?.done??item?.completed)}).filter(item=>item.text);}
+        function renderTaskDetailsPanel(taskId){
+            const aside=document.getElementById('taskDetailAside');if(!aside)return;
+            const task=taskId?tasks.find(item=>item.id===taskId):null;
+            ['taskChecklistInput','btnAddChecklistItem','taskCommentInput','btnAddTaskComment','taskAttachmentName','taskAttachmentUrl','btnAddTaskAttachment'].forEach(id=>{const el=document.getElementById(id);if(el)el.disabled=!task;});
+            const hint=document.getElementById('taskChecklistHint');
+            if(!task){if(hint)hint.textContent='Salve o compromisso primeiro para habilitar checklist, comentários, links e histórico.';['taskChecklistItems','taskCommentsList','taskAttachmentsList','taskActivityList'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML='<div class="task-detail-muted">Disponível depois de salvar o compromisso.</div>';});['taskChecklistCount','taskCommentsCount','taskAttachmentsCount','taskActivityCount'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent='0';});const p=document.getElementById('taskChecklistProgress');if(p)p.style.width='0%';return;}
+            const checklist=normalizeTaskChecklist(task.checklist),checked=checklist.filter(item=>item.done).length,pct=checklist.length?Math.round(checked/checklist.length*100):0;
+            const count=document.getElementById('taskChecklistCount'),progress=document.getElementById('taskChecklistProgress');
+            if(count)count.textContent=checked+'/'+checklist.length;if(progress)progress.style.width=pct+'%';
+            if(hint)hint.textContent=checklist.length?(pct===100?'Todas as etapas concluídas.':pct+'% concluído'):'Adicione pequenas etapas para acompanhar o progresso.';
+            const checklistList=document.getElementById('taskChecklistItems');
+            if(checklistList){
+                checklistList.innerHTML=checklist.length?checklist.map((item,index)=>'<div class="task-check-row"><input type="checkbox" data-task-check-toggle="'+index+'" '+(item.done?'checked':'')+' aria-label="Marcar etapa como concluída"><span class="min-w-0 flex-1 text-[11px] leading-relaxed '+(item.done?'is-done':'text-slate-300')+'">'+escapeHtml(item.text)+'</span><button type="button" data-task-check-remove="'+index+'" class="rounded-md p-1 text-slate-600 hover:bg-slate-800 hover:text-rose-300" aria-label="Remover etapa"><i data-lucide="x" class="h-3.5 w-3.5"></i></button></div>').join(''):'<div class="task-detail-muted">Nenhuma etapa adicionada ainda.</div>';
+                checklistList.querySelectorAll('[data-task-check-toggle]').forEach(input=>input.addEventListener('change',()=>{const live=tasks.find(item=>item.id===taskId);const next=normalizeTaskChecklist(live?.checklist);const index=Number(input.dataset.taskCheckToggle);if(!next[index])return;next[index].done=input.checked;persistTaskDetailPatch(taskId,{checklist:next},(input.checked?'Etapa concluída: ':'Etapa reaberta: ')+next[index].text);}));
+                checklistList.querySelectorAll('[data-task-check-remove]').forEach(button=>button.addEventListener('click',()=>{const live=tasks.find(item=>item.id===taskId);const next=normalizeTaskChecklist(live?.checklist);const removed=next.splice(Number(button.dataset.taskCheckRemove),1)[0];if(removed)persistTaskDetailPatch(taskId,{checklist:next},'Etapa removida: '+removed.text);}));
+            }
+            const comments=Array.isArray(task.comments)?task.comments:[],commentCount=document.getElementById('taskCommentsCount');
+            if(commentCount)commentCount.textContent=comments.length;
+            const commentsList=document.getElementById('taskCommentsList');
+            if(commentsList)commentsList.innerHTML=comments.length?comments.slice().reverse().map(comment=>'<div class="task-meta-entry"><div class="flex items-center justify-between gap-2"><span class="text-[10px] font-bold text-sky-200">'+escapeHtml(comment.author||'Você')+'</span><span class="text-[9px] text-slate-600">'+escapeHtml(formatTaskDetailTimestamp(comment.createdAt))+'</span></div><p class="mt-1 whitespace-pre-wrap break-words text-[11px] leading-relaxed text-slate-300">'+escapeHtml(comment.text||'')+'</p></div>').join(''):'<div class="task-detail-muted">Nenhum comentário ainda. Use este espaço para registrar atualizações.</div>';
+            const attachments=Array.isArray(task.attachments)?task.attachments:[],attachmentCount=document.getElementById('taskAttachmentsCount');
+            if(attachmentCount)attachmentCount.textContent=attachments.length;
+            const attachmentList=document.getElementById('taskAttachmentsList');
+            if(attachmentList)attachmentList.innerHTML=attachments.map((item,index)=>{let url='';try{const parsed=new URL(String(item.url||''));if(['http:','https:'].includes(parsed.protocol))url=parsed.href;}catch(e){}if(!url)return'';return'<div class="task-meta-entry flex items-center justify-between gap-2"><a href="'+escapeHtml(url)+'" target="_blank" rel="noopener noreferrer" class="flex min-w-0 items-center gap-2 text-[10px] font-semibold text-blue-300 hover:text-blue-200"><i data-lucide="external-link" class="h-3.5 w-3.5 shrink-0"></i><span class="truncate">'+escapeHtml(item.name||'Abrir link')+'</span></a><button type="button" data-task-attachment-remove="'+index+'" class="rounded-md p-1 text-slate-600 hover:bg-slate-800 hover:text-rose-300" aria-label="Remover link"><i data-lucide="trash-2" class="h-3.5 w-3.5"></i></button></div>';}).join('')||'<div class="task-detail-muted">Nenhum link anexado.</div>';
+            attachmentList?.querySelectorAll('[data-task-attachment-remove]').forEach(button=>button.addEventListener('click',()=>{const live=tasks.find(item=>item.id===taskId);const next=Array.isArray(live?.attachments)?[...live.attachments]:[];const removed=next.splice(Number(button.dataset.taskAttachmentRemove),1)[0];if(removed)persistTaskDetailPatch(taskId,{attachments:next},'Link removido: '+(removed.name||removed.url));}));
+            const activity=Array.isArray(task.activityLog)?task.activityLog:[],activityCount=document.getElementById('taskActivityCount');
+            if(activityCount)activityCount.textContent=activity.length;
+            const activityList=document.getElementById('taskActivityList');
+            if(activityList)activityList.innerHTML=activity.length?activity.slice().reverse().slice(0,60).map(entry=>'<div class="relative border-l border-violet-500/35 pb-3 pl-3 last:pb-0"><span class="absolute -left-[4px] top-1 h-1.5 w-1.5 rounded-full bg-violet-400"></span><p class="text-[10px] leading-relaxed text-slate-300">'+escapeHtml(entry.text||'Atualização')+'</p><p class="mt-1 text-[9px] text-slate-600">'+escapeHtml(entry.author||'Você')+' · '+escapeHtml(formatTaskDetailTimestamp(entry.createdAt))+'</p></div>').join(''):'<div class="task-detail-muted">O histórico começará a ser registrado a partir das próximas alterações.</div>';
+            refreshIcons();
+        }
+        function persistTaskDetailPatch(taskId,patch,activityText){
+            const current=tasks.find(item=>item.id===taskId);if(!current)return Promise.reject(new Error('Compromisso não encontrado.'));
+            const previous=current,log=Array.isArray(current.activityLog)?[...current.activityLog]:[];
+            if(activityText)log.push(createTaskActivityEntry(activityText));
+            const next={...current,...patch,activityLog:log.slice(-100)};
+            tasks=tasks.map(item=>item.id===taskId?next:item);saveTasksToLocalCacheOnly(tasks);render();renderTaskDetailsPanel(taskId);
+            if(!currentUserState||!db)return Promise.resolve();
+            return db.collection('users').doc(currentUserState.uid).collection('items').doc(taskId).update({...patch,activityLog:next.activityLog,updatedAt:firebase.firestore.FieldValue.serverTimestamp()})
+                .then(()=>renderTaskDetailsPanel(taskId)).catch(error=>{console.error('Erro ao salvar detalhes do compromisso:',error);tasks=tasks.map(item=>item.id===taskId?previous:item);saveTasksToLocalCacheOnly(tasks);render();renderTaskDetailsPanel(taskId);alert('Não foi possível salvar esta alteração. Os dados anteriores foram restaurados.');throw error;});
+        }
+        function addTaskChecklistItem(){
+            const id=document.getElementById('taskId')?.value,input=document.getElementById('taskChecklistInput'),text=(input?.value||'').trim();if(!id||!text)return;
+            const task=tasks.find(item=>item.id===id);if(!task)return;const checklist=normalizeTaskChecklist(task.checklist);checklist.push({id:'check_'+Date.now()+'_'+Math.random().toString(36).slice(2,6),text,done:false});if(input)input.value='';persistTaskDetailPatch(id,{checklist},'Etapa adicionada: '+text);
+        }
+        function addTaskComment(){
+            const id=document.getElementById('taskId')?.value,input=document.getElementById('taskCommentInput'),text=(input?.value||'').trim();if(!id||!text)return;
+            const task=tasks.find(item=>item.id===id);if(!task)return;const comments=Array.isArray(task.comments)?[...task.comments]:[];comments.push({id:'comment_'+Date.now(),text,author:taskDetailActor(),createdAt:new Date().toISOString()});if(input)input.value='';persistTaskDetailPatch(id,{comments:comments.slice(-200)},'Comentário adicionado.');
+        }
+        function addTaskAttachmentLink(){
+            const id=document.getElementById('taskId')?.value,nameInput=document.getElementById('taskAttachmentName'),urlInput=document.getElementById('taskAttachmentUrl'),name=(nameInput?.value||'').trim(),raw=(urlInput?.value||'').trim();if(!id||!raw)return;
+            let url;try{url=new URL(raw);if(!['http:','https:'].includes(url.protocol))throw new Error('Protocolo inválido.');}catch(e){alert('Informe um endereço válido iniciado por https:// ou http://.');return;}
+            const task=tasks.find(item=>item.id===id);if(!task)return;const attachments=Array.isArray(task.attachments)?[...task.attachments]:[],label=name||url.hostname;attachments.push({id:'link_'+Date.now(),name:label,url:url.href,createdAt:new Date().toISOString()});if(nameInput)nameInput.value='';if(urlInput)urlInput.value='';persistTaskDetailPatch(id,{attachments:attachments.slice(-50)},'Link anexado: '+label);
+        }
+
         function openModal(taskId = null) {
             taskForm.reset();
             resetTaskSubmitButton();
@@ -3522,6 +3581,7 @@
                 }
             }
 
+            renderTaskDetailsPanel(taskId);
             taskModal.classList.remove('hidden');
         }
 
@@ -3533,6 +3593,10 @@
         if (btnOpenNewTaskModal) btnOpenNewTaskModal.addEventListener('click', () => openModal());
         if (btnCloseModal) btnCloseModal.addEventListener('click', closeModal);
         if (btnCancelModal) btnCancelModal.addEventListener('click', closeModal);
+        document.getElementById('btnAddChecklistItem')?.addEventListener('click',addTaskChecklistItem);
+        document.getElementById('taskChecklistInput')?.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();addTaskChecklistItem();}});
+        document.getElementById('btnAddTaskComment')?.addEventListener('click',addTaskComment);
+        document.getElementById('btnAddTaskAttachment')?.addEventListener('click',addTaskAttachmentLink);
 
         if (taskForm) {
             taskForm.addEventListener('submit', async (e) => {
@@ -4523,6 +4587,7 @@
             renderKanban();
             renderFolderTasks();
             refreshIcons();
+            if(taskModal&&!taskModal.classList.contains('hidden'))renderTaskDetailsPanel(document.getElementById('taskId')?.value||null);
         }
 
         ['workspaceSearch','workspaceFolderFilter','workspaceStatusFilter','workspacePriorityFilter','workspaceDateFilter'].forEach(id => {
