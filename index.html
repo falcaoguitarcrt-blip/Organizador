@@ -397,6 +397,32 @@
 .folder-space-empty{padding:17px 10px;border:1px dashed rgba(71,85,105,.5);border-radius:9px;color:#64748b;font-size:10px;text-align:center}
 .folder-space-filter{min-width:125px;flex:1 1 130px}
 @media(max-width:760px){.folder-space-board{min-width:920px}.folder-space-week{min-width:1060px}.folder-space-month{min-width:790px}.folder-space-filter{min-width:0}}
+
+/* Etapa 4: ficha lateral de compromisso */
+.task-detail-drawer{display:flex;justify-content:flex-end;align-items:stretch;padding:0!important}
+.task-detail-shell{width:min(100%,1120px);height:100%;max-height:100dvh;border-radius:0!important;display:flex;flex-direction:column;overflow:hidden}
+.task-detail-form{min-height:0;flex:1;overflow-y:auto;overscroll-behavior:contain}
+.task-detail-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(320px,.9fr);gap:18px;align-items:start}
+.task-detail-aside{display:flex;flex-direction:column;gap:12px;min-width:0}
+.task-detail-section{border:1px solid rgba(51,65,85,.78);border-radius:14px;background:rgba(2,6,23,.42);padding:13px}
+.task-detail-section-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
+.task-detail-section-title{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:800;color:#e2e8f0}
+.task-detail-muted{font-size:10px;color:#64748b;line-height:1.5}
+.task-detail-input{width:100%;border:1px solid rgba(51,65,85,.9);border-radius:9px;background:rgba(2,6,23,.78);padding:9px 10px;color:#e2e8f0;font-size:11px;outline:none}
+.task-detail-input:focus{border-color:#3b82f6}
+.task-detail-action{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1px solid rgba(71,85,105,.8);border-radius:9px;padding:8px 10px;color:#cbd5e1;font-size:10px;font-weight:700}
+.task-detail-action:hover{background:rgba(51,65,85,.6);color:#fff}
+.task-detail-progress{height:6px;border-radius:99px;background:#1e293b;overflow:hidden}
+.task-detail-progress>span{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#22c55e,#38bdf8);transition:width .2s ease}
+.task-check-row{display:flex;align-items:flex-start;gap:9px;padding:8px 0;border-bottom:1px solid rgba(51,65,85,.45)}
+.task-check-row:last-child{border-bottom:0}.task-check-row input{margin-top:2px;accent-color:#3b82f6}.task-check-row .is-done{text-decoration:line-through;color:#64748b}
+.task-meta-entry{border:1px solid rgba(51,65,85,.58);border-radius:9px;background:rgba(15,23,42,.55);padding:9px}
+.task-meta-entry+.task-meta-entry{margin-top:7px}
+.task-meta-scroll{max-height:230px;overflow:auto}
+.task-detail-footer{flex-shrink:0;background:rgba(2,8,20,.97);border-top:1px solid rgba(51,65,85,.8);padding:12px 16px}
+.task-detail-header{flex-shrink:0}
+@media(max-width:850px){.task-detail-shell{width:100%;max-width:none}.task-detail-grid{grid-template-columns:minmax(0,1fr);gap:12px}.task-detail-aside{display:grid;grid-template-columns:1fr;gap:10px}.task-detail-form{padding:14px!important}}
+@media(min-width:851px){.task-detail-aside{position:sticky;top:0}}
     </style>
 </head>
 <body class="min-h-screen flex flex-col p-3 md:p-6 antialiased selection:bg-blue-600 selection:text-white">
@@ -1080,10 +1106,10 @@
         </div>
     </div>
 
-    <div id="taskModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
-        <div class="bg-[#0a182e] border border-blue-500/40 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl">
+    <div id="taskModal" class="task-detail-drawer fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden">
+        <div class="task-detail-shell bg-[#0a182e] border-l border-blue-500/35 shadow-2xl">
             <!-- Modal Header -->
-            <div class="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-900/50">
+            <div class="task-detail-header p-4 md:px-6 border-b border-slate-800 flex justify-between items-center bg-slate-900/70">
                 <h3 id="modalTitle" class="text-sm font-bold text-white">Nova Tarefa</h3>
                 <button type="button" id="btnCloseModal" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800">
                     <i data-lucide="x" class="w-4 h-4"></i>
@@ -1091,9 +1117,11 @@
             </div>
 
             <!-- Modal Form -->
-            <form id="taskForm" class="p-4 space-y-3">
+            <form id="taskForm" class="task-detail-form p-4 md:p-6">
                 <input type="hidden" id="taskId">
 
+                <div class="task-detail-grid">
+                <div id="taskCoreFields" class="space-y-3 min-w-0">
                 <!-- Title -->
                 <div>
                     <label class="block text-[11px] font-semibold text-slate-400 mb-1">Título *</label>
@@ -1155,9 +1183,37 @@
                         </select>
                     </div>
                 </div>
+                </div>
+                <aside id="taskDetailAside" class="task-detail-aside">
+                    <section class="task-detail-section">
+                        <div class="task-detail-section-head"><div class="task-detail-section-title"><i data-lucide="list-checks" class="h-4 w-4 text-emerald-300"></i> Checklist</div><span id="taskChecklistCount" class="text-[9px] font-bold text-slate-500">0/0</span></div>
+                        <div class="task-detail-progress mb-3"><span id="taskChecklistProgress" style="width:0%"></span></div>
+                        <div id="taskChecklistItems" class="mb-3"></div>
+                        <div class="flex gap-2"><input id="taskChecklistInput" type="text" maxlength="180" class="task-detail-input min-w-0 flex-1" placeholder="Adicionar uma etapa..." aria-label="Nova etapa do checklist"><button type="button" id="btnAddChecklistItem" class="rounded-lg bg-blue-600 px-3 text-[10px] font-bold text-white hover:bg-blue-500">Adicionar</button></div>
+                        <p id="taskChecklistHint" class="task-detail-muted mt-2">Marque cada etapa conforme avançar.</p>
+                    </section>
+                    <section class="task-detail-section">
+                        <div class="task-detail-section-head"><div class="task-detail-section-title"><i data-lucide="message-circle" class="h-4 w-4 text-sky-300"></i> Comentários</div><span id="taskCommentsCount" class="text-[9px] text-slate-500">0</span></div>
+                        <div id="taskCommentsList" class="task-meta-scroll mb-3"></div>
+                        <textarea id="taskCommentInput" rows="2" maxlength="1200" class="task-detail-input resize-y" placeholder="Escreva uma atualização ou observação..." aria-label="Novo comentário"></textarea>
+                        <div class="mt-2 flex justify-end"><button type="button" id="btnAddTaskComment" class="task-detail-action"><i data-lucide="send" class="h-3.5 w-3.5"></i> Comentar</button></div>
+                    </section>
+                    <section class="task-detail-section">
+                        <div class="task-detail-section-head"><div class="task-detail-section-title"><i data-lucide="paperclip" class="h-4 w-4 text-amber-300"></i> Anexos e links</div><span id="taskAttachmentsCount" class="text-[9px] text-slate-500">0</span></div>
+                        <div id="taskAttachmentsList" class="task-meta-scroll mb-3"></div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2"><input id="taskAttachmentName" type="text" maxlength="100" class="task-detail-input" placeholder="Nome do link"><input id="taskAttachmentUrl" type="url" class="task-detail-input" placeholder="https://..." aria-label="Endereço do anexo"></div>
+                        <div class="mt-2 flex items-center justify-between gap-2"><p class="task-detail-muted">Adicione links do Drive, OneDrive ou documentos online.</p><button type="button" id="btnAddTaskAttachment" class="task-detail-action shrink-0"><i data-lucide="link" class="h-3.5 w-3.5"></i> Adicionar link</button></div>
+                        <p class="task-detail-muted mt-2">Upload direto de arquivos depende da configuração do Firebase Storage e das regras de acesso.</p>
+                    </section>
+                    <section class="task-detail-section">
+                        <div class="task-detail-section-head"><div class="task-detail-section-title"><i data-lucide="history" class="h-4 w-4 text-violet-300"></i> Histórico</div><span id="taskActivityCount" class="text-[9px] text-slate-500">0</span></div>
+                        <div id="taskActivityList" class="task-meta-scroll"></div>
+                    </section>
+                </aside>
+                </div>
 
                 <!-- Modal Actions -->
-                <div class="pt-3 border-t border-slate-800 flex flex-col sm:flex-row sm:items-center gap-2">
+                <div class="task-detail-footer flex flex-col sm:flex-row sm:items-center gap-2">
                     <p id="taskSaveStatus" class="text-[11px] text-slate-500 flex-1" role="status" aria-live="polite"></p>
                     <div class="flex justify-end gap-2 shrink-0">
                         <button type="button" id="btnCancelModal" class="px-3 py-1.5 text-xs font-medium text-slate-400 hover:text-white rounded-lg hover:bg-slate-800">Cancelar</button>
