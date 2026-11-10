@@ -2,9 +2,15 @@
 <html lang="pt-BR" class="h-full bg-[#060e19] text-slate-100">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Minha Agenda">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="icon" href="./icon-192.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" sizes="180x180" href="./app-icon.png">
     <title>Minha Agenda Pro • Agenda pessoal e tarefas</title>
-    
+
     <!-- Fonts & Tailwind CSS CDN -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -32,7 +38,7 @@
             }
         }
     </script>
-    
+
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
 
@@ -64,7 +70,7 @@
 
         body {
             background-color: var(--bg-dark);
-            background-image: 
+            background-image:
                 radial-gradient(circle at 75% 10%, rgba(29, 114, 243, 0.18) 0%, transparent 40%),
                 radial-gradient(circle at 15% 85%, rgba(38, 208, 206, 0.12) 0%, transparent 45%),
                 linear-gradient(135deg, #030811 0%, #061122 50%, #081830 100%);
@@ -118,6 +124,112 @@
             .agenda-week-calendar-grid .agenda-week-column .agenda-task-chip { font-size: 11px; padding: 8px; }
             .agenda-month-calendar-scroll { overflow-x: auto; }
             .agenda-month-calendar-grid { min-width: 680px; }
+        }
+
+        /* iPad/tablet mode: keep the content wide and use a touch-friendly drawer. */
+        @media (min-width: 641px) and (max-width: 1180px) {
+            body {
+                padding-top: max(16px, env(safe-area-inset-top));
+                padding-right: max(16px, env(safe-area-inset-right));
+                padding-bottom: max(16px, env(safe-area-inset-bottom));
+                padding-left: max(16px, env(safe-area-inset-left));
+                overscroll-behavior-y: none;
+            }
+            .shell-frame {
+                flex-direction: column !important;
+                min-height: calc(100dvh - 112px) !important;
+                overflow: visible !important;
+            }
+            .shell-frame > #mobileMenuBar { display: flex !important; }
+            #sidebar {
+                position: fixed !important;
+                top: 0 !important;
+                bottom: 0 !important;
+                left: 0 !important;
+                width: min(320px, 82vw) !important;
+                height: 100dvh !important;
+                transform: translateX(-100%) !important;
+                z-index: 50 !important;
+                padding-top: env(safe-area-inset-top);
+                padding-bottom: env(safe-area-inset-bottom);
+                box-shadow: 18px 0 50px rgba(0,0,0,.45);
+                visibility: hidden;
+            }
+            #sidebar:not([class~="-translate-x-full"]) { transform: translateX(0) !important; visibility: visible; }
+            #sidebarOverlay:not(.hidden) { display: block !important; z-index: 40 !important; }
+            #sidebar .hidden.md\:flex { display: flex !important; }
+            main { padding: 1.25rem !important; overflow-x: hidden; }
+            .ipad-toolbar { grid-template-columns: minmax(0, 1fr) auto !important; }
+            .ipad-toolbar > div:first-child { grid-column: 1 / -1; }
+            #quickAddForm { flex-wrap: wrap; }
+            #quickAddForm input { flex: 1 1 260px; min-width: 0; }
+            .ipad-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+            .ipad-lower-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+            button, input, select, textarea { -webkit-tap-highlight-color: transparent; }
+            button { min-height: 44px; touch-action: manipulation; }
+            input, select, textarea { font-size: 16px !important; }
+            .agenda-task-chip { min-height: 44px; padding: 9px 10px; font-size: 12px; }
+        }
+
+        .bottom-nav {
+            display: none;
+        }
+
+        @media (max-width: 1180px) {
+            /* A gaveta e o overlay ficam acima da barra inferior, sem cobrir o próprio menu. */
+            #sidebar { z-index: 50 !important; }
+            #sidebarOverlay:not(.hidden) { z-index: 49 !important; }
+            .bottom-nav {
+                display: grid;
+                grid-template-columns: repeat(5, minmax(0, 1fr));
+                position: fixed;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                z-index: 45;
+                padding: 8px 12px max(8px, env(safe-area-inset-bottom));
+                background: rgba(5, 14, 29, .94);
+                border-top: 1px solid rgba(51, 82, 124, .65);
+                box-shadow: 0 -14px 38px rgba(0,0,0,.34);
+                backdrop-filter: blur(20px) saturate(140%);
+            }
+            .bottom-nav-btn {
+                min-height: 52px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                gap: 4px;
+                color: #829bba;
+                border-radius: 14px;
+                font-size: 10px;
+                font-weight: 700;
+                transition: color .2s ease, background-color .2s ease, transform .2s ease;
+            }
+            .bottom-nav-btn.active,
+            .bottom-nav-btn.bg-blue-600 {
+                color: #fff;
+                background: rgba(37, 99, 235, .28);
+            }
+            .bottom-nav-btn:active { transform: scale(.96); }
+            .bottom-nav-btn i { width: 20px; height: 20px; }
+            .bottom-nav-primary {
+                width: 52px;
+                height: 52px;
+                min-height: 52px;
+                margin: -18px auto 0;
+                border-radius: 18px;
+                color: #fff;
+                background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+                border: 4px solid #071426;
+                box-shadow: 0 8px 24px rgba(37, 99, 235, .42);
+            }
+            main { padding-bottom: 96px !important; }
+        }
+
+        @media (max-width: 640px) {
+            .bottom-nav { padding-left: 6px; padding-right: 6px; }
+            .bottom-nav-btn { font-size: 9px; }
         }
 
         /* Enhanced Glassmorphic Card Borders */
@@ -209,9 +321,9 @@
 <body class="min-h-screen flex flex-col p-3 md:p-6 antialiased selection:bg-blue-600 selection:text-white">
 
     <div class="max-w-[1740px] w-full mx-auto flex-1 flex flex-col">
-        
+
         <!-- Brand Header Bar: clean, compact and responsive -->
-        <header class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-1 pb-4 mb-1 border-b border-slate-800/70">
+        <header id="appBrandHeader" class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-1 pb-4 mb-1 border-b border-slate-800/70">
             <div class="min-w-0">
                 <h1 class="text-2xl sm:text-3xl font-black tracking-tight leading-none text-white">
                     Minha Agenda <span class="text-blue-500">Pro</span>
@@ -249,9 +361,9 @@
         </header>
 
         <div class="shell-frame rounded-3xl flex-1 flex flex-col md:flex-row overflow-hidden relative min-h-[780px]">
-            
+
             <!-- Mobile Header Trigger -->
-            <div class="md:hidden flex items-center justify-between p-4 bg-slate-900/90 border-b border-slate-800">
+            <div id="mobileMenuBar" class="md:hidden flex items-center justify-between p-4 bg-slate-900/90 border-b border-slate-800">
                 <div class="flex items-center gap-2">
                     <div class="w-7 h-7 bg-gradient-to-br from-blue-500 to-blue-700 rounded-lg grid place-items-center text-white text-xs font-black">
                         <i data-lucide="check-square" class="w-4 h-4"></i>
@@ -330,7 +442,7 @@
 
             <!-- Main Content Area -->
             <main class="flex-1 flex flex-col min-w-0 overflow-y-auto p-4 md:p-7 space-y-4">
-                
+
                 <!-- Migration Banner (Preserved) -->
                 <div id="migrationBanner" class="hidden bg-blue-950/80 border border-blue-500/40 p-3 px-4 rounded-xl text-xs text-blue-200 flex items-center justify-between">
                     <div class="flex items-center gap-2">
@@ -350,7 +462,7 @@
                 </div>
 
                 <!-- Toolbar & Omnibox Trigger -->
-                <div class="grid grid-cols-1 md:grid-cols-[1fr_auto_auto_auto] gap-3 items-center">
+                <div class="ipad-toolbar grid grid-cols-1 md:grid-cols-[1fr_auto_auto_auto] gap-3 items-center">
                     <div onclick="toggleSpotlight(true)" class="bg-slate-900/90 border border-slate-800 hover:border-slate-700 rounded-xl h-10 px-3.5 flex items-center gap-2.5 text-slate-400 text-xs cursor-pointer transition">
                         <i data-lucide="search" class="w-4 h-4 text-slate-500"></i>
                         <input type="text" id="filterSearch" placeholder="Buscar tarefas, projetos, pessoas... (Pressione Ctrl+K)" class="bg-transparent border-none outline-none text-slate-100 text-xs w-full placeholder:text-slate-500 pointer-events-none" aria-label="Buscar tarefas">
@@ -453,9 +565,9 @@
                     </div>
                 </section>
 
-                        
+
                         <!-- KPI Metrics Grid -->
-                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                        <div class="ipad-kpi-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                             <div class="glass-card p-4 rounded-xl flex items-center justify-between cursor-pointer" onclick="filterShortcutLate()">
                                 <div class="flex items-center gap-3">
                                     <div class="w-10 h-10 rounded-lg bg-red-500/15 text-red-400 grid place-items-center text-lg">
@@ -509,7 +621,7 @@
                         </div>
 
                         <!-- Lower Grid Panels -->
-                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                        <div class="ipad-lower-grid grid grid-cols-1 lg:grid-cols-3 gap-4">
                             <!-- Focus Suggested -->
                             <article class="glass-card border-l-4 border-l-cyan-400 rounded-xl p-4 flex flex-col justify-between min-h-[260px]">
                                 <div class="flex justify-between items-start mb-3">
@@ -633,7 +745,7 @@
 
                         <!-- Kanban Columns Container -->
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-start overflow-x-auto pb-4">
-                            
+
                             <!-- Column: A Fazer -->
                             <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-3 flex flex-col min-h-[480px]">
                                 <div class="flex items-center justify-between pb-2 mb-3 border-b border-slate-800">
@@ -741,6 +853,25 @@
                 </div>
     </main>
         </div>
+
+    <!-- Bottom app navigation: optimized for one-handed iPad and mobile use -->
+    <nav id="bottomNav" class="bottom-nav" aria-label="Navegação principal do aplicativo">
+        <button type="button" data-view="dashboard" class="nav-btn bottom-nav-btn active" aria-label="Abrir início">
+            <i data-lucide="home"></i><span>Início</span>
+        </button>
+        <button type="button" data-view="tasks" class="nav-btn bottom-nav-btn" aria-label="Abrir tarefas">
+            <i data-lucide="check-circle-2"></i><span>Tarefas</span>
+        </button>
+        <button type="button" id="bottomNavNewTask" onclick="openModal()" class="bottom-nav-btn bottom-nav-primary" aria-label="Criar nova tarefa">
+            <i data-lucide="plus"></i><span class="sr-only">Nova tarefa</span>
+        </button>
+        <button type="button" data-view="kanban" class="nav-btn bottom-nav-btn" aria-label="Abrir quadro">
+            <i data-lucide="columns-3"></i><span>Quadro</span>
+        </button>
+        <button type="button" data-view="folders" class="nav-btn bottom-nav-btn" aria-label="Abrir pastas">
+            <i data-lucide="folder"></i><span>Pastas</span>
+        </button>
+    </nav>
 
     <!-- FOLDER MODAL -->
     <div id="folderModal" class="fixed inset-0 z-[60] bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
@@ -1038,7 +1169,7 @@
         let selectedFolderColor = '#3b82f6';
         let agendaSeedTimer = null;
         let agendaSeedRunning = false;
-        
+
         let firestoreInspectionState = {
             itemsCount: 0,
             foldersCount: 0,
@@ -1093,7 +1224,7 @@
                     currentUserState = null;
                     firestoreInspectionState = { itemsCount: 0, foldersCount: 0, templatesCount: 0, hasSettings: false, remoteItems: [], checked: false, error: null };
                     updateAuthUIState('UNAUTHENTICATED');
-                    
+
                     tasks = loadInitialTasks();
                     render();
                 }
@@ -2228,7 +2359,7 @@
             const key = getUserStorageKey(PRIMARY_STORAGE_KEY);
             let stored = safeStorageGet(key);
             if (stored) {
-                try { 
+                try {
                     const parsed = JSON.parse(stored);
                     if (Array.isArray(parsed) && parsed.length > 0) return parsed;
                 } catch(e) {}
@@ -2784,7 +2915,7 @@
                     : 'Não foi possível salvar. Verifique sua conexão e tente novamente.', 'error');
             }
         });
-        
+
 
         // --- FILTERS & SHORTCUT HANDLERS (ETAPA 8 FIXES) ---
         let currentFilterMode = 'all'; // Mode tracker: 'all', 'today', 'late', 'priority', 'no_date', 'status'
@@ -2792,7 +2923,7 @@
         function highlightShortcutButtons(activeId) {
             const btnToday = document.getElementById('btnShortcutToday');
             const btnLate = document.getElementById('btnShortcutLate');
-            
+
             if (btnToday) {
                 if (activeId === 'today') {
                     btnToday.className = 'bg-blue-600 border border-blue-400/40 rounded-full px-3 py-1 text-[11px] font-semibold text-white flex items-center gap-1.5 shadow-md shadow-blue-600/20 transition';
@@ -2907,6 +3038,7 @@
         function switchView(viewName) {
             const navBtns = document.querySelectorAll('.nav-btn');
             const viewContents = document.querySelectorAll('.view-content');
+            document.body.classList.toggle('is-secondary-view', viewName !== 'dashboard');
 
             navBtns.forEach(b => {
                 if (b.getAttribute('data-view') === viewName) b.classList.add('active', 'bg-blue-600', 'text-white');
@@ -3187,9 +3319,13 @@
             btn.addEventListener('click', () => {
                 const targetView = btn.getAttribute('data-view');
                 if (!targetView) return;
-                
-                navBtns.forEach(b => b.classList.remove('active', 'bg-blue-600', 'text-white'));
-                btn.classList.add('active', 'bg-blue-600', 'text-white');
+
+                navBtns.forEach(b => {
+                    const isCurrent = b.getAttribute('data-view') === targetView;
+                    b.classList.toggle('active', isCurrent);
+                    b.classList.toggle('bg-blue-600', isCurrent);
+                    b.classList.toggle('text-white', isCurrent);
+                });
 
                 viewContents.forEach(view => {
                     if (view.id === `view-${targetView}`) {
@@ -3198,6 +3334,7 @@
                         view.classList.add('hidden');
                     }
                 });
+                document.body.classList.toggle('is-secondary-view', targetView !== 'dashboard');
                 closeMobileSidebar();
             });
         });
@@ -3748,7 +3885,7 @@
 
         const filterSearchInput = document.getElementById('filterSearch');
         if (filterSearchInput) filterSearchInput.addEventListener('input', renderTaskList);
-        
+
         const filterPrioritySelect = document.getElementById('filterPriority');
         if (filterPrioritySelect) filterPrioritySelect.addEventListener('change', renderTaskList);
 
@@ -3800,7 +3937,7 @@
             if (initialNavBtn) {
                 initialNavBtn.classList.add('bg-blue-600', 'text-white');
             }
-            
+
             if (dataMigratedFromOldKey) {
                 const banner = document.getElementById('migrationBanner');
                 if (banner) {
@@ -3814,6 +3951,11 @@
             updateAuthUIState('LOADING');
             initAuthListener();
         });
+    </script>
+    <script>
+        if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {
+            window.addEventListener('load', () => navigator.serviceWorker.register('service-worker.js').catch(() => {}));
+        }
     </script>
 </body>
 </html>
