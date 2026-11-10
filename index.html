@@ -4205,7 +4205,7 @@
             const date=new Date(plannerAnchorDate);
             if(plannerViewMode==='day')date.setDate(date.getDate()+direction);
             else if(plannerViewMode==='week')date.setDate(date.getDate()+direction*7);
-            else date.setMonth(date.getMonth()+direction);
+            else { date.setDate(1); date.setMonth(date.getMonth()+direction); }
             plannerAnchorDate=date;
             renderPlanner();
         }
