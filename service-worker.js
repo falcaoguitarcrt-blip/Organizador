@@ -1,4 +1,4 @@
-const CACHE_NAME='minha-agenda-pro-v25-menu-pwa';
+const CACHE_NAME='minha-agenda-pro-v26-workspace-board';
 const APP_SHELL=['./','./index.html','./manifest.webmanifest','./icon-192.svg','./icon-512.svg','./app-icon.png'];
 
 /* Mantém a vinculação Semana/Mês com as mesmas tarefas/áreas, sem alterar dados. */
