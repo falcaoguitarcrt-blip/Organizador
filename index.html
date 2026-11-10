@@ -3985,7 +3985,7 @@
             return tasks.filter(task=>{
                 const statusText=String(task.status||'').toLowerCase();
                 if(task.archived===true||task.isArchived===true||['archived','arquivado','arquivada'].includes(statusText))return false;
-                if(folderScope&&!folderScope.has(getTaskFolderId(task)))return false;
+                if(folderScope&&!folders.some(folder=>folderScope.has(folder.id)&&taskBelongsToFolder(task,folder)))return false;
                 if(priority!=='all'&&(task.priority||'Média')!==priority)return false;
                 const done=isTaskCompleted(task);
                 if(status==='active'&&done)return false;
@@ -4068,7 +4068,7 @@
             if(dateField)dateField.value=dateKey||'';
             if(timeField)timeField.value=time||'';
             const selectedFolder=document.getElementById('plannerFolderFilter')?.value||'all';
-            if(folderField&&selectedFolder!=='all')folderField.value=selectedFolder;
+            if(folderField)folderField.value=selectedFolder!=='all'?selectedFolder:'';
         }
 
         function plannerRenderDay(filteredTasks) {
@@ -4179,7 +4179,7 @@
             const {start,end}=plannerGetRange();
             const inPeriod=filtered.filter(task=>agendaTaskDate(task)>=start&&agendaTaskDate(task)<=end);
             const undated=filtered.filter(task=>!agendaTaskDate(task)).length;
-            const dated=filtered.filter(task=>!!agendaTaskDate(task)).length;
+            const dated=inPeriod.length;
             const summary=document.getElementById('plannerPeriodSummary');
             if(summary)summary.textContent=dated+' compromisso(s) com data · '+undated+' sem data';
             const title=document.getElementById('plannerDateLabel');
