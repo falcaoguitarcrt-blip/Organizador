@@ -316,6 +316,113 @@
                 padding: 7px 9px;
             }
         }
+
+        /* Etapa 1: quadro global estilo Canvas/Planner */
+        .workspace-board-scroll { overflow-x:auto; padding-bottom:8px; }
+        .workspace-kanban-grid { display:grid; grid-template-columns:repeat(4,minmax(250px,1fr)); gap:12px; min-width:1048px; align-items:start; }
+        .workspace-kanban-column { min-height:430px; display:flex; flex-direction:column; border:1px solid rgba(51,65,85,.9); border-radius:16px; background:rgba(8,18,34,.78); overflow:hidden; }
+        .workspace-kanban-header { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:13px 14px; border-bottom:1px solid rgba(51,65,85,.7); }
+        .workspace-lane-dropzone { display:flex; flex-direction:column; gap:9px; flex:1; min-height:340px; padding:10px; transition:background-color .15s ease, outline-color .15s ease; }
+        .workspace-lane-dropzone.is-drag-over { background:rgba(37,99,235,.12); outline:2px dashed rgba(96,165,250,.55); outline-offset:-4px; }
+        .workspace-kanban-card { background:rgba(30,41,59,.76); border:1px solid rgba(71,85,105,.65); border-radius:12px; padding:12px; box-shadow:0 4px 14px rgba(0,0,0,.13); transition:border-color .15s ease, transform .15s ease, background-color .15s ease; }
+        .workspace-kanban-card:hover { border-color:rgba(96,165,250,.62); background:rgba(30,45,68,.94); }
+        .workspace-kanban-card.is-dragging { opacity:.45; transform:scale(.985); }
+        .workspace-board-filter { min-width:140px; flex:1 1 145px; }
+        .workspace-lane-empty { border:1px dashed rgba(71,85,105,.55); border-radius:10px; padding:20px 10px; color:#718096; text-align:center; font-size:11px; }
+        @media (max-width: 640px) { .workspace-kanban-grid { min-width:1000px; } .workspace-kanban-column { min-height:390px; } }
+
+        /* Etapa 2: Planner unificado */
+        .planner-toolbar { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px; }
+        .planner-view-switch { display:inline-flex; flex-wrap:wrap; gap:3px; padding:4px; border:1px solid rgba(51,65,85,.8); border-radius:12px; background:rgba(2,6,23,.62); }
+        .planner-view-btn { border-radius:8px; padding:8px 13px; font-size:11px; font-weight:700; color:#94a3b8; transition:all .15s ease; }
+        .planner-view-btn.active { color:#fff; background:rgba(37,99,235,.85); box-shadow:0 2px 8px rgba(37,99,235,.2); }
+        .planner-panel { border:1px solid rgba(51,65,85,.72); border-radius:16px; background:rgba(8,18,34,.72); overflow:hidden; }
+        .planner-day-list { display:flex; flex-direction:column; }
+        .planner-time-row { display:grid; grid-template-columns:70px minmax(0,1fr); min-height:72px; border-top:1px solid rgba(51,65,85,.55); }
+        .planner-time-label { padding:13px 12px; color:#8293aa; font-size:11px; font-variant-numeric:tabular-nums; border-right:1px solid rgba(51,65,85,.5); }
+        .planner-time-drop { padding:6px 10px; min-width:0; transition:background-color .15s ease; }
+        .planner-time-drop.is-drop-over, .planner-day-drop.is-drop-over { background:rgba(37,99,235,.14); outline:2px dashed rgba(96,165,250,.62); outline-offset:-3px; }
+        .planner-event-card { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; width:100%; border:1px solid rgba(71,85,105,.7); border-left:3px solid var(--planner-accent,#3b82f6); border-radius:10px; background:rgba(30,41,59,.78); padding:9px 10px; text-align:left; transition:border-color .15s ease,background-color .15s ease; }
+        .planner-event-card:hover { border-color:rgba(96,165,250,.75); background:rgba(30,45,68,.95); }
+        .planner-event-card.is-dragging { opacity:.45; }
+        .planner-week-grid { display:grid; grid-template-columns:repeat(7,minmax(150px,1fr)); gap:8px; min-width:1120px; align-items:stretch; }
+        .planner-week-column { min-height:330px; border:1px solid rgba(51,65,85,.7); border-radius:12px; background:rgba(2,6,23,.38); overflow:hidden; }
+        .planner-week-column.is-today { border-color:rgba(59,130,246,.7); box-shadow:inset 0 0 0 1px rgba(59,130,246,.16); }
+        .planner-week-head { padding:11px 10px; display:flex; align-items:center; justify-content:space-between; gap:6px; border-bottom:1px solid rgba(51,65,85,.65); }
+        .planner-day-drop { min-height:250px; padding:8px; display:flex; flex-direction:column; gap:7px; }
+        .planner-month-grid { display:grid; grid-template-columns:repeat(7,minmax(115px,1fr)); gap:6px; min-width:840px; }
+        .planner-month-cell { min-height:132px; padding:7px; border:1px solid rgba(51,65,85,.72); border-radius:10px; background:rgba(2,6,23,.35); display:flex; flex-direction:column; gap:5px; }
+        .planner-month-cell.outside { opacity:.45; }
+        .planner-month-cell.today { border-color:rgba(59,130,246,.75); background:rgba(30,64,175,.1); }
+        .planner-month-chip { width:100%; display:block; overflow:hidden; border-radius:6px; padding:4px 6px; background:rgba(30,64,175,.22); border-left:2px solid var(--planner-accent,#3b82f6); color:#dbeafe; font-size:9px; line-height:1.25; text-align:left; white-space:nowrap; text-overflow:ellipsis; }
+        .planner-month-chip:hover { background:rgba(37,99,235,.35); }
+        .planner-date-link { display:inline-flex; align-items:center; justify-content:center; min-width:28px; min-height:28px; border-radius:8px; color:#cbd5e1; font-size:11px; font-weight:800; }
+        .planner-date-link:hover { background:rgba(51,65,85,.65); color:#fff; }
+        .planner-empty { padding:18px 12px; text-align:center; color:#64748b; font-size:11px; border:1px dashed rgba(71,85,105,.5); border-radius:10px; }
+        .planner-unscheduled-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:8px; }
+        .planner-day-scroll { overflow:auto; max-height:calc(100vh - 340px); min-height:280px; }
+        @media (max-width: 760px) {
+            .planner-time-row { grid-template-columns:52px minmax(0,1fr); }
+            .planner-time-label { padding:10px 7px; font-size:10px; }
+            .planner-time-drop { padding:5px 6px; }
+            .planner-day-scroll { max-height:none; }
+            .planner-month-grid { min-width:840px; }
+        }
+
+/* Workspace views per folder */
+.folder-space-toolbar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px}
+.folder-space-views{display:inline-flex;flex-wrap:wrap;gap:3px;padding:4px;border:1px solid rgba(51,65,85,.8);border-radius:12px;background:rgba(2,6,23,.62)}
+.folder-space-view-btn{min-height:34px;border-radius:8px;padding:7px 11px;font-size:10px;font-weight:700;color:#94a3b8}
+.folder-space-view-btn.active{color:#fff;background:rgba(37,99,235,.85)}
+.folder-space-board-scroll,.folder-space-calendar-scroll{overflow-x:auto;padding-bottom:7px}
+.folder-space-board{display:grid;grid-template-columns:repeat(4,minmax(220px,1fr));gap:10px;min-width:940px;align-items:start}
+.folder-space-lane{min-height:300px;display:flex;flex-direction:column;border:1px solid rgba(51,65,85,.78);border-radius:13px;background:rgba(2,6,23,.35);overflow:hidden}
+.folder-space-lane-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:11px;border-bottom:1px solid rgba(51,65,85,.65)}
+.folder-space-lane-list{display:flex;flex-direction:column;gap:8px;padding:9px;min-height:245px}
+.folder-space-lane-list.is-drop-over,.folder-space-day-drop.is-drop-over{background:rgba(37,99,235,.14);outline:2px dashed rgba(96,165,250,.6);outline-offset:-3px}
+.folder-space-card{border:1px solid rgba(71,85,105,.7);border-left:3px solid var(--folder-accent,#3b82f6);border-radius:10px;background:rgba(30,41,59,.8);padding:10px}
+.folder-space-card:hover{border-color:rgba(96,165,250,.72)}.folder-space-card.is-dragging{opacity:.42}
+.folder-space-week{display:grid;grid-template-columns:repeat(7,minmax(145px,1fr));gap:7px;min-width:1060px}
+.folder-space-day{border:1px solid rgba(51,65,85,.7);border-radius:11px;background:rgba(2,6,23,.35);min-height:265px;overflow:hidden}
+.folder-space-day.is-today{border-color:rgba(59,130,246,.72)}
+.folder-space-day-head{display:flex;align-items:center;justify-content:space-between;gap:5px;padding:9px;border-bottom:1px solid rgba(51,65,85,.6)}
+.folder-space-day-drop{min-height:210px;display:flex;flex-direction:column;gap:6px;padding:7px}
+.folder-space-month{display:grid;grid-template-columns:repeat(7,minmax(108px,1fr));gap:6px;min-width:790px}
+.folder-space-month-cell{min-height:125px;padding:7px;display:flex;flex-direction:column;gap:5px;border:1px solid rgba(51,65,85,.68);border-radius:9px;background:rgba(2,6,23,.33)}
+.folder-space-month-cell.outside{opacity:.4}.folder-space-month-cell.is-today{border-color:rgba(59,130,246,.72)}
+.folder-space-month-chip{display:block;width:100%;padding:4px 6px;border-radius:6px;border-left:2px solid var(--folder-accent,#3b82f6);background:rgba(30,64,175,.2);color:#dbeafe;font-size:9px;text-align:left;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.folder-space-time-row{display:grid;grid-template-columns:62px minmax(0,1fr);min-height:64px;border-top:1px solid rgba(51,65,85,.52)}
+.folder-space-time-label{padding:10px 9px;color:#8293aa;font-size:10px;border-right:1px solid rgba(51,65,85,.45);font-variant-numeric:tabular-nums}
+.folder-space-day-drop{min-width:0;padding:6px 8px}
+.folder-space-empty{padding:17px 10px;border:1px dashed rgba(71,85,105,.5);border-radius:9px;color:#64748b;font-size:10px;text-align:center}
+.folder-space-filter{min-width:125px;flex:1 1 130px}
+@media(max-width:760px){.folder-space-board{min-width:920px}.folder-space-week{min-width:1060px}.folder-space-month{min-width:790px}.folder-space-filter{min-width:0}}
+
+/* Etapa 4: ficha lateral de compromisso */
+.task-detail-drawer{display:flex;justify-content:flex-end;align-items:stretch;padding:0!important}
+.task-detail-shell{width:min(100%,1120px);height:100%;max-height:100dvh;border-radius:0!important;display:flex;flex-direction:column;overflow:hidden}
+.task-detail-form{min-height:0;flex:1;overflow-y:auto;overscroll-behavior:contain}
+.task-detail-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(320px,.9fr);gap:18px;align-items:start}
+.task-detail-aside{display:flex;flex-direction:column;gap:12px;min-width:0}
+.task-detail-section{border:1px solid rgba(51,65,85,.78);border-radius:14px;background:rgba(2,6,23,.42);padding:13px}
+.task-detail-section-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
+.task-detail-section-title{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:800;color:#e2e8f0}
+.task-detail-muted{font-size:10px;color:#64748b;line-height:1.5}
+.task-detail-input{width:100%;border:1px solid rgba(51,65,85,.9);border-radius:9px;background:rgba(2,6,23,.78);padding:9px 10px;color:#e2e8f0;font-size:11px;outline:none}
+.task-detail-input:focus{border-color:#3b82f6}
+.task-detail-action{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1px solid rgba(71,85,105,.8);border-radius:9px;padding:8px 10px;color:#cbd5e1;font-size:10px;font-weight:700}
+.task-detail-action:hover{background:rgba(51,65,85,.6);color:#fff}
+.task-detail-progress{height:6px;border-radius:99px;background:#1e293b;overflow:hidden}
+.task-detail-progress>span{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#22c55e,#38bdf8);transition:width .2s ease}
+.task-check-row{display:flex;align-items:flex-start;gap:9px;padding:8px 0;border-bottom:1px solid rgba(51,65,85,.45)}
+.task-check-row:last-child{border-bottom:0}.task-check-row input{margin-top:2px;accent-color:#3b82f6}.task-check-row .is-done{text-decoration:line-through;color:#64748b}
+.task-meta-entry{border:1px solid rgba(51,65,85,.58);border-radius:9px;background:rgba(15,23,42,.55);padding:9px}
+.task-meta-entry+.task-meta-entry{margin-top:7px}
+.task-meta-scroll{max-height:230px;overflow:auto}
+.task-detail-footer{position:sticky;bottom:0;flex-shrink:0;background:rgba(2,8,20,.97);border-top:1px solid rgba(51,65,85,.8);padding:12px 16px}
+.task-detail-header{flex-shrink:0}
+@media(max-width:850px){.task-detail-shell{width:100%;max-width:none}.task-detail-grid{grid-template-columns:minmax(0,1fr);gap:12px}.task-detail-aside{display:grid;grid-template-columns:1fr;gap:10px}.task-detail-form{padding:14px!important}}
+@media(min-width:851px){.task-detail-aside{position:sticky;top:0}}
     </style>
 </head>
 <body class="min-h-screen flex flex-col p-3 md:p-6 antialiased selection:bg-blue-600 selection:text-white">
@@ -398,15 +505,15 @@
                         <i data-lucide="check-circle-2" class="w-4 h-4"></i>
                         <span>Tarefas</span>
                     </button>
+                    <button type="button" data-view="planner" class="nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-semibold rounded-xl text-slate-300 hover:bg-slate-800/60 hover:text-white transition">
+                        <i data-lucide="calendar-range" class="w-4 h-4"></i>
+                        <span>Planejador</span>
+                    </button>
                     <button type="button" data-view="kanban" class="nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-semibold rounded-xl text-slate-300 hover:bg-slate-800/60 hover:text-white transition">
                         <i data-lucide="columns-3" class="w-4 h-4"></i>
-                        <span>Quadro</span>
+                        <span>Fluxo clássico</span>
                     </button>
-                    <button type="button" data-view="dashboard" class="nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-semibold rounded-xl text-slate-300 hover:bg-slate-800/60 hover:text-white transition" onclick="showReportsPanel && showReportsPanel()">
-                        <i data-lucide="bar-chart-3" class="w-4 h-4"></i>
-                        <span>Resumo</span>
-                    </button>
-                    <div class="flex items-center gap-1">
+                        <div class="flex items-center gap-1">
                         <button type="button" data-view="folders" class="nav-btn flex-1 w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-semibold rounded-xl text-slate-300 hover:bg-slate-800/60 hover:text-white transition">
                             <i data-lucide="folder-plus" class="w-4 h-4"></i>
                             <span>Pastas</span>
@@ -534,142 +641,47 @@
                 <!-- Views Container -->
                 <div class="flex-1 space-y-4">
 
-                    <!-- 1. DASHBOARD / VISÃO GERAL -->
+                    <!-- 1. ESPAÇO DE TRABALHO / QUADRO GLOBAL -->
                     <section id="view-dashboard" class="view-content space-y-4">
-
-                <!-- Hero Centro de Comando Card -->
-                <section class="relative bg-[#081628] border border-blue-500/40 rounded-2xl p-6 overflow-hidden flex flex-col md:flex-row items-start md:items-center justify-between gap-4 min-h-[120px] shadow-inner">
-                    <!-- Mountain Vector Silhouette Background Overlay -->
-                    <svg class="hero-bg-svg" viewBox="0 0 500 150" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-                        <defs>
-                            <linearGradient id="gradMoon" x1="0%" y1="0%" x2="100%" y2="100%">
-                                <stop offset="0%" stop-color="#1e58a8" stop-opacity="0.4"/>
-                                <stop offset="100%" stop-color="#081628" stop-opacity="0"/>
-                            </linearGradient>
-                        </defs>
-                        <circle cx="400" cy="40" r="70" fill="url(#gradMoon)"/>
-                        <path d="M150,150 L220,70 L290,120 L380,45 L460,110 L500,80 L500,150 Z" fill="#0d2342" opacity="0.6"/>
-                        <path d="M200,150 L280,85 L350,130 L420,60 L500,125 L500,150 Z" fill="#09182d"/>
-                    </svg>
-
-                    <div class="relative z-10">
-                        <div class="flex items-center gap-2 text-sky-400 font-extrabold text-[10px] tracking-wider uppercase">
-                            <i data-lucide="sun" class="w-4 h-4 text-amber-400 fill-amber-400"></i> CENTRO DE COMANDO
-                        </div>
-                        <h2 id="heroGreetingTitle" class="text-2xl md:text-3xl font-extrabold text-white mt-1 mb-0.5 tracking-tight">Boa tarde, Visitante</h2>
-                        <div class="text-slate-400 text-xs">Organize o que realmente importa hoje.</div>
-                    </div>
-
-                    <div class="relative z-10 text-right font-serif italic text-slate-200 text-xs border-l-2 border-blue-500 pl-3 md:border-l-0 md:pl-0">
-                        “Disciplina de hoje,<br>resultados de amanhã.”
-                    </div>
-                </section>
-
-
-                        <!-- KPI Metrics Grid -->
-                        <div class="ipad-kpi-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                            <div class="glass-card p-4 rounded-xl flex items-center justify-between cursor-pointer" onclick="filterShortcutLate()">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-10 h-10 rounded-lg bg-red-500/15 text-red-400 grid place-items-center text-lg">
-                                        <i data-lucide="alert-circle" class="w-5 h-5"></i>
-                                    </div>
-                                    <div>
-                                        <h3 id="kpiPending" class="text-2xl font-black text-white leading-none">0</h3>
-                                        <p class="text-xs font-bold text-slate-300 mt-1">Atrasados / Pendentes</p>
-                                    </div>
+                        <div class="relative overflow-hidden rounded-2xl border border-blue-500/35 bg-gradient-to-br from-[#0b1b32] via-[#0a172a] to-[#0a2634] p-5 md:p-6">
+                            <div class="absolute -right-10 -top-16 h-52 w-52 rounded-full bg-blue-500/10 blur-3xl pointer-events-none"></div>
+                            <div class="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                                <div>
+                                    <div class="flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-[.18em] text-cyan-300"><i data-lucide="layout-dashboard" class="w-4 h-4"></i> Meu espaço de trabalho</div>
+                                    <h2 id="heroGreetingTitle" class="mt-1 text-2xl md:text-3xl font-extrabold tracking-tight text-white">Seu quadro de compromissos</h2>
+                                    <p class="mt-1 text-xs md:text-sm text-slate-400">Todas as suas áreas em um só lugar. Organize, priorize e avance.</p>
                                 </div>
-                            </div>
-
-                            <div class="glass-card p-4 rounded-xl flex items-center justify-between cursor-pointer" onclick="filterShortcutToday()">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-10 h-10 rounded-lg bg-amber-500/15 text-amber-400 grid place-items-center text-lg">
-                                        <i data-lucide="calendar" class="w-5 h-5"></i>
-                                    </div>
-                                    <div>
-                                        <h3 id="kpiToday" class="text-2xl font-black text-white leading-none">0</h3>
-                                        <p class="text-xs font-bold text-slate-300 mt-1">Hoje</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="glass-card p-4 rounded-xl flex items-center justify-between cursor-pointer" onclick="filterShortcutStatus('done')">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-10 h-10 rounded-lg bg-emerald-500/15 text-emerald-400 grid place-items-center text-lg">
-                                        <i data-lucide="check-circle" class="w-5 h-5"></i>
-                                    </div>
-                                    <div>
-                                        <h3 id="kpiCompleted" class="text-2xl font-black text-white leading-none">0</h3>
-                                        <p class="text-xs font-bold text-slate-300 mt-1">Concluídos</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Progress Card -->
-                            <div class="glass-card p-4 rounded-xl flex flex-col justify-between space-y-2">
-                                <div class="flex justify-between items-center text-xs">
-                                    <span class="font-bold text-slate-300">Progresso do dia</span>
-                                    <span id="kpiRate" class="text-sm font-black text-white">0%</span>
-                                </div>
-                                <div class="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
-                                    <div id="progressBar" class="bg-gradient-to-r from-cyan-400 to-blue-500 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
-                                </div>
-                                <div class="flex justify-between items-center text-[10px] text-slate-500 border-t border-slate-800/80 pt-1.5">
-                                    <span>Próximos 7 dias <b class="text-slate-300" id="progressText">0 tarefa(s)</b></span>
-                                    <span>Concluídos hoje <b class="text-emerald-400" id="doneCountSub">0 ✓</b></span>
+                                <div class="flex flex-wrap gap-2">
+                                    <button type="button" onclick="openWorkspaceTaskModal('backlog')" class="min-h-10 inline-flex items-center justify-center gap-2 rounded-xl border border-slate-600/70 bg-slate-900/70 px-3.5 py-2 text-xs font-semibold text-slate-200 hover:bg-slate-800"><i data-lucide="inbox" class="w-4 h-4"></i> Nova ideia</button>
+                                    <button type="button" onclick="openModal()" class="min-h-10 inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white shadow-lg shadow-blue-950/40 hover:bg-blue-500"><i data-lucide="plus" class="w-4 h-4"></i> Novo compromisso</button>
                                 </div>
                             </div>
                         </div>
-
-                        <!-- Lower Grid Panels -->
-                        <div class="ipad-lower-grid grid grid-cols-1 lg:grid-cols-3 gap-4">
-                            <!-- Focus Suggested -->
-                            <article class="glass-card border-l-4 border-l-cyan-400 rounded-xl p-4 flex flex-col justify-between min-h-[260px]">
-                                <div class="flex justify-between items-start mb-3">
-                                    <div>
-                                        <h3 class="text-sm font-bold text-blue-400">Foco sugerido</h3>
-                                        <p class="text-[10px] text-slate-500">Com base nas suas prioridades e prazos</p>
-                                    </div>
-                                    <div class="w-7 h-7 rounded-lg bg-blue-500/10 border border-blue-500/30 text-blue-400 grid place-items-center text-xs">
-                                        <i data-lucide="target" class="w-4 h-4"></i>
-                                    </div>
-                                </div>
-                                <div id="dashboardFocusContainer" class="space-y-2 flex-1">
-                                    <!-- Dynamic Items injected via JS -->
-                                </div>
-                            </article>
-
-                            <!-- Timeline & Pomodoro Widget -->
-                            <article class="glass-card rounded-xl p-4 flex flex-col justify-between min-h-[260px]">
-                                <div class="flex justify-between items-start mb-3">
-                                    <div>
-                                        <h3 class="text-sm font-bold text-blue-400">Linha do tempo de hoje</h3>
-                                        <p class="text-[10px] text-slate-500">Sua agenda & Pomodoro Timer</p>
-                                    </div>
-                                    <!-- Pomodoro Widget Display -->
-                                    <div id="pomodoroDisplay" class="bg-blue-950/80 border border-blue-500/30 rounded-lg px-2.5 py-1 flex items-center gap-2">
-                                        <i data-lucide="timer" class="w-3.5 h-3.5 text-cyan-400"></i>
-                                        <span id="pomoTimerText" class="text-xs font-mono font-bold text-white">25:00</span>
-                                        <button type="button" onclick="togglePomodoro()" id="btnPomoStart" class="text-[10px] bg-blue-600 hover:bg-blue-500 text-white font-bold px-1.5 py-0.5 rounded">▶</button>
-                                        <button type="button" onclick="resetPomodoro()" class="text-[10px] bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold px-1.5 py-0.5 rounded">↺</button>
-                                    </div>
-                                </div>
-                                <div id="dashboardRecentList" class="space-y-2 flex-1">
-                                    <!-- Dynamic Timeline Items -->
-                                </div>
-                            </article>
-
-                            <!-- Folder Distribution -->
-                            <article class="glass-card rounded-xl p-4 flex flex-col justify-between min-h-[260px]">
-                                <div class="flex items-start justify-between gap-3 mb-3">
-                                    <div>
-                                        <h3 class="text-sm font-bold text-blue-400">Distribuição por pasta</h3>
-                                        <p class="text-[10px] text-slate-500">Suas tarefas organizadas por espaço</p>
-                                    </div>
-                                    <i data-lucide="folder-tree" class="w-5 h-5 text-blue-400"></i>
-                                </div>
-                                <div id="folderDistributionChart" class="flex-1"></div>
-                            </article>
+                        <div class="ipad-kpi-grid grid grid-cols-2 xl:grid-cols-4 gap-3">
+                            <button type="button" onclick="filterShortcutLate()" class="glass-card rounded-xl p-3.5 text-left hover:border-red-500/50"><div class="flex items-center gap-2 text-red-300"><i data-lucide="alert-circle" class="w-4 h-4"></i><span class="text-[10px] font-bold uppercase tracking-wide">Atrasadas</span></div><div id="kpiPending" class="mt-1 text-2xl font-black text-white">0</div></button>
+                            <button type="button" onclick="filterShortcutToday()" class="glass-card rounded-xl p-3.5 text-left hover:border-amber-500/50"><div class="flex items-center gap-2 text-amber-300"><i data-lucide="calendar-days" class="w-4 h-4"></i><span class="text-[10px] font-bold uppercase tracking-wide">Hoje</span></div><div id="kpiToday" class="mt-1 text-2xl font-black text-white">0</div></button>
+                            <button type="button" onclick="filterShortcutStatus('done')" class="glass-card rounded-xl p-3.5 text-left hover:border-emerald-500/50"><div class="flex items-center gap-2 text-emerald-300"><i data-lucide="check-circle-2" class="w-4 h-4"></i><span class="text-[10px] font-bold uppercase tracking-wide">Concluídas</span></div><div id="kpiCompleted" class="mt-1 text-2xl font-black text-white">0</div></button>
+                            <div class="glass-card rounded-xl p-3.5"><div class="flex items-center justify-between gap-2 text-[10px] font-bold uppercase tracking-wide text-blue-200"><span>Progresso geral</span><span id="kpiRate" class="text-sm font-black text-white">0%</span></div><div class="mt-3 h-2 overflow-hidden rounded-full bg-slate-800"><div id="progressBar" class="h-full rounded-full bg-gradient-to-r from-cyan-400 to-blue-500 transition-all duration-500" style="width:0%"></div></div><div class="mt-2 flex justify-between text-[9px] text-slate-500"><span id="progressText">0 tarefa(s)</span><span id="doneCountSub" class="text-emerald-300">0 ✓</span></div></div>
                         </div>
+                                                <div class="glass-card rounded-2xl p-3 md:p-4 space-y-3">
+                            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+                                <div><div class="flex items-center gap-2"><i data-lucide="kanban-square" class="w-5 h-5 text-blue-300"></i><h3 class="text-sm font-extrabold text-white">Quadro geral</h3><span class="rounded-full border border-blue-400/20 bg-blue-500/10 px-2 py-0.5 text-[9px] font-bold text-blue-200">Todas as pastas</span></div><p class="mt-1 text-[10px] text-slate-500">Arraste os cartões entre colunas ou use o seletor em cada cartão.</p></div>
+                                <button type="button" onclick="resetWorkspaceFilters()" class="self-start lg:self-auto inline-flex items-center gap-1.5 rounded-lg border border-slate-700 px-3 py-2 text-[10px] font-semibold text-slate-300 hover:bg-slate-800"><i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Limpar filtros</button>
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-2">
+                                <label class="workspace-board-filter sm:col-span-2 xl:col-span-1 relative"><i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500"></i><input id="workspaceSearch" type="search" placeholder="Buscar no quadro..." aria-label="Buscar no quadro geral" class="w-full rounded-lg border border-slate-700 bg-slate-950/80 py-2.5 pl-9 pr-3 text-xs text-slate-100 outline-none focus:border-blue-500"></label>
+                                <select id="workspaceFolderFilter" aria-label="Filtrar por pasta" class="workspace-board-filter rounded-lg border border-slate-700 bg-slate-950/80 px-3 py-2.5 text-xs text-slate-200 outline-none focus:border-blue-500"><option value="all">Todas as pastas</option></select>
+                                <select id="workspaceStatusFilter" aria-label="Filtrar por coluna" class="workspace-board-filter rounded-lg border border-slate-700 bg-slate-950/80 px-3 py-2.5 text-xs text-slate-200 outline-none focus:border-blue-500"><option value="all">Todas as colunas</option><option value="backlog">Backlog</option><option value="todo">A fazer</option><option value="in_progress">Em andamento</option><option value="done">Concluído</option></select>
+                                <select id="workspacePriorityFilter" aria-label="Filtrar por prioridade" class="workspace-board-filter rounded-lg border border-slate-700 bg-slate-950/80 px-3 py-2.5 text-xs text-slate-200 outline-none focus:border-blue-500"><option value="all">Todas as prioridades</option><option value="Alta">Alta prioridade</option><option value="Média">Média prioridade</option><option value="Baixa">Baixa prioridade</option></select>
+                                <select id="workspaceDateFilter" aria-label="Filtrar por período" class="workspace-board-filter rounded-lg border border-slate-700 bg-slate-950/80 px-3 py-2.5 text-xs text-slate-200 outline-none focus:border-blue-500"><option value="all">Qualquer período</option><option value="today">Hoje</option><option value="overdue">Atrasadas</option><option value="next7">Próximos 7 dias</option><option value="no_date">Sem data</option></select>
+                            </div>
+                        </div>
+                        <div class="workspace-board-scroll"><div id="workspaceKanbanBoard" class="workspace-kanban-grid">
+                            <section class="workspace-kanban-column"><div class="workspace-kanban-header"><div class="flex items-center gap-2"><span class="h-2.5 w-2.5 rounded-full bg-violet-400"></span><h4 class="text-xs font-extrabold text-slate-100">Backlog</h4><span id="workspaceCountBacklog" class="rounded-full bg-violet-500/15 px-2 py-0.5 text-[10px] font-bold text-violet-200">0</span></div><button type="button" onclick="openWorkspaceTaskModal('backlog')" title="Adicionar ideia ao Backlog" class="rounded-lg p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white"><i data-lucide="plus" class="w-4 h-4"></i></button></div><div id="workspaceLaneBacklog" class="workspace-lane-dropzone" data-workspace-drop="backlog"><div class="workspace-lane-empty">Ideias e itens para organizar.</div></div></section>
+                            <section class="workspace-kanban-column"><div class="workspace-kanban-header"><div class="flex items-center gap-2"><span class="h-2.5 w-2.5 rounded-full bg-slate-400"></span><h4 class="text-xs font-extrabold text-slate-100">A fazer</h4><span id="workspaceCountTodo" class="rounded-full bg-slate-700 px-2 py-0.5 text-[10px] font-bold text-slate-200">0</span></div><button type="button" onclick="openModal()" title="Adicionar tarefa" class="rounded-lg p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white"><i data-lucide="plus" class="w-4 h-4"></i></button></div><div id="workspaceLaneTodo" class="workspace-lane-dropzone" data-workspace-drop="todo"><div class="workspace-lane-empty">Nada por aqui por enquanto.</div></div></section>
+                            <section class="workspace-kanban-column"><div class="workspace-kanban-header"><div class="flex items-center gap-2"><span class="h-2.5 w-2.5 rounded-full bg-amber-400"></span><h4 class="text-xs font-extrabold text-slate-100">Em andamento</h4><span id="workspaceCountProgress" class="rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-bold text-amber-200">0</span></div><button type="button" onclick="openModal()" title="Adicionar tarefa" class="rounded-lg p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white"><i data-lucide="plus" class="w-4 h-4"></i></button></div><div id="workspaceLaneProgress" class="workspace-lane-dropzone" data-workspace-drop="in_progress"><div class="workspace-lane-empty">Nada em andamento.</div></div></section>
+                            <section class="workspace-kanban-column"><div class="workspace-kanban-header"><div class="flex items-center gap-2"><span class="h-2.5 w-2.5 rounded-full bg-emerald-400"></span><h4 class="text-xs font-extrabold text-slate-100">Concluído</h4><span id="workspaceCountDone" class="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-bold text-emerald-200">0</span></div></div><div id="workspaceLaneDone" class="workspace-lane-dropzone" data-workspace-drop="done"><div class="workspace-lane-empty">Suas atividades concluídas aparecerão aqui.</div></div></section>
+                        </div></div>
                     </section>
 
                     <!-- 2. LISTA DE TAREFAS -->
@@ -735,6 +747,78 @@
                             <!-- Cards de tarefa injetados via JS -->
                         </div>
                     </section>
+
+                    <!-- PLANEJADOR UNIFICADO -->
+                    <section id="view-planner" class="view-content hidden space-y-4"><div id="plannerRoot" class="space-y-4">
+                        <div class="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-3">
+                            <div>
+                                <div class="flex items-center gap-2 text-cyan-300 text-[10px] font-extrabold uppercase tracking-[.18em]"><i data-lucide="calendar-range" class="w-4 h-4"></i> Planejador integrado</div>
+                                <h2 class="mt-1 text-2xl font-extrabold tracking-tight text-white">Seus compromissos no tempo</h2>
+                                <p class="mt-1 text-xs text-slate-400">Dia, semana e mês mostram os mesmos registros do quadro e das pastas.</p>
+                            </div>
+                            <button type="button" id="plannerNewTaskBtn" class="inline-flex min-h-10 items-center justify-center gap-2 self-start rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white hover:bg-blue-500"><i data-lucide="plus" class="w-4 h-4"></i> Novo compromisso</button>
+                        </div>
+
+                        <div class="planner-panel p-3 md:p-4 space-y-3">
+                            <div class="planner-toolbar">
+                                <div class="planner-view-switch" role="group" aria-label="Modo de visualização do planejador">
+                                    <button type="button" class="planner-view-btn" data-planner-view="day">Dia</button>
+                                    <button type="button" class="planner-view-btn active" data-planner-view="week">Semana</button>
+                                    <button type="button" class="planner-view-btn" data-planner-view="month">Mês</button>
+                                </div>
+                                <div class="flex items-center gap-1.5">
+                                    <button type="button" id="plannerPrev" aria-label="Período anterior" class="rounded-lg border border-slate-700 p-2 text-slate-300 hover:bg-slate-800"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
+                                    <button type="button" id="plannerToday" class="rounded-lg border border-slate-700 px-3 py-2 text-[11px] font-bold text-slate-200 hover:bg-slate-800">Hoje</button>
+                                    <button type="button" id="plannerNext" aria-label="Próximo período" class="rounded-lg border border-slate-700 p-2 text-slate-300 hover:bg-slate-800"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
+                                    <span id="plannerDateLabel" class="min-w-[130px] text-center text-xs font-bold text-white"></span>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                                <select id="plannerFolderFilter" aria-label="Filtrar planejador por pasta" class="rounded-lg border border-slate-700 bg-slate-950/80 px-3 py-2.5 text-xs text-slate-200 outline-none focus:border-blue-500"><option value="all">Todas as pastas</option></select>
+                                <select id="plannerPriorityFilter" aria-label="Filtrar planejador por prioridade" class="rounded-lg border border-slate-700 bg-slate-950/80 px-3 py-2.5 text-xs text-slate-200 outline-none focus:border-blue-500"><option value="all">Todas as prioridades</option><option value="Alta">Alta prioridade</option><option value="Média">Média prioridade</option><option value="Baixa">Baixa prioridade</option></select>
+                                <select id="plannerStatusFilter" aria-label="Filtrar planejador por status" class="rounded-lg border border-slate-700 bg-slate-950/80 px-3 py-2.5 text-xs text-slate-200 outline-none focus:border-blue-500"><option value="active">Somente ativos</option><option value="all">Ativos e concluídos</option><option value="todo">A fazer</option><option value="in_progress">Em andamento</option><option value="done">Concluídos</option></select>
+                            </div>
+                            <div class="flex flex-wrap items-center justify-between gap-2 border-t border-slate-800 pt-3">
+                                <div id="plannerPeriodSummary" class="text-[10px] text-slate-400">Carregando compromissos...</div>
+                                <div class="flex flex-wrap items-center gap-3 text-[10px] text-slate-500">
+                                    <span class="inline-flex items-center gap-1.5"><i class="h-2 w-2 rounded-full bg-blue-400"></i> Com horário</span>
+                                    <span class="inline-flex items-center gap-1.5"><i class="h-2 w-2 rounded-full bg-violet-400"></i> Sem horário</span>
+                                    <span class="inline-flex items-center gap-1.5"><i class="h-2 w-2 rounded-full bg-emerald-400"></i> Concluído</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="plannerDayPanel" class="hidden space-y-3">
+                            <div class="planner-panel overflow-hidden">
+                                <div class="flex items-center justify-between gap-2 border-b border-slate-800 bg-slate-900/55 p-3">
+                                    <div><h3 class="text-xs font-bold text-white">Linha do tempo</h3><p class="text-[10px] text-slate-500">Arraste um compromisso para outro horário ou toque para editar.</p></div>
+                                    <button type="button" id="plannerAddDayTask" class="rounded-lg border border-slate-700 px-3 py-2 text-[10px] font-bold text-slate-200 hover:bg-slate-800"><i data-lucide="plus" class="mr-1 inline h-3 w-3"></i>Adicionar ao dia</button>
+                                </div>
+                                <div id="plannerDayTimed" class="planner-day-scroll planner-day-list"></div>
+                            </div>
+                            <div id="plannerDayUntimedWrap" class="planner-panel p-3 space-y-2">
+                                <div class="flex items-center justify-between gap-2"><h3 class="text-xs font-bold text-white">Este dia · sem horário definido</h3><span id="plannerDayUntimedCount" class="text-[10px] text-slate-500">0 itens</span></div>
+                                <div id="plannerDayUntimed" class="planner-unscheduled-grid"></div>
+                            </div>
+                        </div>
+
+                        <div id="plannerWeekPanel" class="planner-panel p-3 space-y-3">
+                            <div class="flex items-center justify-between gap-2"><div><h3 class="text-xs font-bold text-white">Visão semanal</h3><p class="text-[10px] text-slate-500">Sete dias lado a lado. Arraste cartões para trocar a data.</p></div><span class="text-[10px] text-slate-500">Domingo a sábado</span></div>
+                            <div class="overflow-x-auto pb-2"><div id="plannerWeekGrid" class="planner-week-grid"></div></div>
+                        </div>
+
+                        <div id="plannerMonthPanel" class="hidden planner-panel p-3 space-y-3">
+                            <div class="flex items-center justify-between gap-2"><div><h3 class="text-xs font-bold text-white">Visão mensal</h3><p class="text-[10px] text-slate-500">Selecione um dia para abrir os detalhes ou arraste um cartão para reagendar.</p></div><span class="text-[10px] text-slate-500">Calendário mensal</span></div>
+                            <div class="overflow-x-auto pb-2"><div class="grid grid-cols-7 gap-1.5 mb-1.5 min-w-[840px]">
+                                <div class="px-1 text-[9px] font-bold uppercase text-slate-500">Dom</div><div class="px-1 text-[9px] font-bold uppercase text-slate-500">Seg</div><div class="px-1 text-[9px] font-bold uppercase text-slate-500">Ter</div><div class="px-1 text-[9px] font-bold uppercase text-slate-500">Qua</div><div class="px-1 text-[9px] font-bold uppercase text-slate-500">Qui</div><div class="px-1 text-[9px] font-bold uppercase text-slate-500">Sex</div><div class="px-1 text-[9px] font-bold uppercase text-slate-500">Sáb</div>
+                            </div><div id="plannerMonthGrid" class="planner-month-grid"></div></div>
+                        </div>
+
+                        <div id="plannerUndatedWrap" class="planner-panel p-3 space-y-2">
+                            <div class="flex flex-wrap items-center justify-between gap-2"><div><h3 class="text-xs font-bold text-white">Sem data definida</h3><p class="text-[10px] text-slate-500">Itens que ainda não foram colocados no calendário.</p></div><span id="plannerUndatedCount" class="text-[10px] text-slate-500">0 itens</span></div>
+                            <div id="plannerUndatedGrid" class="planner-unscheduled-grid"></div>
+                        </div>
+                    </div></section>
 
                     <!-- 3. QUADRO KANBAN -->
                     <section id="view-kanban" class="view-content hidden space-y-4">
@@ -819,28 +903,30 @@
                         <button type="button" id="btnNewTaskInFolder" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-[11px] font-semibold">+ Nova tarefa</button>
                     </div>
                 </div>
-                <div id="churchSubfolderNav" class="hidden flex flex-wrap gap-2 mb-3"></div>
-                <div class="glass-card p-2 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
-                    <div class="flex flex-wrap gap-1.5 items-center">
-                        <span class="text-[10px] font-semibold text-slate-500 mr-1">Período</span>
-                        <button type="button" data-folder-period="all" class="folder-period-btn px-3 py-1.5 rounded-lg text-[11px] font-semibold bg-blue-600 text-white">Todas</button>
-                        <button type="button" data-folder-period="today" class="folder-period-btn px-3 py-1.5 rounded-lg text-[11px] font-semibold text-slate-400 hover:text-white hover:bg-slate-800">Hoje</button>
-                        <button type="button" data-folder-period="tomorrow" class="folder-period-btn px-3 py-1.5 rounded-lg text-[11px] font-semibold text-slate-400 hover:text-white hover:bg-slate-800">Amanhã</button>
-                        <button type="button" data-folder-period="week" class="folder-period-btn px-3 py-1.5 rounded-lg text-[11px] font-semibold text-slate-400 hover:text-white hover:bg-slate-800">Semana</button>
-                        <button type="button" data-folder-period="month" class="folder-period-btn px-3 py-1.5 rounded-lg text-[11px] font-semibold text-slate-400 hover:text-white hover:bg-slate-800">Mês</button>
+                <div class="space-y-3 mb-3">
+                    <div id="churchSubfolderNav" class="hidden flex flex-wrap items-center gap-2 rounded-xl border border-slate-800 bg-slate-950/50 p-2"></div>
+                    <div class="folder-space-toolbar rounded-xl border border-slate-800 bg-slate-950/55 p-2">
+                        <div class="folder-space-views" role="group" aria-label="Visualização desta pasta">
+                            <button type="button" data-folder-view="kanban" class="folder-view-btn folder-space-view-btn active">Kanban</button>
+                            <button type="button" data-folder-view="day" class="folder-view-btn folder-space-view-btn">Dia</button>
+                            <button type="button" data-folder-view="week" class="folder-view-btn folder-space-view-btn">Semana</button>
+                            <button type="button" data-folder-view="month" class="folder-view-btn folder-space-view-btn">Mês</button>
+                            <button type="button" data-folder-view="list" class="folder-view-btn folder-space-view-btn">Lista</button>
+                        </div>
+                        <div id="folderCalendarNav" class="hidden items-center gap-1">
+                            <button type="button" id="folderCalendarPrev" aria-label="Período anterior" class="rounded-lg p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
+                            <button type="button" id="folderCalendarToday" class="rounded-lg border border-slate-700 px-2.5 py-1.5 text-[10px] font-bold text-slate-200 hover:bg-slate-800">Hoje</button>
+                            <span id="folderCalendarTitle" class="min-w-[120px] text-center text-[10px] font-semibold text-slate-300"></span>
+                            <button type="button" id="folderCalendarNext" aria-label="Próximo período" class="rounded-lg p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
+                        </div>
                     </div>
-                    <div class="flex flex-wrap gap-1.5 items-center">
-                        <span class="text-[10px] font-semibold text-slate-500 mr-1">Visão</span>
-                        <button type="button" data-folder-view="cards" class="folder-view-btn px-3 py-1.5 rounded-lg text-[11px] font-semibold bg-blue-600 text-white">Cards</button>
-                        <button type="button" data-folder-view="week" class="folder-view-btn px-3 py-1.5 rounded-lg text-[11px] font-semibold text-slate-400 hover:text-white hover:bg-slate-800">Semana</button>
-                        <button type="button" data-folder-view="month" class="folder-view-btn px-3 py-1.5 rounded-lg text-[11px] font-semibold text-slate-400 hover:text-white hover:bg-slate-800">Mês</button>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        <input id="folderWorkspaceSearch" type="search" placeholder="Buscar nesta pasta..." aria-label="Buscar nesta pasta" class="folder-space-filter rounded-lg border border-slate-800 bg-slate-950/70 px-3 py-2.5 text-xs text-slate-200 outline-none focus:border-blue-500">
+                        <select id="folderWorkspaceStatus" aria-label="Filtrar status da pasta" class="folder-space-filter rounded-lg border border-slate-800 bg-slate-950/70 px-3 py-2.5 text-xs text-slate-200 outline-none focus:border-blue-500"><option value="all">Todos os status</option><option value="active">Somente ativos</option><option value="backlog">Backlog</option><option value="todo">A fazer</option><option value="in_progress">Em andamento</option><option value="done">Concluídos</option></select>
+                        <select id="folderWorkspacePriority" aria-label="Filtrar prioridade da pasta" class="folder-space-filter rounded-lg border border-slate-800 bg-slate-950/70 px-3 py-2.5 text-xs text-slate-200 outline-none focus:border-blue-500"><option value="all">Todas as prioridades</option><option value="Alta">Alta prioridade</option><option value="Média">Média prioridade</option><option value="Baixa">Baixa prioridade</option></select>
                     </div>
                 </div>
-                <div id="folderCalendarNav" class="hidden items-center justify-between gap-2 mb-3">
-                    <button type="button" id="folderCalendarPrev" class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
-                    <span id="folderCalendarTitle" class="text-[11px] font-semibold text-slate-300"></span>
-                    <button type="button" id="folderCalendarNext" class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
-                </div>
+
                 <div id="folderTasksList" class="space-y-2"></div>
             </div>
         </div>
@@ -859,14 +945,14 @@
         <button type="button" data-view="dashboard" class="nav-btn bottom-nav-btn active" aria-label="Abrir início">
             <i data-lucide="home"></i><span>Início</span>
         </button>
-        <button type="button" data-view="tasks" class="nav-btn bottom-nav-btn" aria-label="Abrir tarefas">
-            <i data-lucide="check-circle-2"></i><span>Tarefas</span>
+        <button type="button" data-view="planner" class="nav-btn bottom-nav-btn" aria-label="Abrir planejador">
+            <i data-lucide="calendar-range"></i><span>Planejar</span>
         </button>
         <button type="button" id="bottomNavNewTask" onclick="openModal()" class="bottom-nav-btn bottom-nav-primary" aria-label="Criar nova tarefa">
             <i data-lucide="plus"></i><span class="sr-only">Nova tarefa</span>
         </button>
         <button type="button" data-view="kanban" class="nav-btn bottom-nav-btn" aria-label="Abrir quadro">
-            <i data-lucide="columns-3"></i><span>Quadro</span>
+            <i data-lucide="columns-3"></i><span>Fluxo</span>
         </button>
         <button type="button" data-view="folders" class="nav-btn bottom-nav-btn" aria-label="Abrir pastas">
             <i data-lucide="folder"></i><span>Pastas</span>
@@ -1020,10 +1106,10 @@
         </div>
     </div>
 
-    <div id="taskModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
-        <div class="bg-[#0a182e] border border-blue-500/40 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl">
+    <div id="taskModal" class="task-detail-drawer fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden">
+        <div class="task-detail-shell bg-[#0a182e] border-l border-blue-500/35 shadow-2xl">
             <!-- Modal Header -->
-            <div class="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-900/50">
+            <div class="task-detail-header p-4 md:px-6 border-b border-slate-800 flex justify-between items-center bg-slate-900/70">
                 <h3 id="modalTitle" class="text-sm font-bold text-white">Nova Tarefa</h3>
                 <button type="button" id="btnCloseModal" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800">
                     <i data-lucide="x" class="w-4 h-4"></i>
@@ -1031,13 +1117,15 @@
             </div>
 
             <!-- Modal Form -->
-            <form id="taskForm" class="p-4 space-y-3">
+            <form id="taskForm" class="task-detail-form p-4 md:p-6">
                 <input type="hidden" id="taskId">
 
+                <div class="task-detail-grid">
+                <div id="taskCoreFields" class="space-y-3 min-w-0">
                 <!-- Title -->
                 <div>
                     <label class="block text-[11px] font-semibold text-slate-400 mb-1">Título *</label>
-                    <input type="text" id="taskTitle" required placeholder="Ex: Finalizar relatório financeiro" class="w-full bg-slate-950 border border-slate-800 text-slate-100 rounded-lg p-2 text-xs outline-none focus:border-blue-500" aria-label="Título da tarefa">
+                    <input type="text" id="taskTitle" required placeholder="Ex: Preparar reunião de equipe" class="w-full bg-slate-950 border border-slate-800 text-slate-100 rounded-lg p-2 text-xs outline-none focus:border-blue-500" aria-label="Título da tarefa">
                 </div>
 
                 <!-- Description -->
@@ -1095,9 +1183,42 @@
                         </select>
                     </div>
                 </div>
+                </div>
+                <aside id="taskDetailAside" class="task-detail-aside">
+                    <section class="task-detail-section">
+                        <div class="task-detail-section-head"><div class="task-detail-section-title"><i data-lucide="list-checks" class="h-4 w-4 text-emerald-300"></i> Checklist</div><span id="taskChecklistCount" class="text-[9px] font-bold text-slate-500">0/0</span></div>
+                        <div class="task-detail-progress mb-3"><span id="taskChecklistProgress" style="width:0%"></span></div>
+                        <div id="taskChecklistItems" class="mb-3"></div>
+                        <div class="flex gap-2"><input id="taskChecklistInput" type="text" maxlength="180" class="task-detail-input min-w-0 flex-1" placeholder="Adicionar uma etapa..." aria-label="Nova etapa do checklist"><button type="button" id="btnAddChecklistItem" class="rounded-lg bg-blue-600 px-3 text-[10px] font-bold text-white hover:bg-blue-500">Adicionar</button></div>
+                        <p id="taskChecklistHint" class="task-detail-muted mt-2">Marque cada etapa conforme avançar.</p>
+                    </section>
+                    <section class="task-detail-section">
+                        <div class="task-detail-section-head"><div class="task-detail-section-title"><i data-lucide="message-circle" class="h-4 w-4 text-sky-300"></i> Comentários</div><span id="taskCommentsCount" class="text-[9px] text-slate-500">0</span></div>
+                        <div id="taskCommentsList" class="task-meta-scroll mb-3"></div>
+                        <textarea id="taskCommentInput" rows="2" maxlength="1200" class="task-detail-input resize-y" placeholder="Escreva uma atualização ou observação..." aria-label="Novo comentário"></textarea>
+                        <div class="mt-2 flex justify-end"><button type="button" id="btnAddTaskComment" class="task-detail-action"><i data-lucide="send" class="h-3.5 w-3.5"></i> Comentar</button></div>
+                    </section>
+                    <section class="task-detail-section">
+                        <div class="task-detail-section-head"><div class="task-detail-section-title"><i data-lucide="paperclip" class="h-4 w-4 text-amber-300"></i> Anexos e links</div><span id="taskAttachmentsCount" class="text-[9px] text-slate-500">0</span></div>
+                        <div id="taskAttachmentsList" class="task-meta-scroll mb-3"></div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2"><input id="taskAttachmentName" type="text" maxlength="100" class="task-detail-input" placeholder="Nome do link"><input id="taskAttachmentUrl" type="url" class="task-detail-input" placeholder="https://..." aria-label="Endereço do anexo"></div>
+                        <div class="mt-2 flex items-center justify-between gap-2"><p class="task-detail-muted">Adicione links do Drive, OneDrive ou documentos online.</p><button type="button" id="btnAddTaskAttachment" class="task-detail-action shrink-0"><i data-lucide="link" class="h-3.5 w-3.5"></i> Adicionar link</button></div>
+                        <p class="task-detail-muted mt-2">Upload direto de arquivos depende da configuração do Firebase Storage e das regras de acesso.</p>
+                    </section>
+                    <section class="task-detail-section">
+                        <div class="task-detail-section-head"><div class="task-detail-section-title"><i data-lucide="tag" class="h-4 w-4 text-cyan-300"></i> Etiquetas</div><span id="taskLabelsCount" class="text-[9px] text-slate-500">0</span></div>
+                        <div id="taskLabelsList" class="mb-3 flex flex-wrap gap-1.5"></div>
+                        <div class="flex gap-2"><input id="taskLabelInput" type="text" maxlength="40" class="task-detail-input min-w-0 flex-1" placeholder="Ex: importante, reunião..." aria-label="Nova etiqueta"><button type="button" id="btnAddTaskLabel" class="task-detail-action">Adicionar</button></div>
+                    </section>
+                    <section class="task-detail-section">
+                        <div class="task-detail-section-head"><div class="task-detail-section-title"><i data-lucide="history" class="h-4 w-4 text-violet-300"></i> Histórico</div><span id="taskActivityCount" class="text-[9px] text-slate-500">0</span></div>
+                        <div id="taskActivityList" class="task-meta-scroll"></div>
+                    </section>
+                </aside>
+                </div>
 
                 <!-- Modal Actions -->
-                <div class="pt-3 border-t border-slate-800 flex flex-col sm:flex-row sm:items-center gap-2">
+                <div class="task-detail-footer flex flex-col sm:flex-row sm:items-center gap-2">
                     <p id="taskSaveStatus" class="text-[11px] text-slate-500 flex-1" role="status" aria-live="polite"></p>
                     <div class="flex justify-end gap-2 shrink-0">
                         <button type="button" id="btnCancelModal" class="px-3 py-1.5 text-xs font-medium text-slate-400 hover:text-white rounded-lg hover:bg-slate-800">Cancelar</button>
@@ -1830,7 +1951,7 @@
 
         let draggedFolderId = null;
         let activeFolderPeriod = 'all';
-        let activeFolderViewMode = 'cards';
+        let activeFolderViewMode = 'kanban';
         let folderCalendarDate = new Date();
         let currentTaskViewMode = 'cards';
         let taskCalendarDate = new Date();
@@ -1937,7 +2058,7 @@
             activeFolderId = folderId;
             activeChurchSubfolderId = '';
             activeFolderPeriod = 'all';
-            activeFolderViewMode = 'cards';
+            activeFolderViewMode = 'kanban';
             folderCalendarDate = new Date();
             switchView('folders');
             renderFolders();
@@ -1959,7 +2080,7 @@
             } else {
                 empty?.classList.toggle('hidden', rootFolders.length > 0);
                 grid.innerHTML = rootFolders.map(f => {
-                    const count = getActiveTasksForFolder(f).length;
+                    const count = getActiveTasksInFolderTree(f).length;
                     return `<div class="glass-card rounded-xl p-4 border border-slate-800 hover:border-blue-500/50 transition cursor-pointer" onclick="selectFolder('${f.id}')">
                         <div class="flex items-start justify-between gap-3"><div class="flex items-center gap-3 min-w-0"><span class="w-10 h-10 rounded-xl grid place-items-center shrink-0" style="color:${getFolderColor(f)};background:${getFolderColor(f)}22">${folderIconHtml(f.icon,'w-5 h-5',f.color)}</span><div class="min-w-0"><h3 class="text-sm font-bold text-white truncate">${escapeHtml(f.name || 'Sem nome')}</h3><p class="text-[11px] text-slate-500">${count} tarefa${count === 1 ? '' : 's'}</p></div></div><div class="flex gap-1"><button type="button" onclick="event.stopPropagation(); openFolderModal('${f.id}')" class="p-1.5 text-slate-500 hover:text-white hover:bg-slate-800 rounded-lg"><i data-lucide="pencil" class="w-3.5 h-3.5"></i></button><button type="button" onclick="event.stopPropagation(); deleteFolder('${f.id}')" class="p-1.5 text-slate-500 hover:text-red-400 hover:bg-slate-800 rounded-lg"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button></div></div>
                     </div>`;
@@ -1975,8 +2096,9 @@
             const folder = folders.find(f => f.id === folderId);
             if (!folder) return;
             activeFolderId = folderId;
+            activeChurchSubfolderId = '';
             activeFolderPeriod = 'all';
-            activeFolderViewMode = 'cards';
+            activeFolderViewMode = 'kanban';
             folderCalendarDate = new Date();
             switchView('folders');
             renderFolders();
@@ -2034,46 +2156,47 @@
             if (titleEl) titleEl.textContent = agendaMonthLabel(anchorDate);
             return html;
         }
-        function getFolderPeriodTasks(folderTasks) {
-            const today = getLocalDateString(), base = new Date(today+'T00:00:00'), tomorrow = new Date(base); tomorrow.setDate(tomorrow.getDate()+1); const tomorrowKey = getAgendaDateString(tomorrow);
-            if (activeFolderViewMode === 'week' || activeFolderViewMode === 'month') return folderTasks;
-            if (activeFolderPeriod === 'today') return folderTasks.filter(t => agendaTaskDate(t) === today);
-            if (activeFolderPeriod === 'tomorrow') return folderTasks.filter(t => agendaTaskDate(t) === tomorrowKey);
-            return folderTasks;
-        }
-        function updateFolderAgendaControls(){ document.querySelectorAll('.folder-period-btn').forEach(btn=>{const a=btn.dataset.folderPeriod===activeFolderPeriod;btn.classList.toggle('bg-blue-600',a);btn.classList.toggle('text-white',a);btn.classList.toggle('text-slate-400',!a);}); document.querySelectorAll('.folder-view-btn').forEach(btn=>{const a=btn.dataset.folderView===activeFolderViewMode;btn.classList.toggle('bg-blue-600',a);btn.classList.toggle('text-white',a);btn.classList.toggle('text-slate-400',!a);}); }
-        function renderFolderTasks() {
-            const panel=document.getElementById('folderTasksPanel'); if(!panel)return; const folder=folders.find(f=>f.id===activeFolderId); if(!folder){panel.classList.add('hidden');return;} panel.classList.remove('hidden');
-            document.getElementById('folderTasksTitle').textContent=folder.name||'Pasta'; document.getElementById('folderTasksIcon').innerHTML=folderIconHtml(folder.icon,'w-4 h-4',folder.color); document.getElementById('folderTasksIcon').style.color=getFolderColor(folder); document.getElementById('folderTasksIcon').style.background=getFolderColor(folder)+'22';
-            const subNav=document.getElementById('churchSubfolderNav');
-            const churchChildren=folders.filter(f=>f.parentId===folder.id);
-            const isChurch=String(folder.name||'').trim().toLowerCase()==='igreja';
-            let sourceFolderTasks=isChurch?tasks.filter(t=>churchChildren.some(child=>taskBelongsToFolder(t,child))):getTasksForFolder(folder);
-            sourceFolderTasks=getActiveTasks(sourceFolderTasks);
-            if(subNav){
-                subNav.classList.toggle('hidden',!isChurch||!churchChildren.length);
-                subNav.innerHTML = isChurch ? '<span class="text-[10px] text-slate-500 self-center mr-1">Subpastas:</span>' +
-                    churchChildren.map(child => {
-                        const selected = activeChurchSubfolderId === child.id;
-                        return '<button type="button" data-church-subfolder="' + escapeHtml(child.id) + '" class="px-3 py-1.5 rounded-lg text-[11px] ' + (selected ? 'bg-blue-600 text-white' : 'bg-slate-800 hover:bg-blue-600 text-slate-300') + '">' + escapeHtml(child.name) + '</button>';
-                    }).join('') +
-                    '<button type="button" data-church-subfolder="" class="px-3 py-1.5 rounded-lg text-[11px] ' + (!activeChurchSubfolderId ? 'bg-blue-600 text-white' : 'bg-slate-800 hover:bg-blue-600 text-slate-300') + '">Todas</button>' : '';
-                subNav.querySelectorAll('[data-church-subfolder]').forEach(button => button.addEventListener('click', () => openChurchSubfolder(button.dataset.churchSubfolder)));
+        function getFolderDescendantIds(folderId){const ids=new Set([folderId]);let change=true;while(change){change=false;folders.forEach(f=>{if(f.parentId&&ids.has(f.parentId)&&!ids.has(f.id)){ids.add(f.id);change=true;}});}return ids;}
+        function getActiveTasksInFolderTree(folder){if(!folder)return[];const ids=getFolderDescendantIds(folder.id);return getActiveTasks(tasks).filter(t=>folders.some(f=>ids.has(f.id)&&taskBelongsToFolder(t,f)));}
+        function getFolderWorkspaceSource(folder){const ids=getFolderDescendantIds(activeChurchSubfolderId||folder.id);return tasks.filter(t=>folders.some(f=>ids.has(f.id)&&taskBelongsToFolder(t,f))).filter(t=>{const s=String(t.status||'').toLowerCase();return !(t.archived===true||t.isArchived===true||['archived','arquivado','arquivada'].includes(s));});}
+        function getFolderWorkspaceFilteredTasks(source){const q=(document.getElementById('folderWorkspaceSearch')?.value||'').trim().toLocaleLowerCase('pt-BR'),status=document.getElementById('folderWorkspaceStatus')?.value||'all',priority=document.getElementById('folderWorkspacePriority')?.value||'all';return source.filter(t=>{const lane=getWorkspaceLane(t),done=isTaskCompleted(t);if(status==='active'&&done)return false;if(status==='done'&&!done)return false;if(['backlog','todo','in_progress'].includes(status)&&lane!==status)return false;if(priority!=='all'&&(t.priority||'Média')!==priority)return false;if(q&&![t.title,t.description,t.category].some(v=>String(v||'').toLocaleLowerCase('pt-BR').includes(q)))return false;return true;});}
+        function folderSpaceCard(t,compact=false){const folder=folders.find(f=>f.id===getTaskFolderId(t)),accent=folder?getFolderColor(folder):'#3b82f6',lane=getWorkspaceLane(t),done=isTaskCompleted(t),date=t.dueDate?String(t.dueDate).split('-').reverse().join('/'):'Sem data',time=t.dueTime?' · '+escapeHtml(t.dueTime):'',desc=String(t.description||'').trim(),check=getTaskChecklistSummary(t);return '<article class="folder-space-card '+(done?'opacity-65':'')+'" style="--folder-accent:'+escapeHtml(accent)+'" draggable="true" data-folder-space-task="'+escapeHtml(t.id)+'"><div class="flex items-start justify-between gap-2"><button type="button" data-folder-space-open class="min-w-0 flex-1 truncate text-left text-[11px] font-bold text-slate-100 hover:text-blue-200">'+escapeHtml(t.title||'Sem título')+'</button>'+getPriorityBadge(t.priority||'Média')+'</div>'+(compact||!desc?'':'<p class="mt-1.5 line-clamp-2 text-[10px] text-slate-400">'+escapeHtml(desc)+'</p>')+'<div class="mt-2 flex flex-wrap items-center gap-1.5"><span class="rounded-md bg-slate-950/65 px-2 py-1 text-[9px] text-slate-400">'+date+time+'</span>'+(check.total?'<span class="rounded-md bg-emerald-500/10 px-2 py-1 text-[9px] text-emerald-300">'+check.done+'/'+check.total+' etapas</span>':'')+'<label class="relative grid h-7 w-7 place-items-center rounded-md text-slate-500 hover:bg-slate-700 hover:text-blue-200" title="Reagendar compromisso"><i data-lucide="calendar-clock" class="pointer-events-none h-3.5 w-3.5"></i><input type="date" data-folder-space-reschedule aria-label="Escolher nova data" value="'+escapeHtml(t.dueDate||'')+'" class="absolute inset-0 h-full w-full cursor-pointer opacity-0"></label>'+(folder&&folder.id!==activeFolderId?'<span class="rounded-md px-2 py-1 text-[9px]" style="color:'+getFolderColor(folder)+';background:'+getFolderColor(folder)+'22">'+escapeHtml(folder.name||'Subpasta')+'</span>':'')+'</div><div class="mt-2 flex items-center justify-between border-t border-slate-700/60 pt-2"><button type="button" data-folder-space-toggle class="rounded-lg px-2 py-1.5 text-[9px] '+(done?'text-emerald-300':'text-slate-400')+'">'+(done?'Reabrir':'Concluir')+'</button><select data-folder-space-move class="max-w-[130px] rounded-lg border border-slate-700 bg-slate-950 px-2 py-1.5 text-[9px] text-slate-300"><option value="backlog" '+(lane==='backlog'?'selected':'')+'>Backlog</option><option value="todo" '+(lane==='todo'?'selected':'')+'>A fazer</option><option value="in_progress" '+(lane==='in_progress'?'selected':'')+'>Em andamento</option><option value="done" '+(lane==='done'?'selected':'')+'>Concluído</option></select></div></article>';}
+        let folderSpaceDnDReady=false;
+        function folderSpaceInitDnD(){if(folderSpaceDnDReady)return;const root=document.getElementById('folderTasksList');if(!root)return;root.addEventListener('dragover',e=>{const z=e.target.closest('[data-folder-space-drop]');if(z){e.preventDefault();z.classList.add('is-drop-over');}});root.addEventListener('dragleave',e=>{const z=e.target.closest('[data-folder-space-drop]');if(z&&!z.contains(e.relatedTarget))z.classList.remove('is-drop-over');});root.addEventListener('drop',e=>{const z=e.target.closest('[data-folder-space-drop]');if(!z)return;e.preventDefault();z.classList.remove('is-drop-over');const id=e.dataTransfer?.getData('text/plain');if(!id)return;if(z.dataset.folderSpaceDrop)moveTaskToWorkspaceLane(id,z.dataset.folderSpaceDrop);else if(z.dataset.folderSpaceDropDate)updatePlannerTaskSchedule(id,z.dataset.folderSpaceDropDate,z.dataset.folderSpaceDropTime||undefined);});folderSpaceDnDReady=true;}
+        function folderSpaceBindCards(root){root.querySelectorAll('[data-folder-space-task]').forEach(card=>{const id=card.dataset.folderSpaceTask;card.addEventListener('dragstart',e=>{if(e.dataTransfer){e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',id);}card.classList.add('is-dragging');});card.addEventListener('dragend',()=>card.classList.remove('is-dragging'));card.querySelector('[data-folder-space-open]')?.addEventListener('click',()=>openModal(id));card.querySelector('[data-folder-space-toggle]')?.addEventListener('click',()=>toggleTaskComplete(id));card.querySelector('[data-folder-space-move]')?.addEventListener('change',e=>moveTaskToWorkspaceLane(id,e.target.value));card.querySelector('[data-folder-space-reschedule]')?.addEventListener('change',e=>{if(e.target.value)updatePlannerTaskSchedule(id,e.target.value);});});}
+        function folderSpaceRenderKanban(items){const lanes=[['backlog','Backlog','bg-violet-400'],['todo','A fazer','bg-slate-400'],['in_progress','Em andamento','bg-amber-400'],['done','Concluído','bg-emerald-400']];return '<div class="folder-space-board-scroll"><div class="folder-space-board">'+lanes.map(([id,label,color])=>{const list=agendaSortTasks(items.filter(t=>getWorkspaceLane(t)===id));return '<section class="folder-space-lane"><div class="folder-space-lane-head"><div class="flex items-center gap-2"><span class="h-2.5 w-2.5 rounded-full '+color+'"></span><b class="text-[11px] text-slate-100">'+label+'</b><span class="rounded-full bg-slate-800 px-2 py-0.5 text-[9px]">'+list.length+'</span></div>'+(id==='done'?'':'<button type="button" data-folder-lane-add="'+id+'" class="rounded-lg p-1.5 text-slate-500 hover:bg-slate-800"><i data-lucide="plus" class="h-4 w-4"></i></button>')+'</div><div class="folder-space-lane-list" data-folder-space-drop="'+id+'">'+(list.length?list.map(t=>folderSpaceCard(t)).join(''):'<div class="folder-space-empty">Nenhum cartão nesta coluna.</div>')+'</div></section>';}).join('')+'</div></div>';}
+        function folderSpaceRenderDay(items){
+            const key=getAgendaDateString(folderCalendarDate),day=agendaSortTasks(items.filter(t=>agendaTaskDate(t)===key));
+            const timed=day.filter(t=>t.dueTime),untimed=day.filter(t=>!t.dueTime);
+            const outside=timed.filter(t=>{const hour=Number(String(t.dueTime).slice(0,2));return hour<6||hour>22;});
+            let out='<div class="rounded-xl border border-slate-800 bg-slate-950/35 overflow-hidden"><div class="border-b border-slate-800 p-3 text-[11px] font-bold text-white">Linha do tempo · '+formatAgendaDateLong(key)+'</div>';
+            for(let hr=6;hr<=22;hr++){
+                const time=String(hr).padStart(2,'0')+':00',group=timed.filter(t=>Number(String(t.dueTime).slice(0,2))===hr);
+                out+='<div class="folder-space-time-row"><div class="folder-space-time-label">'+time+'</div><div class="folder-space-day-drop" data-folder-space-drop-date="'+key+'" data-folder-space-drop-time="'+time+'">'+(group.length?group.map(t=>folderSpaceCard(t,true)).join(''):'<button type="button" data-folder-space-add-time="'+time+'" class="min-h-9 w-full text-left text-[9px] text-slate-600 hover:text-blue-300">+ Adicionar horário</button>')+'</div></div>';
             }
-            const allFolderTasks=activeChurchSubfolderId&&isChurch?getActiveTasksForFolder(folders.find(f=>f.id===activeChurchSubfolderId)||folder):sourceFolderTasks, periodTasks=agendaSortTasks(getFolderPeriodTasks(allFolderTasks)); document.getElementById('folderTasksCount').textContent=`${periodTasks.length} tarefa${periodTasks.length===1?'':'s'} ativa${periodTasks.length===1?'':'s'}`;
-            const list=document.getElementById('folderTasksList'), nav=document.getElementById('folderCalendarNav');
-            if(activeFolderViewMode==='week'){nav.classList.remove('hidden');nav.classList.add('flex');list.innerHTML=renderAgendaWeek(periodTasks,folderCalendarDate,document.getElementById('folderCalendarTitle'));}
-            else if(activeFolderViewMode==='month'){nav.classList.remove('hidden');nav.classList.add('flex');list.innerHTML=renderAgendaMonth(periodTasks,folderCalendarDate,document.getElementById('folderCalendarTitle'));}
-            else{nav.classList.add('hidden');nav.classList.remove('flex');list.innerHTML=periodTasks.length?periodTasks.map(t=>`<div class='flex items-center justify-between gap-3 p-3 rounded-xl bg-slate-950/60 border border-slate-800 hover:border-slate-700 transition'><div class='flex items-start gap-2 min-w-0 flex-1'><button type='button' aria-label='Concluir tarefa: ${escapeHtml(t.title)}' title='Concluir tarefa' onclick='toggleTaskComplete("${t.id}")' class='mt-0.5 min-w-8 min-h-8 grid place-items-center text-slate-500 hover:text-emerald-400 transition'><i data-lucide='circle' class='w-5 h-5'></i></button><div class='min-w-0'><p class='text-xs font-semibold text-slate-200'>${escapeHtml(t.title)}</p><p class='text-[10px] text-slate-500'>${escapeHtml(t.priority||'Média')}${t.dueDate?' · '+escapeHtml(t.dueDate):''}${t.dueTime?' · '+escapeHtml(t.dueTime):''}</p></div></div><div class='flex items-center gap-1 shrink-0'><label class='relative min-w-8 min-h-8 grid place-items-center p-1.5 text-slate-400 hover:text-blue-300 hover:bg-slate-800 rounded-lg transition cursor-pointer' title='Reagendar tarefa'><i data-lucide='calendar' class='w-4 h-4 pointer-events-none'></i><input type='date' aria-label='Escolher nova data para ${escapeHtml(t.title)}' value='${escapeHtml(t.dueDate||'')}' onchange='updateTaskDueDate("${t.id}",this.value)' class='absolute inset-0 w-full h-full opacity-0 cursor-pointer'></label><button type='button' aria-label='Editar tarefa: ${escapeHtml(t.title)}' title='Editar tarefa' onclick='openModal("${t.id}")' class='min-w-8 min-h-8 grid place-items-center p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition'><i data-lucide='pencil' class='w-4 h-4'></i></button><button type='button' aria-label='Excluir tarefa: ${escapeHtml(t.title)}' title='Excluir tarefa' onclick='deleteTask("${t.id}")' class='min-w-8 min-h-8 grid place-items-center p-1.5 text-slate-400 hover:text-rose-400 hover:bg-slate-800 rounded-lg transition'><i data-lucide='trash-2' class='w-4 h-4'></i></button></div></div>`).join(''):'<div class="text-center py-10"><i data-lucide="calendar-x-2" class="w-8 h-8 text-slate-600 mx-auto mb-2"></i><p class="text-xs text-slate-400">Nenhuma tarefa neste período.</p><p class="text-[10px] text-slate-600 mt-1">As tarefas continuam vinculadas à pasta e aparecem também na aba Tarefas.</p></div>'; updateFolderAgendaControls(); refreshIcons();
+            if(outside.length)out+='<div class="border-t border-slate-800 p-3"><h4 class="mb-2 text-[10px] font-bold text-slate-500">Outros horários</h4>'+outside.map(t=>folderSpaceCard(t,true)).join('')+'</div>';
+            return out+'</div><div class="mt-3 rounded-xl border border-slate-800 bg-slate-950/35 p-3"><h4 class="mb-2 text-[11px] font-bold text-white">Este dia · sem horário ('+untimed.length+')</h4>'+(untimed.length?untimed.map(t=>folderSpaceCard(t,true)).join(''):'<div class="folder-space-empty">Nenhum item sem horário neste dia.</div>')+'</div>';
         }
+        function folderSpaceRenderWeek(items){const start=agendaStartOfWeek(folderCalendarDate),names=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'],today=getLocalDateString();let out='<div class="folder-space-calendar-scroll"><div class="folder-space-week">';for(let i=0;i<7;i++){const d=new Date(start);d.setDate(start.getDate()+i);const key=getAgendaDateString(d),list=agendaSortTasks(items.filter(t=>agendaTaskDate(t)===key));out+='<section class="folder-space-day '+(key===today?'is-today':'')+'"><div class="folder-space-day-head"><div><div class="text-[9px] text-slate-500">'+names[i]+'</div><b class="text-sm text-white">'+d.getDate()+'</b></div><button type="button" data-folder-space-add-date="'+key+'" class="rounded-lg p-1.5 text-slate-500 hover:bg-slate-800"><i data-lucide="plus" class="h-3.5 w-3.5"></i></button></div><div class="folder-space-day-drop" data-folder-space-drop-date="'+key+'">'+(list.length?list.map(t=>folderSpaceCard(t,true)).join(''):'<div class="folder-space-empty">Dia livre</div>')+'</div></section>';}return out+'</div></div>';}
+        function folderSpaceRenderMonth(items){const year=folderCalendarDate.getFullYear(),month=folderCalendarDate.getMonth(),first=new Date(year,month,1),start=agendaStartOfWeek(first),last=new Date(year,month+1,0),end=agendaEndOfWeek(last),today=getLocalDateString(),names=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];let out='<div class="folder-space-calendar-scroll"><div class="mb-1 grid grid-cols-7 gap-1 min-w-[790px]">'+names.map(n=>'<div class="text-[9px] font-bold text-slate-500">'+n+'</div>').join('')+'</div><div class="folder-space-month">';for(let d=new Date(start);d<=end;d.setDate(d.getDate()+1)){const date=new Date(d),key=getAgendaDateString(date),list=agendaSortTasks(items.filter(t=>agendaTaskDate(t)===key));out+='<section class="folder-space-month-cell '+(date.getMonth()===month?'':'outside')+' '+(key===today?'is-today':'')+'" data-folder-space-drop-date="'+key+'"><div class="flex justify-between"><button type="button" data-folder-space-open-date="'+key+'" class="rounded px-1.5 py-1 text-[10px] font-bold">'+date.getDate()+'</button><button type="button" data-folder-space-add-date="'+key+'" class="p-1 text-slate-500"><i data-lucide="plus" class="h-3 w-3"></i></button></div>';list.slice(0,3).forEach(t=>out+='<button type="button" draggable="true" data-folder-space-month-task="'+escapeHtml(t.id)+'" class="folder-space-month-chip">'+(t.dueTime?escapeHtml(t.dueTime)+' ':'')+escapeHtml(t.title||'Sem título')+'</button>');if(list.length>3)out+='<span class="text-[8px] text-blue-300">+'+(list.length-3)+' mais</span>';out+='</section>';}return out+'</div></div>';}
+        function folderSpaceRenderList(items){const list=agendaSortTasks(items);return list.length?'<div class="space-y-2">'+list.map(t=>folderSpaceCard(t)).join('')+'</div>':'<div class="folder-space-empty">Nenhuma atividade encontrada.</div>';}
+        function folderSpaceRenderUndated(items){
+            const list=agendaSortTasks(items.filter(task=>!agendaTaskDate(task)));
+            if(!list.length)return '';
+            return '<section class="mt-3 rounded-xl border border-slate-800 bg-slate-950/35 p-3"><div class="mb-2 flex items-center justify-between"><div><h4 class="text-[11px] font-bold text-white">Sem data definida</h4><p class="text-[9px] text-slate-500">Itens desta pasta que ainda precisam entrar no calendário.</p></div><span class="text-[9px] text-slate-500">'+list.length+' itens</span></div><div class="space-y-2">'+list.map(task=>folderSpaceCard(task,true)).join('')+'</div></section>';
         }
-
+        function updateFolderAgendaControls(){document.querySelectorAll('.folder-view-btn').forEach(btn=>btn.classList.toggle('active',btn.dataset.folderView===activeFolderViewMode));}
+        function renderFolderTasks(){const panel=document.getElementById('folderTasksPanel');if(!panel)return;const folder=folders.find(f=>f.id===activeFolderId);if(!folder){panel.classList.add('hidden');return;}panel.classList.remove('hidden');const title=document.getElementById('folderTasksTitle'),icon=document.getElementById('folderTasksIcon'),count=document.getElementById('folderTasksCount');if(title)title.textContent=folder.name||'Pasta';if(icon){icon.innerHTML=folderIconHtml(folder.icon,'w-4 h-4',folder.color);icon.style.color=getFolderColor(folder);icon.style.background=getFolderColor(folder)+'22';}
+            const children=folders.filter(f=>f.parentId===folder.id),sub=document.getElementById('churchSubfolderNav');if(sub){const show=children.length>0;sub.classList.toggle('hidden',!show);sub.innerHTML=show?'<span class="text-[10px] text-slate-500 mr-1">Subpastas:</span>'+children.map(child=>'<button type="button" data-church-subfolder="'+escapeHtml(child.id)+'" class="rounded-lg px-3 py-1.5 text-[10px] '+(activeChurchSubfolderId===child.id?'bg-blue-600 text-white':'bg-slate-800 text-slate-300')+'">'+folderIconHtml(child.icon,'w-3 h-3',child.color)+escapeHtml(child.name||'Subpasta')+' ('+getActiveTasksInFolderTree(child).length+')</button>').join('')+'<button type="button" data-church-subfolder="" class="rounded-lg px-3 py-1.5 text-[10px] '+(!activeChurchSubfolderId?'bg-blue-600 text-white':'bg-slate-800 text-slate-300')+'">Todas</button>':'';sub.querySelectorAll('[data-church-subfolder]').forEach(btn=>btn.addEventListener('click',()=>openChurchSubfolder(btn.dataset.churchSubfolder)));}
+            const source=getFolderWorkspaceSource(folder),filtered=getFolderWorkspaceFilteredTasks(source),active=source.filter(t=>!isTaskCompleted(t)).length;if(count)count.textContent=source.length+' itens · '+active+' ativos';const list=document.getElementById('folderTasksList'),nav=document.getElementById('folderCalendarNav');if(!list)return;const calendar=['day','week','month'].includes(activeFolderViewMode);if(nav){nav.classList.toggle('hidden',!calendar);nav.classList.toggle('flex',calendar);}if(calendar){const label=activeFolderViewMode==='day'?formatAgendaDateLong(getAgendaDateString(folderCalendarDate)):activeFolderViewMode==='week'?agendaDateLabel(agendaStartOfWeek(folderCalendarDate))+' – '+agendaDateLabel(agendaEndOfWeek(folderCalendarDate)):agendaMonthLabel(folderCalendarDate);const el=document.getElementById('folderCalendarTitle');if(el)el.textContent=label;}updateFolderAgendaControls();folderSpaceInitDnD();if(activeFolderViewMode==='kanban')list.innerHTML=folderSpaceRenderKanban(filtered);else if(activeFolderViewMode==='day')list.innerHTML=folderSpaceRenderDay(filtered);else if(activeFolderViewMode==='week')list.innerHTML=folderSpaceRenderWeek(filtered);else if(activeFolderViewMode==='month')list.innerHTML=folderSpaceRenderMonth(filtered);else list.innerHTML=folderSpaceRenderList(filtered);if(calendar)list.innerHTML+=folderSpaceRenderUndated(filtered);folderSpaceBindCards(list);list.querySelectorAll('[data-folder-lane-add]').forEach(btn=>btn.addEventListener('click',()=>{const lane=btn.dataset.folderLaneAdd||'todo';workspaceCreateLane=lane==='backlog'?'backlog':null;openModalForFolderDate('');const statusSelect=document.getElementById('taskStatus');if(statusSelect)statusSelect.value=lane==='in_progress'?'in_progress':'todo';}));list.querySelectorAll('[data-folder-space-add-date]').forEach(btn=>btn.addEventListener('click',()=>openModalForFolderDate(btn.dataset.folderSpaceAddDate)));list.querySelectorAll('[data-folder-space-add-time]').forEach(btn=>btn.addEventListener('click',()=>openModalForFolderDate(getAgendaDateString(folderCalendarDate),btn.dataset.folderSpaceAddTime)));list.querySelectorAll('[data-folder-space-open-date]').forEach(btn=>btn.addEventListener('click',()=>{folderCalendarDate=new Date(btn.dataset.folderSpaceOpenDate+'T00:00:00');activeFolderViewMode='day';renderFolderTasks();}));list.querySelectorAll('[data-folder-space-month-task]').forEach(btn=>{const id=btn.dataset.folderSpaceMonthTask;btn.addEventListener('click',()=>openModal(id));btn.addEventListener('dragstart',e=>{if(e.dataTransfer){e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',id);}});});refreshIcons();}
+        function openModalForFolderDate(dateKey,timeValue=''){openModal();const dateField=document.getElementById('taskDueDate'),timeField=document.getElementById('taskDueTime'),folderField=document.getElementById('taskFolder');if(dateField)dateField.value=dateKey||'';if(timeField)timeField.value=timeValue||'';if(folderField)folderField.value=activeChurchSubfolderId||activeFolderId||'';}
         const btnBackToFolders = document.getElementById('btnBackToFolders');
         if (btnBackToFolders) {
             btnBackToFolders.addEventListener('click', () => {
                 activeFolderId = null;
+                activeChurchSubfolderId = '';
                 activeFolderPeriod = 'all';
-                activeFolderViewMode = 'cards';
+                activeFolderViewMode = 'kanban';
                 folderCalendarDate = new Date();
                 switchView('folders');
                 renderFolders();
@@ -2085,6 +2208,8 @@
             btnNewTaskInFolder.addEventListener('click', () => {
                 if (!activeFolderId) return;
                 openModal();
+                const folderSelect=document.getElementById('taskFolder');
+                if(folderSelect)folderSelect.value=activeChurchSubfolderId||activeFolderId;
             });
         }
 
@@ -2519,6 +2644,7 @@
                     id,
                     dueDate: dateKey,
                     status: 'todo',
+                    boardLane: null,
                     recurrenceSeriesId: taskObj.id,
                     createdAt: new Date().toISOString()
                 });
@@ -2557,10 +2683,11 @@
         function updateTaskStatusInFirestore(taskId, newStatus) {
             const targetTask = tasks.find(t => t.id === taskId);
             if (!targetTask) return;
-            const previousStatus = targetTask.status;
+            const previousTask = targetTask;
+            const activityLog = [...(Array.isArray(targetTask.activityLog) ? targetTask.activityLog : []), createTaskActivityEntry('Status alterado para ' + (newStatus === 'done' ? 'Concluído' : newStatus === 'in_progress' ? 'Em andamento' : 'A fazer') + '.')].slice(-100);
 
-            // Otimista: Atualiza o estado local temporariamente
-            tasks = tasks.map(t => t.id === taskId ? { ...t, status: newStatus } : t);
+            // Alterar o status pelo fluxo clássico retira o item do Backlog.
+            tasks = tasks.map(t => t.id === taskId ? { ...t, status: newStatus, boardLane: null, activityLog } : t);
             render();
 
             if (!currentUserState || !db) {
@@ -2571,11 +2698,12 @@
             const uid = currentUserState.uid;
             db.collection('users').doc(uid).collection('items').doc(taskId).update({
                 status: newStatus,
+                boardLane: firebase.firestore.FieldValue.delete(),
+                activityLog,
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             }).catch(err => {
                 console.error("Erro ao atualizar status no Firestore. Revertendo estado...", err);
-                // Rollback em caso de falha de conexão/permissão
-                tasks = tasks.map(t => t.id === taskId ? { ...t, status: previousStatus } : t);
+                tasks = tasks.map(t => t.id === taskId ? previousTask : t);
                 render();
                 alert("Falha ao atualizar o status da tarefa no servidor.");
             });
@@ -2596,7 +2724,7 @@
             if (!currentUserState || !db) {
                 tasks = tasks.map(t => {
                     if (t.status !== 'done' && t.dueDate && t.dueDate < todayStr) {
-                        return { ...t, dueDate: todayStr };
+                        return { ...t, dueDate: todayStr, activityLog: [...(Array.isArray(t.activityLog) ? t.activityLog : []), createTaskActivityEntry('Data adiada para ' + todayStr.split('-').reverse().join('/') + '.')].slice(-100) };
                     }
                     return t;
                 });
@@ -2610,8 +2738,10 @@
 
             lateTasks.forEach(task => {
                 const ref = db.collection('users').doc(uid).collection('items').doc(task.id);
+                const activityLog = [...(Array.isArray(task.activityLog) ? task.activityLog : []), createTaskActivityEntry('Data adiada para ' + todayStr.split('-').reverse().join('/') + '.')].slice(-100);
                 batch.update(ref, {
                     dueDate: todayStr,
+                    activityLog,
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
             });
@@ -3049,6 +3179,7 @@
                 if (view.id === `view-${viewName}`) view.classList.remove('hidden');
                 else view.classList.add('hidden');
             });
+            if (viewName === 'planner') renderPlanner();
         }
 
         // --- SPOTLIGHT OMNIBOX (Cmd + K) ---
@@ -3335,6 +3466,7 @@
                     }
                 });
                 document.body.classList.toggle('is-secondary-view', targetView !== 'dashboard');
+                if (targetView === 'planner') renderPlanner();
                 closeMobileSidebar();
             });
         });
@@ -3362,6 +3494,87 @@
         const btnCloseModal = document.getElementById('btnCloseModal');
         const btnCancelModal = document.getElementById('btnCancelModal');
         const taskForm = document.getElementById('taskForm');
+
+        let workspaceCreateLane = null;
+
+        function openWorkspaceTaskModal(lane = 'backlog') {
+            workspaceCreateLane = lane === 'backlog' ? 'backlog' : null;
+            openModal();
+        }
+
+        function taskDetailActor(){return currentUserState?.displayName||'Você';}
+        function createTaskActivityEntry(text){return{id:'activity_'+Date.now()+'_'+Math.random().toString(36).slice(2,7),text:String(text||'').slice(0,240),author:taskDetailActor(),createdAt:new Date().toISOString()};}
+        function formatTaskDetailTimestamp(value){if(!value)return'Agora';const date=value instanceof Date?value:new Date(value);return Number.isNaN(date.getTime())?'':date.toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});}
+        function normalizeTaskChecklist(items){if(!Array.isArray(items))return[];return items.map((item,index)=>typeof item==='string'?{id:'check_'+index+'_'+Date.now(),text:item,done:false}:{id:String(item?.id||('check_'+index+'_'+Date.now())),text:String(item?.text??item?.title??'').trim(),done:Boolean(item?.done??item?.completed)}).filter(item=>item.text);}
+        function getTaskChecklistSummary(task){const items=normalizeTaskChecklist(task?.checklist),done=items.filter(item=>item.done).length;return{total:items.length,done,percent:items.length?Math.round(done/items.length*100):0};}
+        function renderTaskDetailsPanel(taskId){
+            const aside=document.getElementById('taskDetailAside');if(!aside)return;
+            const task=taskId?tasks.find(item=>item.id===taskId):null;
+            ['taskChecklistInput','btnAddChecklistItem','taskCommentInput','btnAddTaskComment','taskAttachmentName','taskAttachmentUrl','btnAddTaskAttachment','taskLabelInput','btnAddTaskLabel'].forEach(id=>{const el=document.getElementById(id);if(el)el.disabled=!task;});
+            const hint=document.getElementById('taskChecklistHint');
+            if(!task){if(hint)hint.textContent='Salve o compromisso primeiro para habilitar checklist, comentários, links e histórico.';['taskChecklistItems','taskCommentsList','taskAttachmentsList','taskActivityList'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML='<div class="task-detail-muted">Disponível depois de salvar o compromisso.</div>';});['taskChecklistCount','taskCommentsCount','taskAttachmentsCount','taskActivityCount'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent='0';});const p=document.getElementById('taskChecklistProgress');if(p)p.style.width='0%';return;}
+            const checklist=normalizeTaskChecklist(task.checklist),checked=checklist.filter(item=>item.done).length,pct=checklist.length?Math.round(checked/checklist.length*100):0;
+            const count=document.getElementById('taskChecklistCount'),progress=document.getElementById('taskChecklistProgress');
+            if(count)count.textContent=checked+'/'+checklist.length;if(progress)progress.style.width=pct+'%';
+            if(hint)hint.textContent=checklist.length?(pct===100?'Todas as etapas concluídas.':pct+'% concluído'):'Adicione pequenas etapas para acompanhar o progresso.';
+            const checklistList=document.getElementById('taskChecklistItems');
+            if(checklistList){
+                checklistList.innerHTML=checklist.length?checklist.map((item,index)=>'<div class="task-check-row"><input type="checkbox" data-task-check-toggle="'+index+'" '+(item.done?'checked':'')+' aria-label="Marcar etapa como concluída"><span class="min-w-0 flex-1 text-[11px] leading-relaxed '+(item.done?'is-done':'text-slate-300')+'">'+escapeHtml(item.text)+'</span><button type="button" data-task-check-remove="'+index+'" class="rounded-md p-1 text-slate-600 hover:bg-slate-800 hover:text-rose-300" aria-label="Remover etapa"><i data-lucide="x" class="h-3.5 w-3.5"></i></button></div>').join(''):'<div class="task-detail-muted">Nenhuma etapa adicionada ainda.</div>';
+                checklistList.querySelectorAll('[data-task-check-toggle]').forEach(input=>input.addEventListener('change',()=>{const live=tasks.find(item=>item.id===taskId);const next=normalizeTaskChecklist(live?.checklist);const index=Number(input.dataset.taskCheckToggle);if(!next[index])return;next[index].done=input.checked;persistTaskDetailPatch(taskId,{checklist:next},(input.checked?'Etapa concluída: ':'Etapa reaberta: ')+next[index].text);}));
+                checklistList.querySelectorAll('[data-task-check-remove]').forEach(button=>button.addEventListener('click',()=>{const live=tasks.find(item=>item.id===taskId);const next=normalizeTaskChecklist(live?.checklist);const removed=next.splice(Number(button.dataset.taskCheckRemove),1)[0];if(removed)persistTaskDetailPatch(taskId,{checklist:next},'Etapa removida: '+removed.text);}));
+            }
+            const comments=Array.isArray(task.comments)?task.comments:[],commentCount=document.getElementById('taskCommentsCount');
+            if(commentCount)commentCount.textContent=comments.length;
+            const commentsList=document.getElementById('taskCommentsList');
+            if(commentsList)commentsList.innerHTML=comments.length?comments.slice().reverse().map(comment=>'<div class="task-meta-entry"><div class="flex items-center justify-between gap-2"><span class="text-[10px] font-bold text-sky-200">'+escapeHtml(comment.author||'Você')+'</span><span class="text-[9px] text-slate-600">'+escapeHtml(formatTaskDetailTimestamp(comment.createdAt))+'</span></div><p class="mt-1 whitespace-pre-wrap break-words text-[11px] leading-relaxed text-slate-300">'+escapeHtml(comment.text||'')+'</p></div>').join(''):'<div class="task-detail-muted">Nenhum comentário ainda. Use este espaço para registrar atualizações.</div>';
+            const attachments=Array.isArray(task.attachments)?task.attachments:[],attachmentCount=document.getElementById('taskAttachmentsCount');
+            if(attachmentCount)attachmentCount.textContent=attachments.length;
+            const attachmentList=document.getElementById('taskAttachmentsList');
+            if(attachmentList)attachmentList.innerHTML=attachments.map((item,index)=>{let url='';try{const parsed=new URL(String(item.url||''));if(['http:','https:'].includes(parsed.protocol))url=parsed.href;}catch(e){}if(!url)return'';return'<div class="task-meta-entry flex items-center justify-between gap-2"><a href="'+escapeHtml(url)+'" target="_blank" rel="noopener noreferrer" class="flex min-w-0 items-center gap-2 text-[10px] font-semibold text-blue-300 hover:text-blue-200"><i data-lucide="external-link" class="h-3.5 w-3.5 shrink-0"></i><span class="truncate">'+escapeHtml(item.name||'Abrir link')+'</span></a><button type="button" data-task-attachment-remove="'+index+'" class="rounded-md p-1 text-slate-600 hover:bg-slate-800 hover:text-rose-300" aria-label="Remover link"><i data-lucide="trash-2" class="h-3.5 w-3.5"></i></button></div>';}).join('')||'<div class="task-detail-muted">Nenhum link anexado.</div>';
+            attachmentList?.querySelectorAll('[data-task-attachment-remove]').forEach(button=>button.addEventListener('click',()=>{const live=tasks.find(item=>item.id===taskId);const next=Array.isArray(live?.attachments)?[...live.attachments]:[];const removed=next.splice(Number(button.dataset.taskAttachmentRemove),1)[0];if(removed)persistTaskDetailPatch(taskId,{attachments:next},'Link removido: '+(removed.name||removed.url));}));
+            const labels=Array.isArray(task.labels)?task.labels:[];
+            const labelsCount=document.getElementById('taskLabelsCount');if(labelsCount)labelsCount.textContent=labels.length;
+            const labelsList=document.getElementById('taskLabelsList');
+            if(labelsList){labelsList.innerHTML=labels.length?labels.map((label,index)=>'<span class="inline-flex items-center gap-1 rounded-md border border-cyan-500/20 bg-cyan-500/10 px-2 py-1 text-[9px] font-semibold text-cyan-200">'+escapeHtml(label)+'<button type="button" data-task-label-remove="'+index+'" class="ml-1 text-cyan-300/60 hover:text-rose-300" aria-label="Remover etiqueta"><i data-lucide="x" class="h-3 w-3"></i></button></span>').join(''):'<div class="task-detail-muted">Adicione etiquetas para classificar este compromisso.</div>';labelsList.querySelectorAll('[data-task-label-remove]').forEach(button=>button.addEventListener('click',()=>{const live=tasks.find(item=>item.id===taskId),next=Array.isArray(live?.labels)?[...live.labels]:[],removed=next.splice(Number(button.dataset.taskLabelRemove),1)[0];if(removed)persistTaskDetailPatch(taskId,{labels:next},'Etiqueta removida: '+removed);}));}
+            const activity=Array.isArray(task.activityLog)?task.activityLog:[],activityCount=document.getElementById('taskActivityCount');
+            if(activityCount)activityCount.textContent=activity.length;
+            const activityList=document.getElementById('taskActivityList');
+            if(activityList)activityList.innerHTML=activity.length?activity.slice().reverse().slice(0,60).map(entry=>'<div class="relative border-l border-violet-500/35 pb-3 pl-3 last:pb-0"><span class="absolute -left-[4px] top-1 h-1.5 w-1.5 rounded-full bg-violet-400"></span><p class="text-[10px] leading-relaxed text-slate-300">'+escapeHtml(entry.text||'Atualização')+'</p><p class="mt-1 text-[9px] text-slate-600">'+escapeHtml(entry.author||'Você')+' · '+escapeHtml(formatTaskDetailTimestamp(entry.createdAt))+'</p></div>').join(''):'<div class="task-detail-muted">O histórico começará a ser registrado a partir das próximas alterações.</div>';
+            refreshIcons();
+        }
+        function persistTaskDetailPatch(taskId,patch,activityText){
+            const current=tasks.find(item=>item.id===taskId);if(!current)return Promise.reject(new Error('Compromisso não encontrado.'));
+            const previous=current,log=Array.isArray(current.activityLog)?[...current.activityLog]:[];
+            if(activityText)log.push(createTaskActivityEntry(activityText));
+            const next={...current,...patch,activityLog:log.slice(-100)};
+            tasks=tasks.map(item=>item.id===taskId?next:item);saveTasksToLocalCacheOnly(tasks);render();renderTaskDetailsPanel(taskId);
+            if(!currentUserState||!db)return Promise.resolve();
+            return db.collection('users').doc(currentUserState.uid).collection('items').doc(taskId).update({...patch,activityLog:next.activityLog,updatedAt:firebase.firestore.FieldValue.serverTimestamp()})
+                .then(()=>renderTaskDetailsPanel(taskId)).catch(error=>{console.error('Erro ao salvar detalhes do compromisso:',error);tasks=tasks.map(item=>item.id===taskId?previous:item);saveTasksToLocalCacheOnly(tasks);render();renderTaskDetailsPanel(taskId);alert('Não foi possível salvar esta alteração. Os dados anteriores foram restaurados.');throw error;});
+        }
+        function addTaskChecklistItem(){
+            const id=document.getElementById('taskId')?.value,input=document.getElementById('taskChecklistInput'),text=(input?.value||'').trim();if(!id||!text)return;
+            const task=tasks.find(item=>item.id===id);if(!task)return;const checklist=normalizeTaskChecklist(task.checklist);checklist.push({id:'check_'+Date.now()+'_'+Math.random().toString(36).slice(2,6),text,done:false});if(input)input.value='';persistTaskDetailPatch(id,{checklist},'Etapa adicionada: '+text);
+        }
+        function addTaskComment(){
+            const id=document.getElementById('taskId')?.value,input=document.getElementById('taskCommentInput'),text=(input?.value||'').trim();if(!id||!text)return;
+            const task=tasks.find(item=>item.id===id);if(!task)return;const comments=Array.isArray(task.comments)?[...task.comments]:[];comments.push({id:'comment_'+Date.now(),text,author:taskDetailActor(),createdAt:new Date().toISOString()});if(input)input.value='';persistTaskDetailPatch(id,{comments:comments.slice(-200)},'Comentário adicionado.');
+        }
+        function addTaskLabel(){
+            const id=document.getElementById('taskId')?.value,input=document.getElementById('taskLabelInput'),label=(input?.value||'').trim();
+            if(!id||!label)return;
+            const task=tasks.find(item=>item.id===id);if(!task)return;
+            const labels=Array.isArray(task.labels)?[...task.labels]:[];
+            if(labels.some(item=>String(item).toLowerCase()===label.toLowerCase())){if(input)input.value='';return;}
+            if(labels.length>=10){alert('Este compromisso já tem o limite de 10 etiquetas.');return;}
+            labels.push(label);if(input)input.value='';
+            persistTaskDetailPatch(id,{labels},'Etiqueta adicionada: '+label);
+        }
+        function addTaskAttachmentLink(){
+            const id=document.getElementById('taskId')?.value,nameInput=document.getElementById('taskAttachmentName'),urlInput=document.getElementById('taskAttachmentUrl'),name=(nameInput?.value||'').trim(),raw=(urlInput?.value||'').trim();if(!id||!raw)return;
+            let url;try{url=new URL(raw);if(!['http:','https:'].includes(url.protocol))throw new Error('Protocolo inválido.');}catch(e){alert('Informe um endereço válido iniciado por https:// ou http://.');return;}
+            const task=tasks.find(item=>item.id===id);if(!task)return;const attachments=Array.isArray(task.attachments)?[...task.attachments]:[],label=name||url.hostname;attachments.push({id:'link_'+Date.now(),name:label,url:url.href,createdAt:new Date().toISOString()});if(nameInput)nameInput.value='';if(urlInput)urlInput.value='';persistTaskDetailPatch(id,{attachments:attachments.slice(-50)},'Link anexado: '+label);
+        }
 
         function openModal(taskId = null) {
             taskForm.reset();
@@ -3391,16 +3604,24 @@
                 }
             }
 
+            renderTaskDetailsPanel(taskId);
             taskModal.classList.remove('hidden');
         }
 
         function closeModal() {
             taskModal.classList.add('hidden');
+            workspaceCreateLane = null;
         }
 
         if (btnOpenNewTaskModal) btnOpenNewTaskModal.addEventListener('click', () => openModal());
         if (btnCloseModal) btnCloseModal.addEventListener('click', closeModal);
         if (btnCancelModal) btnCancelModal.addEventListener('click', closeModal);
+        document.getElementById('btnAddChecklistItem')?.addEventListener('click',addTaskChecklistItem);
+        document.getElementById('taskChecklistInput')?.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();addTaskChecklistItem();}});
+        document.getElementById('btnAddTaskComment')?.addEventListener('click',addTaskComment);
+        document.getElementById('btnAddTaskAttachment')?.addEventListener('click',addTaskAttachmentLink);
+        document.getElementById('btnAddTaskLabel')?.addEventListener('click',addTaskLabel);
+        document.getElementById('taskLabelInput')?.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();addTaskLabel();}});
 
         if (taskForm) {
             taskForm.addEventListener('submit', async (e) => {
@@ -3419,6 +3640,24 @@
                 const folderId = document.getElementById('taskFolder').value || '';
 
                 const existingTask = tasks.find(t => t.id === id);
+                const activityLog = Array.isArray(existingTask?.activityLog) ? [...existingTask.activityLog] : [];
+                if (!existingTask) {
+                    activityLog.push(createTaskActivityEntry('Compromisso criado.'));
+                } else {
+                    const changedFields = [
+                        ['title', title, 'Título atualizado.'],
+                        ['description', description, 'Descrição atualizada.'],
+                        ['dueDate', dueDate, 'Data alterada.'],
+                        ['dueTime', dueTime, 'Horário alterado.'],
+                        ['priority', priority, 'Prioridade alterada para ' + priority + '.'],
+                        ['status', status, 'Status alterado.'],
+                        ['folderId', folderId, 'Pasta alterada.']
+                    ];
+                    changedFields.forEach(([key, value, message]) => {
+                        if (String(existingTask[key] ?? '') !== String(value ?? '')) activityLog.push(createTaskActivityEntry(message));
+                    });
+                    if (activityLog.length > 100) activityLog.splice(0, activityLog.length - 100);
+                }
 
                 const taskObj = {
                     ...(existingTask || {}),
@@ -3432,12 +3671,19 @@
                     priority,
                     status,
                     folderId,
+                    boardLane: status === 'todo' && (existingTask?.boardLane === 'backlog' || (!existingTask && workspaceCreateLane === 'backlog')) ? 'backlog' : null,
+                    activityLog,
+                    checklist: Array.isArray(existingTask?.checklist) ? existingTask.checklist : [],
+                    comments: Array.isArray(existingTask?.comments) ? existingTask.comments : [],
+                    attachments: Array.isArray(existingTask?.attachments) ? existingTask.attachments : [],
+                    labels: Array.isArray(existingTask?.labels) ? existingTask.labels : [],
                     createdAt: existingTask ? (existingTask.createdAt || new Date().toISOString()) : new Date().toISOString()
                 };
 
                 try {
                     await saveTaskToFirestore(taskObj);
                     if (!existingTask && recurrenceRule !== 'none') await materializeRecurringOccurrences(taskObj);
+                    workspaceCreateLane = null;
                     closeModal();
                 } catch (err) {
                     console.error("[Task Save Error]", err);
@@ -3451,9 +3697,11 @@
             if (!newDate) return;
             const targetTask = tasks.find(t => t.id === taskId);
             if (!targetTask) return;
-            const previousDate = targetTask.dueDate || '';
+            const previousTask = targetTask;
+            if ((targetTask.dueDate || '') === newDate) return;
+            const activityLog = [...(Array.isArray(targetTask.activityLog) ? targetTask.activityLog : []), createTaskActivityEntry('Data alterada para ' + newDate.split('-').reverse().join('/') + '.')].slice(-100);
 
-            tasks = tasks.map(t => t.id === taskId ? { ...t, dueDate: newDate } : t);
+            tasks = tasks.map(t => t.id === taskId ? { ...t, dueDate: newDate, activityLog } : t);
             render();
 
             if (!currentUserState || !db) {
@@ -3464,10 +3712,11 @@
             const uid = currentUserState.uid;
             db.collection('users').doc(uid).collection('items').doc(taskId).update({
                 dueDate: newDate,
+                activityLog,
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             }).catch(err => {
                 console.error("Erro ao reagendar tarefa no Firestore. Revertendo data...", err);
-                tasks = tasks.map(t => t.id === taskId ? { ...t, dueDate: previousDate } : t);
+                tasks = tasks.map(t => t.id === taskId ? previousTask : t);
                 render();
                 alert("Não foi possível atualizar a data da tarefa. A data anterior foi restaurada.");
             });
@@ -3760,6 +4009,519 @@
             refreshIcons();
         }
 
+        const WORKSPACE_LANES = [
+            { id:'backlog', label:'Backlog', listId:'workspaceLaneBacklog', countId:'workspaceCountBacklog' },
+            { id:'todo', label:'A fazer', listId:'workspaceLaneTodo', countId:'workspaceCountTodo' },
+            { id:'in_progress', label:'Em andamento', listId:'workspaceLaneProgress', countId:'workspaceCountProgress' },
+            { id:'done', label:'Concluído', listId:'workspaceLaneDone', countId:'workspaceCountDone' }
+        ];
+        let workspaceBoardDnDReady = false;
+
+        function getWorkspaceLane(task) {
+            const status = String(task?.status || 'todo').toLowerCase();
+            if (['done','completed','complete','concluido','concluído','finalizado','finished'].includes(status)) return 'done';
+            if (task?.boardLane === 'backlog') return 'backlog';
+            if (status === 'in_progress' || status === 'in progress' || status === 'doing') return 'in_progress';
+            return 'todo';
+        }
+
+        function refreshWorkspaceFolderFilter() {
+            const select = document.getElementById('workspaceFolderFilter');
+            if (!select) return;
+            const current = select.value || 'all';
+            const sorted = [...folders].sort((a,b) => String(a.name || '').localeCompare(String(b.name || ''), 'pt-BR', { sensitivity:'base' }));
+            select.innerHTML = '<option value="all">Todas as pastas</option>' + sorted.map(folder => {
+                const prefix = folder.parentId ? '↳ ' : '';
+                return '<option value="' + escapeHtml(folder.id) + '">' + prefix + escapeHtml(folder.name || 'Pasta sem nome') + '</option>';
+            }).join('');
+            select.value = sorted.some(folder => folder.id === current) ? current : 'all';
+        }
+
+        function resetWorkspaceFilters() {
+            document.querySelectorAll('[data-planner-view]').forEach(btn=>btn.addEventListener('click',()=>plannerSetMode(btn.dataset.plannerView)));
+        document.getElementById('plannerPrev')?.addEventListener('click',()=>plannerNavigate(-1));
+        document.getElementById('plannerNext')?.addEventListener('click',()=>plannerNavigate(1));
+        document.getElementById('plannerToday')?.addEventListener('click',()=>{plannerAnchorDate=new Date();renderPlanner();});
+        document.getElementById('plannerNewTaskBtn')?.addEventListener('click',()=>plannerCreateTask(getAgendaDateString(plannerAnchorDate)));
+        document.getElementById('plannerAddDayTask')?.addEventListener('click',()=>plannerCreateTask(getAgendaDateString(plannerAnchorDate)));
+        ['plannerFolderFilter','plannerPriorityFilter','plannerStatusFilter'].forEach(id=>{
+            const field=document.getElementById(id);
+            if(field)field.addEventListener('change',renderPlanner);
+        });
+        ['workspaceSearch','workspaceFolderFilter','workspaceStatusFilter','workspacePriorityFilter','workspaceDateFilter'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = id === 'workspaceSearch' ? '' : 'all';
+            });
+            renderWorkspaceBoard();
+        }
+
+        function initWorkspaceBoardDnD() {
+            if (workspaceBoardDnDReady) return;
+            const board = document.getElementById('workspaceKanbanBoard');
+            if (!board) return;
+            board.addEventListener('dragover', event => {
+                const zone = event.target.closest('[data-workspace-drop]');
+                if (!zone) return;
+                event.preventDefault();
+                zone.classList.add('is-drag-over');
+            });
+            board.addEventListener('dragleave', event => {
+                const zone = event.target.closest('[data-workspace-drop]');
+                if (zone && !zone.contains(event.relatedTarget)) zone.classList.remove('is-drag-over');
+            });
+            board.addEventListener('drop', event => {
+                const zone = event.target.closest('[data-workspace-drop]');
+                if (!zone) return;
+                event.preventDefault();
+                zone.classList.remove('is-drag-over');
+                const taskId = event.dataTransfer?.getData('text/plain') || draggedTaskId;
+                if (taskId) moveTaskToWorkspaceLane(taskId, zone.dataset.workspaceDrop);
+            });
+            workspaceBoardDnDReady = true;
+        }
+
+        function moveTaskToWorkspaceLane(taskId, lane) {
+            if (!WORKSPACE_LANES.some(item => item.id === lane)) return;
+            const current = tasks.find(task => task.id === taskId);
+            if (!current || getWorkspaceLane(current) === lane) return;
+            const previous = current;
+            const laneLabels = { backlog:'Backlog', todo:'A fazer', in_progress:'Em andamento', done:'Concluído' };
+            const activityLog = [...(Array.isArray(current.activityLog) ? current.activityLog : []), createTaskActivityEntry('Cartão movido para ' + laneLabels[lane] + '.')].slice(-100);
+            const next = lane === 'backlog'
+                ? { ...current, status:'todo', boardLane:'backlog', activityLog }
+                : { ...current, status:lane, boardLane:null, activityLog };
+
+            tasks = tasks.map(task => task.id === taskId ? next : task);
+            saveTasksToLocalCacheOnly(tasks);
+            render();
+
+            if (!currentUserState || !db) return;
+            const updates = { status:next.status, activityLog:next.activityLog, updatedAt:firebase.firestore.FieldValue.serverTimestamp() };
+            updates.boardLane = lane === 'backlog' ? 'backlog' : firebase.firestore.FieldValue.delete();
+            db.collection('users').doc(currentUserState.uid).collection('items').doc(taskId).update(updates).catch(err => {
+                console.error('Erro ao mover cartão no Firestore. Restaurando posição anterior...', err);
+                tasks = tasks.map(task => task.id === taskId ? previous : task);
+                saveTasksToLocalCacheOnly(tasks);
+                render();
+                alert('Não foi possível mover este cartão. A posição anterior foi restaurada.');
+            });
+        }
+
+        function updatePlannerTaskSchedule(taskId, newDate, newTime) {
+            const task = tasks.find(item => item.id === taskId);
+            if (!task || !newDate) return;
+            const previous = task;
+            const next = { dueDate:newDate, dueTime:newTime === undefined ? (task.dueTime || '') : newTime };
+            if ((task.dueDate || '') === next.dueDate && (task.dueTime || '') === next.dueTime) return;
+            const scheduleText = 'Agenda alterada para ' + next.dueDate.split('-').reverse().join('/') + (next.dueTime ? ' às ' + next.dueTime : ' (sem horário)') + '.';
+            const activityLog = [...(Array.isArray(task.activityLog) ? task.activityLog : []), createTaskActivityEntry(scheduleText)].slice(-100);
+            tasks = tasks.map(item => item.id === taskId ? { ...item, ...next, activityLog } : item);
+            saveTasksToLocalCacheOnly(tasks);
+            render();
+            if (!currentUserState || !db) return;
+            const updates = {
+                dueDate: next.dueDate,
+                activityLog,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+            updates.dueTime = next.dueTime
+                ? next.dueTime
+                : firebase.firestore.FieldValue.delete();
+            db.collection('users').doc(currentUserState.uid).collection('items').doc(taskId).update(updates).catch(err => {
+                console.error('Erro ao reagendar compromisso no Firestore. Restaurando horário anterior...', err);
+                tasks = tasks.map(item => item.id === taskId ? previous : item);
+                saveTasksToLocalCacheOnly(tasks);
+                render();
+                alert('Não foi possível reagendar este compromisso. A data e o horário anteriores foram restaurados.');
+            });
+        }
+
+        let plannerViewMode = 'week';
+        let plannerAnchorDate = new Date();
+        let plannerDnDReady = false;
+
+        function plannerGetRange() {
+            const anchor = new Date(plannerAnchorDate);
+            if (plannerViewMode === 'day') {
+                const key = getAgendaDateString(anchor);
+                return { start:key, end:key };
+            }
+            if (plannerViewMode === 'week') {
+                const start = agendaStartOfWeek(anchor);
+                const end = agendaEndOfWeek(anchor);
+                return { start:getAgendaDateString(start), end:getAgendaDateString(end) };
+            }
+            return {
+                start:getAgendaDateString(new Date(anchor.getFullYear(), anchor.getMonth(), 1)),
+                end:getAgendaDateString(new Date(anchor.getFullYear(), anchor.getMonth()+1, 0))
+            };
+        }
+
+        function plannerDateTitle() {
+            if (plannerViewMode === 'day') return plannerAnchorDate.toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long',year:'numeric'}).replace(/^./,c=>c.toUpperCase());
+            if (plannerViewMode === 'week') {
+                const start=agendaStartOfWeek(plannerAnchorDate), end=agendaEndOfWeek(plannerAnchorDate);
+                return agendaDateLabel(start)+' – '+agendaDateLabel(end);
+            }
+            return agendaMonthLabel(plannerAnchorDate);
+        }
+
+        function plannerRefreshFolderFilter() {
+            const select=document.getElementById('plannerFolderFilter');
+            if(!select)return;
+            const current=select.value||'all';
+            const sorted=[...folders].sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'pt-BR',{sensitivity:'base'}));
+            select.innerHTML='<option value="all">Todas as pastas</option>'+sorted.map(folder=>{
+                const prefix=folder.parentId?'↳ ':'';
+                return '<option value="'+escapeHtml(folder.id)+'">'+prefix+escapeHtml(folder.name||'Pasta sem nome')+'</option>';
+            }).join('');
+            select.value=sorted.some(folder=>folder.id===current)?current:'all';
+        }
+
+        function plannerGetFilteredTasks() {
+            const selectedFolder=document.getElementById('plannerFolderFilter')?.value||'all';
+            const priority=document.getElementById('plannerPriorityFilter')?.value||'all';
+            const status=document.getElementById('plannerStatusFilter')?.value||'active';
+            let folderScope=null;
+            if(selectedFolder!=='all'){
+                folderScope=new Set([selectedFolder]);
+                let changed=true;
+                while(changed){
+                    changed=false;
+                    folders.forEach(folder=>{
+                        if(folder.parentId&&folderScope.has(folder.parentId)&&!folderScope.has(folder.id)){folderScope.add(folder.id);changed=true;}
+                    });
+                }
+            }
+            return tasks.filter(task=>{
+                const statusText=String(task.status||'').toLowerCase();
+                if(task.archived===true||task.isArchived===true||['archived','arquivado','arquivada'].includes(statusText))return false;
+                if(folderScope&&!folders.some(folder=>folderScope.has(folder.id)&&taskBelongsToFolder(task,folder)))return false;
+                if(priority!=='all'&&(task.priority||'Média')!==priority)return false;
+                const done=isTaskCompleted(task);
+                if(status==='active'&&done)return false;
+                if(status==='done'&&!done)return false;
+                if(status==='todo'&&statusText!=='todo')return false;
+                if(status==='in_progress'&&statusText!=='in_progress')return false;
+                return true;
+            });
+        }
+
+        function plannerTaskCard(task, compact=false) {
+            const folder=folders.find(item=>item.id===getTaskFolderId(task));
+            const accent=folder?getFolderColor(folder):'#3b82f6';
+            const done=isTaskCompleted(task);
+            const time=task.dueTime?escapeHtml(task.dueTime):'Sem horário';
+            const folderLabel=folder?escapeHtml(folder.name||'Pasta'):'Sem pasta';
+            const dateLabel=task.dueDate?String(task.dueDate).split('-').reverse().join('/'):'Sem data';
+            const description=String(task.description||'').trim();
+            return '<article class="planner-event-card '+(done?'opacity-60':'')+'" style="--planner-accent:'+escapeHtml(accent)+'" draggable="true" data-planner-task="'+escapeHtml(task.id)+'">'+
+                '<div class="min-w-0 flex-1">'+
+                    '<button type="button" data-planner-open class="block w-full truncate text-left text-[11px] font-bold text-slate-100 hover:text-blue-200">'+(task.dueTime?'<span class="mr-1 text-blue-300">'+time+'</span>':'')+escapeHtml(task.title||'Sem título')+'</button>'+
+                    '<div class="mt-1 flex flex-wrap items-center gap-1.5"><span class="text-[9px] text-slate-400">'+folderLabel+'</span>'+getPriorityBadge(task.priority||'Média')+(compact?'':'<span class="text-[9px] text-slate-500">'+dateLabel+'</span>')+'</div>'+
+                    (!compact&&description?'<p class="mt-1 line-clamp-2 text-[10px] leading-relaxed text-slate-400">'+escapeHtml(description)+'</p>':'')+
+                '</div>'+
+                '<label class="relative grid h-8 w-8 shrink-0 place-items-center rounded-lg text-slate-500 hover:bg-slate-700 hover:text-blue-200" title="Reagendar este compromisso"><i data-lucide="calendar-clock" class="pointer-events-none h-4 w-4"></i><input type="date" data-planner-reschedule aria-label="Escolher nova data para '+escapeHtml(task.title||'compromisso')+'" value="'+escapeHtml(task.dueDate||'')+'" class="absolute inset-0 h-full w-full cursor-pointer opacity-0"></label>'+
+                '</article>';
+        }
+
+        function plannerAddDragHandlers(root) {
+            root.querySelectorAll('[data-planner-task]').forEach(card=>{
+                card.addEventListener('dragstart',event=>{
+                    const id=card.dataset.plannerTask;
+                    if(event.dataTransfer){event.dataTransfer.effectAllowed='move';event.dataTransfer.setData('text/plain',id);}
+                    card.classList.add('is-dragging');
+                });
+                card.addEventListener('dragend',()=>{
+                    card.classList.remove('is-dragging');
+                    root.querySelectorAll('.is-drop-over').forEach(zone=>zone.classList.remove('is-drop-over'));
+                });
+                card.querySelector('[data-planner-open]')?.addEventListener('click',()=>openModal(card.dataset.plannerTask));
+                card.querySelector('[data-planner-reschedule]')?.addEventListener('change',event=>{
+                    if(event.target.value)updatePlannerTaskSchedule(card.dataset.plannerTask,event.target.value);
+                });
+            });
+        }
+
+        function plannerInitDnD() {
+            if(plannerDnDReady)return;
+            const root=document.getElementById('plannerRoot');
+            if(!root)return;
+            root.addEventListener('dragover',event=>{
+                const zone=event.target.closest('[data-planner-drop-date]');
+                if(!zone)return;
+                event.preventDefault();
+                zone.classList.add('is-drop-over');
+            });
+            root.addEventListener('dragleave',event=>{
+                const zone=event.target.closest('[data-planner-drop-date]');
+                if(zone&&!zone.contains(event.relatedTarget))zone.classList.remove('is-drop-over');
+            });
+            root.addEventListener('drop',event=>{
+                const zone=event.target.closest('[data-planner-drop-date]');
+                if(!zone)return;
+                event.preventDefault();
+                zone.classList.remove('is-drop-over');
+                const taskId=event.dataTransfer?.getData('text/plain');
+                if(!taskId)return;
+                const date=zone.dataset.plannerDropDate;
+                const time=zone.dataset.plannerDropTime;
+                updatePlannerTaskSchedule(taskId,date,time||undefined);
+            });
+            plannerDnDReady=true;
+        }
+
+        function plannerCreateTask(dateKey, time='') {
+            openModal();
+            const dateField=document.getElementById('taskDueDate');
+            const timeField=document.getElementById('taskDueTime');
+            const folderField=document.getElementById('taskFolder');
+            if(dateField)dateField.value=dateKey||'';
+            if(timeField)timeField.value=time||'';
+            const selectedFolder=document.getElementById('plannerFolderFilter')?.value||'all';
+            if(folderField)folderField.value=selectedFolder!=='all'?selectedFolder:'';
+        }
+
+        function plannerRenderDay(filteredTasks) {
+            const key=getAgendaDateString(plannerAnchorDate);
+            const dayTasks=agendaSortTasks(filteredTasks.filter(task=>agendaTaskDate(task)===key));
+            const timed=dayTasks.filter(task=>task.dueTime);
+            const untimed=dayTasks.filter(task=>!task.dueTime);
+            const container=document.getElementById('plannerDayTimed');
+            const untimedWrap=document.getElementById('plannerDayUntimedWrap');
+            const untimedList=document.getElementById('plannerDayUntimed');
+            const untimedCount=document.getElementById('plannerDayUntimedCount');
+            const hours=Array.from({length:17},(_,i)=>i+6);
+            let markup='';
+            hours.forEach(hour=>{
+                const hourKey=String(hour).padStart(2,'0')+':00';
+                const group=timed.filter(task=>Number(String(task.dueTime).slice(0,2))===hour);
+                markup+='<div class="planner-time-row">'+
+                    '<div class="planner-time-label">'+hourKey+'</div>'+
+                    '<div class="planner-time-drop" data-planner-drop-date="'+key+'" data-planner-drop-time="'+hourKey+'">'+
+                        (group.length?group.map(task=>plannerTaskCard(task)).join(''):'<button type="button" data-planner-add-time="'+hourKey+'" class="w-full min-h-10 rounded-lg text-left text-[10px] text-slate-700 hover:bg-slate-800/60 hover:text-blue-300">+ Adicionar horário</button>')+
+                    '</div></div>';
+            });
+            const outside=timed.filter(task=>Number(String(task.dueTime).slice(0,2))<6||Number(String(task.dueTime).slice(0,2))>22);
+            if(outside.length)markup+='<div class="border-t border-slate-800 p-3"><div class="mb-2 text-[10px] font-bold text-slate-500">Outros horários</div><div class="space-y-2">'+outside.map(task=>plannerTaskCard(task)).join('')+'</div></div>';
+            container.innerHTML=markup;
+            container.querySelectorAll('[data-planner-add-time]').forEach(btn=>btn.addEventListener('click',()=>plannerCreateTask(key,btn.dataset.plannerAddTime)));
+            if(untimedWrap&&untimedList&&untimedCount){
+                untimedCount.textContent=untimed.length+' '+(untimed.length===1?'item':'itens');
+                untimedList.innerHTML=untimed.length?untimed.map(task=>plannerTaskCard(task)).join(''):'<div class="planner-empty">Nenhum compromisso sem horário neste dia.</div>';
+                untimedWrap.classList.remove('hidden');
+            }
+            plannerAddDragHandlers(container);
+            plannerAddDragHandlers(untimedList);
+        }
+
+        function plannerRenderWeek(filteredTasks) {
+            const start=agendaStartOfWeek(plannerAnchorDate);
+            const names=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+            const today=getLocalDateString();
+            const container=document.getElementById('plannerWeekGrid');
+            let markup='';
+            for(let i=0;i<7;i++){
+                const day=new Date(start);day.setDate(start.getDate()+i);
+                const key=getAgendaDateString(day);
+                const dayTasks=agendaSortTasks(filteredTasks.filter(task=>agendaTaskDate(task)===key));
+                markup+='<section class="planner-week-column '+(key===today?'is-today':'')+'">'+
+                    '<div class="planner-week-head"><div><div class="text-[9px] font-semibold text-slate-500">'+names[i]+'</div><div class="text-sm font-extrabold '+(key===today?'text-blue-300':'text-white')+'">'+day.getDate()+'</div></div><button type="button" data-planner-add-day="'+key+'" class="rounded-lg p-1.5 text-slate-500 hover:bg-slate-800 hover:text-white" aria-label="Adicionar compromisso em '+key+'"><i data-lucide="plus" class="h-3.5 w-3.5"></i></button></div>'+
+                    '<div class="planner-day-drop" data-planner-drop-date="'+key+'">'+
+                    (dayTasks.length?dayTasks.map(task=>plannerTaskCard(task,true)).join(''):'<div class="planner-empty">Dia livre</div>')+
+                    '</div></section>';
+            }
+            container.innerHTML=markup;
+            container.querySelectorAll('[data-planner-add-day]').forEach(btn=>btn.addEventListener('click',()=>plannerCreateTask(btn.dataset.plannerAddDay)));
+            plannerAddDragHandlers(container);
+        }
+
+        function plannerRenderMonth(filteredTasks) {
+            const year=plannerAnchorDate.getFullYear(),month=plannerAnchorDate.getMonth();
+            const first=new Date(year,month,1),start=agendaStartOfWeek(first),last=new Date(year,month+1,0),end=agendaEndOfWeek(last);
+            const today=getLocalDateString(),container=document.getElementById('plannerMonthGrid');
+            let markup='';
+            for(let day=new Date(start);day<=end;day.setDate(day.getDate()+1)){
+                const date=new Date(day),key=getAgendaDateString(date),inMonth=date.getMonth()===month;
+                const dayTasks=agendaSortTasks(filteredTasks.filter(task=>agendaTaskDate(task)===key));
+                const visible=dayTasks.slice(0,3);
+                markup+='<section class="planner-month-cell '+(inMonth?'':'outside')+' '+(key===today?'today':'')+'" data-planner-drop-date="'+key+'">'+
+                    '<div class="flex items-center justify-between gap-1"><button type="button" data-planner-open-day="'+key+'" class="planner-date-link">'+date.getDate()+'</button><button type="button" data-planner-add-day="'+key+'" class="rounded-md p-1 text-slate-600 hover:bg-slate-800 hover:text-blue-300" aria-label="Adicionar compromisso em '+key+'"><i data-lucide="plus" class="h-3 w-3"></i></button></div>'+
+                    visible.map(task=>{
+                        const folder=folders.find(item=>item.id===getTaskFolderId(task));
+                        const accent=folder?getFolderColor(folder):'#3b82f6';
+                        return '<button type="button" draggable="true" data-planner-month-task="'+escapeHtml(task.id)+'" class="planner-month-chip" style="--planner-accent:'+escapeHtml(accent)+'" title="'+escapeHtml(task.title||'Sem título')+'">'+(task.dueTime?escapeHtml(task.dueTime)+' ':'')+escapeHtml(task.title||'Sem título')+'</button>';
+                    }).join('')+
+                    (dayTasks.length>3?'<button type="button" data-planner-open-day="'+key+'" class="text-left text-[9px] font-bold text-blue-300 hover:text-white">+'+(dayTasks.length-3)+' mais</button>':'')+
+                    (dayTasks.length===0&&inMonth?'<span class="mt-auto pt-3 text-[9px] text-slate-700">Livre</span>':'')+
+                    '</section>';
+            }
+            container.innerHTML=markup;
+            container.querySelectorAll('[data-planner-add-day]').forEach(btn=>btn.addEventListener('click',()=>plannerCreateTask(btn.dataset.plannerAddDay)));
+            container.querySelectorAll('[data-planner-open-day]').forEach(btn=>btn.addEventListener('click',()=>openAgendaDayModal(btn.dataset.plannerOpenDay)));
+            container.querySelectorAll('[data-planner-month-task]').forEach(card=>{
+                const taskId=card.dataset.plannerMonthTask;
+                card.addEventListener('click',()=>openModal(taskId));
+                card.addEventListener('dragstart',event=>{
+                    if(event.dataTransfer){event.dataTransfer.effectAllowed='move';event.dataTransfer.setData('text/plain',taskId);}
+                });
+            });
+            plannerAddDragHandlers(container);
+        }
+
+        function plannerRenderUndated(filteredTasks) {
+            const list=document.getElementById('plannerUndatedGrid');
+            const wrap=document.getElementById('plannerUndatedWrap');
+            const count=document.getElementById('plannerUndatedCount');
+            if(!list||!wrap||!count)return;
+            const undated=agendaSortTasks(filteredTasks.filter(task=>!agendaTaskDate(task)));
+            count.textContent=undated.length+' '+(undated.length===1?'item':'itens');
+            list.innerHTML=undated.length?undated.map(task=>plannerTaskCard(task)).join(''):'<div class="planner-empty">Nenhum item sem data definida.</div>';
+            wrap.classList.toggle('hidden',undated.length===0);
+            plannerAddDragHandlers(list);
+        }
+
+        function renderPlanner() {
+            const root=document.getElementById('plannerRoot');
+            if(!root)return;
+            plannerInitDnD();
+            plannerRefreshFolderFilter();
+            const filtered=plannerGetFilteredTasks();
+            const {start,end}=plannerGetRange();
+            const inPeriod=filtered.filter(task=>agendaTaskDate(task)>=start&&agendaTaskDate(task)<=end);
+            const undated=filtered.filter(task=>!agendaTaskDate(task)).length;
+            const dated=inPeriod.length;
+            const summary=document.getElementById('plannerPeriodSummary');
+            if(summary)summary.textContent=dated+' compromisso(s) com data · '+undated+' sem data';
+            const title=document.getElementById('plannerDateLabel');
+            if(title)title.textContent=plannerDateTitle();
+            document.querySelectorAll('[data-planner-view]').forEach(btn=>btn.classList.toggle('active',btn.dataset.plannerView===plannerViewMode));
+            document.getElementById('plannerDayPanel')?.classList.toggle('hidden',plannerViewMode!=='day');
+            document.getElementById('plannerWeekPanel')?.classList.toggle('hidden',plannerViewMode!=='week');
+            document.getElementById('plannerMonthPanel')?.classList.toggle('hidden',plannerViewMode!=='month');
+            if(plannerViewMode==='day')plannerRenderDay(inPeriod);
+            if(plannerViewMode==='week')plannerRenderWeek(inPeriod);
+            if(plannerViewMode==='month')plannerRenderMonth(inPeriod);
+            plannerRenderUndated(filtered);
+            refreshIcons();
+        }
+
+        function plannerSetMode(mode) {
+            if(!['day','week','month'].includes(mode))return;
+            plannerViewMode=mode;
+            renderPlanner();
+        }
+
+        function plannerNavigate(direction) {
+            const date=new Date(plannerAnchorDate);
+            if(plannerViewMode==='day')date.setDate(date.getDate()+direction);
+            else if(plannerViewMode==='week')date.setDate(date.getDate()+direction*7);
+            else { date.setDate(1); date.setMonth(date.getMonth()+direction); }
+            plannerAnchorDate=date;
+            renderPlanner();
+        }
+
+        function renderWorkspaceBoard() {
+            const board = document.getElementById('workspaceKanbanBoard');
+            if (!board) return;
+            refreshWorkspaceFolderFilter();
+            initWorkspaceBoardDnD();
+            const search = (document.getElementById('workspaceSearch')?.value || '').trim().toLocaleLowerCase('pt-BR');
+            const selectedFolder = document.getElementById('workspaceFolderFilter')?.value || 'all';
+            const selectedLane = document.getElementById('workspaceStatusFilter')?.value || 'all';
+            const priority = document.getElementById('workspacePriorityFilter')?.value || 'all';
+            const dateFilter = document.getElementById('workspaceDateFilter')?.value || 'all';
+            const today = getLocalDateString();
+            const nextSevenDays = addDaysToDateString(today, 6);
+
+            let folderScope = null;
+            if (selectedFolder !== 'all') {
+                folderScope = new Set([selectedFolder]);
+                let changed = true;
+                while (changed) {
+                    changed = false;
+                    folders.forEach(folder => {
+                        if (folder.parentId && folderScope.has(folder.parentId) && !folderScope.has(folder.id)) {
+                            folderScope.add(folder.id);
+                            changed = true;
+                        }
+                    });
+                }
+            }
+
+            const visibleTasks = tasks.filter(task => {
+                const statusText = String(task.status || '').toLowerCase();
+                const explicitlyArchived = task.archived === true || task.isArchived === true || ['archived','arquivado','arquivada'].includes(statusText);
+                if (explicitlyArchived) return false;
+                const lane = getWorkspaceLane(task);
+                if (selectedLane !== 'all' && lane !== selectedLane) return false;
+                if (folderScope && !folderScope.has(getTaskFolderId(task))) return false;
+                if (priority !== 'all' && (task.priority || 'Média') !== priority) return false;
+                if (search && ![task.title, task.description, task.category].some(value => String(value || '').toLocaleLowerCase('pt-BR').includes(search))) return false;
+                const due = String(task.dueDate || '').trim();
+                if (dateFilter === 'today' && due !== today) return false;
+                if (dateFilter === 'overdue' && (!due || due >= today || lane === 'done')) return false;
+                if (dateFilter === 'next7' && (!due || due < today || due > nextSevenDays || lane === 'done')) return false;
+                if (dateFilter === 'no_date' && due) return false;
+                return true;
+            });
+
+            const byLane = {};
+            WORKSPACE_LANES.forEach(lane => byLane[lane.id] = []);
+            visibleTasks.forEach(task => byLane[getWorkspaceLane(task)].push(task));
+
+            WORKSPACE_LANES.forEach(lane => {
+                const list = document.getElementById(lane.listId);
+                const count = document.getElementById(lane.countId);
+                if (!list || !count) return;
+                const laneTasks = agendaSortTasks(byLane[lane.id]);
+                count.textContent = laneTasks.length;
+                if (!laneTasks.length) {
+                    list.innerHTML = '<div class="workspace-lane-empty">' + (lane.id === 'backlog' ? 'Ideias e itens para organizar.' : 'Nenhum cartão nesta coluna com os filtros atuais.') + '</div>';
+                    return;
+                }
+                list.innerHTML = laneTasks.map(task => {
+                    const folder = folders.find(item => item.id === getTaskFolderId(task));
+                    const folderBadge = folder
+                        ? '<span class="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[10px] font-semibold" style="color:' + getFolderColor(folder) + ';background:' + getFolderColor(folder) + '22">' + folderIconHtml(folder.icon,'w-3 h-3',folder.color) + escapeHtml(folder.name || 'Pasta') + '</span>'
+                        : '<span class="inline-flex rounded-md bg-slate-800 px-2 py-1 text-[10px] font-semibold text-slate-400">Sem pasta</span>';
+                    const due = String(task.dueDate || '').trim();
+                    const overdue = due && due < today && getWorkspaceLane(task) !== 'done';
+                    const dueLabel = due ? due.split('-').reverse().join('/') + (task.dueTime ? ' · ' + escapeHtml(task.dueTime) : '') : 'Sem data definida';
+                    const description = String(task.description || '').trim();
+                    const checklistSummary = getTaskChecklistSummary(task);
+                    const checklistBadge = checklistSummary.total ? '<span class="inline-flex items-center gap-1 rounded-md bg-emerald-500/10 px-2 py-1 text-[9px] font-semibold text-emerald-300"><i data-lucide="list-checks" class="h-3 w-3"></i>' + checklistSummary.done + '/' + checklistSummary.total + '</span>' : '';
+                    const moveOptions = WORKSPACE_LANES.map(target => '<option value="' + target.id + '"' + (target.id === lane.id ? ' selected' : '') + '>' + target.label + '</option>').join('');
+                    return '<article class="workspace-kanban-card" draggable="true" data-workspace-task="' + escapeHtml(task.id) + '">' +
+                        '<div class="flex items-start justify-between gap-2"><button type="button" data-workspace-action="open" class="min-w-0 flex-1 text-left text-xs font-bold leading-snug text-slate-100 hover:text-blue-200">' + escapeHtml(task.title || 'Sem título') + '</button>' + getPriorityBadge(task.priority || 'Média') + '</div>' +
+                        (description ? '<p class="mt-2 text-[11px] leading-relaxed text-slate-400">' + escapeHtml(description) + '</p>' : '') +
+                        '<div class="mt-3 flex flex-wrap items-center gap-1.5">' + folderBadge + '<span class="inline-flex items-center gap-1 rounded-md bg-slate-950/70 px-2 py-1 text-[10px] ' + (overdue ? 'text-red-300' : 'text-slate-400') + '"><i data-lucide="calendar" class="w-3 h-3"></i>' + escapeHtml(dueLabel) + '</span>' + checklistBadge + '</div>' +
+                        '<div class="mt-3 flex items-center justify-between gap-2 border-t border-slate-700/70 pt-2"><button type="button" data-workspace-action="toggle" class="inline-flex min-h-8 items-center gap-1.5 rounded-lg px-2 text-[10px] font-semibold ' + (lane.id === 'done' ? 'text-emerald-300 hover:bg-emerald-500/10' : 'text-slate-400 hover:bg-slate-700/60 hover:text-slate-100') + '"><i data-lucide="' + (lane.id === 'done' ? 'rotate-ccw' : 'check-circle-2') + '" class="w-3.5 h-3.5"></i>' + (lane.id === 'done' ? 'Reabrir' : 'Concluir') + '</button><select data-workspace-action="move" aria-label="Mover cartão ' + escapeHtml(task.title || '') + '" class="max-w-[132px] rounded-lg border border-slate-700 bg-slate-950 px-2 py-1.5 text-[10px] text-slate-300 outline-none focus:border-blue-500">' + moveOptions + '</select></div>' +
+                        '</article>';
+                }).join('');
+                list.querySelectorAll('[data-workspace-task]').forEach(card => {
+                    const task = laneTasks.find(item => item.id === card.dataset.workspaceTask);
+                    if (!task) return;
+                    card.addEventListener('dragstart', event => {
+                        draggedTaskId = task.id;
+                        card.classList.add('is-dragging');
+                        if (event.dataTransfer) { event.dataTransfer.effectAllowed = 'move'; event.dataTransfer.setData('text/plain', task.id); }
+                    });
+                    card.addEventListener('dragend', () => {
+                        card.classList.remove('is-dragging');
+                        draggedTaskId = null;
+                        document.querySelectorAll('.workspace-lane-dropzone.is-drag-over').forEach(zone => zone.classList.remove('is-drag-over'));
+                    });
+                    card.querySelector('[data-workspace-action="open"]')?.addEventListener('click', () => openModal(task.id));
+                    card.querySelector('[data-workspace-action="toggle"]')?.addEventListener('click', () => toggleTaskComplete(task.id));
+                    card.querySelector('[data-workspace-action="move"]')?.addEventListener('change', event => {
+                        if (event.target.value) moveTaskToWorkspaceLane(task.id, event.target.value);
+                    });
+                });
+            });
+            refreshIcons();
+        }
+
         function renderKanban() {
             const columns = {
                 todo: document.getElementById('kanban-todo'),
@@ -3773,7 +4535,7 @@
             const counts = { todo: 0, in_progress: 0, done: 0 };
 
             tasks.forEach(t => {
-                if (counts[t.status] !== undefined) counts[t.status]++;
+                if (t.boardLane !== 'backlog' && counts[t.status] !== undefined) counts[t.status]++;
 
                 const card = document.createElement('div');
                 card.className = 'bg-slate-950 border border-slate-800 rounded-lg p-3 space-y-1.5 cursor-grab active:cursor-grabbing shadow-sm hover:border-slate-700 transition';
@@ -3802,7 +4564,7 @@
                     draggedTaskId = null;
                 });
 
-                if (columns[t.status]) {
+                if (columns[t.status] && t.boardLane !== 'backlog') {
                     columns[t.status].appendChild(card);
                 }
             });
@@ -3875,13 +4637,21 @@
 
         function render() {
             renderDashboard();
+            renderWorkspaceBoard();
+            renderPlanner();
             renderFolders();
             refreshTaskFolderFilter();
             renderTaskList();
             renderKanban();
             renderFolderTasks();
             refreshIcons();
+            if(taskModal&&!taskModal.classList.contains('hidden'))renderTaskDetailsPanel(document.getElementById('taskId')?.value||null);
         }
+
+        ['workspaceSearch','workspaceFolderFilter','workspaceStatusFilter','workspacePriorityFilter','workspaceDateFilter'].forEach(id => {
+            const field = document.getElementById(id);
+            if (field) field.addEventListener(id === 'workspaceSearch' ? 'input' : 'change', renderWorkspaceBoard);
+        });
 
         const filterSearchInput = document.getElementById('filterSearch');
         if (filterSearchInput) filterSearchInput.addEventListener('input', renderTaskList);
@@ -3904,10 +4674,11 @@
         document.getElementById('btnCloseAgendaDayModal')?.addEventListener('click', closeAgendaDayModal);
         document.getElementById('btnNewAgendaTaskFromDay')?.addEventListener('click', newAgendaTaskFromDay);
         document.getElementById('agendaDayModal')?.addEventListener('click', (e)=>{ if(e.target.id==='agendaDayModal') closeAgendaDayModal(); });
-        document.querySelectorAll('.folder-period-btn').forEach(btn=>btn.addEventListener('click',()=>{const mode=btn.dataset.folderPeriod||'all';activeFolderPeriod=mode;if(mode==='week'||mode==='month'){activeFolderViewMode=mode;folderCalendarDate=new Date();}else{activeFolderViewMode='cards';}renderFolderTasks();}));
-        document.querySelectorAll('.folder-view-btn').forEach(btn=>btn.addEventListener('click',()=>{activeFolderViewMode=btn.dataset.folderView||'cards';activeFolderPeriod=(activeFolderViewMode==='week'||activeFolderViewMode==='month')?activeFolderViewMode:'all';if(activeFolderViewMode==='week'||activeFolderViewMode==='month')folderCalendarDate=new Date();renderFolderTasks();}));
-        document.getElementById('folderCalendarPrev')?.addEventListener('click',()=>{folderCalendarDate=new Date(folderCalendarDate);if(activeFolderViewMode==='week')folderCalendarDate.setDate(folderCalendarDate.getDate()-7);else folderCalendarDate.setMonth(folderCalendarDate.getMonth()-1);renderFolderTasks();});
-        document.getElementById('folderCalendarNext')?.addEventListener('click',()=>{folderCalendarDate=new Date(folderCalendarDate);if(activeFolderViewMode==='week')folderCalendarDate.setDate(folderCalendarDate.getDate()+7);else folderCalendarDate.setMonth(folderCalendarDate.getMonth()+1);renderFolderTasks();});
+        document.querySelectorAll('.folder-view-btn').forEach(btn=>btn.addEventListener('click',()=>{activeFolderViewMode=btn.dataset.folderView||'kanban';if(['day','week','month'].includes(activeFolderViewMode))folderCalendarDate=new Date();renderFolderTasks();}));
+        ['folderWorkspaceSearch','folderWorkspaceStatus','folderWorkspacePriority'].forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener(id==='folderWorkspaceSearch'?'input':'change',renderFolderTasks);});
+        document.getElementById('folderCalendarPrev')?.addEventListener('click',()=>{folderCalendarDate=new Date(folderCalendarDate);if(activeFolderViewMode==='day')folderCalendarDate.setDate(folderCalendarDate.getDate()-1);else if(activeFolderViewMode==='week')folderCalendarDate.setDate(folderCalendarDate.getDate()-7);else{folderCalendarDate.setDate(1);folderCalendarDate.setMonth(folderCalendarDate.getMonth()-1);}renderFolderTasks();});
+        document.getElementById('folderCalendarNext')?.addEventListener('click',()=>{folderCalendarDate=new Date(folderCalendarDate);if(activeFolderViewMode==='day')folderCalendarDate.setDate(folderCalendarDate.getDate()+1);else if(activeFolderViewMode==='week')folderCalendarDate.setDate(folderCalendarDate.getDate()+7);else{folderCalendarDate.setDate(1);folderCalendarDate.setMonth(folderCalendarDate.getMonth()+1);}renderFolderTasks();});
+        document.getElementById('folderCalendarToday')?.addEventListener('click',()=>{folderCalendarDate=new Date();renderFolderTasks();});
 
         document.getElementById('toggleSidebarFolders')?.addEventListener('click', toggleSidebarFolders);
         document.getElementById('btnNewFolder')?.addEventListener('click', () => openFolderModal());
