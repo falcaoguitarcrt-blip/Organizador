@@ -368,6 +368,35 @@
             .planner-day-scroll { max-height:none; }
             .planner-month-grid { min-width:840px; }
         }
+
+/* Workspace views per folder */
+.folder-space-toolbar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px}
+.folder-space-views{display:inline-flex;flex-wrap:wrap;gap:3px;padding:4px;border:1px solid rgba(51,65,85,.8);border-radius:12px;background:rgba(2,6,23,.62)}
+.folder-space-view-btn{min-height:34px;border-radius:8px;padding:7px 11px;font-size:10px;font-weight:700;color:#94a3b8}
+.folder-space-view-btn.active{color:#fff;background:rgba(37,99,235,.85)}
+.folder-space-board-scroll,.folder-space-calendar-scroll{overflow-x:auto;padding-bottom:7px}
+.folder-space-board{display:grid;grid-template-columns:repeat(4,minmax(220px,1fr));gap:10px;min-width:940px;align-items:start}
+.folder-space-lane{min-height:300px;display:flex;flex-direction:column;border:1px solid rgba(51,65,85,.78);border-radius:13px;background:rgba(2,6,23,.35);overflow:hidden}
+.folder-space-lane-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:11px;border-bottom:1px solid rgba(51,65,85,.65)}
+.folder-space-lane-list{display:flex;flex-direction:column;gap:8px;padding:9px;min-height:245px}
+.folder-space-lane-list.is-drop-over,.folder-space-day-drop.is-drop-over{background:rgba(37,99,235,.14);outline:2px dashed rgba(96,165,250,.6);outline-offset:-3px}
+.folder-space-card{border:1px solid rgba(71,85,105,.7);border-left:3px solid var(--folder-accent,#3b82f6);border-radius:10px;background:rgba(30,41,59,.8);padding:10px}
+.folder-space-card:hover{border-color:rgba(96,165,250,.72)}.folder-space-card.is-dragging{opacity:.42}
+.folder-space-week{display:grid;grid-template-columns:repeat(7,minmax(145px,1fr));gap:7px;min-width:1060px}
+.folder-space-day{border:1px solid rgba(51,65,85,.7);border-radius:11px;background:rgba(2,6,23,.35);min-height:265px;overflow:hidden}
+.folder-space-day.is-today{border-color:rgba(59,130,246,.72)}
+.folder-space-day-head{display:flex;align-items:center;justify-content:space-between;gap:5px;padding:9px;border-bottom:1px solid rgba(51,65,85,.6)}
+.folder-space-day-drop{min-height:210px;display:flex;flex-direction:column;gap:6px;padding:7px}
+.folder-space-month{display:grid;grid-template-columns:repeat(7,minmax(108px,1fr));gap:6px;min-width:790px}
+.folder-space-month-cell{min-height:125px;padding:7px;display:flex;flex-direction:column;gap:5px;border:1px solid rgba(51,65,85,.68);border-radius:9px;background:rgba(2,6,23,.33)}
+.folder-space-month-cell.outside{opacity:.4}.folder-space-month-cell.is-today{border-color:rgba(59,130,246,.72)}
+.folder-space-month-chip{display:block;width:100%;padding:4px 6px;border-radius:6px;border-left:2px solid var(--folder-accent,#3b82f6);background:rgba(30,64,175,.2);color:#dbeafe;font-size:9px;text-align:left;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.folder-space-time-row{display:grid;grid-template-columns:62px minmax(0,1fr);min-height:64px;border-top:1px solid rgba(51,65,85,.52)}
+.folder-space-time-label{padding:10px 9px;color:#8293aa;font-size:10px;border-right:1px solid rgba(51,65,85,.45);font-variant-numeric:tabular-nums}
+.folder-space-day-drop{min-width:0;padding:6px 8px}
+.folder-space-empty{padding:17px 10px;border:1px dashed rgba(71,85,105,.5);border-radius:9px;color:#64748b;font-size:10px;text-align:center}
+.folder-space-filter{min-width:125px;flex:1 1 130px}
+@media(max-width:760px){.folder-space-board{min-width:920px}.folder-space-week{min-width:1060px}.folder-space-month{min-width:790px}.folder-space-filter{min-width:0}}
     </style>
 </head>
 <body class="min-h-screen flex flex-col p-3 md:p-6 antialiased selection:bg-blue-600 selection:text-white">
@@ -849,20 +878,27 @@
                     </div>
                 </div>
                 <div id="churchSubfolderNav" class="hidden flex flex-wrap gap-2 mb-3"></div>
-                <div class="glass-card p-2 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
-                    <div class="flex flex-wrap gap-1.5 items-center">
-                        <span class="text-[10px] font-semibold text-slate-500 mr-1">Período</span>
-                        <button type="button" data-folder-period="all" class="folder-period-btn px-3 py-1.5 rounded-lg text-[11px] font-semibold bg-blue-600 text-white">Todas</button>
-                        <button type="button" data-folder-period="today" class="folder-period-btn px-3 py-1.5 rounded-lg text-[11px] font-semibold text-slate-400 hover:text-white hover:bg-slate-800">Hoje</button>
-                        <button type="button" data-folder-period="tomorrow" class="folder-period-btn px-3 py-1.5 rounded-lg text-[11px] font-semibold text-slate-400 hover:text-white hover:bg-slate-800">Amanhã</button>
-                        <button type="button" data-folder-period="week" class="folder-period-btn px-3 py-1.5 rounded-lg text-[11px] font-semibold text-slate-400 hover:text-white hover:bg-slate-800">Semana</button>
-                        <button type="button" data-folder-period="month" class="folder-period-btn px-3 py-1.5 rounded-lg text-[11px] font-semibold text-slate-400 hover:text-white hover:bg-slate-800">Mês</button>
+                <div class="space-y-3 mb-3">
+                    <div id="churchSubfolderNav" class="hidden flex flex-wrap items-center gap-2 rounded-xl border border-slate-800 bg-slate-950/50 p-2"></div>
+                    <div class="folder-space-toolbar rounded-xl border border-slate-800 bg-slate-950/55 p-2">
+                        <div class="folder-space-views" role="group" aria-label="Visualização desta pasta">
+                            <button type="button" data-folder-view="kanban" class="folder-view-btn folder-space-view-btn active">Kanban</button>
+                            <button type="button" data-folder-view="day" class="folder-view-btn folder-space-view-btn">Dia</button>
+                            <button type="button" data-folder-view="week" class="folder-view-btn folder-space-view-btn">Semana</button>
+                            <button type="button" data-folder-view="month" class="folder-view-btn folder-space-view-btn">Mês</button>
+                            <button type="button" data-folder-view="list" class="folder-view-btn folder-space-view-btn">Lista</button>
+                        </div>
+                        <div id="folderCalendarNav" class="hidden items-center gap-1">
+                            <button type="button" id="folderCalendarPrev" aria-label="Período anterior" class="rounded-lg p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
+                            <button type="button" id="folderCalendarToday" class="rounded-lg border border-slate-700 px-2.5 py-1.5 text-[10px] font-bold text-slate-200 hover:bg-slate-800">Hoje</button>
+                            <span id="folderCalendarTitle" class="min-w-[120px] text-center text-[10px] font-semibold text-slate-300"></span>
+                            <button type="button" id="folderCalendarNext" aria-label="Próximo período" class="rounded-lg p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
+                        </div>
                     </div>
-                    <div class="flex flex-wrap gap-1.5 items-center">
-                        <span class="text-[10px] font-semibold text-slate-500 mr-1">Visão</span>
-                        <button type="button" data-folder-view="cards" class="folder-view-btn px-3 py-1.5 rounded-lg text-[11px] font-semibold bg-blue-600 text-white">Cards</button>
-                        <button type="button" data-folder-view="week" class="folder-view-btn px-3 py-1.5 rounded-lg text-[11px] font-semibold text-slate-400 hover:text-white hover:bg-slate-800">Semana</button>
-                        <button type="button" data-folder-view="month" class="folder-view-btn px-3 py-1.5 rounded-lg text-[11px] font-semibold text-slate-400 hover:text-white hover:bg-slate-800">Mês</button>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        <input id="folderWorkspaceSearch" type="search" placeholder="Buscar nesta pasta..." aria-label="Buscar nesta pasta" class="folder-space-filter rounded-lg border border-slate-800 bg-slate-950/70 px-3 py-2.5 text-xs text-slate-200 outline-none focus:border-blue-500">
+                        <select id="folderWorkspaceStatus" aria-label="Filtrar status da pasta" class="folder-space-filter rounded-lg border border-slate-800 bg-slate-950/70 px-3 py-2.5 text-xs text-slate-200 outline-none focus:border-blue-500"><option value="all">Todos os status</option><option value="active">Somente ativos</option><option value="todo">A fazer</option><option value="in_progress">Em andamento</option><option value="done">Concluídos</option></select>
+                        <select id="folderWorkspacePriority" aria-label="Filtrar prioridade da pasta" class="folder-space-filter rounded-lg border border-slate-800 bg-slate-950/70 px-3 py-2.5 text-xs text-slate-200 outline-none focus:border-blue-500"><option value="all">Todas as prioridades</option><option value="Alta">Alta prioridade</option><option value="Média">Média prioridade</option><option value="Baixa">Baixa prioridade</option></select>
                     </div>
                 </div>
                 <div id="folderCalendarNav" class="hidden items-center justify-between gap-2 mb-3">
@@ -1859,7 +1895,7 @@
 
         let draggedFolderId = null;
         let activeFolderPeriod = 'all';
-        let activeFolderViewMode = 'cards';
+        let activeFolderViewMode = 'kanban';
         let folderCalendarDate = new Date();
         let currentTaskViewMode = 'cards';
         let taskCalendarDate = new Date();
@@ -1966,7 +2002,7 @@
             activeFolderId = folderId;
             activeChurchSubfolderId = '';
             activeFolderPeriod = 'all';
-            activeFolderViewMode = 'cards';
+            activeFolderViewMode = 'kanban';
             folderCalendarDate = new Date();
             switchView('folders');
             renderFolders();
@@ -2005,7 +2041,7 @@
             if (!folder) return;
             activeFolderId = folderId;
             activeFolderPeriod = 'all';
-            activeFolderViewMode = 'cards';
+            activeFolderViewMode = 'kanban';
             folderCalendarDate = new Date();
             switchView('folders');
             renderFolders();
@@ -2102,7 +2138,7 @@
             btnBackToFolders.addEventListener('click', () => {
                 activeFolderId = null;
                 activeFolderPeriod = 'all';
-                activeFolderViewMode = 'cards';
+                activeFolderViewMode = 'kanban';
                 folderCalendarDate = new Date();
                 switchView('folders');
                 renderFolders();
