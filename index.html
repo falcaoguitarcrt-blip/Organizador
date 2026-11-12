@@ -423,7 +423,35 @@
 .task-detail-header{flex-shrink:0}
 @media(max-width:850px){.task-detail-shell{width:100%;max-width:none}.task-detail-grid{grid-template-columns:minmax(0,1fr);gap:12px}.task-detail-aside{display:grid;grid-template-columns:1fr;gap:10px}.task-detail-form{padding:14px!important}}
 @media(min-width:851px){.task-detail-aside{position:sticky;top:0}}
-    </style>
+    
+        .workspace-lane-more { display:inline-flex;align-items:center;justify-content:center;min-width:30px;min-height:30px; }
+        #workspaceLaneContextMenu { position:fixed;z-index:12000;width:min(320px,calc(100vw - 20px));max-height:min(78vh,680px);overflow:auto;background:#292d32;border:1px solid rgba(148,163,184,.24);border-radius:12px;box-shadow:0 18px 50px rgba(0,0,0,.5);padding:8px;color:#e5e7eb; }
+        #workspaceLaneContextMenu .lane-menu-title { display:flex;align-items:center;justify-content:space-between;padding:6px 8px 10px;border-bottom:1px solid rgba(148,163,184,.18);font-size:12px;font-weight:800;color:#cbd5e1; }
+        #workspaceLaneContextMenu .lane-menu-item { display:flex;width:100%;align-items:center;gap:9px;text-align:left;padding:9px 10px;border-radius:7px;font-size:13px;color:#d1d5db;background:transparent; }
+        #workspaceLaneContextMenu .lane-menu-item:hover { background:rgba(148,163,184,.13);color:#fff; }
+        #workspaceLaneContextMenu .lane-menu-item:disabled,#workspaceLaneContextMenu .lane-menu-sub button:disabled { opacity:.35;cursor:not-allowed; }
+        #workspaceLaneContextMenu .lane-menu-sep { border-top:1px solid rgba(148,163,184,.18);margin:7px 2px; }
+        #workspaceLaneContextMenu .lane-menu-section { padding:8px 9px 5px;font-size:11px;font-weight:800;color:#9ca3af; }
+        #workspaceLaneContextMenu [hidden] { display:none !important; }
+        #workspaceLaneContextMenu .lane-menu-sub { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;padding:3px 6px 7px; }
+        #workspaceLaneContextMenu .lane-menu-sub button { padding:7px 8px;border-radius:7px;background:#202429;color:#cbd5e1;text-align:left;font-size:11px; }
+        #workspaceLaneContextMenu .lane-menu-sub button:hover { background:#3b4148;color:#fff; }
+        #workspaceLaneContextMenu .lane-color-grid { display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;padding:7px 9px 10px; }
+        #workspaceLaneContextMenu .lane-color-swatch { width:30px;height:30px;border-radius:9px;border:2px solid rgba(255,255,255,.16);box-shadow:inset 0 0 0 1px rgba(0,0,0,.12); }
+        #workspaceLaneContextMenu .lane-color-swatch[aria-pressed="true"] { outline:2px solid #fff;outline-offset:2px; }
+        #workspaceLaneContextMenu .lane-menu-note { padding:7px 9px 4px;font-size:10px;color:#9ca3af;line-height:1.45; }
+
+        /* Programação visual da Igreja: categorias com identidade fixa */
+        .church-program-card{position:relative;overflow:hidden;border:1px solid color-mix(in srgb,var(--church-accent) 38%,#263244);background:linear-gradient(110deg,color-mix(in srgb,var(--church-accent) 10%,#111827),#111827 58%);border-radius:16px;padding:14px 14px 13px 18px;box-shadow:0 8px 24px rgba(0,0,0,.13)}
+        .church-program-card:before{content:"";position:absolute;left:0;top:14px;bottom:14px;width:4px;border-radius:99px;background:var(--church-accent)}
+        .church-program-card .church-program-category{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:4px 8px;background:color-mix(in srgb,var(--church-accent) 15%,transparent);color:var(--church-accent);font-size:9px;font-weight:800;letter-spacing:.04em}
+        .church-program-card .church-program-time{display:inline-flex;align-items:center;gap:5px;border:1px solid color-mix(in srgb,var(--church-accent) 22%,#334155);background:color-mix(in srgb,var(--church-accent) 8%,#111827);border-radius:10px;padding:7px 9px;color:#f8fafc;font-size:11px;font-weight:800;white-space:nowrap}
+        .church-program-card .church-program-date{font-size:11px;color:#d1d5db;font-weight:700}
+        .church-program-card .church-program-date .church-today{margin-left:7px;border-radius:7px;padding:3px 7px;background:color-mix(in srgb,var(--church-accent) 18%,transparent);color:var(--church-accent);font-size:9px}
+        .church-program-card .church-program-role{font-size:10px;color:#a1a1aa;line-height:1.5}
+        .church-program-card .church-program-role strong{color:var(--church-accent)}
+        @media(max-width:480px){.church-program-card{padding:13px 11px 12px 16px}.church-program-card .church-program-time{padding:6px 7px;font-size:10px}}
+</style>
 </head>
 <body class="min-h-screen flex flex-col p-3 md:p-6 antialiased selection:bg-blue-600 selection:text-white">
 
@@ -690,10 +718,10 @@
                             </div>
                         </div>
                         <div class="workspace-board-scroll"><div id="workspaceKanbanBoard" class="workspace-kanban-grid">
-                            <section class="workspace-kanban-column"><div class="workspace-kanban-header"><div class="flex items-center gap-2"><span class="h-2.5 w-2.5 rounded-full bg-violet-400"></span><h4 class="text-xs font-extrabold text-slate-100">Backlog</h4><span id="workspaceCountBacklog" class="rounded-full bg-violet-500/15 px-2 py-0.5 text-[10px] font-bold text-violet-200">0</span></div><button type="button" onclick="openWorkspaceTaskModal('backlog')" title="Adicionar ideia ao Backlog" class="rounded-lg p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white"><i data-lucide="plus" class="w-4 h-4"></i></button></div><div id="workspaceLaneBacklog" class="workspace-lane-dropzone" data-workspace-drop="backlog"><div class="workspace-lane-empty">Ideias e itens para organizar.</div></div></section>
-                            <section class="workspace-kanban-column"><div class="workspace-kanban-header"><div class="flex items-center gap-2"><span class="h-2.5 w-2.5 rounded-full bg-slate-400"></span><h4 class="text-xs font-extrabold text-slate-100">A fazer</h4><span id="workspaceCountTodo" class="rounded-full bg-slate-700 px-2 py-0.5 text-[10px] font-bold text-slate-200">0</span></div><button type="button" onclick="openModal()" title="Adicionar tarefa" class="rounded-lg p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white"><i data-lucide="plus" class="w-4 h-4"></i></button></div><div id="workspaceLaneTodo" class="workspace-lane-dropzone" data-workspace-drop="todo"><div class="workspace-lane-empty">Nada por aqui por enquanto.</div></div></section>
-                            <section class="workspace-kanban-column"><div class="workspace-kanban-header"><div class="flex items-center gap-2"><span class="h-2.5 w-2.5 rounded-full bg-amber-400"></span><h4 class="text-xs font-extrabold text-slate-100">Em andamento</h4><span id="workspaceCountProgress" class="rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-bold text-amber-200">0</span></div><button type="button" onclick="openModal()" title="Adicionar tarefa" class="rounded-lg p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white"><i data-lucide="plus" class="w-4 h-4"></i></button></div><div id="workspaceLaneProgress" class="workspace-lane-dropzone" data-workspace-drop="in_progress"><div class="workspace-lane-empty">Nada em andamento.</div></div></section>
-                            <section class="workspace-kanban-column"><div class="workspace-kanban-header"><div class="flex items-center gap-2"><span class="h-2.5 w-2.5 rounded-full bg-emerald-400"></span><h4 class="text-xs font-extrabold text-slate-100">Concluído</h4><span id="workspaceCountDone" class="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-bold text-emerald-200">0</span></div></div><div id="workspaceLaneDone" class="workspace-lane-dropzone" data-workspace-drop="done"><div class="workspace-lane-empty">Suas atividades concluídas aparecerão aqui.</div></div></section>
+                            <section class="workspace-kanban-column" data-workspace-lane-column="backlog"><div class="workspace-kanban-header"><div class="flex items-center gap-2"><span class="h-2.5 w-2.5 rounded-full bg-violet-400"></span><h4 class="text-xs font-extrabold text-slate-100">Backlog</h4><span id="workspaceCountBacklog" class="rounded-full bg-violet-500/15 px-2 py-0.5 text-[10px] font-bold text-violet-200">0</span></div><div class="flex items-center gap-1"><button type="button" onclick="openWorkspaceTaskModal('backlog')" title="Adicionar ideia ao Backlog" class="rounded-lg p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white"><i data-lucide="plus" class="w-4 h-4"></i></button><button type="button" onclick="openWorkspaceLaneMenu(event,'backlog')" aria-label="Ações da lista Backlog" title="Ações da lista" class="workspace-lane-more rounded-lg p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white"><i data-lucide="ellipsis" class="w-4 h-4"></i></button></div></div><div id="workspaceLaneBacklog" class="workspace-lane-dropzone" data-workspace-drop="backlog"><div class="workspace-lane-empty">Ideias e itens para organizar.</div></div></section>
+                            <section class="workspace-kanban-column" data-workspace-lane-column="todo"><div class="workspace-kanban-header"><div class="flex items-center gap-2"><span class="h-2.5 w-2.5 rounded-full bg-slate-400"></span><h4 class="text-xs font-extrabold text-slate-100">A fazer</h4><span id="workspaceCountTodo" class="rounded-full bg-slate-700 px-2 py-0.5 text-[10px] font-bold text-slate-200">0</span></div><div class="flex items-center gap-1"><button type="button" onclick="openWorkspaceTaskModal('todo')" title="Adicionar tarefa" class="rounded-lg p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white"><i data-lucide="plus" class="w-4 h-4"></i></button><button type="button" onclick="openWorkspaceLaneMenu(event,'todo')" aria-label="Ações da lista A fazer" title="Ações da lista" class="workspace-lane-more rounded-lg p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white"><i data-lucide="ellipsis" class="w-4 h-4"></i></button></div></div><div id="workspaceLaneTodo" class="workspace-lane-dropzone" data-workspace-drop="todo"><div class="workspace-lane-empty">Nada por aqui por enquanto.</div></div></section>
+                            <section class="workspace-kanban-column" data-workspace-lane-column="in_progress"><div class="workspace-kanban-header"><div class="flex items-center gap-2"><span class="h-2.5 w-2.5 rounded-full bg-amber-400"></span><h4 class="text-xs font-extrabold text-slate-100">Em andamento</h4><span id="workspaceCountProgress" class="rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-bold text-amber-200">0</span></div><div class="flex items-center gap-1"><button type="button" onclick="openWorkspaceTaskModal('in_progress')" title="Adicionar tarefa" class="rounded-lg p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white"><i data-lucide="plus" class="w-4 h-4"></i></button><button type="button" onclick="openWorkspaceLaneMenu(event,'in_progress')" aria-label="Ações da lista Em andamento" title="Ações da lista" class="workspace-lane-more rounded-lg p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white"><i data-lucide="ellipsis" class="w-4 h-4"></i></button></div></div><div id="workspaceLaneProgress" class="workspace-lane-dropzone" data-workspace-drop="in_progress"><div class="workspace-lane-empty">Nada em andamento.</div></div></section>
+                            <section class="workspace-kanban-column" data-workspace-lane-column="done"><div class="workspace-kanban-header"><div class="flex items-center gap-2"><span class="h-2.5 w-2.5 rounded-full bg-emerald-400"></span><h4 class="text-xs font-extrabold text-slate-100">Concluído</h4><span id="workspaceCountDone" class="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-bold text-emerald-200">0</span></div><div class="flex items-center gap-1"><button type="button" onclick="openWorkspaceTaskModal('done')" title="Adicionar tarefa concluída" class="rounded-lg p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white"><i data-lucide="plus" class="w-4 h-4"></i></button><button type="button" onclick="openWorkspaceLaneMenu(event,'done')" aria-label="Ações da lista Concluído" title="Ações da lista" class="workspace-lane-more rounded-lg p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white"><i data-lucide="ellipsis" class="w-4 h-4"></i></button></div></div><div id="workspaceLaneDone" class="workspace-lane-dropzone" data-workspace-drop="done"><div class="workspace-lane-empty">Suas atividades concluídas aparecerão aqui.</div></div></section>
                         </div></div>
                     </section>
 
@@ -2173,7 +2201,18 @@
         function getActiveTasksInFolderTree(folder){if(!folder)return[];const ids=getFolderDescendantIds(folder.id);return getActiveTasks(tasks).filter(t=>folders.some(f=>ids.has(f.id)&&taskBelongsToFolder(t,f)));}
         function getFolderWorkspaceSource(folder){const ids=getFolderDescendantIds(activeChurchSubfolderId||folder.id);return tasks.filter(t=>folders.some(f=>ids.has(f.id)&&taskBelongsToFolder(t,f))).filter(t=>{const s=String(t.status||'').toLowerCase();return !(t.archived===true||t.isArchived===true||['archived','arquivado','arquivada'].includes(s));});}
         function getFolderWorkspaceFilteredTasks(source){const q=(document.getElementById('folderWorkspaceSearch')?.value||'').trim().toLocaleLowerCase('pt-BR'),status=document.getElementById('folderWorkspaceStatus')?.value||'all',priority=document.getElementById('folderWorkspacePriority')?.value||'all';return source.filter(t=>{const lane=getWorkspaceLane(t),done=isTaskCompleted(t);if(status==='active'&&done)return false;if(status==='done'&&!done)return false;if(['backlog','todo','in_progress'].includes(status)&&lane!==status)return false;if(priority!=='all'&&(t.priority||'Média')!==priority)return false;if(q&&![t.title,t.description,t.category].some(v=>String(v||'').toLocaleLowerCase('pt-BR').includes(q)))return false;return true;});}
-        function folderSpaceCard(t,compact=false){const folder=folders.find(f=>f.id===getTaskFolderId(t)),accent=folder?getFolderColor(folder):'#3b82f6',lane=getWorkspaceLane(t),done=isTaskCompleted(t),date=t.dueDate?String(t.dueDate).split('-').reverse().join('/'):'Sem data',time=t.dueTime?' · '+escapeHtml(t.dueTime):'',desc=String(t.description||'').trim(),check=getTaskChecklistSummary(t);return '<article class="folder-space-card '+(done?'opacity-65':'')+'" style="--folder-accent:'+escapeHtml(accent)+'" draggable="true" data-folder-space-task="'+escapeHtml(t.id)+'"><div class="flex items-start justify-between gap-2"><button type="button" data-folder-space-open class="min-w-0 flex-1 truncate text-left text-[11px] font-bold text-slate-100 hover:text-blue-200">'+escapeHtml(t.title||'Sem título')+'</button>'+getPriorityBadge(t.priority||'Média')+'</div>'+(compact||!desc?'':'<p class="mt-1.5 line-clamp-2 text-[10px] text-slate-400">'+escapeHtml(desc)+'</p>')+'<div class="mt-2 flex flex-wrap items-center gap-1.5"><span class="rounded-md bg-slate-950/65 px-2 py-1 text-[9px] text-slate-400">'+date+time+'</span>'+(check.total?'<span class="rounded-md bg-emerald-500/10 px-2 py-1 text-[9px] text-emerald-300">'+check.done+'/'+check.total+' etapas</span>':'')+'<label class="relative grid h-7 w-7 place-items-center rounded-md text-slate-500 hover:bg-slate-700 hover:text-blue-200" title="Reagendar compromisso"><i data-lucide="calendar-clock" class="pointer-events-none h-3.5 w-3.5"></i><input type="date" data-folder-space-reschedule aria-label="Escolher nova data" value="'+escapeHtml(t.dueDate||'')+'" class="absolute inset-0 h-full w-full cursor-pointer opacity-0"></label>'+(folder&&folder.id!==activeFolderId?'<span class="rounded-md px-2 py-1 text-[9px]" style="color:'+getFolderColor(folder)+';background:'+getFolderColor(folder)+'22">'+escapeHtml(folder.name||'Subpasta')+'</span>':'')+'</div><div class="mt-2 flex items-center justify-between border-t border-slate-700/60 pt-2"><button type="button" data-folder-space-toggle class="rounded-lg px-2 py-1.5 text-[9px] '+(done?'text-emerald-300':'text-slate-400')+'">'+(done?'Reabrir':'Concluir')+'</button><select data-folder-space-move class="max-w-[130px] rounded-lg border border-slate-700 bg-slate-950 px-2 py-1.5 text-[9px] text-slate-300"><option value="backlog" '+(lane==='backlog'?'selected':'')+'>Backlog</option><option value="todo" '+(lane==='todo'?'selected':'')+'>A fazer</option><option value="in_progress" '+(lane==='in_progress'?'selected':'')+'>Em andamento</option><option value="done" '+(lane==='done'?'selected':'')+'>Concluído</option></select></div></article>';}
+        function getChurchProgramTheme(task,folder){
+            const church=String(folder?.name||'').trim().toLocaleLowerCase('pt-BR')==='igreja'||folders.some(f=>f.id===getTaskFolderId(task)&&String(f.name||'').toLocaleLowerCase('pt-BR').includes('igreja'));
+            if(!church)return null;
+            const text=[task.title,task.category,task.description].map(v=>String(v||'')).join(' ').toLocaleLowerCase('pt-BR');
+            if(text.includes('jornada de conhecimento')||text.includes('jornada conhecimento'))return{label:'Jornada de Conhecimento',color:'#FF572F',role:task.role||task.function||''};
+            if(/\\bge\\b|grupo de encorajamento|encorajamento/.test(text))return{label:'Grupo de Encorajamento · GE',color:'#22C55E'};
+            if(/culto|celebração|celebracao/.test(text))return{label:'Culto',color:'#A78BFA'};
+            if(/liderança|lideranca|supervisão|supervisao|líderes|lideres/.test(text))return{label:'Liderança / Supervisão',color:'#60A5FA'};
+            if(/evento|conferência|conferencia|dunamis|retiro|encontro/.test(text))return{label:'Evento',color:'#F59E0B'};
+            return{label:String(task.category||'Outros').trim()||'Outros',color:'#94A3B8'};
+        }
+        function folderSpaceCard(t,compact=false){const folder=folders.find(f=>f.id===getTaskFolderId(t)),churchTheme=getChurchProgramTheme(t,folder),accent=churchTheme?.color||(folder?getFolderColor(folder):'#3b82f6'),lane=getWorkspaceLane(t),done=isTaskCompleted(t),date=t.dueDate?String(t.dueDate).split('-').reverse().join('/'):'Sem data',time=t.dueTime?' · '+escapeHtml(t.dueTime):'',desc=String(t.description||'').trim(),check=getTaskChecklistSummary(t),today=t.dueDate===getAgendaDateString(new Date()),role=String(t.role||t.function||t.funcao||'').trim();if(churchTheme){return '<article class="folder-space-card church-program-card '+(done?'opacity-65':'')+'" style="--folder-accent:'+escapeHtml(accent)+';--church-accent:'+escapeHtml(accent)+'" draggable="true" data-folder-space-task="'+escapeHtml(t.id)+'"><div class="flex items-start justify-between gap-2"><div class="min-w-0 flex-1"><span class="church-program-category">'+escapeHtml(churchTheme.label)+'</span><button type="button" data-folder-space-open class="mt-2 block w-full truncate text-left text-[15px] font-extrabold leading-snug text-white hover:text-slate-100">'+escapeHtml(t.title||'Sem título')+'</button>'+(desc?'<p class="mt-1.5 line-clamp-2 text-[11px] text-slate-300">'+escapeHtml(desc)+'</p>':'')+(role?'<p class="church-program-role mt-2">FUNÇÃO: <strong>'+escapeHtml(role)+'</strong></p>':'')+'</div><span class="church-program-time"><i data-lucide="clock" class="h-3.5 w-3.5" style="color:'+escapeHtml(accent)+'"></i>'+escapeHtml(t.dueTime||'—')+'</span></div><div class="mt-3 flex flex-wrap items-center gap-2"><span class="church-program-date">'+date+(today?'<span class="church-today">HOJE</span>':'')+'</span><span class="text-slate-500 text-[10px]">•</span><span class="text-[10px] text-slate-400">'+(t.dueDate?escapeHtml(new Date(t.dueDate+'T12:00:00').toLocaleDateString('pt-BR',{weekday:'long'})):'Data a definir')+'</span>'+(check.total?'<span class="ml-auto rounded-md bg-emerald-500/10 px-2 py-1 text-[9px] text-emerald-300">'+check.done+'/'+check.total+' etapas</span>':'')+'</div><div class="mt-2 flex items-center justify-between"><span>'+getPriorityBadge(t.priority||'Média')+'</span><label class="relative grid h-7 w-7 place-items-center rounded-md text-slate-500 hover:bg-slate-700 hover:text-blue-200" title="'+(done?'Reabrir':'Concluir')+'"><input type="checkbox" data-folder-space-complete class="absolute inset-0 h-full w-full cursor-pointer opacity-0" '+(done?'checked':'')+'><i data-lucide="'+(done?'check-circle-2':'circle')+'" class="h-4 w-4 pointer-events-none"></i></label></div></article>';}return '<article class="folder-space-card '+(done?'opacity-65':'')+'" style="--folder-accent:'+escapeHtml(accent)+'" draggable="true" data-folder-space-task="'+escapeHtml(t.id)+'"><div class="flex items-start justify-between gap-2"><button type="button" data-folder-space-open class="min-w-0 flex-1 truncate text-left text-[11px] font-bold text-slate-100 hover:text-blue-200">'+escapeHtml(t.title||'Sem título')+'</button>'+getPriorityBadge(t.priority||'Média')+'</div>'+(compact||!desc?'':'<p class="mt-1.5 line-clamp-2 text-[10px] text-slate-400">'+escapeHtml(desc)+'</p>')+'<div class="mt-2 flex flex-wrap items-center gap-1.5"><span class="rounded-md bg-slate-950/65 px-2 py-1 text-[9px] text-slate-400">'+date+time+'</span>'+(check.total?'<span class="rounded-md bg-emerald-500/10 px-2 py-1 text-[9px] text-emerald-300">'+check.done+'/'+check.total+' etapas</span>':'')+'<label class="relative grid h-7 w-7 place-items-center rounded-md text-slate-500 hover:bg-slate-700 hover:text-blue-200" title="Reagendar compromisso"><i data-lucide="calendar-clock" class="pointer-events-none h-3.5 w-3.5"></i><input type="date" data-folder-space-reschedule aria-label="Escolher nova data" value="'+escapeHtml(t.dueDate||'')+'" class="absolute inset-0 h-full w-full cursor-pointer opacity-0"></label>'+(folder&&folder.id!==activeFolderId?'<span class="rounded-md px-2 py-1 text-[9px]" style="color:'+getFolderColor(folder)+';background:'+getFolderColor(folder)+'22">'+escapeHtml(folder.name||'Subpasta')+'</span>':'')+'</div><div class="mt-2 flex items-center justify-between border-t border-slate-700/60 pt-2"><button type="button" data-folder-space-toggle class="rounded-lg px-2 py-1.5 text-[9px] '+(done?'text-emerald-300':'text-slate-400')+'">'+(done?'Reabrir':'Concluir')+'</button><select data-folder-space-move class="max-w-[130px] rounded-lg border border-slate-700 bg-slate-950 px-2 py-1.5 text-[9px] text-slate-300"><option value="backlog" '+(lane==='backlog'?'selected':'')+'>Backlog</option><option value="todo" '+(lane==='todo'?'selected':'')+'>A fazer</option><option value="in_progress" '+(lane==='in_progress'?'selected':'')+'>Em andamento</option><option value="done" '+(lane==='done'?'selected':'')+'>Concluído</option></select></div></article>';}
         let folderSpaceDnDReady=false;
         function folderSpaceInitDnD(){if(folderSpaceDnDReady)return;const root=document.getElementById('folderTasksList');if(!root)return;root.addEventListener('dragover',e=>{const z=e.target.closest('[data-folder-space-drop]');if(z){e.preventDefault();z.classList.add('is-drop-over');}});root.addEventListener('dragleave',e=>{const z=e.target.closest('[data-folder-space-drop]');if(z&&!z.contains(e.relatedTarget))z.classList.remove('is-drop-over');});root.addEventListener('drop',e=>{const z=e.target.closest('[data-folder-space-drop]');if(!z)return;e.preventDefault();z.classList.remove('is-drop-over');const id=e.dataTransfer?.getData('text/plain');if(!id)return;if(z.dataset.folderSpaceDrop)moveTaskToWorkspaceLane(id,z.dataset.folderSpaceDrop);else if(z.dataset.folderSpaceDropDate)updatePlannerTaskSchedule(id,z.dataset.folderSpaceDropDate,z.dataset.folderSpaceDropTime||undefined);});folderSpaceDnDReady=true;}
         function folderSpaceBindCards(root){root.querySelectorAll('[data-folder-space-task]').forEach(card=>{const id=card.dataset.folderSpaceTask;card.addEventListener('dragstart',e=>{if(e.dataTransfer){e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',id);}card.classList.add('is-dragging');});card.addEventListener('dragend',()=>card.classList.remove('is-dragging'));card.querySelector('[data-folder-space-open]')?.addEventListener('click',()=>openModal(id));card.querySelector('[data-folder-space-toggle]')?.addEventListener('click',()=>toggleTaskComplete(id));card.querySelector('[data-folder-space-move]')?.addEventListener('change',e=>moveTaskToWorkspaceLane(id,e.target.value));card.querySelector('[data-folder-space-reschedule]')?.addEventListener('change',e=>{if(e.target.value)updatePlannerTaskSchedule(id,e.target.value);});});}
@@ -3513,6 +3552,8 @@
         function openWorkspaceTaskModal(lane = 'backlog') {
             workspaceCreateLane = lane === 'backlog' ? 'backlog' : null;
             openModal();
+            const status = document.getElementById('taskStatus');
+            if (status) status.value = lane === 'in_progress' ? 'in_progress' : lane === 'done' ? 'done' : 'todo';
         }
 
         function taskDetailActor(){return currentUserState?.displayName||'Você';}
@@ -4434,6 +4475,112 @@
             renderPlanner();
         }
 
+
+        const WORKSPACE_LANE_PREFS_KEY='agenda_pro_workspace_lane_preferences';
+        const WORKSPACE_LANE_PALETTE=[
+            {name:'Azul',value:'#2563eb'},{name:'Roxo',value:'#8b5cf6'},{name:'Lilás',value:'#c084fc'},
+            {name:'Rosa',value:'#ec4899'},{name:'Vermelho',value:'#ef4444'},{name:'Laranja',value:'#f97316'},
+            {name:'Amarelo',value:'#eab308'},{name:'Verde',value:'#22c55e'},{name:'Turquesa',value:'#14b8a6'},
+            {name:'Ciano',value:'#06b6d4'},{name:'Cinza',value:'#64748b'},{name:'Sem cor',value:''}
+        ];
+        function getWorkspaceLanePrefs(){try{return JSON.parse(safeStorageGet(getUserStorageKey(WORKSPACE_LANE_PREFS_KEY))||'{}')||{};}catch(e){return{};}}
+        function saveWorkspaceLanePrefs(prefs){const ok=safeStorageSet(getUserStorageKey(WORKSPACE_LANE_PREFS_KEY),JSON.stringify(prefs||{}));if(!ok)alert('Não foi possível salvar as preferências das listas neste navegador.');return ok;}
+        function getWorkspaceLaneOrder(prefs){
+            const base=WORKSPACE_LANES.map(l=>l.id),saved=Array.isArray(prefs.order)?prefs.order.filter(id=>base.includes(id)):[];
+            base.forEach(id=>{if(!saved.includes(id))saved.push(id);});
+            return [...saved.filter(id=>prefs[id]?.pinned),...saved.filter(id=>!prefs[id]?.pinned)];
+        }
+        function applyWorkspaceLanePresentation(){
+            const prefs=getWorkspaceLanePrefs(),order=getWorkspaceLaneOrder(prefs),board=document.getElementById('workspaceKanbanBoard');if(!board)return;
+            order.forEach((id,index)=>{
+                const section=board.querySelector('[data-workspace-lane-column="'+id+'"]');if(!section)return;
+                section.style.order=String(index);const pref=prefs[id]||{},color=pref.color||'';
+                section.style.borderColor=color?color+'99':'';section.style.background=color?'linear-gradient(180deg,'+color+'20 0%,rgba(8,18,34,.9) 42%)':'';
+                const header=section.querySelector('.workspace-kanban-header');if(header)header.style.borderBottomColor=color?color+'66':'';
+                const dot=header?.querySelector('span.h-2\\.5');if(dot)dot.style.backgroundColor=color||'';
+                const title=header?.querySelector('h4');if(title)title.style.color=color||'';
+                const meta=header?.querySelector('.flex.items-center.gap-2');
+                if(meta){meta.querySelectorAll('.workspace-lane-state').forEach(el=>el.remove());
+                    if(pref.pinned){const b=document.createElement('span');b.className='workspace-lane-state text-[9px] rounded px-1.5 py-0.5';b.style.cssText='background:rgba(250,204,21,.12);color:#fcd34d';b.textContent='Fixada';meta.appendChild(b);}
+                    if(pref.following){const b=document.createElement('span');b.className='workspace-lane-state text-[9px] rounded px-1.5 py-0.5';b.style.cssText='background:rgba(96,165,250,.12);color:#93c5fd';b.textContent='Seguindo';meta.appendChild(b);}
+                }
+            });
+        }
+        function sortWorkspaceLaneTasks(items,laneId){
+            const mode=getWorkspaceLanePrefs()[laneId]?.sortBy||'manual',priority={Urgente:0,Alta:1,'Média':2,Baixa:3};
+            return items.slice().sort((a,b)=>{
+                if(mode==='title')return String(a.title||'').localeCompare(String(b.title||''),'pt-BR');
+                if(mode==='date')return String(a.dueDate||'9999-99-99').localeCompare(String(b.dueDate||'9999-99-99'));
+                if(mode==='priority')return (priority[a.priority]??4)-(priority[b.priority]??4);
+                if(mode==='created')return String(b.createdAt||'').localeCompare(String(a.createdAt||''));
+                return 0;
+            });
+        }
+        function closeWorkspaceLaneMenu(){document.getElementById('workspaceLaneContextMenu')?.remove();}
+        function openWorkspaceLaneMenu(event,laneId){
+            event?.preventDefault();event?.stopPropagation();closeWorkspaceLaneMenu();
+            const lane=WORKSPACE_LANES.find(item=>item.id===laneId);if(!lane)return;
+            const prefs=getWorkspaceLanePrefs(),pref=prefs[laneId]||{},order=getWorkspaceLaneOrder(prefs),position=order.indexOf(laneId);
+            const targets=WORKSPACE_LANES.filter(item=>item.id!==laneId).map(item=>'<button type="button" data-action="move-all" data-target="'+item.id+'">→ '+escapeHtml(item.label)+'</button>').join('');
+            const colors=WORKSPACE_LANE_PALETTE.map(color=>'<button type="button" class="lane-color-swatch" data-action="color" data-color="'+color.value+'" title="'+color.name+'" aria-label="'+color.name+'" aria-pressed="'+String((pref.color||'')===color.value)+'" style="background:'+(color.value||'linear-gradient(135deg,#202429 45%,#687080 45%,#687080 55%,#202429 55%)')+'"></button>').join('');
+            const menu=document.createElement('div');menu.id='workspaceLaneContextMenu';menu.setAttribute('role','menu');
+            menu.innerHTML='<div class="lane-menu-title"><span>Ações da lista · '+escapeHtml(lane.label)+'</span><button type="button" data-action="close" aria-label="Fechar menu">✕</button></div>'+
+                '<button type="button" class="lane-menu-item" data-action="add">＋ Adicionar cartão</button>'+
+                '<button type="button" class="lane-menu-item" data-action="copy">▣ Copiar lista</button>'+
+                '<div class="lane-menu-section">Mover lista</div><div class="lane-menu-sub"><button type="button" data-action="reorder" data-direction="-1" '+(position<=0?'disabled':'')+'>← Para esquerda</button><button type="button" data-action="reorder" data-direction="1" '+(position>=order.length-1?'disabled':'')+'>Para direita →</button></div>'+
+                '<button type="button" class="lane-menu-item" data-action="move-all-open">⇄ Mover todos os cartões nesta lista</button>'+
+                '<div class="lane-menu-sub" data-move-targets hidden>'+targets+'</div>'+
+                '<div class="lane-menu-section">Ordenar por</div><div class="lane-menu-sub"><button type="button" data-action="sort" data-sort="date">Data de entrega</button><button type="button" data-action="sort" data-sort="priority">Prioridade</button><button type="button" data-action="sort" data-sort="title">Título</button><button type="button" data-action="sort" data-sort="created">Criação</button><button type="button" data-action="sort" data-sort="manual">Ordem padrão</button></div>'+
+                '<div class="lane-menu-sep"></div><button type="button" class="lane-menu-item" data-action="pin">'+(pref.pinned?'📌 Desafixar lista':'📌 Fixar lista')+'</button>'+
+                '<button type="button" class="lane-menu-item" data-action="follow">'+(pref.following?'◉ Deixar de seguir':'◎ Seguir lista')+'</button>'+
+                '<div class="lane-menu-sep"></div><div class="lane-menu-section">Alterar cor da lista</div><div class="lane-color-grid">'+colors+'</div>'+
+                '<div class="lane-menu-note">Preferências salvas neste navegador e separadas por usuário.</div><div class="lane-menu-sep"></div><div class="lane-menu-section">Automação</div><div class="lane-menu-note">Regras automáticas poderão ser adicionadas em uma próxima etapa.</div>';
+            document.body.appendChild(menu);
+            const rect=event?.currentTarget?.getBoundingClientRect?.()||{right:window.innerWidth-12,bottom:80},width=Math.min(320,window.innerWidth-20);
+            menu.style.left=Math.max(10,Math.min(rect.right-width,window.innerWidth-width-10))+'px';
+            menu.style.top=Math.max(10,Math.min(rect.bottom+6,window.innerHeight-menu.offsetHeight-10))+'px';
+            menu.addEventListener('click',async e=>{
+                const button=e.target.closest('button[data-action]');if(!button)return;const action=button.dataset.action;
+                if(action==='close'){closeWorkspaceLaneMenu();return;}
+                if(action==='move-all-open'){const sub=menu.querySelector('[data-move-targets]');if(sub)sub.hidden=!sub.hidden;return;}
+                closeWorkspaceLaneMenu();
+                if(action==='add'){openWorkspaceTaskModal(laneId);return;}
+                if(action==='copy'){await copyWorkspaceLane(laneId);return;}
+                if(action==='move-all'){await moveAllWorkspaceLaneTasks(laneId,button.dataset.target);return;}
+                if(action==='reorder'){moveWorkspaceLaneOrder(laneId,Number(button.dataset.direction));return;}
+                const next=getWorkspaceLanePrefs(),current=next[laneId]||{};
+                if(action==='color'){current.color=button.dataset.color||'';next[laneId]=current;saveWorkspaceLanePrefs(next);applyWorkspaceLanePresentation();return;}
+                if(action==='sort'){current.sortBy=button.dataset.sort||'manual';next[laneId]=current;saveWorkspaceLanePrefs(next);renderWorkspaceBoard();return;}
+                if(action==='pin'){current.pinned=!current.pinned;next[laneId]=current;saveWorkspaceLanePrefs(next);applyWorkspaceLanePresentation();return;}
+                if(action==='follow'){current.following=!current.following;next[laneId]=current;saveWorkspaceLanePrefs(next);applyWorkspaceLanePresentation();return;}
+            });
+            if(!window.workspaceLaneMenuOutsideBound){window.workspaceLaneMenuOutsideBound=true;document.addEventListener('click',e=>{if(!e.target.closest('#workspaceLaneContextMenu')&&!e.target.closest('.workspace-lane-more'))closeWorkspaceLaneMenu();});document.addEventListener('keydown',e=>{if(e.key==='Escape')closeWorkspaceLaneMenu();});}
+        }
+        function moveWorkspaceLaneOrder(laneId,direction){
+            const prefs=getWorkspaceLanePrefs(),order=getWorkspaceLaneOrder(prefs),from=order.indexOf(laneId),to=from+direction;if(to<0||to>=order.length)return;
+            [order[from],order[to]]=[order[to],order[from]];prefs.order=order;saveWorkspaceLanePrefs(prefs);applyWorkspaceLanePresentation();
+        }
+        async function copyWorkspaceLane(laneId){
+            const source=tasks.filter(task=>getWorkspaceLane(task)===laneId);if(!source.length){alert('Esta lista não tem cartões para copiar.');return;}
+            if(!confirm('Copiar '+source.length+' cartão(ões) desta lista?'))return;
+            const stamp=new Date().toISOString(),laneLabel=WORKSPACE_LANES.find(l=>l.id===laneId)?.label||'lista';
+            const copies=source.map((task,index)=>({...task,id:'task_copy_'+Date.now()+'_'+index+'_'+Math.random().toString(36).slice(2,7),title:String(task.title||'Sem título')+' (cópia)',createdAt:stamp,updatedAt:null,comments:[],activityLog:[createTaskActivityEntry('Cartão copiado para '+laneLabel+'.')],checklist:Array.isArray(task.checklist)?task.checklist.map((item,i)=>({...item,id:'check_copy_'+Date.now()+'_'+index+'_'+i})):[]}));
+            const previous=tasks;tasks=[...tasks,...copies];saveTasksToLocalCacheOnly(tasks);render();
+            if(currentUserState&&db){try{const batch=db.batch();copies.forEach(copy=>{const data={...copy};delete data.id;batch.set(db.collection('users').doc(currentUserState.uid).collection('items').doc(copy.id),{...data,createdAt:firebase.firestore.FieldValue.serverTimestamp(),updatedAt:firebase.firestore.FieldValue.serverTimestamp()});});await batch.commit();}catch(err){console.error('Falha ao copiar lista:',err);tasks=previous;saveTasksToLocalCacheOnly(tasks);render();alert('Não foi possível copiar os cartões no Firebase. A lista original foi mantida.');return;}}
+            alert(source.length+' cartão(ões) copiado(s).');
+        }
+        async function moveAllWorkspaceLaneTasks(fromLane,toLane){
+            if(!WORKSPACE_LANES.some(l=>l.id===toLane)||fromLane===toLane)return;
+            const affected=tasks.filter(task=>getWorkspaceLane(task)===fromLane);if(!affected.length){alert('Esta lista não tem cartões para mover.');return;}
+            const fromLabel=WORKSPACE_LANES.find(l=>l.id===fromLane)?.label||'lista',toLabel=WORKSPACE_LANES.find(l=>l.id===toLane)?.label||'lista';
+            if(!confirm('Mover '+affected.length+' cartão(ões) de '+fromLabel+' para '+toLabel+'?'))return;
+            const previous=tasks,ids=new Set(affected.map(t=>t.id));
+            tasks=tasks.map(task=>{if(!ids.has(task.id))return task;const activityLog=[...(Array.isArray(task.activityLog)?task.activityLog:[]),createTaskActivityEntry('Cartão movido em massa de '+fromLabel+' para '+toLabel+'.')].slice(-100);return{...task,status:toLane==='backlog'?'todo':toLane,boardLane:toLane==='backlog'?'backlog':null,activityLog};});
+            saveTasksToLocalCacheOnly(tasks);render();
+            if(currentUserState&&db){try{const batch=db.batch();affected.forEach(task=>{const next=tasks.find(item=>item.id===task.id),update={status:next.status,activityLog:next.activityLog,updatedAt:firebase.firestore.FieldValue.serverTimestamp()};update.boardLane=toLane==='backlog'?'backlog':firebase.firestore.FieldValue.delete();batch.update(db.collection('users').doc(currentUserState.uid).collection('items').doc(task.id),update);});await batch.commit();}catch(err){console.error('Falha ao mover cartões:',err);tasks=previous;saveTasksToLocalCacheOnly(tasks);render();alert('Não foi possível mover os cartões no Firebase. As posições originais foram restauradas.');return;}}
+            alert(affected.length+' cartão(ões) movido(s).');
+        }
+
         function renderWorkspaceBoard() {
             const board = document.getElementById('workspaceKanbanBoard');
             if (!board) return;
@@ -4487,7 +4634,7 @@
                 const list = document.getElementById(lane.listId);
                 const count = document.getElementById(lane.countId);
                 if (!list || !count) return;
-                const laneTasks = agendaSortTasks(byLane[lane.id]);
+                const laneTasks = sortWorkspaceLaneTasks(agendaSortTasks(byLane[lane.id]),lane.id);
                 count.textContent = laneTasks.length;
                 if (!laneTasks.length) {
                     list.innerHTML = '<div class="workspace-lane-empty">' + (lane.id === 'backlog' ? 'Ideias e itens para organizar.' : 'Nenhum cartão nesta coluna com os filtros atuais.') + '</div>';
@@ -4532,6 +4679,7 @@
                     });
                 });
             });
+            applyWorkspaceLanePresentation();
             refreshIcons();
         }
 
