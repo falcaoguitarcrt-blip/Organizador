@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agenda da semana</title>
+<style>
+:root{--bg:#f6f5f2;--card:#fff;--ink:#1d1d1f;--mute:#6b6b70;--line:#e6e4df;
+--igreja:#7b5cd6;--lazer:#1f9d6b;--unimed:#1f6fd1;--pessoal:#c4692a;--warn:#b54708;--warnbg:#fff4e5;--ok:#2e7d32}
+@media (prefers-color-scheme:dark){:root{--bg:#141416;--card:#1e1e21;--ink:#f2f2f3;--mute:#a1a1a8;--line:#2e2e33;--warnbg:#3a2a14;--warn:#ffb054}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:720px;margin:0 auto;padding:20px 16px 40px}
+h1{font-size:22px;margin:0 0 2px}
+.sub{color:var(--mute);font-size:13px;margin-bottom:16px}
+.legend{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px;font-size:12px}
+.chip{padding:3px 9px;border-radius:999px;background:var(--card);border:1px solid var(--line)}
+.chip b{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;vertical-align:middle}
+.day{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 14px 6px;margin-bottom:12px}
+.day.today{border:2px solid var(--igreja)}
+.dhead{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
+.dhead h2{font-size:16px;margin:0}
+.tag{font-size:11px;font-weight:600;color:#fff;background:var(--igreja);padding:2px 8px;border-radius:999px}
+.ev{display:flex;gap:10px;padding:9px 0;border-top:1px solid var(--line)}
+.ev:first-of-type{border-top:0}
+.bar{width:4px;border-radius:4px;flex:none}
+.time{width:58px;flex:none;font-size:13px;font-weight:600;color:var(--mute)}
+.t{font-weight:600}
+.d{font-size:13px;color:var(--mute);margin-top:2px}
+.warn{background:var(--warnbg);color:var(--warn);font-size:13px;border-radius:8px;padding:6px 9px;margin-top:6px}
+.note{font-size:13px;color:var(--ok);margin-top:4px}
+.igreja{background:var(--igreja)}.lazer{background:var(--lazer)}.unimed{background:var(--unimed)}.pessoal{background:var(--pessoal)}
+.foot{color:var(--mute);font-size:12px;text-align:center;margin-top:18px}
+</style>
+</head>
+<body><div class="wrap">
+<h1>Agenda da semana</h1>
+<div class="sub">19 a 25/11/2026 · atualizada qui 19/11 · fuso de São Paulo</div>
+<div class="legend">
+<span class="chip"><b class="igreja"></b>⛪ Igreja</span>
+<span class="chip"><b class="lazer"></b>🏡 Área de lazer</span>
+<span class="chip"><b class="unimed"></b>💼 Unimed</span>
+<span class="chip"><b class="pessoal"></b>Pessoal</span>
+</div>
+
+<section class="day today">
+<div class="dhead"><h2>Quinta, 19/11</h2><span class="tag">Hoje</span></div>
+<div class="ev"><div class="bar igreja"></div><div class="time">Dia todo</div><div><div class="t">⛪ Dunamis Con (São Paulo)</div><div class="d">19 a 22/11</div></div></div>
+<div class="ev"><div class="bar unimed"></div><div class="time">Hoje/seg</div><div><div class="t">💼 Envio da PTU A-400, A-410 e A-450</div><div class="note">Vai ser enviada hoje ou na segunda (23/11), ainda em análise</div></div></div>
+<div class="ev"><div class="bar pessoal"></div><div class="time">17:15</div><div><div class="t">✅ Levar as chaves antes de viajar</div></div></div>
+<div class="ev"><div class="bar pessoal"></div><div class="time">até 18:30</div><div><div class="t">🚗 Saída de São Carlos → Hortolândia</div><div class="d">Pernoite na casa da prima</div></div></div>
+</section>
+
+<section class="day">
+<div class="dhead"><h2>Sexta, 20/11</h2></div>
+<div class="ev"><div class="bar igreja"></div><div class="time">Cedo</div><div><div class="t">⛪ Hortolândia → Dunamis em São Paulo</div><div class="d">Vão juntos</div></div></div>
+<div class="ev"><div class="bar unimed"></div><div class="time">Dia todo</div><div><div class="t">💼 Rotina PTU A-400, A-410 e A-450</div><div class="note">Envio planejado para hoje (19/11) ou segunda (23/11)</div></div></div>
+<div class="ev"><div class="bar pessoal"></div><div class="time">20–22/11</div><div><div class="t">Hospedagem Requinte Home (SP)</div><div class="d">Rua Viaza, 400</div><div class="warn">⚠️ No Google Agenda o convite aparece como recusado. Confira se a reserva está mantida.</div></div></div>
+</section>
+
+<section class="day">
+<div class="dhead"><h2>Sábado, 21/11</h2></div>
+<div class="ev"><div class="bar igreja"></div><div class="time">Dia todo</div><div><div class="t">⛪ Dunamis Con</div></div></div>
+<div class="ev"><div class="bar lazer"></div><div class="time">08:00</div><div><div class="t">🏡 Camila limpa + Juliano (caixa de gordura)</div><div class="d">Camila abre para o Juliano. Você estará em SP.</div></div></div>
+<div class="ev"><div class="bar lazer"></div><div class="time">18:00</div><div><div class="t">🏡 Confirmar com a Camila: limpeza para o Wesley</div></div></div>
+</section>
+
+<section class="day">
+<div class="dhead"><h2>Domingo, 22/11</h2></div>
+<div class="ev"><div class="bar igreja"></div><div class="time">Dia todo</div><div><div class="t">⛪ Dunamis Con (último dia)</div></div></div>
+<div class="ev"><div class="bar lazer"></div><div class="time">08:00</div><div><div class="t">🏡 Locação: Wesley</div><div class="d">R$ 500 · entrada R$ 150 recebida · saldo R$ 350 via Pix no dia · Camila leva as chaves</div></div></div>
+<div class="ev"><div class="bar lazer"></div><div class="time">09:00</div><div><div class="t">🏡 Confirmar chaves e conferir o Pix de R$ 350</div></div></div>
+</section>
+
+<section class="day">
+<div class="dhead"><h2>Segunda, 23/11 a sexta, 27/11</h2></div>
+<div class="ev"><div class="bar unimed"></div><div class="time">Seg</div><div><div class="t">💼 Possível envio da PTU</div><div class="d">Se não for enviada hoje</div></div></div>
+<div class="ev"><div class="bar igreja"></div><div class="time">Semana</div><div><div class="t">⛪ Confraternização dos GEs</div><div class="d">Última semana do ciclo</div></div></div>
+</section>
+
+<div class="foot">Responda na conversa da agenda dizendo o que concluiu para atualizar tudo.</div>
+</div></body>
+</html>
